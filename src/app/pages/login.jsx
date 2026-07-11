@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../providers/auth-provider";
 import { motion } from "motion/react";
@@ -36,6 +36,10 @@ export function LoginPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

@@ -1024,7 +1024,7 @@ export function HeroSection() {
         </AnimatePresence>
       </div>
 
-      <div className="mx-auto flex min-h-[92svh] max-w-[1200px] flex-col justify-center items-center px-4 sm:px-6 md:min-h-[94svh] lg:px-8 xl:min-h-[96svh]">
+      <div className="mx-auto flex min-h-[92svh] max-w-[1200px] flex-col justify-start pt-32 items-center px-4 sm:px-6 md:min-h-[94svh] lg:px-8 xl:min-h-[96svh]">
         <div className="relative w-full max-w-[90vw] md:max-w-6xl flex flex-col items-center">
           <div className="relative z-10 flex flex-col items-center text-center w-full max-w-[90vw] md:max-w-6xl">
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -1037,7 +1037,7 @@ export function HeroSection() {
 
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
               <h1
-                className="mt-6 font-light w-full max-w-none text-center text-5xl sm:text-7xl tracking-tighter lg:text-[5.2rem] lg:leading-[1.05] !text-white drop-shadow-md md:whitespace-nowrap"
+                className="mt-2 font-light w-full max-w-none text-center text-5xl sm:text-7xl tracking-tighter lg:text-[5.2rem] lg:leading-[1.05] !text-white drop-shadow-md md:whitespace-nowrap"
               >
                 Play. Book.{" "}
                 <span
@@ -1048,24 +1048,48 @@ export function HeroSection() {
               </h1>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.15 }}>
-              <p className="mt-6 text-center text-lg sm:text-xl md:text-2xl font-light tracking-wider text-white/90 max-w-2xl mx-auto">
-                Let's begin where the game never stops
-              </p>
-            </motion.div>
+              <motion.p 
+                key={currentBg}
+                className="mt-2 text-center text-lg sm:text-xl md:text-2xl font-light tracking-wider text-white/90 max-w-2xl mx-auto font-['Poppins']"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 1 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.1 }
+                  }
+                }}
+              >
+                <span className="text-always-brand-green drop-shadow-[0_0_20px_rgba(109,255,59,0.3)] inline-block">
+                  {"Let's begin".split("").map((char, index) => (
+                    <motion.span key={`l1-${index}`} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
+                      {char === " " ? "\u00A0" : char}
+                    </motion.span>
+                  ))}
+                </span>
+                <br />
+                <span className="inline-block text-white">
+                  {"where the game never stops".split("").map((char, index) => (
+                    <motion.span key={`l2-${index}`} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
+                      {char === " " ? "\u00A0" : char}
+                    </motion.span>
+                  ))}
+                </span>
+              </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="mt-10 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
+            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="mt-4 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
 
               <Link to="/venues" className="w-full sm:w-auto">
                 <Button
-                  className="w-full sm:w-auto h-14 rounded-full px-8 text-base font-semibold backdrop-blur-md transition-all hover:scale-105 shadow-sm group border border-[#6DFF3B] bg-transparent !text-white hover:bg-[#6DFF3B] hover:!text-[#050505]"
+                  className="w-full sm:w-auto h-14 rounded-full px-8 text-base font-semibold backdrop-blur-md transition-all hover:scale-105 shadow-sm group border !border-[#6DFF3B] bg-transparent !text-white hover:bg-[#6DFF3B] hover:!text-[#050505]"
                 >
                   Book a turf now
                 </Button>
               </Link>
               <Link to="/venues" className="w-full sm:w-auto">
                 <Button
-                  className="w-full sm:w-auto h-14 rounded-full px-8 text-base font-semibold backdrop-blur-md transition-all hover:scale-105 shadow-sm group border border-[#6DFF3B] bg-transparent !text-white hover:bg-[#6DFF3B] hover:!text-[#050505]"
+                  className="w-full sm:w-auto h-14 rounded-full px-8 text-base font-semibold backdrop-blur-md transition-all hover:scale-105 shadow-sm group border !border-[#6DFF3B] bg-transparent !text-white hover:bg-[#6DFF3B] hover:!text-[#050505]"
                 >
                   List of our turfs
                 </Button>

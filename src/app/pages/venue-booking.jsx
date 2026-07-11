@@ -199,7 +199,6 @@ const venueData = [
 ];
 
 const sports = [
-  "All",
   "Football",
   "Cricket",
   "Badminton",
@@ -253,6 +252,7 @@ export function VenueBooking() {
   const [availabilityOnly, setAvailabilityOnly] = useState(true);
   const [ratingOnly, setRatingOnly] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [activeFilterTab, setActiveFilterTab] = useState("Sort");
 
   const filteredVenues = useMemo(() => {
     const filtered = venueData.filter((venue) => {
@@ -280,9 +280,10 @@ export function VenueBooking() {
 
     const sorted = [...filtered];
     sorted.sort((a, b) => {
-      if (sortBy === "Rating") return b.rating - a.rating;
-      if (sortBy === "Price: Low to High") return a.price - b.price;
-      if (sortBy === "Distance") return a.distance - b.distance;
+      if (sortBy === "Rating" || sortBy === "Ratings high to low") return b.rating - a.rating;
+      if (sortBy === "Price: Low to High" || sortBy === "Price low to high") return a.price - b.price;
+      if (sortBy === "Price high to low") return b.price - a.price;
+      if (sortBy === "Distance" || sortBy === "Distance from you") return a.distance - b.distance;
       return b.reviews - a.reviews;
     });
 
@@ -338,70 +339,34 @@ export function VenueBooking() {
             </div>
 
             <div className="rounded-[24px] border border-white/10 bg-black/60 backdrop-blur-md shadow-2xl p-4 md:p-5">
-              <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-[2.5fr_1.2fr_135px] items-center">
-                <label className="relative block">
+              <div className="flex gap-2.5 items-center">
+                <label className="relative block flex-1">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
                   <input
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search sports, venues, or tournaments"
+                    placeholder="Search sports"
                     className="h-12 rounded-[18px] border border-white/10 bg-black/40 pl-11 text-white placeholder:text-white/40 w-full hover:border-[#6DFF3B]/30 focus:border-[#6DFF3B] focus:outline-none transition-colors text-sm"
                   />
                 </label>
-
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-12 rounded-[18px] !border-white/10 !bg-black/40 !text-white hover:!bg-black/60 hover:border-[#6DFF3B]/30 transition-colors">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent className="theme-adaptive rounded-[18px] border-white/[0.08] bg-[#101216] text-white" style={{ backgroundColor: '#101216', borderColor: 'rgba(255,255,255,0.08)', color: 'white' }}>
-                    {sorts.map((item) => (
-                      <SelectItem key={item} value={item} className="rounded-[12px] my-1 data-[highlighted]:bg-[#6DFF3B]/10 data-[highlighted]:text-[#6DFF3B] cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Button className="h-12 w-full rounded-[18px] bg-[#6DFF3B] px-5 text-[#050505] hover:bg-[#86ff60] font-semibold transition-all">
-                  Search
-                  <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
-                </Button>
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(true)}
+                  className="h-12 w-12 shrink-0 flex items-center justify-center rounded-[18px] bg-[#6DFF3B] text-[#050505] shadow-[0_4px_12px_rgba(109,255,59,0.25)] hover:bg-[#86ff60] transition-colors lg:hidden"
+                  aria-label="Open Filters"
+                >
+                  <SlidersHorizontal className="h-5 w-5" />
+                </button>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {sports.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setSport(item)}
-                  className={cn(
-                    "rounded-full border px-4 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm font-medium transition cursor-pointer shadow-md",
-                    sport === item
-                      ? "border-transparent bg-[#6DFF3B] text-[#050505] shadow-[0_4px_12px_rgba(109,255,59,0.25)]"
-                      : "border-white/10 bg-black/40 text-white/80 hover:border-white/20 hover:bg-black/60",
-                  )}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
+
           </div>
         </div>
       </section>
 
-      {/* Mobile Filter FAB */}
-      <div className="fixed bottom-24 right-4 z-40 lg:hidden">
-        <button
-          type="button"
-          onClick={() => setFilterOpen(true)}
-          className="flex items-center gap-2 rounded-full bg-[#6DFF3B] px-4 py-3 text-sm font-semibold text-[#050505] shadow-[0_8px_24px_rgba(109,255,59,0.4)] active:scale-95 transition-transform"
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          Filters
-        </button>
-      </div>
+
 
       {/* Mobile Filter Bottom Sheet */}
       <AnimatePresence>
@@ -414,7 +379,7 @@ export function VenueBooking() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setFilterOpen(false)}
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+              className="fixed inset-0 z-[60] bg-transparent lg:hidden"
             />
             {/* Drawer */}
             <motion.div
@@ -423,118 +388,150 @@ export function VenueBooking() {
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 26, stiffness: 260 }}
-              className="fixed bottom-0 left-0 right-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-[32px] bg-[#101216] px-5 pb-10 pt-5 lg:hidden"
+              className="fixed bottom-0 left-0 right-0 z-[70] flex flex-col h-[75vh] rounded-t-[32px] overflow-hidden lg:hidden bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
             >
               {/* Drag handle */}
-              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+              <div className="flex justify-center pt-3 pb-2 w-full shrink-0">
+                <div className="h-1 w-12 rounded-full bg-slate-300" />
+              </div>
+
               {/* Header */}
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-white/45">Filters</p>
-                  <h2 className="mt-1 text-lg text-white">Refine your search</h2>
-                </div>
+              <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100 shrink-0 bg-white">
+                <h2 className="text-xl font-semibold text-slate-900">Filter</h2>
                 <button
                   type="button"
                   onClick={() => setFilterOpen(false)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70"
+                  className="flex h-8 w-8 items-center justify-center rounded-full transition bg-slate-100 text-slate-600 hover:bg-slate-200"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              {/* Sport */}
-              <div className="space-y-3 mb-5">
-                <p className="text-sm text-white/78">Sport</p>
-                <Select value={sport} onValueChange={setSport}>
-                  <SelectTrigger className="h-10 rounded-xl border-white/[0.08] bg-[#050505]/50 text-white cursor-pointer">
-                    <SelectValue placeholder="All Sports" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#101216] border-white/[0.08] text-white rounded-xl">
-                    {sports.map((item) => (
-                      <SelectItem key={item} value={item} className="cursor-pointer">
-                        {item === "All" ? "All Sports" : item}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Main Content Area: 2 Columns */}
+              <div className="flex flex-1 overflow-hidden bg-white">
+                {/* Left Tabs Column */}
+                <div className="w-[35%] flex flex-col overflow-y-auto overflow-x-hidden border-r border-slate-100 bg-slate-50">
+                  {["Sort", "Sports", "Surfaces", "Amenities", "Price", "Radius", "Team Size", "Preferred Time"].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveFilterTab(tab)}
+                      className={cn(
+                        "w-full text-left px-4 py-4 text-sm font-medium transition-colors border-l-4",
+                        activeFilterTab === tab
+                          ? "border-[#4CFF3B] text-[#4CFF3B] bg-[#E8FFE5]"
+                          : "border-transparent text-slate-600 hover:bg-white"
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Right Content Column */}
+                <div className="flex-1 overflow-y-auto p-5 bg-white">
+                  {activeFilterTab === "Sort" && (
+                    <div className="flex flex-col gap-5">
+                      {["Distance from you", "Ratings high to low", "Price low to high", "Price high to low"].map((option) => (
+                        <label key={option} className="flex items-center gap-3 cursor-pointer group">
+                          <div className={cn(
+                            "flex h-5 w-5 items-center justify-center rounded-full border-2 transition",
+                            sortBy === option 
+                              ? "border-[#4CFF3B]" 
+                              : "border-slate-300 group-hover:border-slate-400"
+                          )}>
+                            {sortBy === option && <div className="h-2.5 w-2.5 rounded-full bg-[#4CFF3B]" />}
+                          </div>
+                          <span className="text-sm font-medium text-slate-700">{option}</span>
+                          <input
+                            type="radio"
+                            name="sort"
+                            value={option}
+                            checked={sortBy === option}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="hidden"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {activeFilterTab === "Sports" && (
+                    <div className="flex flex-col gap-5">
+                      {sports.map((item) => (
+                        <label key={item} className="flex items-center gap-3 cursor-pointer group">
+                          <div className={cn(
+                            "flex h-5 w-5 items-center justify-center rounded-full border-2 transition",
+                            sport === item 
+                              ? "border-[#4CFF3B]" 
+                              : "border-slate-300 group-hover:border-slate-400"
+                          )}>
+                            {sport === item && <div className="h-2.5 w-2.5 rounded-full bg-[#4CFF3B]" />}
+                          </div>
+                          <span className="text-sm font-medium text-slate-700">{item === "All" ? "All Sports" : item}</span>
+                          <input
+                            type="radio"
+                            name="sport"
+                            value={item}
+                            checked={sport === item}
+                            onChange={(e) => setSport(e.target.value)}
+                            className="hidden"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  {activeFilterTab === "Price" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-slate-700">Price per hour</p>
+                      </div>
+                      <div className="py-2">
+                        <Slider value={priceRange} min={500} max={2000} step={50} onValueChange={setPriceRange} className="py-1 cursor-pointer" />
+                      </div>
+                      <div className="flex items-center gap-3 pt-2">
+                        <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-center">
+                          <p className="text-[10px] uppercase text-slate-500">Min</p>
+                          <p className="text-sm font-medium text-slate-800">₹{priceRange[0]}</p>
+                        </div>
+                        <div className="text-xs text-slate-400">-</div>
+                        <div className="flex-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-center">
+                          <p className="text-[10px] uppercase text-slate-500">Max</p>
+                          <p className="text-sm font-medium text-slate-800">₹{priceRange[1]}+</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {["Surfaces", "Amenities", "Radius", "Team Size", "Preferred Time"].includes(activeFilterTab) && (
+                    <div className="flex h-full items-center justify-center">
+                      <p className="text-sm text-center text-slate-400">
+                        Options for {activeFilterTab} will appear here.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Price */}
-              <div className="space-y-3 mb-5">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-white/78">Price per hour</p>
-                  <span className="text-xs text-[#6DFF3B] font-semibold bg-[#6DFF3B]/10 px-2 py-0.5 rounded-full">
-                    ₹{priceRange[0]} - ₹{priceRange[1]}+
-                  </span>
-                </div>
-                <div className="rounded-[24px] border border-white/[0.08] bg-[#050505]/40 p-4 space-y-4">
-                  <div className="flex items-end justify-between h-12 px-1">
-                    {[15, 25, 35, 55, 75, 95, 80, 60, 45, 30, 50, 65, 85, 55, 35, 20, 10, 5].map((height, idx) => {
-                      const barPrice = 500 + idx * ((2000 - 500) / 18);
-                      const isActive = barPrice >= priceRange[0] && barPrice <= priceRange[1];
-                      return (
-                        <div
-                          key={idx}
-                          className={cn("w-full mx-[2px] rounded-t-sm transition-all duration-300", isActive ? "bg-primary" : "bg-white/[0.08]")}
-                          style={{ height: `${height}%` }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <Slider value={priceRange} min={500} max={2000} step={50} onValueChange={setPriceRange} className="py-1 cursor-pointer" />
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-[#101216]/50 p-2 text-center">
-                      <p className="text-[10px] text-white/40 uppercase">Min Price</p>
-                      <p className="text-sm font-medium text-white">₹{priceRange[0]}</p>
-                    </div>
-                    <div className="text-white/35 text-xs">-</div>
-                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-[#101216]/50 p-2 text-center">
-                      <p className="text-[10px] text-white/40 uppercase">Max Price</p>
-                      <p className="text-sm font-medium text-white">₹{priceRange[1]}+</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Trust & Availability */}
-              <div className="space-y-3 mb-5">
-                <p className="text-sm text-white/78">Trust &amp; availability</p>
+              {/* Bottom Sticky Action Bar */}
+              <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-white shrink-0">
                 <button
                   type="button"
-                  onClick={() => setAvailabilityOnly((c) => !c)}
-                  className={cn("flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition",
-                    availabilityOnly ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-white" : "border-white/[0.08] bg-white/[0.03] text-white/72"
-                  )}
+                  onClick={() => {
+                    setSortBy("Recommended");
+                    setSport("All");
+                    setPriceRange([700, 1600]);
+                    setActiveFilterTab("Sort");
+                  }}
+                  className="text-sm font-semibold tracking-wide transition-colors uppercase text-slate-900 hover:text-[#4CFF3B]"
                 >
-                  <div>
-                    <p className="text-sm">Available today</p>
-                    <p className="mt-1 text-xs text-white/52">Hide sold-out venues</p>
-                  </div>
-                  <TimerReset className="h-4 w-4 text-[#6DFF3B]" />
+                  Reset
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRatingOnly((c) => !c)}
-                  className={cn("flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition",
-                    ratingOnly ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-white" : "border-white/[0.08] bg-white/[0.03] text-white/72"
-                  )}
+                  onClick={() => setFilterOpen(false)}
+                  className="rounded-[10px] bg-[#4CFF3B] px-8 py-3 text-sm font-semibold text-[#050505] shadow-lg shadow-[#4CFF3B]/20 active:scale-[0.98] transition-transform uppercase tracking-wide"
                 >
-                  <div>
-                    <p className="text-sm">4.8+ only</p>
-                    <p className="mt-1 text-xs text-white/52">Prioritize better-rated venues</p>
-                  </div>
-                  <Star className="h-4 w-4 text-[#6DFF3B]" />
+                  Apply
                 </button>
               </div>
-
-              {/* Apply button */}
-              <button
-                type="button"
-                onClick={() => setFilterOpen(false)}
-                className="w-full rounded-[18px] bg-[#6DFF3B] py-3.5 text-sm font-semibold text-[#050505] shadow-[0_4px_12px_rgba(109,255,59,0.3)] active:scale-[0.98] transition-transform"
-              >
-                Apply Filters
-              </button>
             </motion.div>
           </>
         )}

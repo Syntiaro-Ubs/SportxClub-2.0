@@ -129,7 +129,7 @@ export function CalendarView() {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         <div className="xl:col-span-4 xl:col-start-1">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-lg sticky top-24">
+          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-lg xl:sticky xl:top-24">
             <CardContent className="p-4 flex flex-col items-center">
               <Calendar
                 mode="single"
