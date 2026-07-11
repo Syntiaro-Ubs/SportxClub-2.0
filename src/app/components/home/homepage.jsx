@@ -1025,8 +1025,8 @@ export function HeroSection() {
       </div>
 
       <div className="mx-auto flex min-h-[92svh] max-w-[1200px] flex-col justify-center items-center px-4 sm:px-6 md:min-h-[94svh] lg:px-8 xl:min-h-[96svh]">
-        <div className="relative w-full max-w-4xl flex flex-col items-center">
-          <div className="relative z-10 flex flex-col items-center text-center w-full max-w-4xl">
+        <div className="relative w-full max-w-[90vw] md:max-w-6xl flex flex-col items-center">
+          <div className="relative z-10 flex flex-col items-center text-center w-full max-w-[90vw] md:max-w-6xl">
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
               <Badge
                 className="rounded-full px-4 py-2 text-xs uppercase tracking-[0.26em] border border-[#6DFF3B]/20 bg-[#6DFF3B]/10 text-[#6DFF3B]"
@@ -1037,7 +1037,7 @@ export function HeroSection() {
 
             <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
               <h1
-                className="mt-6 font-light max-w-3xl text-center text-5xl sm:text-7xl tracking-tighter lg:text-[5.2rem] lg:leading-[1.05] !text-white drop-shadow-md"
+                className="mt-6 font-light w-full max-w-none text-center text-5xl sm:text-7xl tracking-tighter lg:text-[5.2rem] lg:leading-[1.05] !text-white drop-shadow-md md:whitespace-nowrap"
               >
                 Play. Book.{" "}
                 <span
