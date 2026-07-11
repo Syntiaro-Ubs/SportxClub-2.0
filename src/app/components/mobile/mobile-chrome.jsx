@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "next-themes";
 import {
@@ -15,16 +15,20 @@ import {
   Check,
   X,
   ChevronRight,
+  ChevronLeft,
   ShoppingCart,
   Activity,
   Users,
   MessageSquare,
   Sparkles,
+  Search,
+  LocateFixed,
 } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
 import { ThemeToggleButton } from "../ui/theme-toggle-button";
+import { toast } from "sonner";
 import { Logo } from "../brand/Logo";
 import { useAuth } from "../../providers/auth-provider";
 
@@ -55,6 +59,10 @@ export function MobileAppBar() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { currentUser } = useAuth();
   const isDark = resolvedTheme !== "light";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isHomePage = location.pathname === "/";
+  const [locationQuery, setLocationQuery] = useState("");
 
   useEffect(() => {
     const handleCityChange = (e) => {
@@ -98,6 +106,10 @@ export function MobileAppBar() {
     "Jaipur",
   ];
 
+  const filteredCities = cities.filter((c) =>
+    c.toLowerCase().includes(locationQuery.toLowerCase())
+  );
+
   const menuItems = [
     { label: "Dashboard", to: "/dashboard", icon: Home },
     { label: "Player Details", to: "/player-dashboard", icon: Activity, requiresAuth: true },
@@ -132,11 +144,22 @@ export function MobileAppBar() {
     <>
       <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
         <div className="flex h-16 items-center justify-between px-4">
-          {/* Left: Brand Identity */}
+          {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">
-            <Link to="/" className="shrink-0 flex items-center h-[58px] w-auto translate-y-[4px]">
-              <Logo className="h-full" />
-            </Link>
+            {!isHomePage ? (
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex items-center justify-center h-9 w-9 rounded-full bg-muted/50 hover:bg-muted text-foreground transition-colors cursor-pointer shrink-0 -ml-1"
+                aria-label="Go Back"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            ) : (
+              <Link to="/" className="shrink-0 flex items-center h-[58px] w-auto translate-y-[4px]">
+                <Logo className="h-full" />
+              </Link>
+            )}
             <div className="min-w-0 flex items-center">
               {/* Preferred Location Selector (BookMyShow style) */}
               <button
@@ -154,6 +177,17 @@ export function MobileAppBar() {
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
+            {currentUser && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/profile')}
+                className="h-10.5 w-10.5 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs backdrop-blur-md cursor-pointer"
+                aria-label="Profile"
+              >
+                <UserCircle2 className="h-5 w-5" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -288,8 +322,31 @@ export function MobileAppBar() {
                 Choose your city to view verified sports turfs near you.
               </p>
 
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-2xl bg-primary/10 p-4 text-primary text-sm font-medium transition-colors hover:bg-primary/20 cursor-pointer mb-3"
+                onClick={() => {
+                  toast?.success("Location accessed successfully");
+                  handleCitySelect("Mumbai"); // Simulated behavior
+                }}
+              >
+                <LocateFixed className="h-5 w-5" />
+                Use your current location
+              </button>
+
+              <div className="relative mb-4">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search location..."
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  className="w-full rounded-full border border-border/60 bg-background py-3 pl-11 pr-4 text-sm text-foreground outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
+                />
+              </div>
+
               <div className="space-y-2">
-                {cities.map((c) => {
+                {filteredCities.map((c) => {
                   const isSelected = city === c;
                   return (
                     <button

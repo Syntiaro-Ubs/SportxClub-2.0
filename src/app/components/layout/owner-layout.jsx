@@ -182,6 +182,13 @@ export function OwnerLayout() {
           {isMobileMenuOpen && (
             <>
               <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+                onClick={() => setIsMobileMenuOpen(false)}
+              />
+              <motion.div
                 initial={{ x: "-100%" }}
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}

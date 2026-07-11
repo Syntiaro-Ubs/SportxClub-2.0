@@ -363,11 +363,11 @@ export function MobileHomePage() {
   // Sports categories use Framer Motion marquee for infinite auto-scrolling
 
   const bgImages = [
-    "/assets/hero/unique-hero.jpg",
-    "/assets/hero/unique-hero-2.jpg",
-    "/assets/hero/unique-hero-3.jpg",
-    "/assets/hero/unique-hero-4.jpg",
-    "/assets/hero/unique-hero-5.jpg",
+    "/assets/hero/slider-1.jpg",
+    "/assets/hero/slider-2.jpg",
+    "/assets/hero/slider-3.jpg",
+    "/assets/hero/slider-4.jpg",
+    "/assets/hero/slider-5.jpg",
   ];
 
   useEffect(() => {
@@ -383,38 +383,40 @@ export function MobileHomePage() {
 
       <main className="pb-[calc(108px+env(safe-area-inset-bottom))]">
         <div className="space-y-6 px-4 py-4">
+          <div className="sticky top-16 z-40">
+            <SearchBar />
+          </div>
+
           <motion.section
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="relative overflow-hidden rounded-[28px] p-4 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.35)] min-h-[360px] flex flex-col justify-end always-dark"
+            initial={{ opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="relative overflow-hidden rounded-[32px] p-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.35)] aspect-[4/3] flex flex-col justify-between always-dark border border-white/10"
           >
             <div className="absolute inset-0 z-0">
               <AnimatePresence mode="popLayout">
                 <motion.div
                   key={currentBg}
-                  initial={{ x: "100%", opacity: 1 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: "-100%", opacity: 1 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-cover bg-no-repeat bg-center brightness-[0.7] saturate-[1.1]"
+                  initial={{ opacity: 0, scale: 1.08 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  className="absolute inset-0 bg-cover bg-no-repeat bg-center brightness-[0.75] saturate-[1.2]"
                   style={{ backgroundImage: `url(${bgImages[currentBg]})` }}
                 />
               </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-black/30" />
             </div>
 
-            <div className="relative z-10">
-              <p className="text-xs uppercase tracking-[0.24em] text-always-white-90 drop-shadow-md">
-                Good evening
+            <div className="relative z-10 mt-auto pb-1">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/90 mb-1 drop-shadow-md">
+                Good evening, {firstName}
               </p>
-              <h1 className="mt-2 text-2xl tracking-tight text-always-white drop-shadow-md">
-                Ready for your next game, {firstName}?
+              <h1 className="text-xl font-bold tracking-tight leading-[1.2] text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] max-w-[85%]">
+                Ready for your next game?
               </h1>
             </div>
           </motion.section>
-
-          <SearchBar />
 
           <section className="space-y-3 sports-categories-container">
             <SectionHeader title="Sports categories" action="More" />
@@ -507,13 +509,15 @@ export function MobileHomePage() {
 
           <section className="space-y-3">
             <SectionHeader title="Popular tournaments" />
-            <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              {tournaments.map((item) => (
-                <motion.article
-                  key={item.title}
-                  whileTap={{ scale: 0.985 }}
-                  className="min-w-[78%] overflow-hidden rounded-[24px] border border-border/60 bg-card shadow-[0_12px_28px_-22px_rgba(15,23,42,0.32)]"
-                >
+            <div className="relative overflow-hidden">
+              <style dangerouslySetInnerHTML={{ __html: marqueeStyle }} />
+              <div className="animate-marquee-categories flex gap-3 w-max pb-1">
+                {[...tournaments, ...tournaments].map((item, index) => (
+                  <motion.article
+                    key={`${item.title}-${index}`}
+                    whileTap={{ scale: 0.985 }}
+                    className="w-[280px] shrink-0 overflow-hidden rounded-[24px] border border-border/60 bg-card shadow-[0_12px_28px_-22px_rgba(15,23,42,0.32)]"
+                  >
                   <div className="relative aspect-[16/10]">
                     <ImageWithFallback
                       src={item.image}
@@ -550,6 +554,7 @@ export function MobileHomePage() {
                 </motion.article>
               ))}
             </div>
+            </div>
           </section>
 
           <section className="space-y-3">
@@ -583,36 +588,7 @@ export function MobileHomePage() {
             </div>
           </section>
 
-          <section className="space-y-3">
-            <SectionHeader title="Recently viewed" action="See history" />
-            <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-              {recent.map((item) => (
-                <motion.article
-                  key={item.name}
-                  whileTap={{ scale: 0.98 }}
-                  className="min-w-[68%] overflow-hidden rounded-[22px] border border-border/60 bg-card"
-                >
-                  <div className="flex items-center gap-3 p-3">
-                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[18px]">
-                      <ImageWithFallback
-                        src={item.image}
-                        alt={item.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      <h3 className="text-sm  text-foreground">{item.name}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {item.sport}
-                      </p>
-                    </div>
-                  </div>
-                </motion.article>
-              ))}
-            </div>
-          </section>
+
 
           <section className="space-y-3">
             <SectionHeader title="Trending activities" />
