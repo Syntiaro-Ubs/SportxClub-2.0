@@ -429,15 +429,12 @@ export function MobileHomePage() {
                     className="flex min-w-[76px] shrink-0 flex-col items-center gap-2 group cursor-pointer border-0"
                   >
                     <span
-                      style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none' }}
-                      className={cn(
-                        "flex h-[72px] w-[72px] items-center justify-center rounded-[20px] bg-gradient-to-br transition-all border-0",
-                        item.accent,
-                      )}
+                      style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none', background: 'transparent' }}
+                      className="flex h-[72px] w-[72px] items-center justify-center rounded-[20px] transition-all border-0 bg-transparent"
                     >
                       <span
-                        style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none' }}
-                        className="flex h-[56px] w-[56px] overflow-hidden rounded-xl bg-background/90 relative border-0"
+                        style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none', background: 'transparent' }}
+                        className="flex h-[56px] w-[56px] overflow-hidden rounded-xl relative border-0 bg-transparent"
                       >
                         <ImageWithFallback
                           src={item.image}
