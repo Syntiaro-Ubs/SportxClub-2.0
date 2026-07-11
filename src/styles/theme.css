@@ -224,6 +224,9 @@ html, body {
 .text-always-white-90 {
   color: rgba(255, 255, 255, 0.9) !important;
 }
+.text-always-brand-green {
+  color: #6DFF3B !important;
+}
 .bg-always-black-40 {
   background-color: rgba(0, 0, 0, 0.4) !important;
 }

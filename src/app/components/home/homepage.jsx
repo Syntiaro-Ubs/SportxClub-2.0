@@ -1041,7 +1041,7 @@ export function HeroSection() {
               >
                 Play. Book.{" "}
                 <span
-                  className="text-[#6DFF3B] drop-shadow-[0_0_20px_rgba(109,255,59,0.3)]"
+                  className="text-always-brand-green drop-shadow-[0_0_20px_rgba(109,255,59,0.3)]"
                 >
                   Compete.
                 </span>
