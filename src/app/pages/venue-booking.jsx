@@ -1,0 +1,834 @@
+import { useMemo, useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router";
+import { toast } from "sonner";
+import { useAuth } from "../providers/auth-provider";
+import { motion, AnimatePresence } from "motion/react";
+import { useTheme } from "next-themes";
+import {
+  ArrowRight,
+  ChevronDown,
+  Filter,
+  Heart,
+  MapPin,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Star,
+  TimerReset,
+  X,
+} from "lucide-react";
+
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { Slider } from "../components/ui/slider";
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { cn } from "../components/ui/utils";
+
+const asset = (path) => `/assets${path}`;
+
+const venueData = [
+  {
+    id: 1,
+    name: "Elite Turf Arena",
+    location: "Powai, Mumbai",
+    city: "Mumbai",
+    sport: "Football",
+    rating: 4.9,
+    reviews: 234,
+    price: 1200,
+    distance: 1.2,
+    availableToday: true,
+    availability: "Tonight slots available",
+    image: asset("/venues/turf-1.webp"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Flood lights", "Parking", "Verified venue"],
+  },
+  {
+    id: 2,
+    name: "Metro Sports Park",
+    location: "Bandra West, Mumbai",
+    city: "Mumbai",
+    sport: "Cricket",
+    rating: 4.8,
+    reviews: 189,
+    price: 950,
+    distance: 2.5,
+    availableToday: true,
+    availability: "Few evening slots left",
+    image: asset("/venues/turf-2.webp"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Wi-Fi", "Shower", "Secure payments"],
+  },
+  {
+    id: 3,
+    name: "Grand Playfield",
+    location: "Andheri East, Mumbai",
+    city: "Mumbai",
+    sport: "Badminton",
+    rating: 5.0,
+    reviews: 92,
+    price: 1500,
+    distance: 3.8,
+    availableToday: false,
+    availability: "Morning slots only",
+    image: asset("/venues/turf-3.webp"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Pro lighting", "Parking", "Real reviews"],
+  },
+  {
+    id: 4,
+    name: "Victory Greens",
+    location: "Juhu, Mumbai",
+    city: "Mumbai",
+    sport: "Tennis",
+    rating: 4.7,
+    reviews: 128,
+    price: 1050,
+    distance: 4.1,
+    availableToday: true,
+    availability: "Available after 6 PM",
+    image: asset("/venues/turf-4.webp"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Flood lights", "Wi-Fi", "Verified venue"],
+  },
+  {
+    id: 5,
+    name: "Pro Match Grounds",
+    location: "Thane West, Thane",
+    city: "Thane",
+    sport: "Football",
+    rating: 4.8,
+    reviews: 101,
+    price: 800,
+    distance: 6.6,
+    availableToday: true,
+    availability: "Prime time available",
+    image: asset("/venues/turf-5.webp"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Parking", "Changing room", "Easy refund"],
+  },
+  {
+    id: 6,
+    name: "Apex Turf Club",
+    location: "Navi Mumbai",
+    city: "Navi Mumbai",
+    sport: "Basketball",
+    rating: 4.9,
+    reviews: 76,
+    price: 1300,
+    distance: 8.4,
+    availableToday: false,
+    availability: "Next slot tomorrow",
+    image: asset("/venues/turf-6.webp"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Flood lights", "Shower", "Secure payments"],
+  },
+  {
+    id: 7,
+    name: "Champions Sports Arena",
+    location: "Bandra East, Mumbai",
+    city: "Mumbai",
+    sport: "Football",
+    rating: 4.8,
+    reviews: 150,
+    price: 1100,
+    distance: 3.2,
+    availableToday: true,
+    availability: "Slots available now",
+    image: asset("/venues/turf-1.webp"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Flood lights", "Changing room", "Verified venue"],
+  },
+  {
+    id: 8,
+    name: "Ace Tennis Academy",
+    location: "Powai, Mumbai",
+    city: "Mumbai",
+    sport: "Tennis",
+    rating: 4.9,
+    reviews: 95,
+    price: 1250,
+    distance: 1.5,
+    availableToday: true,
+    availability: "Evening slots open",
+    image: asset("/sports/cat-padel.webp"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Flood lights", "Pro coaching", "Parking"],
+  },
+  {
+    id: 9,
+    name: "Super Cricket Club",
+    location: "Andheri West, Mumbai",
+    city: "Mumbai",
+    sport: "Cricket",
+    rating: 4.6,
+    reviews: 112,
+    price: 1000,
+    distance: 4.4,
+    availableToday: true,
+    availability: "Prime slots open",
+    image: asset("/venues/turf-2.webp"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Flood lights", "Wi-Fi", "Secure payments"],
+  },
+  {
+    id: 10,
+    name: "Smash & Drive Badminton",
+    location: "Andheri West, Mumbai",
+    city: "Mumbai",
+    sport: "Badminton",
+    rating: 4.7,
+    reviews: 84,
+    price: 1400,
+    distance: 4.6,
+    availableToday: false,
+    availability: "Available tomorrow",
+    image: asset("/venues/turf-3.webp"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Flood lights", "Locker room", "Real reviews"],
+  },
+];
+
+const sports = [
+  "All",
+  "Football",
+  "Cricket",
+  "Badminton",
+  "Basketball",
+  "Tennis",
+];
+const locations = ["All", "Mumbai", "Thane", "Navi Mumbai"];
+const sorts = ["Recommended", "Rating", "Price: Low to High", "Distance"];
+
+export function VenueBooking() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme !== "light";
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const locationState = useLocation();
+  const [query, setQuery] = useState("");
+  const [sport, setSport] = useState("All");
+  const [location, setLocation] = useState(
+    () => localStorage.getItem("preferred-city") || "All",
+  );
+
+  useEffect(() => {
+    if (locationState.state?.search) {
+      setQuery(locationState.state.search);
+    }
+    if (locationState.state?.openFilters) {
+      setFilterOpen(true);
+    }
+  }, [locationState]);
+
+  useEffect(() => {
+    const handleCityChange = (e) => {
+      const customEvent = e;
+      setLocation(customEvent.detail);
+    };
+    window.addEventListener("preferredCityChanged", handleCityChange);
+    return () =>
+      window.removeEventListener("preferredCityChanged", handleCityChange);
+  }, []);
+
+  const handleLocationChange = (newVal) => {
+    setLocation(newVal);
+    localStorage.setItem("preferred-city", newVal);
+    window.dispatchEvent(
+      new CustomEvent("preferredCityChanged", { detail: newVal }),
+    );
+  };
+
+  const [sortBy, setSortBy] = useState("Recommended");
+  const [priceRange, setPriceRange] = useState([700, 1600]);
+  const [availabilityOnly, setAvailabilityOnly] = useState(true);
+  const [ratingOnly, setRatingOnly] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const filteredVenues = useMemo(() => {
+    const filtered = venueData.filter((venue) => {
+      const matchesQuery =
+        !query.trim() ||
+        venue.name.toLowerCase().includes(query.toLowerCase()) ||
+        venue.location.toLowerCase().includes(query.toLowerCase()) ||
+        venue.sport.toLowerCase().includes(query.toLowerCase());
+      const matchesSport = sport === "All" || venue.sport === sport;
+      const matchesLocation = location === "All" || venue.city === location;
+      const matchesPrice =
+        venue.price >= priceRange[0] && venue.price <= priceRange[1];
+      const matchesAvailability = !availabilityOnly || venue.availableToday;
+      const matchesRating = !ratingOnly || venue.rating >= 4.8;
+
+      return (
+        matchesQuery &&
+        matchesSport &&
+        matchesLocation &&
+        matchesPrice &&
+        matchesAvailability &&
+        matchesRating
+      );
+    });
+
+    const sorted = [...filtered];
+    sorted.sort((a, b) => {
+      if (sortBy === "Rating") return b.rating - a.rating;
+      if (sortBy === "Price: Low to High") return a.price - b.price;
+      if (sortBy === "Distance") return a.distance - b.distance;
+      return b.reviews - a.reviews;
+    });
+
+    return sorted;
+  }, [
+    availabilityOnly,
+    location,
+    priceRange,
+    query,
+    ratingOnly,
+    sortBy,
+    sport,
+  ]);
+
+  return (
+    <div
+      className={cn(
+        "theme-adaptive",
+        isDark ? "bg-[#050505] text-white" : "bg-white text-slate-900",
+      )}
+    >
+      <section
+        className="always-dark relative overflow-hidden border-b border-white/[0.08] bg-[#060813] min-h-[320px] md:min-h-[480px] flex items-center py-8 md:py-16 text-white"
+      >
+        {/* Abstract Glowing Sports Field Background */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <img
+            src="/assets/venues/playground-banner.png"
+            alt="Sports Playground"
+            className="w-full h-full object-cover"
+          />
+          {/* Main green pitch glow */}
+          <div className="absolute -bottom-[30%] left-1/2 -translate-x-1/2 w-[80%] h-[60%] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none" />
+          {/* Spotlight glows */}
+          <div className="absolute -top-[10%] left-[20%] w-[35%] h-[35%] rounded-full bg-blue-500/10 blur-[100px] pointer-events-none" />
+          <div className="absolute -top-[10%] right-[20%] w-[35%] h-[35%] rounded-full bg-emerald-500/8 blur-[100px] pointer-events-none" />
+          {/* Subtle grid pattern overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:40px_40px] opacity-35" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 w-full">
+          <div className="flex flex-col gap-4">
+            <div className="max-w-3xl space-y-3">
+              <p className="text-[0.72rem] uppercase tracking-[0.36em] text-[#6DFF3B]">
+                Venues
+              </p>
+              <h1 className="text-3xl tracking-tight text-white md:text-5xl font-black">
+                Find & Book Premium Venues Near You.
+              </h1>
+              <p className="max-w-2xl text-sm leading-7 text-white/80 md:text-base">
+                Search by sport, check real-time slot availability, and book your sports venue instantly with SportXClub.
+              </p>
+            </div>
+
+            <div className="rounded-[24px] border border-white/10 bg-black/60 backdrop-blur-md shadow-2xl p-4 md:p-5">
+              <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-[2.5fr_1.2fr_135px] items-center">
+                <label className="relative block">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+                  <input
+                    type="text"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search sports, venues, or tournaments"
+                    className="h-12 rounded-[18px] border border-white/10 bg-black/40 pl-11 text-white placeholder:text-white/40 w-full hover:border-[#6DFF3B]/30 focus:border-[#6DFF3B] focus:outline-none transition-colors text-sm"
+                  />
+                </label>
+
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="h-12 rounded-[18px] !border-white/10 !bg-black/40 !text-white hover:!bg-black/60 hover:border-[#6DFF3B]/30 transition-colors">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent className="theme-adaptive rounded-[18px] border-white/[0.08] bg-[#101216] text-white" style={{ backgroundColor: '#101216', borderColor: 'rgba(255,255,255,0.08)', color: 'white' }}>
+                    {sorts.map((item) => (
+                      <SelectItem key={item} value={item} className="rounded-[12px] my-1 data-[highlighted]:bg-[#6DFF3B]/10 data-[highlighted]:text-[#6DFF3B] cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">
+                        {item}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button className="h-12 w-full rounded-[18px] bg-[#6DFF3B] px-5 text-[#050505] hover:bg-[#86ff60] font-semibold transition-all">
+                  Search
+                  <ArrowRight className="ml-1.5 h-4 w-4 shrink-0" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {sports.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setSport(item)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm font-medium transition cursor-pointer shadow-md",
+                    sport === item
+                      ? "border-transparent bg-[#6DFF3B] text-[#050505] shadow-[0_4px_12px_rgba(109,255,59,0.25)]"
+                      : "border-white/10 bg-black/40 text-white/80 hover:border-white/20 hover:bg-black/60",
+                  )}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mobile Filter FAB */}
+      <div className="fixed bottom-24 right-4 z-40 lg:hidden">
+        <button
+          type="button"
+          onClick={() => setFilterOpen(true)}
+          className="flex items-center gap-2 rounded-full bg-[#6DFF3B] px-4 py-3 text-sm font-semibold text-[#050505] shadow-[0_8px_24px_rgba(109,255,59,0.4)] active:scale-95 transition-transform"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Filters
+        </button>
+      </div>
+
+      {/* Mobile Filter Bottom Sheet */}
+      <AnimatePresence>
+        {filterOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="filter-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setFilterOpen(false)}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            />
+            {/* Drawer */}
+            <motion.div
+              key="filter-drawer"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 260 }}
+              className="fixed bottom-0 left-0 right-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-[32px] bg-[#101216] px-5 pb-10 pt-5 lg:hidden"
+            >
+              {/* Drag handle */}
+              <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-white/45">Filters</p>
+                  <h2 className="mt-1 text-lg text-white">Refine your search</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFilterOpen(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/70"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Sport */}
+              <div className="space-y-3 mb-5">
+                <p className="text-sm text-white/78">Sport</p>
+                <Select value={sport} onValueChange={setSport}>
+                  <SelectTrigger className="h-10 rounded-xl border-white/[0.08] bg-[#050505]/50 text-white cursor-pointer">
+                    <SelectValue placeholder="All Sports" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#101216] border-white/[0.08] text-white rounded-xl">
+                    {sports.map((item) => (
+                      <SelectItem key={item} value={item} className="cursor-pointer">
+                        {item === "All" ? "All Sports" : item}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Price */}
+              <div className="space-y-3 mb-5">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-white/78">Price per hour</p>
+                  <span className="text-xs text-[#6DFF3B] font-semibold bg-[#6DFF3B]/10 px-2 py-0.5 rounded-full">
+                    ₹{priceRange[0]} - ₹{priceRange[1]}+
+                  </span>
+                </div>
+                <div className="rounded-[24px] border border-white/[0.08] bg-[#050505]/40 p-4 space-y-4">
+                  <div className="flex items-end justify-between h-12 px-1">
+                    {[15, 25, 35, 55, 75, 95, 80, 60, 45, 30, 50, 65, 85, 55, 35, 20, 10, 5].map((height, idx) => {
+                      const barPrice = 500 + idx * ((2000 - 500) / 18);
+                      const isActive = barPrice >= priceRange[0] && barPrice <= priceRange[1];
+                      return (
+                        <div
+                          key={idx}
+                          className={cn("w-full mx-[2px] rounded-t-sm transition-all duration-300", isActive ? "bg-primary" : "bg-white/[0.08]")}
+                          style={{ height: `${height}%` }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <Slider value={priceRange} min={500} max={2000} step={50} onValueChange={setPriceRange} className="py-1 cursor-pointer" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-[#101216]/50 p-2 text-center">
+                      <p className="text-[10px] text-white/40 uppercase">Min Price</p>
+                      <p className="text-sm font-medium text-white">₹{priceRange[0]}</p>
+                    </div>
+                    <div className="text-white/35 text-xs">-</div>
+                    <div className="flex-1 rounded-xl border border-white/[0.08] bg-[#101216]/50 p-2 text-center">
+                      <p className="text-[10px] text-white/40 uppercase">Max Price</p>
+                      <p className="text-sm font-medium text-white">₹{priceRange[1]}+</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust & Availability */}
+              <div className="space-y-3 mb-5">
+                <p className="text-sm text-white/78">Trust &amp; availability</p>
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityOnly((c) => !c)}
+                  className={cn("flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition",
+                    availabilityOnly ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-white" : "border-white/[0.08] bg-white/[0.03] text-white/72"
+                  )}
+                >
+                  <div>
+                    <p className="text-sm">Available today</p>
+                    <p className="mt-1 text-xs text-white/52">Hide sold-out venues</p>
+                  </div>
+                  <TimerReset className="h-4 w-4 text-[#6DFF3B]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRatingOnly((c) => !c)}
+                  className={cn("flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition",
+                    ratingOnly ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-white" : "border-white/[0.08] bg-white/[0.03] text-white/72"
+                  )}
+                >
+                  <div>
+                    <p className="text-sm">4.8+ only</p>
+                    <p className="mt-1 text-xs text-white/52">Prioritize better-rated venues</p>
+                  </div>
+                  <Star className="h-4 w-4 text-[#6DFF3B]" />
+                </button>
+              </div>
+
+              {/* Apply button */}
+              <button
+                type="button"
+                onClick={() => setFilterOpen(false)}
+                className="w-full rounded-[18px] bg-[#6DFF3B] py-3.5 text-sm font-semibold text-[#050505] shadow-[0_4px_12px_rgba(109,255,59,0.3)] active:scale-[0.98] transition-transform"
+              >
+                Apply Filters
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      <section className="mx-auto grid max-w-[1400px] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:px-8 lg:py-10">
+        <aside className="hidden space-y-4 lg:block lg:sticky lg:top-24 lg:self-start">
+          <Card className="rounded-[24px] border-white/[0.08] bg-[#101216]">
+            <CardContent className="space-y-6 p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs  uppercase tracking-[0.28em] text-white/45">
+                    Filters
+                  </p>
+                  <h2 className="mt-2 text-lg  text-white">
+                    Refine your search
+                  </h2>
+                </div>
+                <Filter className="h-5 w-5 text-[#6DFF3B]" />
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm text-white/78">Sport</p>
+                <Select value={sport} onValueChange={setSport}>
+                  <SelectTrigger className="h-10 rounded-xl border-white/[0.08] bg-[#050505]/50 text-white cursor-pointer">
+                    <SelectValue placeholder="All Sports" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#101216] border-white/[0.08] text-white rounded-xl">
+                    {sports.map((item) => (
+                      <SelectItem key={item} value={item} className="cursor-pointer">
+                        {item === "All" ? "All Sports" : item}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-white/78">Price per hour</p>
+                    <span className="text-xs text-[#6DFF3B] font-semibold bg-[#6DFF3B]/10 px-2 py-0.5 rounded-full">
+                      ₹{priceRange[0]} - ₹{priceRange[1]}+
+                    </span>
+                  </div>
+
+                  <div className="rounded-[24px] border border-white/[0.08] bg-[#050505]/40 p-5 space-y-4">
+                    {/* Price Histogram chart */}
+                    <div className="flex items-end justify-between h-14 px-2 pt-2">
+                      {[15, 25, 35, 55, 75, 95, 80, 60, 45, 30, 50, 65, 85, 55, 35, 20, 10, 5].map((height, idx) => {
+                        const barPrice = 500 + idx * ((2000 - 500) / 18);
+                        const isActive = barPrice >= priceRange[0] && barPrice <= priceRange[1];
+                        return (
+                          <div
+                            key={idx}
+                            className={cn(
+                              "w-full mx-[2px] rounded-t-sm transition-all duration-300",
+                              isActive ? "bg-primary" : "bg-white/[0.08]"
+                            )}
+                            style={{
+                              height: `${height}%`,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+
+                    <Slider
+                      value={priceRange}
+                      min={500}
+                      max={2000}
+                      step={50}
+                      onValueChange={setPriceRange}
+                      className="py-1 cursor-pointer"
+                    />
+
+                    <div className="flex items-center gap-3 pt-1">
+                      <div className="flex-1 rounded-xl border border-white/[0.08] bg-[#101216]/50 p-2 text-center">
+                        <p className="text-[10px] text-white/40 uppercase">Min Price</p>
+                        <p className="text-sm font-medium text-white">₹{priceRange[0]}</p>
+                      </div>
+                      <div className="text-white/35 text-xs">-</div>
+                      <div className="flex-1 rounded-xl border border-white/[0.08] bg-[#101216]/50 p-2 text-center">
+                        <p className="text-[10px] text-white/40 uppercase">Max Price</p>
+                        <p className="text-sm font-medium text-white">₹{priceRange[1]}+</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm  text-white/78">Trust & availability</p>
+                <button
+                  type="button"
+                  onClick={() => setAvailabilityOnly((current) => !current)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition",
+                    availabilityOnly
+                      ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-white"
+                      : "border-white/[0.08] bg-white/[0.03] text-white/72",
+                  )}
+                >
+                  <div>
+                    <p className="text-sm ">Available today</p>
+                    <p className="mt-1 text-xs text-white/52">
+                      Hide sold-out venues
+                    </p>
+                  </div>
+                  <TimerReset className="h-4 w-4 text-[#6DFF3B]" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRatingOnly((current) => !current)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-[18px] border px-4 py-3 text-left transition",
+                    ratingOnly
+                      ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-white"
+                      : "border-white/[0.08] bg-white/[0.03] text-white/72",
+                  )}
+                >
+                  <div>
+                    <p className="text-sm ">4.8+ only</p>
+                    <p className="mt-1 text-xs text-white/52">
+                      Prioritize better-rated venues
+                    </p>
+                  </div>
+                  <Star className="h-4 w-4 text-[#6DFF3B]" />
+                </button>
+              </div>
+
+              <div className="rounded-[20px] border border-[#6DFF3B]/18 bg-[#6DFF3B]/10 p-4">
+                <p className="text-sm  text-white">Trust badges</p>
+                <div className="mt-3 space-y-2 text-sm text-white/70">
+                  <p>Verified venue</p>
+                  <p>Secure payment</p>
+                  <p>Easy refund</p>
+                  <p>Real reviews</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
+
+        <div className="space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-white/52">
+              Showing{" "}
+              <span className="text-white">{filteredVenues.length}</span> venues
+              in your area
+            </p>
+          </div>
+
+          {filteredVenues.length > 0 ? (
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {filteredVenues.map((venue, index) => (
+                <motion.div
+                  key={venue.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: index * 0.04 }}
+                  whileHover={{ y: -6 }}
+                >
+                  <Link
+                    to={`/venues/${venue.id}`}
+                    className="block h-full"
+                    onClick={(e) => {
+                      if (!currentUser) {
+                        e.preventDefault();
+                        toast.error("Please sign in first to view slots and book.");
+                        navigate("/login");
+                      }
+                    }}
+                  >
+                    <Card className="group h-full overflow-hidden rounded-[24px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
+                      <div className="relative aspect-[4/3] overflow-hidden">
+                        <ImageWithFallback
+                          src={venue.image}
+                          alt={venue.name}
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+
+                        <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.02),rgba(5,5,5,0.7))]" />
+                        <div className="absolute left-4 top-4 flex gap-2">
+                          {venue.badges.map((badge) => (
+                            <img
+                              key={badge}
+                              src={badge}
+                              alt=""
+                              aria-hidden="true"
+                              className="h-6 w-6"
+                            />
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          aria-label={`Save ${venue.name}`}
+                          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#050505]/70 text-white/70 backdrop-blur-md transition hover:bg-[#050505]/90 hover:text-white"
+                        >
+                          <Heart className="h-4 w-4" />
+                        </button>
+                        <div className="absolute left-4 bottom-4 rounded-full border border-white/[0.08] bg-[#050505]/72 px-3 py-1.5 text-xs  text-white/90 backdrop-blur-md">
+                          {venue.distance.toFixed(1)} km away
+                        </div>
+                      </div>
+
+                      <CardContent className="space-y-4 p-5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <h3 className="text-lg  text-white">
+                              {venue.name}
+                            </h3>
+                            <p className="mt-1 text-sm text-white/58">
+                              {venue.location}
+                            </p>
+                          </div>
+                          <div className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-sm text-white">
+                            <Star className="inline-block h-4 w-4 fill-[#6DFF3B] text-[#6DFF3B]" />{" "}
+                            {venue.rating.toFixed(1)}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <Badge className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-white/72">
+                            {venue.sport}
+                          </Badge>
+                          <Badge className="rounded-full border border-emerald-500/20 bg-emerald-500/10 dark:border-[#6DFF3B]/20 dark:bg-[#6DFF3B]/10 px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-emerald-600 dark:text-[#6DFF3B]">
+                            {venue.availableToday
+                              ? "Available today"
+                              : "Limited slots"}
+                          </Badge>
+                        </div>
+
+                        <div className="grid gap-2">
+                          {venue.amenities.map((amenity) => (
+                            <div
+                              key={amenity}
+                              className="flex items-center gap-2 rounded-[16px] border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/66"
+                            >
+                              <ShieldCheck className="h-4 w-4 text-[#6DFF3B]" />
+                              {amenity}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3 pt-1">
+                          <div>
+                            <p className="text-xs uppercase tracking-[0.22em] text-white/45">
+                              From
+                            </p>
+                            <p className="mt-1 text-xl  text-white">
+                              ₹{venue.price}/hr
+                            </p>
+                          </div>
+                          <Button className="group h-11 rounded-[16px] border border-[#6DFF3B] bg-transparent px-5 text-white transition-all hover:bg-[#6DFF3B] hover:text-[#050505]">
+                            View slots
+                            <ArrowRight className="h-4 w-4 text-[#6DFF3B] transition-colors group-hover:text-[#050505]" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <Card className="rounded-[24px] border-white/[0.08] bg-[#101216]">
+              <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
+                <p className="text-lg  text-white">
+                  No venues match your filters
+                </p>
+                <p className="max-w-md text-sm leading-7 text-white/58">
+                  Try widening the price range or switching the sport and
+                  location filters.
+                </p>
+                <Button
+                  onClick={() => {
+                    setQuery("");
+                    setSport("All");
+                    setLocation("All");
+                    setSortBy("Recommended");
+                    setPriceRange([700, 1600]);
+                    setAvailabilityOnly(true);
+                    setRatingOnly(false);
+                  }}
+                  className="h-11 rounded-[16px] bg-[#6DFF3B] px-5  text-[#050505] hover:bg-[#86ff60]"
+                >
+                  Reset filters
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
