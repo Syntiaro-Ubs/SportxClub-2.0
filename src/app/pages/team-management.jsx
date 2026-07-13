@@ -561,6 +561,7 @@ export function TeamManagement() {
 
   // Consolidated payment & entry ticket states
   const [paidTeams, setPaidTeams] = useState([]);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentModalMode, setPaymentModalMode] = useState(null); // null | "pay" | "ticket"
   const [paymentTeam, setPaymentTeam] = useState(null);
   const [shareAmount, setShareAmount] = useState(0);
@@ -763,11 +764,13 @@ export function TeamManagement() {
     setShareAmount(shareCost);
     setTotalTurfCost(totalCost || 1200);
     setPaymentModalMode("pay");
+    setIsPaymentModalOpen(true);
   };
 
   const handleOpenEntryPass = (team) => {
     setPaymentTeam(team);
     setPaymentModalMode("ticket");
+    setIsPaymentModalOpen(true);
   };
 
   const handleConfirmPayment = () => {
@@ -1696,7 +1699,7 @@ export function TeamManagement() {
       </Dialog>
 
       {/* Consolidated Payment & Entry Ticket Dialog */}
-      <Dialog open={paymentModalMode !== null} onOpenChange={(open) => { if (!open) setPaymentModalMode(null); }}>
+      <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent className="bg-background border-border text-foreground sm:max-w-md rounded-3xl p-5 overflow-hidden shadow-2xl relative">
           
           {paymentModalMode === "pay" && (
