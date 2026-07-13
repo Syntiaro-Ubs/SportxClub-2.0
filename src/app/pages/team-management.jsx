@@ -1291,8 +1291,7 @@ export function TeamManagement() {
 
           <div className="flex items-center justify-between">
             <h2 className="text-xl ">Team Roster</h2>
-            {userTeams.some(t => t.id === selectedTeamObject?.id) &&
-              ((selectedTeamObject?.roster || []).some(m => m.name === "You" || m.name === currentUser?.fullName) ? (
+            {userTeams.some(t => t.id === selectedTeamObject?.id) ? (
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="sm" className="text-primary h-8 px-2 rounded-xl text-xs flex items-center gap-1 font-bold shrink-0 cursor-pointer">
@@ -1329,7 +1328,7 @@ export function TeamManagement() {
                     </div>
                   </DialogContent>
                 </Dialog>
-              ) : null)}
+              ) : null}
           </div>
           <Card className="border-border/40 shadow-sm">
             <CardHeader className="pb-3">
