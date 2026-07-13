@@ -144,6 +144,7 @@ export function TeamManagement() {
       losses: 8,
       upcoming: 3,
       role: "Captain",
+      neededPositions: ["All-rounder", "Bowler", "Batsman", "Bowler", "Batsman"],
       roster: [
         { id: 1, name: "Rahul Sharma", role: "Captain", position: "Batsman", status: "online" },
         { id: 2, name: "Amit Patel", role: "Member", position: "Bowler", status: "online" },
@@ -162,6 +163,7 @@ export function TeamManagement() {
       losses: 6,
       upcoming: 2,
       role: "Member",
+      neededPositions: [],
       roster: [
         { id: 1, name: "Kabir Singh", role: "Captain", position: "Point Guard", status: "online" },
         { id: 2, name: "Rishi Kapoor", role: "Member", position: "Shooting Guard", status: "online" },
@@ -179,12 +181,16 @@ export function TeamManagement() {
       losses: 7,
       upcoming: 1,
       role: "Member",
+      neededPositions: ["Defender", "Midfielder", "Defender"],
       roster: [
         { id: 1, name: "Sunil Chhetri", role: "Captain", position: "Striker", status: "online" },
         { id: 2, name: "Gurpreet Singh", role: "Member", position: "Goalkeeper", status: "online" },
         { id: 3, name: "Anirudh Thapa", role: "Member", position: "Midfielder", status: "online" },
         { id: 4, name: "Sahal Samad", role: "Member", position: "Midfielder", status: "offline" },
-        { id: 5, name: "Sandesh Jhingan", role: "Member", position: "Defender", status: "online" }
+        { id: 5, name: "Sandesh Jhingan", role: "Member", position: "Defender", status: "online" },
+        { id: 6, name: "Subhasish Bose", role: "Member", position: "Defender", status: "online" },
+        { id: 7, name: "Pritam Kotal", role: "Member", position: "Defender", status: "online" },
+        { id: 8, name: "Manvir Singh", role: "Member", position: "Striker", status: "offline" }
       ]
     },
     {
@@ -196,6 +202,7 @@ export function TeamManagement() {
       losses: 12,
       upcoming: 4,
       role: "Member",
+      neededPositions: ["Wicket Keeper", "Batsman", "Bowler", "Batsman", "Bowler", "All-rounder", "Bowler"],
       roster: [
         { id: 1, name: "Rohan Verma", role: "Captain", position: "Batsman", status: "online" },
         { id: 2, name: "Amit K.", role: "Member", position: "All-rounder", status: "online" },
@@ -915,9 +922,9 @@ export function TeamManagement() {
                       <CardContent className="space-y-5">
                         <div className="grid grid-cols-4 gap-2">
                           <div className="text-center p-2 rounded-xl bg-muted/40">
-                            <p className="text-sm font-bold text-foreground">{team.members}</p>
+                            <p className="text-sm font-bold text-foreground">{getSportFormatSize(team.sport)}</p>
                             <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
-                              Players
+                              Format
                             </p>
                           </div>
                           <div className="text-center p-2 rounded-xl bg-muted/40">
@@ -943,62 +950,126 @@ export function TeamManagement() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            className="flex-1 h-9 text-xs rounded-xl bg-muted/80 hover:bg-muted font-bold text-foreground cursor-pointer"
-                            variant="secondary"
-                            onClick={() => handleOpenChat(team)}
-                          >
-                            Team Chat
-                          </Button>
-                          {team.role === "Member" ? (
+                        <div className="space-y-2">
+                          {team.role === "Member" && !sharedStatsTeams.includes(team.id) ? (
                             <Button
-                              variant="outline"
-                              className="flex-1 h-9 text-xs rounded-xl border-red-500/25 hover:border-red-500/40 text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold cursor-pointer"
-                              onClick={() => handleLeaveTeam(team.id, team.name)}
+                              className="w-full h-9 text-xs rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-600/20 font-bold cursor-pointer flex items-center justify-center gap-1.5"
+                              disabled={sendingStatsTeamId === team.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setTargetStatsTeamId(team.id);
+                                setSelectedStatsRole("");
+                                setIsStatsRoleModalOpen(true);
+                              }}
                             >
-                              Leave Team
+                              {sendingStatsTeamId === team.id ? (
+                                <>
+                                  <span className="h-3 w-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin shrink-0" />
+                                  Sending {sendingStatsRole} Stats...
+                                </>
+                              ) : (
+                                <>
+                                  <Activity className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                                  Send Stats
+                                </>
+                              )}
                             </Button>
                           ) : (
-                            <Button
-                              variant="outline"
-                              className="flex-1 h-9 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold group cursor-pointer"
-                              onClick={() => handleOpenStats(team)}
-                            >
-                              Stats
-                              <ArrowRight className="ml-1.5 h-3 w-3 group-hover:translate-x-1 transition-transform" />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                className="flex-1 h-9 text-xs rounded-xl bg-muted/80 hover:bg-muted font-bold text-foreground cursor-pointer"
+                                variant="secondary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenChat(team);
+                                }}
+                              >
+                                Team Chat
+                              </Button>
+                              {team.role === "Member" ? (
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 h-9 text-xs rounded-xl border-red-500/25 hover:border-red-500/40 text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLeaveTeam(team.id, team.name);
+                                  }}
+                                >
+                                  Leave Team
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 h-9 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold group cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenStats(team);
+                                  }}
+                                >
+                                  Stats
+                                  <ArrowRight className="ml-1.5 h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                              )}
+                            </div>
                           )}
+
+                          {/* If squad is full, show payment controls */}
+                          {team.roster?.length >= getSportFormatSize(team.sport) && (
+                            <div>
+                              {paidTeams.includes(team.id) ? (
+                                <Button
+                                  className="w-full h-9 text-xs rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-bold cursor-pointer flex items-center justify-center gap-1.5"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenEntryPass(team);
+                                  }}
+                                >
+                                  <Ticket className="h-3.5 w-3.5 text-emerald-400" />
+                                  View Entry Pass 🎫
+                                </Button>
+                              ) : (
+                                <Button
+                                  className="w-full h-9 text-xs rounded-xl bg-[#6DFF3B] hover:bg-[#5ce630] text-black font-bold cursor-pointer flex items-center justify-center gap-1.5"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenPayment(team, Math.round(1200 / getSportFormatSize(team.sport)), 1200);
+                                  }}
+                                >
+                                  <CreditCard className="h-3.5 w-3.5" />
+                                  Pay Match Share (₹{Math.round(1200 / getSportFormatSize(team.sport))})
+                                </Button>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Dynamic View Roster Button */}
+                          {(() => {
+                            const joinedCount = team.roster?.length || team.members;
+                            const formatSize = getSportFormatSize(team.sport);
+                            const neededCount = Math.max(0, formatSize - joinedCount);
+                            let buttonLabel = "";
+                            if (neededCount > 0) {
+                              const rolesStr = team.neededPositions && team.neededPositions.length > 0
+                                ? ` ${team.neededPositions.slice(0, 2).join("/")}`
+                                : "";
+                              buttonLabel = `View Roster (${joinedCount} Joined • Need ${neededCount}${rolesStr})`;
+                            } else {
+                              buttonLabel = `View Roster (${joinedCount} Joined • Squad Full ✓)`;
+                            }
+
+                            return (
+                              <Button
+                                className="w-full h-9 text-xs rounded-xl bg-green-500/10 hover:bg-green-500/20 text-emerald-500 dark:text-[#6DFF3B] border border-green-500/25 font-bold cursor-pointer flex items-center justify-center gap-1.5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedRosterTeamId(team.id);
+                                }}
+                              >
+                                <Users className="h-4 w-4" /> {buttonLabel}
+                              </Button>
+                            );
+                          })()}
                         </div>
-                        
-                        {/* If squad is full, show payment controls */}
-                        {team.roster?.length >= getSportFormatSize(team.sport) && (
-                          <div className="mt-1.5">
-                            {paidTeams.includes(team.id) ? (
-                              <Button
-                                className="w-full h-9 text-xs rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-bold cursor-pointer flex items-center justify-center gap-1.5"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenEntryPass(team);
-                                }}
-                              >
-                                <Ticket className="h-3.5 w-3.5 text-emerald-400" />
-                                View Entry Ticket
-                              </Button>
-                            ) : (
-                              <Button
-                                className="w-full h-9 text-xs rounded-xl bg-[#6DFF3B] hover:bg-[#5ce630] text-black font-bold cursor-pointer flex items-center justify-center gap-1.5"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenPayment(team, Math.round(1200 / getSportFormatSize(team.sport)), 1200);
-                                }}
-                              >
-                                <CreditCard className="h-3.5 w-3.5" />
-                                Pay Match Share (₹{Math.round(1200 / getSportFormatSize(team.sport))})
-                              </Button>
-                            )}
-                          </div>
-                        )}
                       </CardContent>
                     </Card>
                   </motion.div>
