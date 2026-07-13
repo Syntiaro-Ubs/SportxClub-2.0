@@ -49,18 +49,20 @@ export function SquadBookingPage() {
   });
 
   const totalPrice = venue.price * playHours;
-  const costPerPlayer = Math.round(totalPrice / squadLobby.maxSize);
+  const activeCount = squadLobby.members.length || 1;
+  const costPerPlayer = Math.round(totalPrice / activeCount);
   const amountToPayNow = paymentMode === "full" ? totalPrice : costPerPlayer;
 
   const handleCheckout = () => {
     toast.success(paymentMode === "full"
       ? `Full squad booking payment of ₹${totalPrice} successful!`
-      : `Squad cost-split payment of ₹${costPerPlayer} successful!`
+      : `Squad cost-split payment of ₹${costPerPlayer} successful! Remaining ${activeCount - 1} members notified of their split share.`
     );
     setTimeout(() => {
       navigate("/booking-success");
     }, 800);
   };
+
 
   return (
     <div className="theme-adaptive bg-[#050505] text-white min-h-screen">
@@ -150,42 +152,53 @@ export function SquadBookingPage() {
               </CardContent>
             </Card>
 
-            {/* Split billing details */}
-            <Card className="rounded-[28px] border-white/[0.08] bg-[#101216]">
-              <CardContent className="p-6 md:p-8 space-y-4">
-                <h2 className="text-xl text-white font-bold flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-[#6DFF3B]" />
-                  Billing Summary
-                </h2>
+             {/* Split billing details */}
+             <Card className="rounded-[28px] border-white/[0.08] bg-[#101216]">
+               <CardContent className="p-6 md:p-8 space-y-4">
+                 <h2 className="text-xl text-white font-bold flex items-center gap-2">
+                   <CreditCard className="h-5 w-5 text-[#6DFF3B]" />
+                   Billing Summary
+                 </h2>
 
-                <div className="space-y-2.5 text-sm">
-                  <div className="flex justify-between text-white/70">
-                    <span>Total Turf Booking Cost:</span>
-                    <span>₹{totalPrice}</span>
-                  </div>
-                  {paymentMode === "split" && (
-                    <div className="flex justify-between text-white/70">
-                      <span>Split Ratio (Total Players):</span>
-                      <span>{squadLobby.maxSize} Ways</span>
-                    </div>
-                  )}
-                  <div className="border-t border-white/[0.08] pt-2 flex justify-between font-bold text-base text-[#6DFF3B]">
-                    <span>{paymentMode === "full" ? "Total Amount to Pay Now:" : "Your Share to Pay Now:"}</span>
-                    <span>₹{amountToPayNow}</span>
-                  </div>
-                </div>
+                 {squadLobby.members.length < squadLobby.maxSize && (
+                   <div className="bg-amber-500/10 border border-amber-500/30 text-amber-400 p-4 rounded-2xl text-xs leading-relaxed space-y-1.5 text-left">
+                     <p className="font-bold flex items-center gap-1.5">
+                       ⚠️ Squad is not full ({squadLobby.members.length}/{squadLobby.maxSize} joined)
+                     </p>
+                     <p className="text-zinc-300">
+                       Booking cost will be split equally among the {squadLobby.members.length} active players (₹{costPerPlayer} each instead of ₹{Math.round(totalPrice / squadLobby.maxSize)}). Host can confirm booking now and other members will receive updated split requests.
+                     </p>
+                   </div>
+                 )}
 
-                {paymentMode === "split" ? (
-                  <div className="p-3 rounded-xl bg-[#6DFF3B]/5 border border-[#6DFF3B]/20 text-xs text-white/80 leading-relaxed font-medium">
-                    💡 <strong>Split details:</strong> Each player in the squad will receive an automated request to pay their share (₹{costPerPlayer}) within 1 hour of booking. As host, you secure the booking by paying your share now.
-                  </div>
-                ) : (
-                  <div className="p-3 rounded-xl bg-[#6DFF3B]/5 border border-[#6DFF3B]/20 text-xs text-white/80 leading-relaxed font-medium">
-                    ⚡ <strong>Full Payment details:</strong> You are paying the full slot booking amount (₹{totalPrice}) now. Other squad members will not be charged or asked to split.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                 <div className="space-y-2.5 text-sm">
+                   <div className="flex justify-between text-white/70">
+                     <span>Total Turf Booking Cost:</span>
+                     <span>₹{totalPrice}</span>
+                   </div>
+                   {paymentMode === "split" && (
+                     <div className="flex justify-between text-white/70">
+                       <span>Split Ratio (Active Players):</span>
+                       <span>{activeCount} / {squadLobby.maxSize} Ways</span>
+                     </div>
+                   )}
+                   <div className="border-t border-white/[0.08] pt-2 flex justify-between font-bold text-base text-[#6DFF3B]">
+                     <span>{paymentMode === "full" ? "Total Amount to Pay Now:" : "Your Share to Pay Now:"}</span>
+                     <span>₹{amountToPayNow}</span>
+                   </div>
+                 </div>
+
+                 {paymentMode === "split" ? (
+                   <div className="p-3 rounded-xl bg-[#6DFF3B]/5 border border-[#6DFF3B]/20 text-xs text-white/80 leading-relaxed font-medium text-left">
+                     💡 <strong>Split details:</strong> Each player in the squad will receive an automated request to pay their share (₹{costPerPlayer}) within 1 hour of booking. As host, you secure the booking by paying your share now.
+                   </div>
+                 ) : (
+                   <div className="p-3 rounded-xl bg-[#6DFF3B]/5 border border-[#6DFF3B]/20 text-xs text-white/80 leading-relaxed font-medium text-left">
+                     ⚡ <strong>Full Payment details:</strong> You are paying the full slot booking amount (₹{totalPrice}) now. Other squad members will not be charged or asked to split.
+                   </div>
+                 )}
+               </CardContent>
+             </Card>
           </div>
 
           <div>
