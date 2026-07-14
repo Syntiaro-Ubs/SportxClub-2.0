@@ -15,6 +15,12 @@ import {
   Target,
   Check,
   Loader2,
+  Plus,
+  Users,
+  Share2,
+  Copy,
+  ExternalLink,
+  Ticket,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -33,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { useAuth } from "../providers/auth-provider";
 
 const players = [
   {
@@ -130,17 +137,22 @@ const mockGroups = [
     isGroup: true,
     name: "Powai Strikers",
     sport: "Cricket",
-    size: 4,
+    size: 9,
     skillLevel: "Advanced",
     location: "Mumbai, 1.5 km away",
     rating: 4.8,
     matches: 45,
     winRate: "72%",
     members: [
-      { id: 401, name: "Rahul Sharma", sport: "Cricket", skillLevel: "Advanced", rating: 4.8 },
-      { id: 402, name: "Priya Patel", sport: "Cricket", skillLevel: "Intermediate", rating: 4.6 },
-      { id: 403, name: "Arjun Malhotra", sport: "Cricket", skillLevel: "Expert", rating: 4.9 },
-      { id: 404, name: "Suresh Raina", sport: "Cricket", skillLevel: "Advanced", rating: 4.7 }
+      { id: 401, name: "Rahul Sharma", sport: "Cricket", skillLevel: "Advanced", rating: 4.8, role: "Batsman" },
+      { id: 402, name: "Priya Patel", sport: "Cricket", skillLevel: "Intermediate", rating: 4.6, role: "All-rounder" },
+      { id: 403, name: "Arjun Malhotra", sport: "Cricket", skillLevel: "Expert", rating: 4.9, role: "Bowler" },
+      { id: 404, name: "Suresh Raina", sport: "Cricket", skillLevel: "Advanced", rating: 4.7, role: "Batsman" },
+      { id: 405, name: "Rohan Das", sport: "Cricket", skillLevel: "Expert", rating: 4.9, role: "Batsman" },
+      { id: 406, name: "Sneha Sen", sport: "Cricket", skillLevel: "Advanced", rating: 4.6, role: "Bowler" },
+      { id: 407, name: "Kabir Mehta", sport: "Cricket", skillLevel: "Beginner", rating: 4.2, role: "Batsman" },
+      { id: 408, name: "Neha Sharma", sport: "Cricket", skillLevel: "Intermediate", rating: 4.4, role: "Bowler" },
+      { id: 409, name: "Amit Patel", sport: "Cricket", skillLevel: "Advanced", rating: 4.7, role: "Wicket Keeper" }
     ],
     availability: "Weekends",
   },
@@ -156,9 +168,9 @@ const mockGroups = [
     matches: 62,
     winRate: "78%",
     members: [
-      { id: 501, name: "Kabir Singh", sport: "Basketball", skillLevel: "Expert", rating: 4.9 },
-      { id: 502, name: "Rishi Kapoor", sport: "Basketball", skillLevel: "Advanced", rating: 4.7 },
-      { id: 503, name: "Tara Sutaria", sport: "Basketball", skillLevel: "Intermediate", rating: 4.6 }
+      { id: 501, name: "Kabir Singh", sport: "Basketball", skillLevel: "Expert", rating: 4.9, role: "Point Guard" },
+      { id: 502, name: "Rishi Kapoor", sport: "Basketball", skillLevel: "Advanced", rating: 4.7, role: "Shooting Guard" },
+      { id: 503, name: "Tara Sutaria", sport: "Basketball", skillLevel: "Intermediate", rating: 4.6, role: "Small Forward" }
     ],
     availability: "Evenings",
   },
@@ -174,46 +186,53 @@ const mockGroups = [
     matches: 28,
     winRate: "60%",
     members: [
-      { id: 601, name: "Aditi Rao", sport: "Badminton", skillLevel: "Intermediate", rating: 4.4 },
-      { id: 602, name: "Dev Patel", sport: "Badminton", skillLevel: "Intermediate", rating: 4.5 }
+      { id: 601, name: "Aditi Rao", sport: "Badminton", skillLevel: "Intermediate", rating: 4.4, role: "Singles Player" },
+      { id: 602, name: "Dev Patel", sport: "Badminton", skillLevel: "Intermediate", rating: 4.5, role: "Singles Player" }
     ],
     availability: "Mornings",
   },
   {
     id: "g-4",
     isGroup: true,
-    name: "Net Busters",
+    name: "Net Busters FC",
     sport: "Football",
-    size: 5,
+    size: 8,
     skillLevel: "Expert",
     location: "Mumbai, 2.0 km away",
     rating: 4.8,
     matches: 84,
     winRate: "75%",
     members: [
-      { id: 701, name: "Sunil Chhetri", sport: "Football", skillLevel: "Expert", rating: 4.9 },
-      { id: 702, name: "Gurpreet Singh", sport: "Football", skillLevel: "Advanced", rating: 4.8 },
-      { id: 703, name: "Anirudh Thapa", sport: "Football", skillLevel: "Advanced", rating: 4.7 },
-      { id: 704, name: "Sahal Samad", sport: "Football", skillLevel: "Intermediate", rating: 4.6 },
-      { id: 705, name: "Jeje Lalpekhlua", sport: "Football", skillLevel: "Intermediate", rating: 4.5 }
+      { id: 701, name: "Sunil Chhetri", sport: "Football", skillLevel: "Expert", rating: 4.9, role: "Striker" },
+      { id: 702, name: "Gurpreet Singh", sport: "Football", skillLevel: "Advanced", rating: 4.8, role: "Goalkeeper" },
+      { id: 703, name: "Anirudh Thapa", sport: "Football", skillLevel: "Advanced", rating: 4.7, role: "Midfielder" },
+      { id: 704, name: "Sahal Samad", sport: "Football", skillLevel: "Intermediate", rating: 4.6, role: "Midfielder" },
+      { id: 705, name: "Jeje Lalpekhlua", sport: "Football", skillLevel: "Intermediate", rating: 4.5, role: "Striker" },
+      { id: 706, name: "Sandesh Jhingan", sport: "Football", skillLevel: "Advanced", rating: 4.7, role: "Defender" },
+      { id: 707, name: "Subhasish Bose", sport: "Football", skillLevel: "Intermediate", rating: 4.4, role: "Defender" },
+      { id: 708, name: "Pritam Kotal", sport: "Football", skillLevel: "Advanced", rating: 4.5, role: "Defender" }
     ],
     availability: "Weekdays",
   },
   {
     id: "g-5",
     isGroup: true,
-    name: "Spin Wizards",
+    name: "Spin Wizards XI",
     sport: "Cricket",
-    size: 3,
+    size: 7,
     skillLevel: "Intermediate",
     location: "Mumbai, 4.5 km away",
     rating: 4.5,
     matches: 36,
     winRate: "64%",
     members: [
-      { id: 801, name: "Yuzvendra Chahal", sport: "Cricket", skillLevel: "Advanced", rating: 4.7 },
-      { id: 802, name: "Kuldeep Yadav", sport: "Cricket", skillLevel: "Advanced", rating: 4.6 },
-      { id: 803, name: "Ravindra Jadeja", sport: "Cricket", skillLevel: "Expert", rating: 4.8 }
+      { id: 801, name: "Yuzvendra Chahal", sport: "Cricket", skillLevel: "Advanced", rating: 4.7, role: "Bowler" },
+      { id: 802, name: "Kuldeep Yadav", sport: "Cricket", skillLevel: "Advanced", rating: 4.6, role: "Bowler" },
+      { id: 803, name: "Ravindra Jadeja", sport: "Cricket", skillLevel: "Expert", rating: 4.8, role: "All-rounder" },
+      { id: 804, name: "Axar Patel", sport: "Cricket", skillLevel: "Advanced", rating: 4.6, role: "All-rounder" },
+      { id: 805, name: "Ravichandran Ashwin", sport: "Cricket", skillLevel: "Expert", rating: 4.7, role: "Bowler" },
+      { id: 806, name: "Washington Sundar", sport: "Cricket", skillLevel: "Intermediate", rating: 4.4, role: "All-rounder" },
+      { id: 807, name: "Ravi Bishnoi", sport: "Cricket", skillLevel: "Intermediate", rating: 4.3, role: "Bowler" }
     ],
     availability: "Evenings",
   },
@@ -229,8 +248,8 @@ const mockGroups = [
     matches: 52,
     winRate: "69%",
     members: [
-      { id: 901, name: "Leander Paes", sport: "Tennis", skillLevel: "Expert", rating: 4.9 },
-      { id: 902, name: "Mahesh Bhupathi", sport: "Tennis", skillLevel: "Expert", rating: 4.8 }
+      { id: 901, name: "Leander Paes", sport: "Tennis", skillLevel: "Expert", rating: 4.9, role: "Doubles Player" },
+      { id: 902, name: "Mahesh Bhupathi", sport: "Tennis", skillLevel: "Expert", rating: 4.8, role: "Doubles Player" }
     ],
     availability: "Mornings",
   },
@@ -246,17 +265,148 @@ const mockGroups = [
     matches: 19,
     winRate: "52%",
     members: [
-      { id: 1001, name: "Amritpal Singh", sport: "Basketball", skillLevel: "Advanced", rating: 4.5 },
-      { id: 1002, name: "Vishesh Bhriguvanshi", sport: "Basketball", skillLevel: "Advanced", rating: 4.6 },
-      { id: 1003, name: "Satnam Singh", sport: "Basketball", skillLevel: "Intermediate", rating: 4.3 },
-      { id: 1004, name: "Pranav Pinjarkar", sport: "Basketball", skillLevel: "Beginner", rating: 4.0 }
+      { id: 1001, name: "Amritpal Singh", sport: "Basketball", skillLevel: "Advanced", rating: 4.5, role: "Center" },
+      { id: 1002, name: "Vishesh Bhriguvanshi", sport: "Basketball", skillLevel: "Advanced", rating: 4.6, role: "Guard" },
+      { id: 1003, name: "Satnam Singh", sport: "Basketball", skillLevel: "Intermediate", rating: 4.3, role: "Center" },
+      { id: 1004, name: "Pranav Pinjarkar", sport: "Basketball", skillLevel: "Beginner", rating: 4.0, role: "Forward" }
     ],
     availability: "Weekends",
+  },
+  {
+    id: "g-8",
+    isGroup: true,
+    name: "Juhu Titans FC",
+    sport: "Football",
+    size: 9,
+    skillLevel: "Advanced",
+    location: "Mumbai, 6.2 km away",
+    rating: 4.6,
+    matches: 40,
+    winRate: "68%",
+    members: [
+      { id: 1101, name: "Vikram Sen", sport: "Football", skillLevel: "Advanced", rating: 4.6, role: "Defender" },
+      { id: 1102, name: "Sanjay Dutta", sport: "Football", skillLevel: "Advanced", rating: 4.5, role: "Midfielder" },
+      { id: 1103, name: "Aman Preet", sport: "Football", skillLevel: "Intermediate", rating: 4.4, role: "Striker" },
+      { id: 1104, name: "Rishabh Roy", sport: "Football", skillLevel: "Intermediate", rating: 4.3, role: "Midfielder" },
+      { id: 1105, name: "Tushar Dev", sport: "Football", skillLevel: "Beginner", rating: 4.1, role: "Defender" },
+      { id: 1106, name: "Kunal Jha", sport: "Football", skillLevel: "Intermediate", rating: 4.2, role: "Defender" },
+      { id: 1107, name: "Hardik Pal", sport: "Football", skillLevel: "Advanced", rating: 4.5, role: "Midfielder" },
+      { id: 1108, name: "Nitin Vyas", sport: "Football", skillLevel: "Intermediate", rating: 4.3, role: "Defender" },
+      { id: 1109, name: "Sumit Gill", sport: "Football", skillLevel: "Advanced", rating: 4.6, role: "Goalkeeper" }
+    ],
+    availability: "Evenings",
+  },
+  {
+    id: "g-9",
+    isGroup: true,
+    name: "Chembur Challengers",
+    sport: "Cricket",
+    size: 8,
+    skillLevel: "Advanced",
+    location: "Mumbai, 8.5 km away",
+    rating: 4.7,
+    matches: 50,
+    winRate: "70%",
+    members: [
+      { id: 1201, name: "Abhinav Bindra", sport: "Cricket", skillLevel: "Expert", rating: 4.8, role: "Batsman" },
+      { id: 1202, name: "Gagan Narang", sport: "Cricket", skillLevel: "Advanced", rating: 4.6, role: "Bowler" },
+      { id: 1203, name: "Rajyavardhan Rathore", sport: "Cricket", skillLevel: "Expert", rating: 4.9, role: "All-rounder" },
+      { id: 1204, name: "Vijay Kumar", sport: "Cricket", skillLevel: "Advanced", rating: 4.5, role: "Batsman" },
+      { id: 1205, name: "Sushil Kumar", sport: "Cricket", skillLevel: "Advanced", rating: 4.6, role: "Bowler" },
+      { id: 1206, name: "Mary Kom", sport: "Cricket", skillLevel: "Expert", rating: 4.8, role: "Wicket Keeper" },
+      { id: 1207, name: "Mary Kom", sport: "Cricket", skillLevel: "Expert", rating: 4.8, role: "Wicket Keeper" },
+      { id: 1208, name: "Saina Nehwal", sport: "Cricket", skillLevel: "Advanced", rating: 4.7, role: "Bowler" }
+    ],
+    availability: "Weekends",
+  },
+  {
+    id: "g-10",
+    isGroup: true,
+    name: "Thane Hawks FC",
+    sport: "Football",
+    size: 6,
+    skillLevel: "Intermediate",
+    location: "Thane, 19.5 km away",
+    rating: 4.3,
+    matches: 24,
+    winRate: "50%",
+    members: [
+      { id: 1301, name: "Joy Banerjee", sport: "Football", skillLevel: "Intermediate", rating: 4.3, role: "Striker" },
+      { id: 1302, name: "Sourav Ganguly", sport: "Football", skillLevel: "Advanced", rating: 4.6, role: "Midfielder" },
+      { id: 1303, name: "Sachin Tendulkar", sport: "Football", skillLevel: "Expert", rating: 4.9, role: "Striker" },
+      { id: 1304, name: "Rahul Dravid", sport: "Football", skillLevel: "Advanced", rating: 4.7, role: "Goalkeeper" },
+      { id: 1305, name: "VVS Laxman", sport: "Football", skillLevel: "Intermediate", rating: 4.5, role: "Defender" },
+      { id: 1306, name: "Anil Kumble", sport: "Football", skillLevel: "Advanced", rating: 4.6, role: "Defender" }
+    ],
+    availability: "Weekends",
+  },
+  {
+    id: "g-11",
+    isGroup: true,
+    name: "Pune Blasters XI",
+    sport: "Cricket",
+    size: 9,
+    skillLevel: "Expert",
+    location: "Pune, 120.0 km away",
+    rating: 4.9,
+    matches: 90,
+    winRate: "80%",
+    members: [
+      { id: 1401, name: "MS Dhoni", sport: "Cricket", skillLevel: "Expert", rating: 5.0, role: "Wicket Keeper" },
+      { id: 1402, name: "Virat Kohli", sport: "Cricket", skillLevel: "Expert", rating: 4.9, role: "Batsman" },
+      { id: 1403, name: "Rohit Sharma", sport: "Cricket", skillLevel: "Expert", rating: 4.8, role: "Batsman" },
+      { id: 1404, name: "Jasprit Bumrah", sport: "Cricket", skillLevel: "Expert", rating: 4.9, role: "Bowler" },
+      { id: 1405, name: "Hardik Pandya", sport: "Cricket", skillLevel: "Advanced", rating: 4.7, role: "All-rounder" },
+      { id: 1406, name: "KL Rahul", sport: "Cricket", skillLevel: "Advanced", rating: 4.6, role: "Batsman" },
+      { id: 1407, name: "Ravindra Jadeja", sport: "Cricket", skillLevel: "Expert", rating: 4.8, role: "All-rounder" },
+      { id: 1408, name: "Mohammed Shami", sport: "Cricket", skillLevel: "Advanced", rating: 4.7, role: "Bowler" },
+      { id: 1409, name: "Rishabh Pant", sport: "Cricket", skillLevel: "Advanced", rating: 4.6, role: "Batsman" }
+    ],
+    availability: "Weekdays",
   }
 ];
 
+const sportsOptions = [
+  { id: "cricket", name: "Cricket", emoji: "🏏" },
+  { id: "football", name: "Football", emoji: "⚽" },
+  { id: "badminton", name: "Badminton", emoji: "🏸" },
+  { id: "basketball", name: "Basketball", emoji: "🏀" },
+  { id: "tennis", name: "Tennis", emoji: "🎾" },
+];
+
+const sportConfigs = {
+  Cricket: {
+    defaultSize: 10,
+    recommendations: {
+      10: "(Recommended for Cricket)"
+    }
+  },
+  Football: {
+    defaultSize: 11,
+    recommendations: {
+      10: "(Recommended for 5v5 Turf)",
+      11: "(Recommended for Football)",
+      12: "(Recommended for 6v6 Turf)"
+    }
+  },
+  Tennis: {
+    defaultSize: 2,
+    recommendations: {
+      2: "(Recommended for Singles)",
+      4: "(Recommended for Doubles)"
+    }
+  },
+  Basketball: {
+    defaultSize: 10,
+    recommendations: {
+      10: "(Recommended for 5v5 Basketball)"
+    }
+  }
+};
+
 export function PlayerMatching() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState("1");
@@ -264,20 +414,71 @@ export function PlayerMatching() {
   const [invitedPlayers, setInvitedPlayers] = useState({});
   const [isSending, setIsSending] = useState(false);
 
+  // Quick matchmaking scanner states
+  const [isRadarScanning, setIsRadarScanning] = useState(false);
+  const [radarProgress, setRadarProgress] = useState(0);
+  const [radarConfetti, setRadarConfetti] = useState(false);
+
+  const handleQuickMatchJoin = () => {
+    setIsRadarScanning(true);
+    setRadarProgress(0);
+    
+    const interval = setInterval(() => {
+      setRadarProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          return 100;
+        }
+        return prev + 12;
+      });
+    }, 250);
+
+    setTimeout(() => {
+      setIsRadarScanning(false);
+      setRadarConfetti(true);
+      toast.success("🎯 Quick Match found: Juhu Jaguars FC (Football) is seeking a Midfielder!");
+      setTimeout(() => {
+        setRadarConfetti(false);
+        navigate("/teams");
+      }, 4000);
+    }, 2800);
+  };
+
+
   // New Matchmaking Lobby states
-  const [squadLobby, setSquadLobby] = useState({
-    active: false,
-    sport: "Cricket",
-    maxSize: 10,
-    members: []
+  const [squadLobby, setSquadLobby] = useState(() => {
+    const saved = localStorage.getItem("active_squad_lobby");
+    return saved ? JSON.parse(saved) : {
+      active: false,
+      sport: "Cricket",
+      maxSize: 10,
+      minSkill: "Open to All",
+      members: [],
+      paymentMode: null,
+      paidMembers: []
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem("active_squad_lobby", JSON.stringify(squadLobby));
+  }, [squadLobby]);
+
   const [isLobbyOpen, setIsLobbyOpen] = useState(false);
   const [isCreateLobbyOpen, setIsCreateLobbyOpen] = useState(false);
   const [joinRequests, setJoinRequests] = useState([]);
+  const [showHostMasterPass, setShowHostMasterPass] = useState(false);
+  const [isInviteCardOpen, setIsInviteCardOpen] = useState(false);
+  
+  // Squad Join Modal state
+  const [selectedGroupToJoin, setSelectedGroupToJoin] = useState(null);
+  const [isJoinSquadModalOpen, setIsJoinSquadModalOpen] = useState(false);
+  const [joinSquadRole, setJoinSquadRole] = useState("All-rounder");
+  const [joinSquadMessage, setJoinSquadMessage] = useState("");
 
   // Create lobby form states
   const [formSport, setFormSport] = useState("Cricket");
   const [formSize, setFormSize] = useState(10);
+  const [formMinSkill, setFormMinSkill] = useState("Open to All");
 
   const handleCreateSquad = () => {
     const hostUser = { id: 99, name: "You (Host)", sport: formSport, skillLevel: "Expert", rating: 5.0, role: "host" };
@@ -286,13 +487,69 @@ export function PlayerMatching() {
       active: true,
       sport: formSport,
       maxSize: formSize,
-      members: [hostUser]
+      minSkill: formMinSkill,
+      members: [hostUser],
+      paymentMode: null,
+      paidMembers: []
     });
     setInvitedPlayers({});
     setJoinRequests([]);
     setIsCreateLobbyOpen(false);
     setIsLobbyOpen(true);
     toast.success(`Squad lobby created for ${formSport}!`);
+  };
+
+  const handleAutoFillSquad = () => {
+    const mockTeammates = [
+      { id: 101, name: "Amit Patel", sport: formSport, skillLevel: "Advanced", rating: 4.7, role: "player" },
+      { id: 102, name: "Vikram Malhotra", sport: formSport, skillLevel: "Intermediate", rating: 4.5, role: "player" },
+      { id: 103, name: "Rohan Das", sport: formSport, skillLevel: "Expert", rating: 4.9, role: "player" },
+      { id: 104, name: "Sneha Sen", sport: formSport, skillLevel: "Advanced", rating: 4.6, role: "player" },
+      { id: 105, name: "Kabir Mehta", sport: formSport, skillLevel: "Beginner", rating: 4.2, role: "player" },
+      { id: 106, name: "Neha Sharma", sport: formSport, skillLevel: "Intermediate", rating: 4.4, role: "player" },
+      { id: 1, name: "Rahul Sharma", sport: formSport, skillLevel: "Advanced", rating: 4.8, role: "player" },
+      { id: 2, name: "Priya Patel", sport: formSport, skillLevel: "Intermediate", rating: 4.6, role: "player" },
+      { id: 3, name: "Arjun Malhotra", sport: formSport, skillLevel: "Expert", rating: 4.9, role: "player" },
+      { id: 4, name: "Sanjay Kumar", sport: formSport, skillLevel: "Intermediate", rating: 4.4, role: "player" },
+      { id: 5, name: "Aman Preet", sport: formSport, skillLevel: "Advanced", rating: 4.6, role: "player" },
+    ];
+    setSquadLobby(prev => {
+      const needed = prev.maxSize - prev.members.length;
+      if (needed <= 0) return prev;
+      const joined = mockTeammates.slice(0, needed);
+      toast.success(`⚡ Quick-Fill: ${joined.length} matching players auto-joined your squad!`);
+      return {
+        ...prev,
+        members: [...prev.members, ...joined]
+      };
+    });
+  };
+
+  const handleTransferHost = (memberId, memberName) => {
+    setSquadLobby(prev => {
+      const updatedMembers = prev.members.map(m => {
+        if (m.id === 99) return { ...m, role: "player" };
+        if (m.id === memberId) return { ...m, role: "host" };
+        return m;
+      });
+      toast.success(`🔄 Host ownership transferred to ${memberName}!`);
+      return { ...prev, members: updatedMembers };
+    });
+  };
+
+  const handleSimulatePayments = () => {
+    setSquadLobby(prev => {
+      const allIds = prev.members.map(m => m.id);
+      toast.success("💳 Simulated: All teammates have paid their match share!");
+      return {
+        ...prev,
+        paidMembers: allIds
+      };
+    });
+  };
+
+  const handleSendReminder = (memberName) => {
+    toast.success(`⚡ Payment reminder notification sent to ${memberName}!`);
   };
 
   const handleKickMember = (memberId, memberName) => {
@@ -345,14 +602,58 @@ export function PlayerMatching() {
   };
 
   const handleDisbandSquad = () => {
-    setSquadLobby({ active: false, sport: "Cricket", maxSize: 10, members: [] });
+    setSquadLobby({
+      active: false,
+      sport: "Cricket",
+      maxSize: 10,
+      minSkill: "Open to All",
+      members: [],
+      paymentMode: null,
+      paidMembers: []
+    });
     setInvitedPlayers({});
     setJoinRequests([]);
     setIsLobbyOpen(false);
+    setShowHostMasterPass(false);
     toast.error("Squad disbanded.");
   };
 
   const [matchingTab, setMatchingTab] = useState("players"); // "players" | "groups"
+  const userSports = currentUser?.selectedSports || ["football", "cricket", "badminton"];
+
+  const parseDistanceStr = (locStr) => {
+    if (!locStr) return 0;
+    const match = locStr.match(/(\d+(\.\d+)?)/);
+    return match ? parseFloat(match[0]) : 999;
+  };
+
+  const handleRequestGroupJoin = (group) => {
+    setSelectedGroupToJoin(group);
+    const isCricket = group.sport.toLowerCase() === "cricket";
+    const isFootball = group.sport.toLowerCase() === "football";
+    setJoinSquadRole(isCricket ? "Batsman" : isFootball ? "Striker" : "Singles Partner");
+    setJoinSquadMessage(`Hey captain, I'm a middle-order player, would love to join your squad for this match!`);
+    setIsJoinSquadModalOpen(true);
+  };
+
+  const handleSubmitSquadJoinRequest = () => {
+    if (!selectedGroupToJoin) return;
+    setIsJoinSquadModalOpen(false);
+    const groupId = selectedGroupToJoin.id;
+    const groupName = selectedGroupToJoin.name;
+
+    setInvitedPlayers((prev) => ({ ...prev, [groupId]: "invited" }));
+    toast.info(`Sent join request to squad "${groupName}" as ${joinSquadRole}! Waiting for captain approval...`);
+
+    // Simulate approval
+    setTimeout(() => {
+      setInvitedPlayers((prev) => ({ ...prev, [groupId]: "joined" }));
+      toast.success(`✓ Joined squad "${groupName}" successfully as ${joinSquadRole}!`);
+      setRadarConfetti(true);
+      setTimeout(() => setRadarConfetti(false), 4500);
+    }, 4000);
+  };
+
 
   const handleOpenInvite = (playerOrGroup) => {
     if (playerOrGroup.isGroup) {
@@ -580,6 +881,64 @@ export function PlayerMatching() {
 
   return (
     <div className="space-y-6">
+      {/* Radar confetti celebration */}
+      <div className="pointer-events-none fixed inset-0 z-50">
+        {radarConfetti && (
+          <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+            {[...Array(50)].map((_, i) => {
+              const left = Math.random() * 100;
+              const delay = Math.random() * 1.5;
+              const duration = 1.5 + Math.random() * 2;
+              const color = ["#6DFF3B", "#FFD700", "#FF4500", "#00BFFF", "#FF69B4", "#8A2BE2"][Math.floor(Math.random() * 6)];
+              const size = 6 + Math.random() * 8;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ y: -20, x: `${left}vw`, opacity: 1, rotate: 0 }}
+                  animate={{
+                    y: "105vh",
+                    x: `${left + (Math.random() * 14 - 7)}vw`,
+                    rotate: 360,
+                    opacity: 0
+                  }}
+                  transition={{ duration: duration, delay: delay, ease: "easeOut" }}
+                  style={{
+                    position: "absolute",
+                    width: size,
+                    height: size,
+                    backgroundColor: color,
+                    borderRadius: Math.random() > 0.5 ? "50%" : "0%",
+                    top: 0,
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Match Radar Scanner Dialog Modal */}
+      <Dialog open={isRadarScanning} onOpenChange={setIsRadarScanning}>
+        <DialogContent className="bg-black/95 border-zinc-800 text-white sm:max-w-md p-6 rounded-3xl flex flex-col items-center justify-center text-center">
+          <div className="relative w-36 h-36 flex items-center justify-center my-4">
+            <div className="absolute inset-0 rounded-full border-4 border-dashed border-[#6DFF3B]/30 animate-spin" style={{ animationDuration: "12s" }} />
+            <div className="absolute inset-4 rounded-full border border-dashed border-[#6DFF3B]/40 animate-spin" style={{ animationDuration: "8s", animationDirection: "reverse" }} />
+            <div className="absolute inset-8 rounded-full bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 animate-pulse" />
+            <Target className="h-10 w-10 text-[#6DFF3B] z-10 animate-bounce" />
+          </div>
+          <h3 className="font-extrabold text-lg text-[#6DFF3B] tracking-wide uppercase">Quick Match Radar Active</h3>
+          <p className="text-xs text-zinc-400 mt-2 leading-relaxed max-w-xs">
+            Scanning for active squad lobbies within 10 km that need players matching your preferred sports...
+          </p>
+          <div className="w-full mt-6 space-y-1.5">
+            <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden animate-pulse">
+              <div className="h-full bg-[#6DFF3B] transition-all duration-300" style={{ width: `${radarProgress}%` }} />
+            </div>
+            <span className="text-[10px] text-zinc-500 font-mono">Progress: {Math.min(100, Math.floor(radarProgress))}%</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Header */}
       <div>
         <h1 className="text-3xl ">Find Players</h1>
@@ -617,16 +976,31 @@ export function PlayerMatching() {
               </div>
             </div>
 
-            <div className="w-full flex justify-center lg:w-auto">
+            <div className="w-full flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-3 lg:w-auto z-10">
               <Button
                 onClick={() => setIsCreateLobbyOpen(true)}
-                className="bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold px-6 h-12 shadow-lg shadow-[#6DFF3B]/10 hover:shadow-[#6DFF3B]/20 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer flex items-center gap-2 text-sm lg:ml-4"
+                className="w-full sm:w-auto bg-[#6DFF3B] text-black hover:bg-[#5ce630] rounded-xl font-bold px-5 h-11 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 text-xs shrink-0"
               >
-                <UserPlus className="h-4.5 w-4.5" />
-                Create Squad Lobby
+                <Plus className="h-4 w-4" /> Create Squad Lobby
+              </Button>
+              
+              <Button
+                onClick={() => navigate("/teams")}
+                variant="outline"
+                className="w-full sm:w-auto border-border/80 text-foreground hover:bg-muted bg-card/40 backdrop-blur-md rounded-xl font-bold px-5 h-11 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 text-xs shrink-0"
+              >
+                <Users className="h-4 w-4 text-[#6DFF3B]" /> Play in Another Team
+              </Button>
+
+              <Button
+                onClick={handleQuickMatchJoin}
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 rounded-xl font-bold px-5 h-11 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 text-xs shrink-0"
+              >
+                <Target className="h-4 w-4" /> Quick Match Join
               </Button>
             </div>
           </div>
+
 
           {/* Styled Floating Image on the right side */}
           <div className="hidden lg:block absolute right-0 top-0 bottom-0 w-[35%] h-full pointer-events-none">
@@ -771,251 +1145,306 @@ export function PlayerMatching() {
       {matchingTab === "players" ? (
         /* Players Grid */
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {players.map((player, index) => {
-            const isJoined = squadLobby.members.some((m) => m.id === player.id) || invitedPlayers[player.id] === "joined";
-            return (
-              <motion.div
-                key={player.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <Card className="hover:shadow-lg transition-all border-border/50">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarFallback className="text-lg bg-primary text-primary-foreground font-semibold">
-                          {player.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <h3 className="font-bold mb-1">{player.name}</h3>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            {player.sport}
-                          </Badge>
-                          <Badge
-                            className={`text-xs border-0 ${skillColors[player.skillLevel]}`}
-                          >
-                            {player.skillLevel}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          <span className="text-xs">{player.location}</span>
-                        </div>
-                      </div>
-                    </div>
+          {(() => {
+            const filtered = players.filter((player) => {
+              const distance = parseDistanceStr(player.location);
+              const isClose = distance <= 10;
+              const matchesSport = userSports.some(sportId => {
+                const sportObj = sportsOptions.find(s => s.id === sportId);
+                const sportName = sportObj ? sportObj.name.toLowerCase() : sportId.toLowerCase();
+                return player.sport.toLowerCase().includes(sportName) || sportName.includes(player.sport.toLowerCase());
+              });
+              return isClose && matchesSport;
+            });
 
-                    <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-border/50">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          <span className="text-sm ">{player.rating}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Rating</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Trophy className="h-3 w-3 text-primary" />
-                          <span className="text-sm ">{player.matches}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Matches</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Target className="h-3 w-3 text-accent" />
-                          <span className="text-sm ">{player.winRate}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Win Rate</p>
-                      </div>
-                    </div>
+            if (filtered.length === 0) {
+              return (
+                <div className="col-span-full py-12 text-center bg-card rounded-2xl border border-border/60">
+                  <p className="text-sm font-semibold text-muted-foreground">No players matching preferred sports within 10 km.</p>
+                </div>
+              );
+            }
 
-                    <div className="space-y-2 mb-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Position:</span>
-                        <span className="">{player.preferredPosition}</span>
+            return filtered.map((player, index) => {
+              const isJoined = squadLobby.members.some((m) => m.id === player.id) || invitedPlayers[player.id] === "joined";
+              return (
+                <motion.div
+                  key={player.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <Card className="hover:shadow-lg transition-all border-border/50 bg-card rounded-2xl overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <Avatar className="h-16 w-16">
+                          <AvatarFallback className="text-lg bg-primary text-primary-foreground font-semibold">
+                            {player.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h3 className="font-bold mb-1 text-foreground">{player.name}</h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline" className="text-xs border-border text-foreground">
+                              {player.sport}
+                            </Badge>
+                            <Badge
+                              className={`text-xs border-0 ${skillColors[player.skillLevel]}`}
+                            >
+                              {player.skillLevel}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <MapPin className="h-3 w-3 text-[#6DFF3B]" />
+                            <span className="text-xs">{player.location}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Availability:</span>
-                        <span className="">{player.availability}</span>
-                      </div>
-                    </div>
 
-                    <div className="flex gap-2 w-full">
-                      <Button
-                        onClick={() => handleOpenInvite(player)}
-                        disabled={!!invitedPlayers[player.id] || squadLobby.members.some((m) => m.id === player.id)}
-                        className={`${isJoined ? "flex-1" : "w-full"} gap-2 cursor-pointer transition-all duration-300 ${isJoined
-                            ? "bg-slate-100 dark:bg-[#101216] border border-slate-200 dark:border-white/[0.08] text-emerald-600 dark:text-[#6DFF3B] disabled:opacity-100"
-                            : invitedPlayers[player.id] === "invited"
-                              ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-transparent disabled:opacity-100"
-                              : "bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60]"
-                          }`}
-                      >
-                        {isJoined ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            Joined Squad
-                          </>
-                        ) : invitedPlayers[player.id] === "invited" ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Inviting...
-                          </>
-                        ) : squadLobby.active ? (
-                          <>
-                            <UserPlus className="h-4 w-4" />
-                            Invite to Squad
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="h-4 w-4" />
-                            Invite
-                          </>
-                        )}
-                      </Button>
-                      {isJoined && (
-                        <Button variant="outline" className="flex-1 gap-2 cursor-pointer">
-                          <MessageSquare className="h-4 w-4" />
-                          Chat
+                      <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-border/50">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            <span className="text-sm text-foreground">{player.rating}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Rating</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Trophy className="h-3 w-3 text-[#6DFF3B]" />
+                            <span className="text-sm text-foreground">{player.matches}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Matches</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Target className="h-3 w-3 text-accent" />
+                            <span className="text-sm text-foreground">{player.winRate}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Win Rate</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 mb-4 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Position:</span>
+                          <span className="text-foreground">{player.preferredPosition}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Availability:</span>
+                          <span className="text-foreground">{player.availability}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          onClick={() => handleOpenInvite(player)}
+                          disabled={!!invitedPlayers[player.id] || squadLobby.members.some((m) => m.id === player.id)}
+                          className={`${isJoined ? "flex-1" : "w-full"} gap-2 cursor-pointer transition-all duration-300 ${isJoined
+                              ? "bg-slate-100 dark:bg-[#101216] border border-slate-200 dark:border-white/[0.08] text-emerald-600 dark:text-[#6DFF3B] disabled:opacity-100"
+                              : invitedPlayers[player.id] === "invited"
+                                ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-transparent disabled:opacity-100"
+                                : "bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60]"
+                            }`}
+                        >
+                          {isJoined ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Joined Squad
+                            </>
+                          ) : invitedPlayers[player.id] === "invited" ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Inviting...
+                            </>
+                          ) : squadLobby.active ? (
+                            <>
+                              <UserPlus className="h-4 w-4" />
+                              Invite to Squad
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="h-4 w-4" />
+                              Invite
+                            </>
+                          )}
                         </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+                        {isJoined && (
+                          <Button variant="outline" className="flex-1 gap-2 cursor-pointer border-border text-foreground hover:bg-muted">
+                            <MessageSquare className="h-4 w-4" />
+                            Chat
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            });
+          })()}
         </div>
+
       ) : (
         /* Groups Grid */
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {mockGroups.map((group, index) => {
-            const groupJoined = invitedPlayers[group.id] === "joined" || squadLobby.members.some(m => group.members.some(gm => gm.id === m.id));
-            const groupInvited = invitedPlayers[group.id] === "invited";
+          {(() => {
+            const filtered = mockGroups.filter((group) => {
+              const distance = parseDistanceStr(group.location);
+              const isClose = distance <= 10;
+              const matchesSport = userSports.some(sportId => {
+                const sportObj = sportsOptions.find(s => s.id === sportId);
+                const sportName = sportObj ? sportObj.name.toLowerCase() : sportId.toLowerCase();
+                return group.sport.toLowerCase().includes(sportName) || sportName.includes(group.sport.toLowerCase());
+              });
+              return isClose && matchesSport;
+            });
 
-            return (
-              <motion.div
-                key={group.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <Card className="hover:shadow-lg transition-all border-border/50">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="h-16 w-16 rounded-full bg-indigo-500/20 text-indigo-650 dark:text-indigo-400 flex items-center justify-center text-2xl font-bold shrink-0">
-                        👥
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold mb-1 truncate">{group.name}</h3>
-                        <div className="flex items-center gap-1.5 flex-wrap mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            {group.sport}
-                          </Badge>
-                          <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 text-xs border-0">
-                            {group.size} Players
-                          </Badge>
-                          <Badge
-                            className={`text-xs border-0 ${skillColors[group.skillLevel]}`}
-                          >
-                            {group.skillLevel}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
-                          <MapPin className="h-3 w-3" />
-                          <span className="text-xs">{group.location}</span>
-                        </div>
-                      </div>
-                    </div>
+            if (filtered.length === 0) {
+              return (
+                <div className="col-span-full py-12 text-center bg-card rounded-2xl border border-border/60">
+                  <p className="text-sm font-semibold text-muted-foreground">No squad groups matching preferred sports within 10 km.</p>
+                </div>
+              );
+            }
 
-                    <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-border/50">
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          <span className="text-sm ">{group.rating}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Rating</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Trophy className="h-3 w-3 text-primary" />
-                          <span className="text-sm ">{group.matches}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Matches</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Target className="h-3 w-3 text-accent" />
-                          <span className="text-sm ">{group.winRate}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Win Rate</p>
-                      </div>
-                    </div>
+            return filtered.map((group, index) => {
+              const groupJoined = invitedPlayers[group.id] === "joined" || squadLobby.members.some(m => group.members.some(gm => gm.id === m.id));
+              const groupInvited = invitedPlayers[group.id] === "invited";
+              const reliabilityMock = 94 + (index % 5);
 
-                    <div className="space-y-2 mb-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Members:</span>
-                        <span className="truncate max-w-[150px]" title={group.members.map(m => m.name).join(", ")}>
-                          {group.members.map(m => m.name.split(" ")[0]).join(", ")}
-                        </span>
+              return (
+                <motion.div
+                  key={group.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <Card className="hover:shadow-lg transition-all border-border/50 bg-card rounded-2xl overflow-hidden text-left">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="h-16 w-16 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl font-bold shrink-0">
+                          👥
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold mb-1 truncate text-foreground">{group.name}</h3>
+                          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                            <Badge variant="outline" className="text-xs border-border text-foreground">
+                              {group.sport}
+                            </Badge>
+                            <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 text-xs border-0 font-bold">
+                              {group.size} Players
+                            </Badge>
+                            <Badge
+                              className={`text-xs border-0 ${skillColors[group.skillLevel]}`}
+                            >
+                              {group.skillLevel}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground truncate">
+                            <MapPin className="h-3 w-3 text-[#6DFF3B]" />
+                            <span className="text-xs">{group.location}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Availability:</span>
-                        <span className="">{group.availability}</span>
-                      </div>
-                    </div>
 
-                    <div className="flex gap-2 w-full">
-                      <Button
-                        onClick={() => handleOpenInvite(group)}
-                        disabled={groupJoined || groupInvited}
-                        className={`${groupJoined ? "flex-1" : "w-full"} gap-2 cursor-pointer transition-all duration-300 ${groupJoined
-                          ? "bg-slate-100 dark:bg-[#101216] border border-slate-200 dark:border-white/[0.08] text-emerald-600 dark:text-[#6DFF3B] disabled:opacity-100"
-                          : groupInvited
-                            ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-transparent disabled:opacity-100"
-                            : "bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60]"
-                          }`}
-                      >
-                        {groupJoined ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            Joined Squad
-                          </>
-                        ) : groupInvited ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Inviting...
-                          </>
-                        ) : squadLobby.active ? (
-                          <>
-                            <UserPlus className="h-4 w-4" />
-                            Invite Group
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus className="h-4 w-4" />
-                            Invite
-                          </>
-                        )}
-                      </Button>
-                      {groupJoined && (
-                        <Button variant="outline" className="flex-1 gap-2 cursor-pointer">
-                          <MessageSquare className="h-4 w-4" />
-                          Chat
+                      <div className="grid grid-cols-3 gap-3 mb-4 pb-4 border-b border-border/50">
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            <span className="text-sm text-foreground">{group.rating}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Rating</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Trophy className="h-3 w-3 text-[#6DFF3B]" />
+                            <span className="text-sm text-foreground">{group.matches}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Matches</p>
+                        </div>
+                        <div className="text-center">
+                          <div className="flex items-center justify-center gap-1 mb-1">
+                            <Target className="h-3 w-3 text-accent" />
+                            <span className="text-sm text-foreground">{group.winRate}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">Win Rate</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 mb-4 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Members:</span>
+                          <span className="truncate max-w-[150px] font-semibold text-foreground" title={group.members.map(m => m.name).join(", ")}>
+                            {group.members.map(m => m.name.split(" ")[0]).join(", ")}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Reliability Score:</span>
+                          <span className="font-bold text-[#6DFF3B]">🛡️ {reliabilityMock}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Availability:</span>
+                          <span className="text-foreground">{group.availability}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          onClick={() => {
+                            if (squadLobby.active) {
+                              handleOpenInvite(group);
+                            } else {
+                              handleRequestGroupJoin(group);
+                            }
+                          }}
+                          disabled={groupJoined || (groupInvited && squadLobby.active)}
+                          className={`${groupJoined ? "flex-1" : "w-full"} gap-2 cursor-pointer transition-all duration-300 ${groupJoined
+                            ? "bg-slate-100 dark:bg-[#101216] border border-slate-200 dark:border-white/[0.08] text-emerald-600 dark:text-[#6DFF3B] disabled:opacity-100"
+                            : groupInvited
+                              ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-transparent disabled:opacity-100 font-bold"
+                              : "bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60]"
+                            }`}
+                        >
+                          {groupJoined ? (
+                            <>
+                              <Check className="h-4 w-4" />
+                              Joined Squad
+                            </>
+                          ) : groupInvited ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              {squadLobby.active ? "Inviting..." : "Requested..."}
+                            </>
+                          ) : squadLobby.active ? (
+                            <>
+                              <UserPlus className="h-4 w-4" />
+                              Invite Group
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="h-4 w-4" />
+                              Request to Join Squad
+                            </>
+                          )}
                         </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+                        {groupJoined && (
+                          <Button variant="outline" className="flex-1 gap-2 cursor-pointer border-border text-foreground hover:bg-muted">
+                            <MessageSquare className="h-4 w-4" />
+                            Chat
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            });
+          })()}
         </div>
+
       )}
 
       {/* Load More */}
@@ -1160,7 +1589,12 @@ export function PlayerMatching() {
                   <button
                     key={sport}
                     type="button"
-                    onClick={() => setFormSport(sport)}
+                    onClick={() => {
+                      setFormSport(sport);
+                      if (sportConfigs[sport]) {
+                        setFormSize(sportConfigs[sport].defaultSize);
+                      }
+                    }}
                     className={`rounded-full border px-4 py-2 text-xs font-semibold transition cursor-pointer ${formSport === sport
                       ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-emerald-600 dark:text-[#6DFF3B]"
                       : "border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.03] text-slate-600 dark:text-white/68 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
@@ -1180,13 +1614,36 @@ export function PlayerMatching() {
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-[#101216] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl">
-                  {[2, 4, 6, 8, 10, 12].map((size) => (
-                    <SelectItem key={size} value={size.toString()} className="cursor-pointer rounded-lg my-0.5 focus:bg-[#6DFF3B]/10 focus:text-slate-950 dark:focus:text-[#6DFF3B]">
-                      {size} Players {size === 10 ? "(Recommended for Cricket)" : ""} {size === 4 ? "(Doubles)" : ""}
-                    </SelectItem>
-                  ))}
+                  {[2, 4, 6, 8, 10, 11, 12].map((size) => {
+                    const recommendation = sportConfigs[formSport]?.recommendations?.[size] || "";
+                    return (
+                      <SelectItem key={size} value={size.toString()} className="cursor-pointer rounded-lg my-0.5 focus:bg-[#6DFF3B]/10 focus:text-slate-950 dark:focus:text-[#6DFF3B]">
+                        {size} Players {recommendation}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Select Skill Level */}
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Minimum Skill Level</label>
+              <div className="flex flex-wrap gap-2">
+                {["Open to All", "Intermediate", "Expert"].map((skill) => (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => setFormMinSkill(skill)}
+                    className={`rounded-full border px-4 py-2 text-xs font-semibold transition cursor-pointer ${formMinSkill === skill
+                      ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-emerald-600 dark:text-[#6DFF3B]"
+                      : "border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.03] text-slate-600 dark:text-white/68 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                      }`}
+                  >
+                    {skill}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <p className="text-[10px] text-muted-foreground italic">
@@ -1215,200 +1672,505 @@ export function PlayerMatching() {
       {/* Lobby Management Panel */}
       <Dialog open={isLobbyOpen} onOpenChange={setIsLobbyOpen}>
         <DialogContent className="sm:max-w-lg rounded-2xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] text-slate-900 dark:text-white shadow-2xl">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  Lobby Room: {squadLobby.sport}
-                </DialogTitle>
-                <DialogDescription className="text-slate-500 dark:text-white/60 text-xs mt-0.5">
-                  Match Lobby waiting room. Search and invite players to complete the team.
-                </DialogDescription>
-              </div>
-              <Badge className="bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 text-emerald-600 dark:text-[#6DFF3B] text-[10px] uppercase font-semibold">
-                {squadLobby.members.length} / {squadLobby.maxSize} Joined
-              </Badge>
-            </div>
-          </DialogHeader>
+          
+          {showHostMasterPass ? (
+            <div className="space-y-4 pt-2 text-center relative">
+              {/* Glowing ticket border line effects */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-[#6DFF3B]" />
 
-          {/* Members list */}
-          <div className="my-2 space-y-3 max-h-[300px] overflow-y-auto pr-1">
-            {/* Join Requests */}
-            {joinRequests.length > 0 && (
-              <div className="space-y-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-3">
-                <label className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold block flex items-center gap-1.5 animate-pulse">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                  </span>
-                  Pending Join Requests ({joinRequests.length})
-                </label>
-                <div className="space-y-2">
-                  {joinRequests.map((req) => (
-                    <div
-                      key={req.id}
-                      className="flex items-center justify-between p-2 rounded-xl bg-white/70 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05]"
-                    >
-                      {req.isGroup ? (
+              <div className="space-y-1">
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] font-bold uppercase tracking-[4px] px-2 py-0.5 rounded-full">Lobby Host Master Pass</span>
+                <h3 className="text-lg font-black tracking-tight text-foreground uppercase mt-1.5">Lobby Master Pass</h3>
+                <p className="text-[10px] text-muted-foreground">Show this QR code at the turf reception for team entry</p>
+              </div>
+
+              {/* QR / Barcode Card */}
+              <div className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center border border-border/40 shadow-sm max-w-[200px] mx-auto">
+                <div className="h-32 w-32 bg-[#050505] flex items-center justify-center p-1 rounded-lg">
+                  <div className="grid grid-cols-5 gap-1.5 h-full w-full">
+                    {Array.from({ length: 25 }).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className={`rounded-xs ${(idx * 7 + 13) % 2 === 0 ? "bg-[#6DFF3B]" : "bg-transparent"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <span className="text-[9px] font-mono text-slate-800 mt-2 font-bold tracking-widest">LOBBY-HOST-99-PASS</span>
+              </div>
+
+              {/* Roster details header */}
+              <div className="bg-slate-50 dark:bg-muted/40 p-3 rounded-2xl border border-slate-200 dark:border-border/40 text-left space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[9px] text-muted-foreground uppercase font-mono">Sport & Format</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{squadLobby.sport} ({squadLobby.maxSize} Players)</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 dark:border-border/40 pt-1.5 text-xs">
+                  <span className="text-[9px] text-muted-foreground uppercase font-mono">Min Skill level</span>
+                  <span className="font-bold text-[#6DFF3B]">{squadLobby.minSkill}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 dark:border-border/40 pt-1.5 text-xs">
+                  <span className="text-[9px] text-muted-foreground uppercase font-mono">Payment Mode</span>
+                  <span className="font-bold text-emerald-400 capitalize">{squadLobby.paymentMode === "full" ? "Paid Full (Reimbursed)" : "Split Payment"}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowHostMasterPass(false)}
+                  variant="outline"
+                  className="flex-1 rounded-xl text-xs h-10 font-bold cursor-pointer"
+                >
+                  Back to Lobby
+                </Button>
+                <Button
+                  onClick={() => {
+                    toast.success("📋 Master pass receipt downloaded to downloads folder!");
+                  }}
+                  className="flex-1 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl text-xs h-10 font-bold cursor-pointer"
+                >
+                  Download Receipt
+                </Button>
+              </div>
+            </div>
+          ) : squadLobby.paymentMode ? (
+            <div className="space-y-4 pt-1">
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                    📊 Payment Tracking Dashboard
+                  </DialogTitle>
+                  <Badge className="bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 text-emerald-600 dark:text-[#6DFF3B] text-[10px] uppercase font-semibold">
+                    {squadLobby.paymentMode === "full" ? "Paid Full" : "Split Mode"}
+                  </Badge>
+                </div>
+                <DialogDescription className="text-xs text-muted-foreground text-left">
+                  {squadLobby.paymentMode === "full" 
+                    ? "You paid the full turf booking fee. Players will reimburse you. Track their payments below."
+                    : "Lobby booking is on hold. Other teammates need to pay their individual split share to confirm."
+                  }
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Members List with Payment Statuses */}
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Teammates Payments</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                  {squadLobby.members.map((member) => {
+                    const hasPaid = squadLobby.paidMembers.includes(member.id) || member.role === "host";
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]"
+                      >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-8 w-8 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0">
-                            👥
-                          </div>
+                          <Avatar className="h-7 w-7">
+                            <AvatarFallback className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-medium">
+                              {member.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="min-w-0">
-                            <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">Group: {req.groupName}</p>
-                            <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">
-                              {req.members.map((m) => m.name.split(" ")[0]).join(", ")}
+                            <p className="font-semibold text-xs truncate text-slate-900 dark:text-white">
+                              {member.name} {member.role === "host" && "(You)"}
+                            </p>
+                            <p className="text-[8px] text-muted-foreground truncate">
+                              Share: ₹{Math.round(1200 / squadLobby.maxSize)}
                             </p>
                           </div>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-8 w-8 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
-                            {req.name.split(" ").map(n => n[0]).join("").toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{req.name}</p>
-                            <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">{req.skillLevel} • ★ {req.rating}</p>
-                          </div>
-                        </div>
-                      )}
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Button
-                          onClick={() => handleAcceptRequest(req)}
-                          className="h-7 px-3 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold rounded-lg cursor-pointer"
-                        >
-                          {req.isGroup ? "Accept Group" : "Accept"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleDeclineRequest(req.id, req.isGroup ? req.groupName : req.name)}
-                          className="h-7 w-7 p-0 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg cursor-pointer"
-                        >
-                          ✕
-                        </Button>
+                        {hasPaid ? (
+                          <Badge className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-bold py-0.5 px-2">
+                            {member.role === "host" ? "Host Paid" : "Paid ✓"}
+                          </Badge>
+                        ) : (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-[9px] text-amber-500 font-semibold mr-1">Pending</span>
+                            <Button
+                              size="sm"
+                              onClick={() => handleSendReminder(member.name)}
+                              className="h-6 px-2 text-[8px] bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 rounded-md font-bold cursor-pointer"
+                            >
+                              Reminder ⚡
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
-            )}
 
-            <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Lobby Members</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {squadLobby.members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-medium">
-                        {member.name.split(" ").map(n => n[0]).join("").toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-xs truncate text-slate-900 dark:text-white flex items-center gap-1.5">
-                        {member.name}
-                        {member.role === "host" && (
-                          <span title="Lobby Host">👑</span>
-                        )}
-                      </p>
-                      <p className="text-[9px] text-muted-foreground truncate capitalize">
-                        {member.role === "host" ? "Squad Leader" : `Player • ★ ${member.rating}`}
-                      </p>
-                    </div>
-                  </div>
-                  {member.role !== "host" && (
-                    <button
-                      onClick={() => handleKickMember(member.id, member.name)}
-                      className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 hover:text-red-500 text-slate-400 dark:text-slate-500 transition cursor-pointer"
-                      title="Kick member"
-                    >
-                      <UserPlus className="h-3.5 w-3.5 rotate-45" />
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {/* Show empty open slots */}
-              {Array.from({ length: squadLobby.maxSize - squadLobby.members.length }).map((_, idx) => (
-                <div
-                  key={`open-${idx}`}
-                  onClick={() => {
-                    setIsLobbyOpen(false);
-                    const searchInput = document.querySelector('input[placeholder="Search players..."]');
-                    if (searchInput) searchInput.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="flex items-center justify-center p-2.5 rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/5 transition cursor-pointer group text-slate-400 dark:text-white/35 min-h-[50px]"
-                >
-                  <span className="text-[10px] font-medium flex items-center gap-1.5 group-hover:text-emerald-600 dark:group-hover:text-[#6DFF3B] transition-colors">
-                    <UserPlus className="h-3 w-3" />
-                    Open Slot
+              {/* Progress and simulation */}
+              <div className="pt-2 border-t border-slate-100 dark:border-white/[0.08] space-y-3">
+                <div className="flex justify-between text-xs font-semibold text-left">
+                  <span className="text-muted-foreground">Teammate Payments Received</span>
+                  <span className="text-emerald-500 font-bold">
+                    {squadLobby.paymentMode === "full" 
+                      ? `${squadLobby.paidMembers.length}/${squadLobby.members.length} Reimbursed`
+                      : `${squadLobby.paidMembers.length}/${squadLobby.members.length} Paid`
+                    }
                   </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Lobby progress indicator */}
-          <div className="pt-2 border-t border-slate-100 dark:border-white/[0.08]">
-            {squadLobby.members.length < squadLobby.maxSize ? (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-medium">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600 dark:text-[#6DFF3B]" />
-                    Finding remaining players...
-                  </span>
-                  <span>{Math.round((squadLobby.members.length / squadLobby.maxSize) * 100)}% Complete</span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-emerald-500 to-[#6DFF3B] transition-all duration-500"
-                    style={{ width: `${(squadLobby.members.length / squadLobby.maxSize) * 100}%` }}
+                    style={{ width: `${(squadLobby.paidMembers.length / squadLobby.members.length) * 100}%` }}
                   />
                 </div>
-              </div>
-            ) : (
-              <div className="p-3 bg-[#6DFF3B]/10 border border-[#6DFF3B]/20 rounded-xl space-y-3 shadow-md shadow-[#6DFF3B]/5 animate-pulse">
-                <div className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-emerald-600 dark:text-[#6DFF3B]" />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">Squad is Full & Ready!</h4>
-                    <p className="text-[10px] text-muted-foreground">All slots filled. You can now proceed to book a turf complex.</p>
+
+                {squadLobby.paidMembers.length < squadLobby.members.length ? (
+                  <div className="flex flex-col gap-2 pt-1">
+                    <Button
+                      onClick={handleSimulatePayments}
+                      className="w-full h-9 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl text-xs font-semibold cursor-pointer"
+                    >
+                      🤖 Simulate Teammate Payments (For Demo)
+                    </Button>
+                    <p className="text-[9px] text-center text-muted-foreground italic">
+                      * Waiting for remaining players to complete payments before generating host master entry pass.
+                    </p>
                   </div>
-                </div>
-                <Button
-                  onClick={() => {
-                    setIsLobbyOpen(false);
-                    navigate("/squad-booking", { state: { squadLobby } });
-                  }}
-                  className="w-full h-9 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-lg text-xs font-semibold cursor-pointer"
-                >
-                  Book turf for your Squad
-                </Button>
+                ) : (
+                  <div className="pt-1">
+                    <Button
+                      onClick={() => setShowHostMasterPass(true)}
+                      className="w-full h-10 bg-gradient-to-r from-[#6DFF3B] to-[#5ce630] hover:from-[#5ce630] hover:to-[#4cd122] text-black font-bold rounded-xl text-xs cursor-pointer shadow-lg shadow-green-500/20 flex items-center justify-center gap-1.5"
+                    >
+                      <Ticket className="h-4 w-4" />
+                      View Host Master Pass 🎫
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
+
+              <DialogFooter className="gap-2 sm:gap-0 mt-2 border-t border-slate-100 dark:border-white/[0.08] pt-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLobbyOpen(false)}
+                  className="border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl cursor-pointer"
+                >
+                  Close Panel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDisbandSquad}
+                  className="rounded-xl cursor-pointer"
+                >
+                  Disband Squad
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      </span>
+                      Lobby Room: {squadLobby.sport}
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-white/60 text-xs mt-0.5">
+                      Match Lobby waiting room. Search and invite players to complete the team.
+                    </DialogDescription>
+                  </div>
+                  <Badge className="bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 text-emerald-600 dark:text-[#6DFF3B] text-[10px] uppercase font-semibold">
+                    {squadLobby.members.length} / {squadLobby.maxSize} Joined
+                  </Badge>
+                </div>
+              </DialogHeader>
+
+              {/* Members list */}
+              <div className="my-2 space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {/* Join Requests */}
+                {joinRequests.length > 0 && (
+                  <div className="space-y-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-3">
+                    <label className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold block flex items-center gap-1.5 animate-pulse">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                      </span>
+                      Pending Join Requests ({joinRequests.length})
+                    </label>
+                    <div className="space-y-2">
+                      {joinRequests.map((req) => (
+                        <div
+                          key={req.id}
+                          className="flex items-center justify-between p-2 rounded-xl bg-white/70 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05]"
+                        >
+                          {req.isGroup ? (
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="h-8 w-8 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                👥
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">Group: {req.groupName}</p>
+                                <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">
+                                  {req.members.map((m) => m.name.split(" ")[0]).join(", ")}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="h-8 w-8 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                {req.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{req.name}</p>
+                                <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">{req.skillLevel} • ★ {req.rating}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              onClick={() => handleAcceptRequest(req)}
+                              className="h-7 px-3 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold rounded-lg cursor-pointer"
+                            >
+                              {req.isGroup ? "Accept Group" : "Accept"}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleDeclineRequest(req.id, req.isGroup ? req.groupName : req.name)}
+                              className="h-7 w-7 p-0 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg cursor-pointer"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Lobby Members</label>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsInviteCardOpen(true)}
+                    className="h-7 text-[9px] px-2.5 bg-[#6DFF3B]/10 hover:bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] border border-[#6DFF3B]/20 rounded-xl font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Share2 className="h-3 w-3" /> Invite Card (WhatsApp)
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                  {squadLobby.members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-medium">
+                            {member.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-xs truncate text-slate-900 dark:text-white flex items-center gap-1.5">
+                            {member.name}
+                            {member.role === "host" && (
+                              <span title="Lobby Host">👑</span>
+                            )}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground truncate capitalize">
+                            {member.role === "host" ? "Squad Leader" : `Player • ★ ${member.rating}`}
+                          </p>
+                        </div>
+                      </div>
+                      {member.role !== "host" && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            onClick={() => handleTransferHost(member.id, member.name)}
+                            className="h-6 px-1.5 text-[8px] bg-[#6DFF3B]/10 hover:bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] border border-[#6DFF3B]/20 rounded-md font-bold cursor-pointer"
+                            title="Make Lobby Host"
+                          >
+                            👑 Make Host
+                          </Button>
+                          <button
+                            onClick={() => handleKickMember(member.id, member.name)}
+                            className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 hover:text-red-500 text-slate-400 dark:text-slate-500 transition cursor-pointer"
+                            title="Kick member"
+                          >
+                            <UserPlus className="h-3.5 w-3.5 rotate-45" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Show empty open slots */}
+                  {Array.from({ length: squadLobby.maxSize - squadLobby.members.length }).map((_, idx) => (
+                    <div
+                      key={`open-${idx}`}
+                      onClick={() => {
+                        setIsLobbyOpen(false);
+                        const searchInput = document.querySelector('input[placeholder="Search players..."]');
+                        if (searchInput) searchInput.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="flex items-center justify-center p-2.5 rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/5 transition cursor-pointer group text-slate-400 dark:text-white/35 min-h-[50px]"
+                    >
+                      <span className="text-[10px] font-medium flex items-center gap-1.5 group-hover:text-emerald-600 dark:group-hover:text-[#6DFF3B] transition-colors">
+                        <UserPlus className="h-3 w-3" />
+                        Open Slot
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lobby progress indicator */}
+              <div className="pt-2 border-t border-slate-100 dark:border-white/[0.08] text-left">
+                {squadLobby.members.length < squadLobby.maxSize ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-medium">
+                      <span className="text-muted-foreground flex items-center gap-1.5">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600 dark:text-[#6DFF3B]" />
+                        Finding remaining players...
+                      </span>
+                      <span>{Math.round((squadLobby.members.length / squadLobby.maxSize) * 100)}% Complete</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 to-[#6DFF3B] transition-all duration-500"
+                        style={{ width: `${(squadLobby.members.length / squadLobby.maxSize) * 100}%` }}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleAutoFillSquad}
+                        className="flex-1 h-9 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 rounded-lg text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        ⚡ Auto-Fill Squad
+                      </Button>
+                      
+                      <Button
+                        onClick={() => {
+                          setIsLobbyOpen(false);
+                          navigate("/squad-booking", { state: { squadLobby } });
+                        }}
+                        className="flex-1 h-9 bg-[#6DFF3B]/10 hover:bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] border border-[#6DFF3B]/20 rounded-lg text-xs font-semibold cursor-pointer"
+                      >
+                        Proceed with Current ({squadLobby.members.length})
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-[#6DFF3B]/10 border border-[#6DFF3B]/20 rounded-xl space-y-3 shadow-md shadow-[#6DFF3B]/5 animate-pulse">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-emerald-600 dark:text-[#6DFF3B]" />
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white">Squad is Full & Ready!</h4>
+                        <p className="text-[10px] text-muted-foreground">All slots filled. You can now proceed to book a turf complex.</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setIsLobbyOpen(false);
+                        navigate("/squad-booking", { state: { squadLobby } });
+                      }}
+                      className="w-full h-9 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-lg text-xs font-semibold cursor-pointer"
+                    >
+                      Book turf for your Squad
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0 mt-2 border-t border-slate-100 dark:border-white/[0.08] pt-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLobbyOpen(false)}
+                  className="border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl cursor-pointer"
+                >
+                  Keep Searching
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDisbandSquad}
+                  className="rounded-xl cursor-pointer"
+                >
+                  Disband Squad
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* WhatsApp Invite Card Dialog */}
+      <Dialog open={isInviteCardOpen} onOpenChange={setIsInviteCardOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] text-slate-900 dark:text-white shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+              📲 WhatsApp Invite Card
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Share this invite card to WhatsApp or social media groups to recruit players!
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="border border-green-500/30 bg-[#6DFF3B]/5 p-5 rounded-2xl space-y-4 text-left font-sans shadow-inner">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] font-black tracking-widest px-2 py-0.5 rounded-full uppercase">SportXClub Invite</span>
+              <Badge className="bg-[#6DFF3B] text-black text-[9px] font-bold">LIVE LOBBY</Badge>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                Join our {squadLobby.sport} Match! 🏏
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-white/70 leading-relaxed">
+                Hey friends! I've launched a Matchmaking Squad Lobby on SportXClub. We are looking for players to join us!
+              </p>
+            </div>
+
+            <div className="border-t border-slate-200 dark:border-white/[0.08] pt-3 grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Sport</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{squadLobby.sport}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Slots Filled</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{squadLobby.members.length} / {squadLobby.maxSize}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Min Skill Level</span>
+                <span className="font-bold text-[#6DFF3B]">{squadLobby.minSkill}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Host</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">You (Host)</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-100 dark:bg-slate-900 p-2.5 rounded-xl text-[10px] font-mono text-slate-500 dark:text-slate-400 break-all select-all flex items-center justify-between border border-border/30">
+              <span>https://sportxclub.com/join-lobby?id=lobby-99</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  navigator.clipboard.writeText(`🏆 *SportXClub Match Invitation* 🏆\n\nSport: ${squadLobby.sport}\nMin Skill: ${squadLobby.minSkill}\nSquad: ${squadLobby.members.length}/${squadLobby.maxSize} Joined\nHost: You (Host)\n\nJoin Link: https://sportxclub.com/join-lobby?id=lobby-99`);
+                  toast.success("📋 Invite message copied to clipboard!");
+                }}
+                className="h-6 w-6 p-0 hover:bg-slate-200 dark:hover:bg-slate-900 rounded cursor-pointer"
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0 mt-2 border-t border-slate-100 dark:border-white/[0.08] pt-3">
+          <DialogFooter>
             <Button
-              variant="outline"
-              onClick={() => setIsLobbyOpen(false)}
-              className="border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl cursor-pointer"
+              onClick={() => setIsInviteCardOpen(false)}
+              className="w-full bg-[#6DFF3B] text-black hover:bg-[#86ff60] font-bold rounded-xl h-10 text-xs cursor-pointer"
             >
-              Keep Searching
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDisbandSquad}
-              className="rounded-xl cursor-pointer"
-            >
-              Disband Squad
+              Done & Close
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1472,6 +2234,114 @@ export function PlayerMatching() {
           </div>
         </div>
       )}
+
+      {/* Join Squad Lobby dialog form */}
+      <Dialog open={isJoinSquadModalOpen} onOpenChange={setIsJoinSquadModalOpen}>
+        <DialogContent className="bg-background border-border text-foreground sm:max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <Users className="h-5 w-5 text-[#6DFF3B]" /> Join Squad Lobby
+            </DialogTitle>
+          </DialogHeader>
+          {selectedGroupToJoin && (
+            <div className="space-y-4 py-3 text-left">
+              <div>
+                <h4 className="font-bold text-sm text-foreground">{selectedGroupToJoin.name}</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {selectedGroupToJoin.sport} • {selectedGroupToJoin.location} • 🛡️ Host Reliability: {94 + (selectedGroupToJoin.id.charCodeAt(0) % 5)}%
+                </p>
+              </div>
+
+              {/* Roster & Position Needs */}
+              <div className="border border-border/60 bg-muted/30 p-3.5 rounded-2xl space-y-3">
+                <div>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1.5">Current Roster</span>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {selectedGroupToJoin.members.map((member, idx) => {
+                      const rolesList = selectedGroupToJoin.sport.toLowerCase() === "cricket"
+                        ? ["Batsman", "Bowler", "All-rounder", "Wicket Keeper"]
+                        : selectedGroupToJoin.sport.toLowerCase() === "football"
+                        ? ["Striker", "Midfielder", "Defender", "Goalkeeper"]
+                        : ["Singles Player", "Doubles Player"];
+                      const role = member.role || rolesList[idx % rolesList.length];
+                      return (
+                        <div key={idx} className="bg-card px-2.5 py-1.5 rounded-xl border border-border/40 text-[10px] text-foreground flex items-center justify-between">
+                          <span className="font-medium truncate max-w-[80px] text-foreground">{member.name}</span>
+                          <Badge variant="outline" className="text-[8px] border-zinc-700 text-slate-400 px-1 py-0">{role}</Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="border-t border-border/40 pt-2.5">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mb-1">Vacancy & Needs</span>
+                  <p className="text-xs font-bold text-[#6DFF3B]">
+                    {10 - selectedGroupToJoin.members.length} slots remaining (Needed: {
+                      selectedGroupToJoin.sport.toLowerCase() === "cricket" 
+                        ? "Wicket Keeper, Bowler" 
+                        : selectedGroupToJoin.sport.toLowerCase() === "football"
+                        ? "Goalkeeper, Midfielder"
+                        : "Partner"
+                    })
+                  </p>
+                </div>
+              </div>
+
+              {/* Role selection buttons */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Your Role</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(selectedGroupToJoin.sport.toLowerCase() === "cricket"
+                    ? ["Batsman", "Bowler", "All-rounder", "Wicket Keeper"]
+                    : selectedGroupToJoin.sport.toLowerCase() === "football"
+                    ? ["Striker", "Midfielder", "Defender", "Goalkeeper"]
+                    : ["Singles Partner", "Doubles Partner"]
+                  ).map((pos) => {
+                    const isNeeded = selectedGroupToJoin.sport.toLowerCase() === "cricket"
+                      ? ["Bowler", "Wicket Keeper"].includes(pos)
+                      : selectedGroupToJoin.sport.toLowerCase() === "football"
+                      ? ["Goalkeeper", "Midfielder"].includes(pos)
+                      : true;
+                    return (
+                      <button
+                        key={pos}
+                        type="button"
+                        className={`h-10 rounded-xl text-xs font-semibold px-3 flex items-center justify-between border transition-all ${
+                          joinSquadRole === pos
+                            ? "bg-[#6DFF3B] text-black border-[#6DFF3B]"
+                            : "bg-card border-border hover:bg-muted text-foreground"
+                        }`}
+                        onClick={() => setJoinSquadRole(pos)}
+                      >
+                        <span>{pos}</span>
+                        {isNeeded && <Badge className="bg-blue-500/10 text-blue-400 text-[8px] font-bold px-1.5 border-none uppercase">Need</Badge>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Message text area */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Message to Captain</label>
+                <textarea
+                  placeholder='e.g., "Hey captain, I am a striker, would love to join your match!"'
+                  className="w-full bg-card border border-border text-foreground p-3 rounded-2xl text-xs focus:outline-none focus:border-[#6DFF3B] h-20 resize-none leading-relaxed"
+                  value={joinSquadMessage}
+                  onChange={(e) => setJoinSquadMessage(e.target.value)}
+                />
+              </div>
+
+              <Button
+                className="w-full bg-[#6DFF3B] text-black hover:bg-[#5ce630] font-bold rounded-xl h-11 text-xs mt-2"
+                onClick={handleSubmitSquadJoinRequest}
+              >
+                Send Join Request
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
