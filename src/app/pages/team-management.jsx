@@ -494,6 +494,11 @@ export function TeamManagement() {
   ]);
 
   useEffect(() => {
+    // Decline pre-loaded/initial invites after 20 seconds
+    const initialInviteTimeout = setTimeout(() => {
+      setTeamInvites(prev => prev.filter(inv => inv.id.startsWith("inv-dyn-")));
+    }, 20000);
+
     const inviteInterval = setInterval(() => {
       const turfNames = [
         "Juhu Sports Club",
@@ -507,9 +512,9 @@ export function TeamManagement() {
         "Powai Elite Arena",
         "Santacruz Smashers"
       ];
-      
+
       const sportsList = ["Cricket", "Football", "Badminton"];
-      
+
       const rolesMap = {
         "Cricket": ["Batsman", "Bowler", "All-rounder", "Wicket Keeper"],
         "Football": ["Striker", "Midfielder", "Defender", "Goalkeeper"],
@@ -522,7 +527,7 @@ export function TeamManagement() {
       const randomRole = rolesList[Math.floor(Math.random() * rolesList.length)];
       const randomDistanceKm = parseFloat((1.0 + Math.random() * 8.5).toFixed(1)); // 1.0 to 9.5 km
       const randomReliability = Math.floor(92 + Math.random() * 8); // 92 to 99%
-      
+
       const newInvite = {
         id: `inv-dyn-${Date.now()}`,
         teamName: randomTurf,
@@ -532,23 +537,26 @@ export function TeamManagement() {
         distanceKm: randomDistanceKm,
         hostReliability: randomReliability
       };
-      
+
       setTeamInvites(prev => [newInvite, ...prev]);
-      
-      // Quietly auto-decline/remove invite after 10 seconds without showing any toast notification
+
+      // Quietly auto-decline/remove invite after 20 seconds without showing any toast notification
       setTimeout(() => {
         setTeamInvites(prev => prev.filter(inv => inv.id !== newInvite.id));
-      }, 10000);
+      }, 20000);
     }, 15000);
 
-    return () => clearInterval(inviteInterval);
+    return () => {
+      clearTimeout(initialInviteTimeout);
+      clearInterval(inviteInterval);
+    };
   }, []);
 
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const [selectedTeamToJoin, setSelectedTeamToJoin] = useState(null);
   const [joinRole, setJoinRole] = useState("");
   const [joinMessage, setJoinMessage] = useState("");
-  
+
   const [showConfetti, setShowConfetti] = useState(false);
 
   // Stats selection states
@@ -558,6 +566,24 @@ export function TeamManagement() {
   const [sendingStatsRole, setSendingStatsRole] = useState("");
   const [sendingStatsTeamId, setSendingStatsTeamId] = useState(null);
   const [sharedStatsTeams, setSharedStatsTeams] = useState([]);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [rosterModalOpen, setRosterModalOpen] = useState(false);
+  const [rosterTeam, setRosterTeam] = useState(null);
+  const [notifiedFullTeams, setNotifiedFullTeams] = useState([]);
+
+  useEffect(() => {
+    userTeams.forEach(team => {
+      const joinedCount = team.roster?.length || team.members;
+      const formatSize = getSportFormatSize(team.sport);
+      const isFull = joinedCount >= formatSize;
+      const isUserPlayer = (team.roster || []).some(m => m.name === "You" || m.name === currentUser?.fullName);
+
+      if (isFull && !isUserPlayer && !notifiedFullTeams.includes(team.id)) {
+        toast.warning(`🔒 ${team.name} squad is now full and closed for requests!`);
+        setNotifiedFullTeams(prev => [...prev, team.id]);
+      }
+    });
+  }, [userTeams, currentUser, notifiedFullTeams]);
 
   // Consolidated payment & entry ticket states
   const [paidTeams, setPaidTeams] = useState([]);
@@ -580,6 +606,8 @@ export function TeamManagement() {
 
   const handleLeaveTeam = (teamId, teamName) => {
     setUserTeams(prev => prev.filter(t => t.id !== teamId));
+    setSharedStatsTeams(prev => prev.filter(id => id !== teamId));
+    setPendingRequests(prev => prev.filter(id => id !== teamId));
     toast.error(`You have left the team: ${teamName}`);
   };
 
@@ -612,26 +640,34 @@ export function TeamManagement() {
 
   const handleAcceptInvite = (invite) => {
     setTeamInvites(prev => prev.filter(inv => inv.id !== invite.id));
-    
+
     const newId = Date.now();
+    const formatSize = getSportFormatSize(invite.sport);
+
+    // Initial mock players
+    const fullMockRoster = [
+      { id: 1, name: currentUser?.fullName || "You", role: "Member", position: invite.roleInvited, status: "online" },
+      { id: 2, name: "Captain Virat", role: "Captain", position: invite.sport === "Football" ? "Striker" : invite.sport === "Badminton" ? "Doubles Partner" : "Batsman", status: "online" },
+      { id: 3, name: "Arjun Malhotra", role: "Member", position: invite.sport === "Football" ? "Defender" : "Bowler", status: "online" },
+      { id: 4, name: "Sanjay Kumar", role: "Member", position: invite.sport === "Football" ? "Midfielder" : "Batsman", status: "offline" },
+      { id: 5, name: "Aman Preet", role: "Member", position: invite.sport === "Football" ? "Defender" : "All-rounder", status: "online" }
+    ];
+
+    // Slice the roster to not exceed the sport's format size
+    const roster = fullMockRoster.slice(0, formatSize);
+
     const newTeam = {
       id: newId,
       name: invite.teamName,
       sport: invite.sport,
-      members: 11,
+      members: roster.length,
       wins: 15,
       losses: 4,
       upcoming: 1,
       role: "Member",
-      roster: [
-        { id: 1, name: currentUser?.fullName || "You", role: "Member", position: invite.roleInvited, status: "online" },
-        { id: 2, name: "Captain Virat", role: "Captain", position: invite.sport === "Football" ? "Striker" : "Batsman", status: "online" },
-        { id: 3, name: "Arjun Malhotra", role: "Member", position: "Bowler", status: "online" },
-        { id: 4, name: "Sanjay Kumar", role: "Member", position: "Defender", status: "offline" },
-        { id: 5, name: "Aman Preet", role: "Member", position: "Midfielder", status: "online" }
-      ]
+      roster: roster
     };
-    
+
     setUserTeams(prev => [...prev, newTeam]);
     setSelectedRosterTeamId(newId);
     toast.success(`Welcome to ${invite.teamName}!`);
@@ -649,7 +685,7 @@ export function TeamManagement() {
       toast.error("Please select a playing position.");
       return;
     }
-    
+
     setExploreTeams(prev => prev.map(t => {
       if (t.id === selectedTeamToJoin.id) {
         return { ...t, status: "Requested" };
@@ -673,29 +709,43 @@ export function TeamManagement() {
               }
             }
           });
-          
+
           // Add to userTeams
-          const joinedNewTeam = {
-            id: targetTeam.id,
-            name: targetTeam.name,
-            sport: targetTeam.sport,
-            members: targetTeam.members + 1,
-            wins: targetTeam.wins,
-            losses: targetTeam.losses,
-            upcoming: 1,
-            role: "Member",
-            neededPositions: (targetTeam.neededPositions || []).filter(p => p !== joinRole),
-            roster: [
-              { id: 1, name: currentUser?.fullName || "You", role: "Member", position: joinRole || "Striker", status: "online" },
-              { id: 2, name: targetTeam.hostName || "Host Captain", role: "Captain", position: targetTeam.sport === "Football" ? "Striker" : "Batsman", status: "online" },
-              ...targetTeam.joinedRoster.map((m, idx) => ({
+          const formatSize = getSportFormatSize(targetTeam.sport);
+
+          let rawRoster = [
+            { id: 1, name: currentUser?.fullName || "You", role: "Member", position: joinRole || "Player", status: "online" },
+            { id: 2, name: targetTeam.hostName || "Host Captain", role: "Captain", position: targetTeam.sport === "Football" ? "Striker" : targetTeam.sport === "Badminton" ? "Singles" : "Batsman", status: "online" }
+          ];
+
+          // Add other players from joinedRoster if we still have slot, avoiding duplicates with host
+          targetTeam.joinedRoster.forEach((m, idx) => {
+            const isHost = m.name === targetTeam.hostName || m.name.startsWith(targetTeam.hostName.split(" ")[0]);
+            if (!isHost) {
+              rawRoster.push({
                 id: idx + 3,
                 name: m.name,
                 role: "Member",
                 position: m.role || "Player",
                 status: Math.random() > 0.3 ? "online" : "offline"
-              }))
-            ]
+              });
+            }
+          });
+
+          // Slice to make sure it doesn't exceed format size
+          const roster = rawRoster.slice(0, formatSize);
+
+          const joinedNewTeam = {
+            id: targetTeam.id,
+            name: targetTeam.name,
+            sport: targetTeam.sport,
+            members: roster.length,
+            wins: targetTeam.wins,
+            losses: targetTeam.losses,
+            upcoming: 1,
+            role: "Member",
+            neededPositions: (targetTeam.neededPositions || []).filter(p => p !== joinRole),
+            roster: roster
           };
           setUserTeams(curr => {
             const alreadyIn = curr.some(x => x.name === targetTeam.name);
@@ -703,7 +753,7 @@ export function TeamManagement() {
             setSelectedRosterTeamId(joinedNewTeam.id);
             return [...curr, joinedNewTeam];
           });
-          
+
           return { ...t, status: "Joined", members: t.members + 1 };
         }
         return t;
@@ -714,10 +764,12 @@ export function TeamManagement() {
   const handleSendStatsToHost = (teamId, teamName, selectedRole) => {
     setSendingStatsRole(selectedRole || "Player");
     setSendingStatsTeamId(teamId);
+    setPendingRequests(prev => [...prev, teamId]);
     toast.info(`📤 Sending ${selectedRole || "Player"} stats to ${teamName} Captain/Host...`);
 
     setTimeout(() => {
       setSharedStatsTeams(prev => [...prev, teamId]);
+      setPendingRequests(prev => prev.filter(id => id !== teamId));
       setSendingStatsTeamId(null);
       setSendingStatsRole("");
       toast.success(`⚡ Captain approved your stats! Team Chat unlocked for ${teamName}.`);
@@ -840,26 +892,24 @@ export function TeamManagement() {
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Teams Overview */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* Tab Selector */}
           <div className="flex border-b border-border/80">
             <button
               onClick={() => setActiveTab("mine")}
-              className={`py-3 px-6 font-bold text-sm border-b-2 transition-all ${
-                activeTab === "mine"
-                  ? "border-[#6DFF3B] text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className={`py-3 px-6 font-bold text-sm border-b-2 transition-all ${activeTab === "mine"
+                ? "border-[#6DFF3B] text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
             >
               Your Teams ({userTeams.length})
             </button>
             <button
               onClick={() => setActiveTab("explore")}
-              className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${
-                activeTab === "explore"
-                  ? "border-[#6DFF3B] text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
+              className={`py-3 px-6 font-bold text-sm border-b-2 transition-all flex items-center gap-2 ${activeTab === "explore"
+                ? "border-[#6DFF3B] text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
             >
               Explore Teams
               <Badge className="bg-[#6DFF3B]/10 text-[#6DFF3B] border border-[#6DFF3B]/20 text-[9px] py-0 px-2 rounded-full font-bold">
@@ -869,224 +919,251 @@ export function TeamManagement() {
           </div>
 
           {activeTab === "mine" ? (
-            userTeams.length > 0 ? (
-              <div className="grid sm:grid-cols-2 gap-6">
-                {userTeams.map((team, index) => (
-                  <motion.div
-                    key={team.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                  >
-                    <Card
-                      className={`group overflow-hidden shadow-sm hover:shadow-md transition-all bg-card rounded-2xl cursor-pointer ${
-                        selectedRosterTeamId === team.id
-                          ? "border-[#6DFF3B] ring-1 ring-[#6DFF3B]/50"
-                          : "border-border/60"
-                      }`}
-                      onClick={() => setSelectedRosterTeamId(team.id)}
-                    >
-                      <div className={`h-1.5 transition-colors ${
-                        selectedRosterTeamId === team.id ? "bg-[#6DFF3B]" : "bg-[#6DFF3B]/20 group-hover:bg-[#6DFF3B]"
-                      }`} />
-                      <CardHeader className="pb-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#6DFF3B]/10 text-[#6DFF3B] group-hover:bg-[#6DFF3B] group-hover:text-black transition-colors shrink-0">
-                              <Users className="h-5.5 w-5.5" />
+            (() => {
+              const visibleTeams = userTeams.filter(team => {
+                const userInRoster = (team.roster || []).find(m => m.name === "You" || m.name === currentUser?.fullName);
+                const isMemberOfRoster = !!userInRoster;
+                const joinedCount = team.roster?.length || team.members;
+                const formatSize = getSportFormatSize(team.sport);
+                const isFull = joinedCount >= formatSize;
+
+                if (isFull && !isMemberOfRoster) {
+                  return false;
+                }
+                return true;
+              });
+
+              if (visibleTeams.length === 0) {
+                return (
+                  <EmptyState
+                    icon={Users}
+                    title="No teams joined"
+                    description="Join a team or create your own to start competing in leagues and tournaments."
+                    actionText="Create a Team"
+                    onAction={() => { }}
+                  />
+                );
+              }
+
+              return (
+                <div className="grid sm:grid-cols-2 gap-6">
+                  {visibleTeams.map((team, index) => {
+                    const userInRoster = (team.roster || []).find(m => m.name === "You" || m.name === currentUser?.fullName);
+                    const userRole = userInRoster ? userInRoster.role : team.role;
+                    const isMemberOfRoster = !!userInRoster;
+
+                    return (
+                      <motion.div
+                        key={team.id}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                      >
+                        <Card
+                          className={`group overflow-hidden shadow-sm hover:shadow-md transition-all bg-card rounded-2xl cursor-pointer ${selectedRosterTeamId === team.id
+                            ? "border-[#6DFF3B] ring-1 ring-[#6DFF3B]/50"
+                            : "border-border/60"
+                            }`}
+                          onClick={() => setSelectedRosterTeamId(team.id)}
+                        >
+                          <div className={`h-1.5 transition-colors ${selectedRosterTeamId === team.id ? "bg-[#6DFF3B]" : "bg-[#6DFF3B]/20 group-hover:bg-[#6DFF3B]"
+                            }`} />
+                          <CardHeader className="pb-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#6DFF3B]/10 text-[#6DFF3B] group-hover:bg-[#6DFF3B] group-hover:text-black transition-colors shrink-0">
+                                  <Users className="h-5.5 w-5.5" />
+                                </div>
+                                <div>
+                                  <CardTitle className="text-base font-bold text-foreground">
+                                    {team.name}
+                                  </CardTitle>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[9px] uppercase px-2 py-0.5 border-[#6DFF3B]/20 text-[#6DFF3B]"
+                                    >
+                                      {team.sport}
+                                    </Badge>
+                                    <Badge className="bg-muted text-muted-foreground border-none text-[9px] px-2 py-0.5">
+                                      {userRole}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Team settings"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                              >
+                                <Settings className="h-4 w-4" />
+                              </Button>
                             </div>
-                            <div>
-                              <CardTitle className="text-base font-bold text-foreground">
-                                {team.name}
-                              </CardTitle>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge
-                                  variant="outline"
-                                  className="text-[9px] uppercase px-2 py-0.5 border-[#6DFF3B]/20 text-[#6DFF3B]"
-                                >
-                                  {team.sport}
-                                </Badge>
-                                <Badge className="bg-muted text-muted-foreground border-none text-[9px] px-2 py-0.5">
-                                  {team.role}
-                                </Badge>
+                          </CardHeader>
+                          <CardContent className="space-y-5">
+                            <div className="grid grid-cols-4 gap-2">
+                              <div className="text-center p-2 rounded-xl bg-muted/40">
+                                <p className="text-sm font-bold text-foreground">{getSportFormatSize(team.sport)}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
+                                  Format
+                                </p>
+                              </div>
+                              <div className="text-center p-2 rounded-xl bg-muted/40">
+                                <p className="text-sm font-bold text-[#6DFF3B]">{team.wins}</p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
+                                  Wins
+                                </p>
+                              </div>
+                              <div className="text-center p-2 rounded-xl bg-muted/40">
+                                <p className="text-sm font-bold text-rose-400">
+                                  {team.losses}
+                                </p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
+                                  Loss
+                                </p>
+                              </div>
+                              <div className="text-center p-2 rounded-xl bg-muted/40">
+                                <p className="text-sm font-bold text-blue-400">
+                                  {team.upcoming}
+                                </p>
+                                <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
+                                  Next
+                                </p>
                               </div>
                             </div>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Team settings"
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
-                          >
-                            <Settings className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-5">
-                        <div className="grid grid-cols-4 gap-2">
-                          <div className="text-center p-2 rounded-xl bg-muted/40">
-                            <p className="text-sm font-bold text-foreground">{getSportFormatSize(team.sport)}</p>
-                            <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
-                              Format
-                            </p>
-                          </div>
-                          <div className="text-center p-2 rounded-xl bg-muted/40">
-                            <p className="text-sm font-bold text-[#6DFF3B]">{team.wins}</p>
-                            <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
-                              Wins
-                            </p>
-                          </div>
-                          <div className="text-center p-2 rounded-xl bg-muted/40">
-                            <p className="text-sm font-bold text-rose-400">
-                              {team.losses}
-                            </p>
-                            <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
-                              Loss
-                            </p>
-                          </div>
-                          <div className="text-center p-2 rounded-xl bg-muted/40">
-                            <p className="text-sm font-bold text-blue-400">
-                              {team.upcoming}
-                            </p>
-                            <p className="text-[9px] text-muted-foreground uppercase font-bold mt-0.5">
-                              Next
-                            </p>
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          {team.role === "Member" && !sharedStatsTeams.includes(team.id) ? (
-                            <Button
-                              className="w-full h-9 text-xs rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-600/20 font-bold cursor-pointer flex items-center justify-center gap-1.5"
-                              disabled={sendingStatsTeamId === team.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setTargetStatsTeamId(team.id);
-                                setSelectedStatsRole("");
-                                setIsStatsRoleModalOpen(true);
-                              }}
-                            >
-                              {sendingStatsTeamId === team.id ? (
-                                <>
-                                  <span className="h-3 w-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin shrink-0" />
-                                  Sending {sendingStatsRole} Stats...
-                                </>
+                            <div className="space-y-2">
+                              {!isMemberOfRoster ? (
+                                pendingRequests.includes(team.id) ? (
+                                  <Button
+                                    className="w-full h-9 text-xs rounded-xl bg-muted border border-border text-muted-foreground font-bold cursor-not-allowed flex items-center justify-center gap-1.5"
+                                    disabled
+                                  >
+                                    <span className="h-3.5 w-3.5 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin shrink-0" />
+                                    Request Pending ⏳
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    className="w-full h-9 text-xs rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-600/20 font-bold cursor-pointer flex items-center justify-center gap-1.5"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setTargetStatsTeamId(team.id);
+                                      setSelectedStatsRole("");
+                                      setIsStatsRoleModalOpen(true);
+                                    }}
+                                  >
+                                    <Activity className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                                    Send Stats
+                                  </Button>
+                                )
                               ) : (
-                                <>
-                                  <Activity className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                                  Send Stats
-                                </>
+                                <div className="flex gap-2">
+                                  <Button
+                                    className="flex-1 h-9 text-xs rounded-xl bg-muted/80 hover:bg-muted font-bold text-foreground cursor-pointer"
+                                    variant="secondary"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenChat(team);
+                                    }}
+                                  >
+                                    Team Chat
+                                  </Button>
+                                  {userRole === "Member" ? (
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1 h-9 text-xs rounded-xl border-red-500/25 hover:border-red-500/40 text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleLeaveTeam(team.id, team.name);
+                                      }}
+                                    >
+                                      Leave Team
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      className="flex-1 h-9 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold group cursor-pointer"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenStats(team);
+                                      }}
+                                    >
+                                      Stats
+                                      <ArrowRight className="ml-1.5 h-3 w-3 group-hover:translate-x-1 transition-transform" />
+                                    </Button>
+                                  )}
+                                </div>
                               )}
-                            </Button>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button
-                                className="flex-1 h-9 text-xs rounded-xl bg-muted/80 hover:bg-muted font-bold text-foreground cursor-pointer"
-                                variant="secondary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenChat(team);
-                                }}
-                              >
-                                Team Chat
-                              </Button>
-                              {team.role === "Member" ? (
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 h-9 text-xs rounded-xl border-red-500/25 hover:border-red-500/40 text-red-400 hover:text-red-300 hover:bg-red-500/10 font-bold cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLeaveTeam(team.id, team.name);
-                                  }}
-                                >
-                                  Leave Team
-                                </Button>
-                              ) : (
-                                <Button
-                                  variant="outline"
-                                  className="flex-1 h-9 text-xs rounded-xl border-border text-foreground hover:bg-muted font-bold group cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenStats(team);
-                                  }}
-                                >
-                                  Stats
-                                  <ArrowRight className="ml-1.5 h-3 w-3 group-hover:translate-x-1 transition-transform" />
-                                </Button>
+
+                              {/* If squad is full, show payment controls */}
+                              {isMemberOfRoster && team.roster?.length >= getSportFormatSize(team.sport) && (
+                                <div className="space-y-2 animate-fade-in transition-all duration-300">
+                                  {paidTeams.includes(team.id) ? (
+                                    <Button
+                                      className="w-full h-9 text-xs rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenEntryPass(team);
+                                      }}
+                                    >
+                                      <Ticket className="h-3.5 w-3.5 text-emerald-400" />
+                                      View Entry Pass 🎫
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      className="w-full h-9 text-xs rounded-xl bg-gradient-to-r from-[#6DFF3B] to-[#5ce630] hover:from-[#5ce630] hover:to-[#4cd122] text-black font-bold cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-green-500/20 hover:shadow-lg hover:shadow-green-500/30 transition-all active:scale-[0.98]"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleOpenPayment(team, Math.round(1200 / getSportFormatSize(team.sport)), 1200);
+                                      }}
+                                    >
+                                      <CreditCard className="h-3.5 w-3.5" />
+                                      Pay Match Share (₹{Math.round(1200 / getSportFormatSize(team.sport))})
+                                    </Button>
+                                  )}
+                                </div>
                               )}
+
+                              {/* Dynamic View Roster Button */}
+                              {(() => {
+                                const joinedCount = team.roster?.length || team.members;
+                                const formatSize = getSportFormatSize(team.sport);
+                                const neededCount = Math.max(0, formatSize - joinedCount);
+                                let buttonLabel = "";
+                                if (neededCount > 0) {
+                                  const rolesStr = team.neededPositions && team.neededPositions.length > 0
+                                    ? ` ${team.neededPositions.slice(0, 2).join("/")}`
+                                    : "";
+                                  buttonLabel = `View Roster (${joinedCount} Joined • Need ${neededCount}${rolesStr})`;
+                                } else {
+                                  buttonLabel = `View Roster (${joinedCount} Joined • Squad Full ✓)`;
+                                }
+
+                                return (
+                                  <Button
+                                    className="w-full min-h-9 h-auto py-2 px-3 text-xs rounded-xl bg-[#6DFF3B] hover:bg-[#BFFFAC] text-black dark:text-black border border-[#BFFFAC]/50 font-bold cursor-pointer flex items-center justify-center gap-1.5 text-center whitespace-normal leading-relaxed"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRosterTeam(team);
+                                      setRosterModalOpen(true);
+                                    }}
+                                  >
+                                    <Users className="h-4 w-4 shrink-0" />
+                                    <span className="break-words max-w-full text-center">
+                                      {buttonLabel}
+                                    </span>
+                                  </Button>
+                                );
+                              })()}
                             </div>
-                          )}
-
-                          {/* If squad is full, show payment controls */}
-                          {team.roster?.length >= getSportFormatSize(team.sport) && (
-                            <div>
-                              {paidTeams.includes(team.id) ? (
-                                <Button
-                                  className="w-full h-9 text-xs rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-bold cursor-pointer flex items-center justify-center gap-1.5"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenEntryPass(team);
-                                  }}
-                                >
-                                  <Ticket className="h-3.5 w-3.5 text-emerald-400" />
-                                  View Entry Pass 🎫
-                                </Button>
-                              ) : (
-                                <Button
-                                  className="w-full h-9 text-xs rounded-xl bg-[#6DFF3B] hover:bg-[#5ce630] text-black font-bold cursor-pointer flex items-center justify-center gap-1.5"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenPayment(team, Math.round(1200 / getSportFormatSize(team.sport)), 1200);
-                                  }}
-                                >
-                                  <CreditCard className="h-3.5 w-3.5" />
-                                  Pay Match Share (₹{Math.round(1200 / getSportFormatSize(team.sport))})
-                                </Button>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Dynamic View Roster Button */}
-                          {(() => {
-                            const joinedCount = team.roster?.length || team.members;
-                            const formatSize = getSportFormatSize(team.sport);
-                            const neededCount = Math.max(0, formatSize - joinedCount);
-                            let buttonLabel = "";
-                            if (neededCount > 0) {
-                              const rolesStr = team.neededPositions && team.neededPositions.length > 0
-                                ? ` ${team.neededPositions.slice(0, 2).join("/")}`
-                                : "";
-                              buttonLabel = `View Roster (${joinedCount} Joined • Need ${neededCount}${rolesStr})`;
-                            } else {
-                              buttonLabel = `View Roster (${joinedCount} Joined • Squad Full ✓)`;
-                            }
-
-                            return (
-                              <Button
-                                className="w-full h-9 text-xs rounded-xl bg-green-500/10 hover:bg-green-500/20 text-emerald-500 dark:text-[#6DFF3B] border border-green-500/25 font-bold cursor-pointer flex items-center justify-center gap-1.5"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedRosterTeamId(team.id);
-                                }}
-                              >
-                                <Users className="h-4 w-4" /> {buttonLabel}
-                              </Button>
-                            );
-                          })()}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                icon={Users}
-                title="No teams joined"
-                description="Join a team or create your own to start competing in leagues and tournaments."
-                actionText="Create a Team"
-                onAction={() => {}}
-              />
-            )
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              );
+            })()
           ) : (
             /* Explore Teams Tab (with location / sport filtering) */
             <div className="space-y-6">
@@ -1241,22 +1318,21 @@ export function TeamManagement() {
                       <div className="space-y-2">
                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Your Role</label>
                         <div className="grid grid-cols-2 gap-2">
-                          {(selectedTeamToJoin.sport.toLowerCase() === "cricket" 
-                            ? ["Batsman", "Bowler", "All-rounder", "Wicket Keeper"] 
+                          {(selectedTeamToJoin.sport.toLowerCase() === "cricket"
+                            ? ["Batsman", "Bowler", "All-rounder", "Wicket Keeper"]
                             : selectedTeamToJoin.sport.toLowerCase() === "football"
-                            ? ["Striker", "Midfielder", "Defender", "Goalkeeper"]
-                            : ["Singles Player", "Doubles Player"]
+                              ? ["Striker", "Midfielder", "Defender", "Goalkeeper"]
+                              : ["Singles Player", "Doubles Player"]
                           ).map((pos) => {
                             const isNeeded = selectedTeamToJoin.neededPositions.includes(pos);
                             return (
                               <button
                                 key={pos}
                                 type="button"
-                                className={`h-10 rounded-xl text-xs font-semibold px-3 flex items-center justify-between border transition-all ${
-                                  joinRole === pos 
-                                    ? "bg-[#6DFF3B] text-black border-[#6DFF3B]" 
-                                    : "bg-card border-border hover:bg-muted text-foreground"
-                                }`}
+                                className={`h-10 rounded-xl text-xs font-semibold px-3 flex items-center justify-between border transition-all ${joinRole === pos
+                                  ? "bg-[#6DFF3B] text-black border-[#6DFF3B]"
+                                  : "bg-card border-border hover:bg-muted text-foreground"
+                                  }`}
                                 onClick={() => setJoinRole(pos)}
                               >
                                 <span>{pos}</span>
@@ -1363,105 +1439,6 @@ export function TeamManagement() {
             </Card>
           </div>
 
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl ">Team Roster</h2>
-            {userTeams.some(t => t.id === selectedTeamObject?.id) ? (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-primary h-8 px-2 rounded-xl text-xs flex items-center gap-1 font-bold shrink-0 cursor-pointer">
-                      <UserPlus className="h-3.5 w-3.5" />
-                      Invite
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-background border-border text-foreground sm:max-w-sm rounded-3xl p-5">
-                    <DialogHeader className="text-left pb-3 border-b border-border/40">
-                      <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-                        <UserPlus className="h-5 w-5 text-indigo-400" /> Send Squad Invite
-                      </DialogTitle>
-                      <DialogDescription className="text-xs text-muted-foreground">
-                        Invite a player to join your active squad roster.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-3 text-left">
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Player Name / Username</label>
-                        <Input placeholder="Enter username..." className="rounded-xl text-xs" />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Position Role</label>
-                        <Input placeholder="e.g. Batsman, Striker..." className="rounded-xl text-xs" />
-                      </div>
-                      <Button
-                        className="w-full bg-[#6DFF3B] text-black hover:bg-[#5ce630] font-bold rounded-xl h-11 text-xs mt-2"
-                        onClick={() => {
-                          toast.success("📤 Invitation sent successfully!");
-                        }}
-                      >
-                        Send Invite Request
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              ) : null}
-          </div>
-          <Card className="border-border/40 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">{selectedTeamObject?.name || "Team"} Roster</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-0 space-y-4">
-              {activeRosterList.length > 0 ? (
-                activeRosterList.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-3 rounded-xl border border-border/20 bg-muted/20 hover:bg-muted/40 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                          <AvatarFallback className="bg-primary/10 text-primary ">
-                            {member.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div
-                          className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card ${
-                            member.status === "online"
-                              ? "bg-green-500"
-                              : "bg-muted"
-                          }`}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className=" text-sm truncate">{member.name}</p>
-                          {member.role === "Captain" && (
-                            <Shield className="h-3 w-3 text-amber-500" />
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground  uppercase tracking-wider">
-                          {member.position}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Message member"
-                      className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))
-              ) : (
-                <p className="text-center py-8 text-muted-foreground text-sm ">
-                  No members found
-                </p>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
 
@@ -1542,7 +1519,7 @@ export function TeamManagement() {
               <p className="text-[10px] text-muted-foreground mt-0.5">{chatTeam?.sport} • {chatTeam?.members} active squad players online</p>
             </div>
           </div>
-          
+
           <div className="p-4 flex-1 space-y-4 max-h-[300px] overflow-y-auto bg-muted/20">
             {chatMessages.map((msg, idx) => (
               <div key={idx} className={`flex flex-col ${msg.isUser ? "items-end" : "items-start"}`}>
@@ -1550,9 +1527,8 @@ export function TeamManagement() {
                   <span className="text-[10px] font-bold text-muted-foreground">{msg.sender}</span>
                   <span className="text-[9px] text-muted-foreground/60">{msg.time}</span>
                 </div>
-                <div className={`p-3 rounded-2xl text-xs max-w-[85%] leading-relaxed ${
-                  msg.isUser ? "bg-[#6DFF3B] text-black rounded-tr-none" : "bg-card border border-border text-foreground rounded-tl-none"
-                }`}>
+                <div className={`p-3 rounded-2xl text-xs max-w-[85%] leading-relaxed ${msg.isUser ? "bg-[#6DFF3B] text-black rounded-tr-none" : "bg-card border border-border text-foreground rounded-tl-none"
+                  }`}>
                   {msg.text}
                 </div>
               </div>
@@ -1626,15 +1602,15 @@ export function TeamManagement() {
         </DialogContent>
       </Dialog>
 
-      {/* Stats Role Selection Modal */}
+      {/* Stats Role Selection Modal (Unified Team Stats & Join Request) */}
       <Dialog open={isStatsRoleModalOpen} onOpenChange={setIsStatsRoleModalOpen}>
-        <DialogContent className="bg-background border-border text-foreground sm:max-w-sm rounded-3xl p-5">
+        <DialogContent className="bg-background border-border text-foreground sm:max-w-md rounded-3xl p-5 max-h-[85vh] overflow-y-auto">
           <DialogHeader className="text-left pb-3 border-b border-border/40">
             <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
-              <Activity className="h-5 w-5 text-blue-400" /> Apply Position / Send Stats
+              <Trophy className="h-5 w-5 text-[#6DFF3B]" /> Team Stats & Join Request
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Select which role you want to apply for in this team.
+              Review team performance and apply to join the squad.
             </DialogDescription>
           </DialogHeader>
 
@@ -1648,8 +1624,29 @@ export function TeamManagement() {
                 ? ["Striker", "Midfielder", "Defender", "Goalkeeper"]
                 : ["Singles Player", "Doubles Player"];
 
+            const winRate = Math.round((team.wins / (team.wins + team.losses || 1)) * 100);
+
             return (
               <div className="space-y-4 py-3 text-left">
+                {/* Team performance overview */}
+                <div className="space-y-2">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">Team Performance</span>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    <div className="bg-card p-2.5 rounded-xl border border-border/40 text-center">
+                      <p className="text-[10px] text-muted-foreground">Win Rate</p>
+                      <p className="text-base font-bold mt-0.5 text-[#6DFF3B]">{winRate}%</p>
+                    </div>
+                    <div className="bg-card p-2.5 rounded-xl border border-border/40 text-center">
+                      <p className="text-[10px] text-muted-foreground">Wins / Loss</p>
+                      <p className="text-base font-bold mt-0.5 text-foreground">{team.wins} / {team.losses}</p>
+                    </div>
+                    <div className="bg-card p-2.5 rounded-xl border border-border/40 text-center">
+                      <p className="text-[10px] text-muted-foreground">Roster Size</p>
+                      <p className="text-base font-bold mt-0.5 text-blue-400">{team.roster?.length || team.members}</p>
+                    </div>
+                  </div>
+                </div>
+
                 {team.neededPositions && team.neededPositions.length > 0 && (
                   <div className="bg-blue-500/5 border border-blue-500/10 p-3 rounded-2xl">
                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider block mb-1">Open Needs</span>
@@ -1660,7 +1657,7 @@ export function TeamManagement() {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Your Role</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Your Position Role</label>
                   <div className="grid grid-cols-2 gap-2">
                     {roles.map((pos) => {
                       const isNeeded = team.neededPositions?.includes(pos);
@@ -1669,13 +1666,13 @@ export function TeamManagement() {
                           key={pos}
                           type="button"
                           className={`h-10 rounded-xl text-xs font-semibold px-3 flex items-center justify-between border transition-all ${selectedStatsRole === pos
-                            ? "bg-blue-500 text-white border-blue-500"
+                            ? "bg-[#6DFF3B] text-black border-[#6DFF3B]"
                             : "bg-card border-border hover:bg-muted text-foreground"
                             }`}
                           onClick={() => setSelectedStatsRole(pos)}
                         >
                           <span>{pos}</span>
-                          {isNeeded && <Badge className="bg-[#6DFF3B]/15 text-[#6DFF3B] text-[8px] font-bold px-1.5 border-none uppercase">Need</Badge>}
+                          {isNeeded && <Badge className="bg-blue-500/15 text-blue-400 text-[8px] font-bold px-1.5 border-none uppercase">Need</Badge>}
                         </button>
                       );
                     })}
@@ -1690,7 +1687,7 @@ export function TeamManagement() {
                     handleSendStatsToHost(team.id, team.name, selectedStatsRole);
                   }}
                 >
-                  Confirm & Send Stats
+                  Send Join Request & Stats
                 </Button>
               </div>
             );
@@ -1700,8 +1697,8 @@ export function TeamManagement() {
 
       {/* Consolidated Payment & Entry Ticket Dialog */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
-        <DialogContent className="bg-background border-border text-foreground sm:max-w-md rounded-3xl p-5 overflow-hidden shadow-2xl relative">
-          
+        <DialogContent className="bg-background border-border text-foreground sm:max-w-md rounded-3xl p-5 overflow-hidden shadow-2xl">
+
           {paymentModalMode === "pay" && (
             <>
               <DialogHeader className="text-left pb-3 border-b border-border/40">
@@ -1888,6 +1885,119 @@ export function TeamManagement() {
           )}
 
         </DialogContent>
+      </Dialog>
+
+      {/* View Roster Dialog Modal */}
+      <Dialog open={rosterModalOpen} onOpenChange={setRosterModalOpen}>
+        {(() => {
+          const currentRosterTeam = rosterTeam ? (userTeams.find(t => t.id === rosterTeam.id) || rosterTeam) : null;
+          return (
+            <DialogContent className="bg-background border-border text-foreground sm:max-w-md max-h-[80vh] overflow-hidden p-0 rounded-3xl flex flex-col">
+              <div className="p-5 border-b border-border bg-muted/40 flex items-center justify-between">
+                <div>
+                  <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+                    <Users className="h-5 w-5 text-[#6DFF3B]" /> {currentRosterTeam?.name} Roster
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                    {currentRosterTeam?.sport} • {currentRosterTeam?.roster?.length || currentRosterTeam?.members} players joined
+                  </DialogDescription>
+                </div>
+              </div>
+
+              <div className="p-5 flex-1 overflow-y-auto space-y-3.5 bg-muted/10">
+                {/* Invite option rendered inside the player list if user is a member */}
+                {currentRosterTeam && (currentRosterTeam.roster || []).some(m => m.name === "You" || m.name === currentUser?.fullName) && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-[#6DFF3B]/30 hover:border-[#6DFF3B]/60 bg-[#6DFF3B]/5 hover:bg-[#6DFF3B]/10 text-[#6DFF3B] text-xs font-bold transition-all cursor-pointer">
+                        <UserPlus className="h-4 w-4 shrink-0" />
+                        Invite New Player
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-background border-border text-foreground sm:max-w-sm rounded-3xl p-5">
+                      <DialogHeader className="text-left pb-3 border-b border-border/40">
+                        <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                          <UserPlus className="h-5 w-5 text-indigo-400" /> Send Squad Invite
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-muted-foreground">
+                          Invite a player to join your active squad roster.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-3 text-left">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Player Name / Username</label>
+                          <Input placeholder="Enter username..." className="rounded-xl text-xs" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Position Role</label>
+                          <Input placeholder="e.g. Batsman, Striker..." className="rounded-xl text-xs" />
+                        </div>
+                        <Button
+                          className="w-full bg-[#6DFF3B] text-black hover:bg-[#5ce630] font-bold rounded-xl h-11 text-xs mt-2"
+                          onClick={() => {
+                            toast.success("📤 Invitation sent successfully!");
+                          }}
+                        >
+                          Send Invite Request
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                {currentRosterTeam && (currentRosterTeam.roster || []).length > 0 ? (
+                  (currentRosterTeam.roster || []).map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-3.5 rounded-2xl border border-border/40 bg-card hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Avatar className="h-10 w-10 border border-border bg-muted shadow-sm">
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                              {member.name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div
+                            className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card ${member.status === "online"
+                              ? "bg-green-500"
+                              : "bg-muted"
+                              }`}
+                          />
+                        </div>
+                        <div className="min-w-0 text-left">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-foreground truncate">{member.name}</p>
+                            {member.role === "Captain" && (
+                              <Shield className="h-3.5 w-3.5 text-amber-500 fill-amber-500/20" />
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mt-0.5">
+                            {member.position}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Message member"
+                        className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors bg-muted/40 hover:bg-muted"
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center py-10 text-muted-foreground text-sm">
+                    No members found in this roster.
+                  </p>
+                )}
+              </div>
+            </DialogContent>
+          );
+        })()}
       </Dialog>
     </div>
   );

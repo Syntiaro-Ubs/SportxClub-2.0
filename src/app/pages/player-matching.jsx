@@ -17,6 +17,10 @@ import {
   Loader2,
   Plus,
   Users,
+  Share2,
+  Copy,
+  ExternalLink,
+  Ticket,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -370,6 +374,36 @@ const sportsOptions = [
   { id: "tennis", name: "Tennis", emoji: "🎾" },
 ];
 
+const sportConfigs = {
+  Cricket: {
+    defaultSize: 10,
+    recommendations: {
+      10: "(Recommended for Cricket)"
+    }
+  },
+  Football: {
+    defaultSize: 11,
+    recommendations: {
+      10: "(Recommended for 5v5 Turf)",
+      11: "(Recommended for Football)",
+      12: "(Recommended for 6v6 Turf)"
+    }
+  },
+  Tennis: {
+    defaultSize: 2,
+    recommendations: {
+      2: "(Recommended for Singles)",
+      4: "(Recommended for Doubles)"
+    }
+  },
+  Basketball: {
+    defaultSize: 10,
+    recommendations: {
+      10: "(Recommended for 5v5 Basketball)"
+    }
+  }
+};
+
 export function PlayerMatching() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -412,15 +446,28 @@ export function PlayerMatching() {
 
 
   // New Matchmaking Lobby states
-  const [squadLobby, setSquadLobby] = useState({
-    active: false,
-    sport: "Cricket",
-    maxSize: 10,
-    members: []
+  const [squadLobby, setSquadLobby] = useState(() => {
+    const saved = localStorage.getItem("active_squad_lobby");
+    return saved ? JSON.parse(saved) : {
+      active: false,
+      sport: "Cricket",
+      maxSize: 10,
+      minSkill: "Open to All",
+      members: [],
+      paymentMode: null,
+      paidMembers: []
+    };
   });
+
+  useEffect(() => {
+    localStorage.setItem("active_squad_lobby", JSON.stringify(squadLobby));
+  }, [squadLobby]);
+
   const [isLobbyOpen, setIsLobbyOpen] = useState(false);
   const [isCreateLobbyOpen, setIsCreateLobbyOpen] = useState(false);
   const [joinRequests, setJoinRequests] = useState([]);
+  const [showHostMasterPass, setShowHostMasterPass] = useState(false);
+  const [isInviteCardOpen, setIsInviteCardOpen] = useState(false);
   
   // Squad Join Modal state
   const [selectedGroupToJoin, setSelectedGroupToJoin] = useState(null);
@@ -431,6 +478,7 @@ export function PlayerMatching() {
   // Create lobby form states
   const [formSport, setFormSport] = useState("Cricket");
   const [formSize, setFormSize] = useState(10);
+  const [formMinSkill, setFormMinSkill] = useState("Open to All");
 
   const handleCreateSquad = () => {
     const hostUser = { id: 99, name: "You (Host)", sport: formSport, skillLevel: "Expert", rating: 5.0, role: "host" };
@@ -439,13 +487,69 @@ export function PlayerMatching() {
       active: true,
       sport: formSport,
       maxSize: formSize,
-      members: [hostUser]
+      minSkill: formMinSkill,
+      members: [hostUser],
+      paymentMode: null,
+      paidMembers: []
     });
     setInvitedPlayers({});
     setJoinRequests([]);
     setIsCreateLobbyOpen(false);
     setIsLobbyOpen(true);
     toast.success(`Squad lobby created for ${formSport}!`);
+  };
+
+  const handleAutoFillSquad = () => {
+    const mockTeammates = [
+      { id: 101, name: "Amit Patel", sport: formSport, skillLevel: "Advanced", rating: 4.7, role: "player" },
+      { id: 102, name: "Vikram Malhotra", sport: formSport, skillLevel: "Intermediate", rating: 4.5, role: "player" },
+      { id: 103, name: "Rohan Das", sport: formSport, skillLevel: "Expert", rating: 4.9, role: "player" },
+      { id: 104, name: "Sneha Sen", sport: formSport, skillLevel: "Advanced", rating: 4.6, role: "player" },
+      { id: 105, name: "Kabir Mehta", sport: formSport, skillLevel: "Beginner", rating: 4.2, role: "player" },
+      { id: 106, name: "Neha Sharma", sport: formSport, skillLevel: "Intermediate", rating: 4.4, role: "player" },
+      { id: 1, name: "Rahul Sharma", sport: formSport, skillLevel: "Advanced", rating: 4.8, role: "player" },
+      { id: 2, name: "Priya Patel", sport: formSport, skillLevel: "Intermediate", rating: 4.6, role: "player" },
+      { id: 3, name: "Arjun Malhotra", sport: formSport, skillLevel: "Expert", rating: 4.9, role: "player" },
+      { id: 4, name: "Sanjay Kumar", sport: formSport, skillLevel: "Intermediate", rating: 4.4, role: "player" },
+      { id: 5, name: "Aman Preet", sport: formSport, skillLevel: "Advanced", rating: 4.6, role: "player" },
+    ];
+    setSquadLobby(prev => {
+      const needed = prev.maxSize - prev.members.length;
+      if (needed <= 0) return prev;
+      const joined = mockTeammates.slice(0, needed);
+      toast.success(`⚡ Quick-Fill: ${joined.length} matching players auto-joined your squad!`);
+      return {
+        ...prev,
+        members: [...prev.members, ...joined]
+      };
+    });
+  };
+
+  const handleTransferHost = (memberId, memberName) => {
+    setSquadLobby(prev => {
+      const updatedMembers = prev.members.map(m => {
+        if (m.id === 99) return { ...m, role: "player" };
+        if (m.id === memberId) return { ...m, role: "host" };
+        return m;
+      });
+      toast.success(`🔄 Host ownership transferred to ${memberName}!`);
+      return { ...prev, members: updatedMembers };
+    });
+  };
+
+  const handleSimulatePayments = () => {
+    setSquadLobby(prev => {
+      const allIds = prev.members.map(m => m.id);
+      toast.success("💳 Simulated: All teammates have paid their match share!");
+      return {
+        ...prev,
+        paidMembers: allIds
+      };
+    });
+  };
+
+  const handleSendReminder = (memberName) => {
+    toast.success(`⚡ Payment reminder notification sent to ${memberName}!`);
   };
 
   const handleKickMember = (memberId, memberName) => {
@@ -498,10 +602,19 @@ export function PlayerMatching() {
   };
 
   const handleDisbandSquad = () => {
-    setSquadLobby({ active: false, sport: "Cricket", maxSize: 10, members: [] });
+    setSquadLobby({
+      active: false,
+      sport: "Cricket",
+      maxSize: 10,
+      minSkill: "Open to All",
+      members: [],
+      paymentMode: null,
+      paidMembers: []
+    });
     setInvitedPlayers({});
     setJoinRequests([]);
     setIsLobbyOpen(false);
+    setShowHostMasterPass(false);
     toast.error("Squad disbanded.");
   };
 
@@ -1476,7 +1589,12 @@ export function PlayerMatching() {
                   <button
                     key={sport}
                     type="button"
-                    onClick={() => setFormSport(sport)}
+                    onClick={() => {
+                      setFormSport(sport);
+                      if (sportConfigs[sport]) {
+                        setFormSize(sportConfigs[sport].defaultSize);
+                      }
+                    }}
                     className={`rounded-full border px-4 py-2 text-xs font-semibold transition cursor-pointer ${formSport === sport
                       ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-emerald-600 dark:text-[#6DFF3B]"
                       : "border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.03] text-slate-600 dark:text-white/68 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
@@ -1496,13 +1614,36 @@ export function PlayerMatching() {
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
                 <SelectContent className="bg-white dark:bg-[#101216] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl">
-                  {[2, 4, 6, 8, 10, 12].map((size) => (
-                    <SelectItem key={size} value={size.toString()} className="cursor-pointer rounded-lg my-0.5 focus:bg-[#6DFF3B]/10 focus:text-slate-950 dark:focus:text-[#6DFF3B]">
-                      {size} Players {size === 10 ? "(Recommended for Cricket)" : ""} {size === 4 ? "(Doubles)" : ""}
-                    </SelectItem>
-                  ))}
+                  {[2, 4, 6, 8, 10, 11, 12].map((size) => {
+                    const recommendation = sportConfigs[formSport]?.recommendations?.[size] || "";
+                    return (
+                      <SelectItem key={size} value={size.toString()} className="cursor-pointer rounded-lg my-0.5 focus:bg-[#6DFF3B]/10 focus:text-slate-950 dark:focus:text-[#6DFF3B]">
+                        {size} Players {recommendation}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Select Skill Level */}
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Minimum Skill Level</label>
+              <div className="flex flex-wrap gap-2">
+                {["Open to All", "Intermediate", "Expert"].map((skill) => (
+                  <button
+                    key={skill}
+                    type="button"
+                    onClick={() => setFormMinSkill(skill)}
+                    className={`rounded-full border px-4 py-2 text-xs font-semibold transition cursor-pointer ${formMinSkill === skill
+                      ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/10 text-emerald-600 dark:text-[#6DFF3B]"
+                      : "border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-white/[0.03] text-slate-600 dark:text-white/68 hover:bg-slate-100 dark:hover:bg-white/[0.06]"
+                      }`}
+                  >
+                    {skill}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <p className="text-[10px] text-muted-foreground italic">
@@ -1531,209 +1672,505 @@ export function PlayerMatching() {
       {/* Lobby Management Panel */}
       <Dialog open={isLobbyOpen} onOpenChange={setIsLobbyOpen}>
         <DialogContent className="sm:max-w-lg rounded-2xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] text-slate-900 dark:text-white shadow-2xl">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                  </span>
-                  Lobby Room: {squadLobby.sport}
-                </DialogTitle>
-                <DialogDescription className="text-slate-500 dark:text-white/60 text-xs mt-0.5">
-                  Match Lobby waiting room. Search and invite players to complete the team.
-                </DialogDescription>
-              </div>
-              <Badge className="bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 text-emerald-600 dark:text-[#6DFF3B] text-[10px] uppercase font-semibold">
-                {squadLobby.members.length} / {squadLobby.maxSize} Joined
-              </Badge>
-            </div>
-          </DialogHeader>
+          
+          {showHostMasterPass ? (
+            <div className="space-y-4 pt-2 text-center relative">
+              {/* Glowing ticket border line effects */}
+              <div className="absolute top-0 left-0 w-full h-1 bg-[#6DFF3B]" />
 
-          {/* Members list */}
-          <div className="my-2 space-y-3 max-h-[300px] overflow-y-auto pr-1">
-            {/* Join Requests */}
-            {joinRequests.length > 0 && (
-              <div className="space-y-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-3">
-                <label className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold block flex items-center gap-1.5 animate-pulse">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                  </span>
-                  Pending Join Requests ({joinRequests.length})
-                </label>
-                <div className="space-y-2">
-                  {joinRequests.map((req) => (
-                    <div
-                      key={req.id}
-                      className="flex items-center justify-between p-2 rounded-xl bg-white/70 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05]"
-                    >
-                      {req.isGroup ? (
+              <div className="space-y-1">
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] font-bold uppercase tracking-[4px] px-2 py-0.5 rounded-full">Lobby Host Master Pass</span>
+                <h3 className="text-lg font-black tracking-tight text-foreground uppercase mt-1.5">Lobby Master Pass</h3>
+                <p className="text-[10px] text-muted-foreground">Show this QR code at the turf reception for team entry</p>
+              </div>
+
+              {/* QR / Barcode Card */}
+              <div className="bg-white p-4 rounded-2xl flex flex-col items-center justify-center border border-border/40 shadow-sm max-w-[200px] mx-auto">
+                <div className="h-32 w-32 bg-[#050505] flex items-center justify-center p-1 rounded-lg">
+                  <div className="grid grid-cols-5 gap-1.5 h-full w-full">
+                    {Array.from({ length: 25 }).map((_, idx) => (
+                      <div
+                        key={idx}
+                        className={`rounded-xs ${(idx * 7 + 13) % 2 === 0 ? "bg-[#6DFF3B]" : "bg-transparent"}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <span className="text-[9px] font-mono text-slate-800 mt-2 font-bold tracking-widest">LOBBY-HOST-99-PASS</span>
+              </div>
+
+              {/* Roster details header */}
+              <div className="bg-slate-50 dark:bg-muted/40 p-3 rounded-2xl border border-slate-200 dark:border-border/40 text-left space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[9px] text-muted-foreground uppercase font-mono">Sport & Format</span>
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{squadLobby.sport} ({squadLobby.maxSize} Players)</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 dark:border-border/40 pt-1.5 text-xs">
+                  <span className="text-[9px] text-muted-foreground uppercase font-mono">Min Skill level</span>
+                  <span className="font-bold text-[#6DFF3B]">{squadLobby.minSkill}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-slate-200 dark:border-border/40 pt-1.5 text-xs">
+                  <span className="text-[9px] text-muted-foreground uppercase font-mono">Payment Mode</span>
+                  <span className="font-bold text-emerald-400 capitalize">{squadLobby.paymentMode === "full" ? "Paid Full (Reimbursed)" : "Split Payment"}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setShowHostMasterPass(false)}
+                  variant="outline"
+                  className="flex-1 rounded-xl text-xs h-10 font-bold cursor-pointer"
+                >
+                  Back to Lobby
+                </Button>
+                <Button
+                  onClick={() => {
+                    toast.success("📋 Master pass receipt downloaded to downloads folder!");
+                  }}
+                  className="flex-1 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl text-xs h-10 font-bold cursor-pointer"
+                >
+                  Download Receipt
+                </Button>
+              </div>
+            </div>
+          ) : squadLobby.paymentMode ? (
+            <div className="space-y-4 pt-1">
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                    📊 Payment Tracking Dashboard
+                  </DialogTitle>
+                  <Badge className="bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 text-emerald-600 dark:text-[#6DFF3B] text-[10px] uppercase font-semibold">
+                    {squadLobby.paymentMode === "full" ? "Paid Full" : "Split Mode"}
+                  </Badge>
+                </div>
+                <DialogDescription className="text-xs text-muted-foreground text-left">
+                  {squadLobby.paymentMode === "full" 
+                    ? "You paid the full turf booking fee. Players will reimburse you. Track their payments below."
+                    : "Lobby booking is on hold. Other teammates need to pay their individual split share to confirm."
+                  }
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Members List with Payment Statuses */}
+              <div className="space-y-2 text-left">
+                <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Teammates Payments</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[220px] overflow-y-auto pr-1">
+                  {squadLobby.members.map((member) => {
+                    const hasPaid = squadLobby.paidMembers.includes(member.id) || member.role === "host";
+                    return (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]"
+                      >
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-8 w-8 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0">
-                            👥
-                          </div>
+                          <Avatar className="h-7 w-7">
+                            <AvatarFallback className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-medium">
+                              {member.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="min-w-0">
-                            <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">Group: {req.groupName}</p>
-                            <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">
-                              {req.members.map((m) => m.name.split(" ")[0]).join(", ")}
+                            <p className="font-semibold text-xs truncate text-slate-900 dark:text-white">
+                              {member.name} {member.role === "host" && "(You)"}
+                            </p>
+                            <p className="text-[8px] text-muted-foreground truncate">
+                              Share: ₹{Math.round(1200 / squadLobby.maxSize)}
                             </p>
                           </div>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-8 w-8 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
-                            {req.name.split(" ").map(n => n[0]).join("").toUpperCase()}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{req.name}</p>
-                            <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">{req.skillLevel} • ★ {req.rating}</p>
-                          </div>
-                        </div>
-                      )}
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <Button
-                          onClick={() => handleAcceptRequest(req)}
-                          className="h-7 px-3 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold rounded-lg cursor-pointer"
-                        >
-                          {req.isGroup ? "Accept Group" : "Accept"}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleDeclineRequest(req.id, req.isGroup ? req.groupName : req.name)}
-                          className="h-7 w-7 p-0 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg cursor-pointer"
-                        >
-                          ✕
-                        </Button>
+                        {hasPaid ? (
+                          <Badge className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[9px] font-bold py-0.5 px-2">
+                            {member.role === "host" ? "Host Paid" : "Paid ✓"}
+                          </Badge>
+                        ) : (
+                          <div className="flex items-center gap-1 shrink-0">
+                            <span className="text-[9px] text-amber-500 font-semibold mr-1">Pending</span>
+                            <Button
+                              size="sm"
+                              onClick={() => handleSendReminder(member.name)}
+                              className="h-6 px-2 text-[8px] bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/20 rounded-md font-bold cursor-pointer"
+                            >
+                              Reminder ⚡
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
-            )}
 
-            <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Lobby Members</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {squadLobby.members.map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-medium">
-                        {member.name.split(" ").map(n => n[0]).join("").toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0">
-                      <p className="font-semibold text-xs truncate text-slate-900 dark:text-white flex items-center gap-1.5">
-                        {member.name}
-                        {member.role === "host" && (
-                          <span title="Lobby Host">👑</span>
-                        )}
-                      </p>
-                      <p className="text-[9px] text-muted-foreground truncate capitalize">
-                        {member.role === "host" ? "Squad Leader" : `Player • ★ ${member.rating}`}
-                      </p>
-                    </div>
-                  </div>
-                  {member.role !== "host" && (
-                    <button
-                      onClick={() => handleKickMember(member.id, member.name)}
-                      className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 hover:text-red-500 text-slate-400 dark:text-slate-500 transition cursor-pointer"
-                      title="Kick member"
-                    >
-                      <UserPlus className="h-3.5 w-3.5 rotate-45" />
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {/* Show empty open slots */}
-              {Array.from({ length: squadLobby.maxSize - squadLobby.members.length }).map((_, idx) => (
-                <div
-                  key={`open-${idx}`}
-                  onClick={() => {
-                    setIsLobbyOpen(false);
-                    const searchInput = document.querySelector('input[placeholder="Search players..."]');
-                    if (searchInput) searchInput.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="flex items-center justify-center p-2.5 rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/5 transition cursor-pointer group text-slate-400 dark:text-white/35 min-h-[50px]"
-                >
-                  <span className="text-[10px] font-medium flex items-center gap-1.5 group-hover:text-emerald-600 dark:group-hover:text-[#6DFF3B] transition-colors">
-                    <UserPlus className="h-3 w-3" />
-                    Open Slot
+              {/* Progress and simulation */}
+              <div className="pt-2 border-t border-slate-100 dark:border-white/[0.08] space-y-3">
+                <div className="flex justify-between text-xs font-semibold text-left">
+                  <span className="text-muted-foreground">Teammate Payments Received</span>
+                  <span className="text-emerald-500 font-bold">
+                    {squadLobby.paymentMode === "full" 
+                      ? `${squadLobby.paidMembers.length}/${squadLobby.members.length} Reimbursed`
+                      : `${squadLobby.paidMembers.length}/${squadLobby.members.length} Paid`
+                    }
                   </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Lobby progress indicator */}
-          <div className="pt-2 border-t border-slate-100 dark:border-white/[0.08]">
-            {squadLobby.members.length < squadLobby.maxSize ? (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs font-medium">
-                  <span className="text-muted-foreground flex items-center gap-1.5">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600 dark:text-[#6DFF3B]" />
-                    Finding remaining players...
-                  </span>
-                  <span>{Math.round((squadLobby.members.length / squadLobby.maxSize) * 100)}% Complete</span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-emerald-500 to-[#6DFF3B] transition-all duration-500"
-                    style={{ width: `${(squadLobby.members.length / squadLobby.maxSize) * 100}%` }}
+                    style={{ width: `${(squadLobby.paidMembers.length / squadLobby.members.length) * 100}%` }}
                   />
                 </div>
-                <Button
-                  onClick={() => {
-                    setIsLobbyOpen(false);
-                    navigate("/squad-booking", { state: { squadLobby } });
-                  }}
-                  className="w-full h-9 mt-2 bg-[#6DFF3B]/10 hover:bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] border border-[#6DFF3B]/20 rounded-lg text-xs font-semibold cursor-pointer"
-                >
-                  Proceed with Current Players ({squadLobby.members.length} Joined)
-                </Button>
-              </div>
-            ) : (
-              <div className="p-3 bg-[#6DFF3B]/10 border border-[#6DFF3B]/20 rounded-xl space-y-3 shadow-md shadow-[#6DFF3B]/5 animate-pulse">
-                <div className="flex items-center gap-2">
-                  <Check className="h-5 w-5 text-emerald-600 dark:text-[#6DFF3B]" />
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">Squad is Full & Ready!</h4>
-                    <p className="text-[10px] text-muted-foreground">All slots filled. You can now proceed to book a turf complex.</p>
+
+                {squadLobby.paidMembers.length < squadLobby.members.length ? (
+                  <div className="flex flex-col gap-2 pt-1">
+                    <Button
+                      onClick={handleSimulatePayments}
+                      className="w-full h-9 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-xl text-xs font-semibold cursor-pointer"
+                    >
+                      🤖 Simulate Teammate Payments (For Demo)
+                    </Button>
+                    <p className="text-[9px] text-center text-muted-foreground italic">
+                      * Waiting for remaining players to complete payments before generating host master entry pass.
+                    </p>
                   </div>
-                </div>
-                <Button
-                  onClick={() => {
-                    setIsLobbyOpen(false);
-                    navigate("/squad-booking", { state: { squadLobby } });
-                  }}
-                  className="w-full h-9 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-lg text-xs font-semibold cursor-pointer"
-                >
-                  Book turf for your Squad
-                </Button>
+                ) : (
+                  <div className="pt-1">
+                    <Button
+                      onClick={() => setShowHostMasterPass(true)}
+                      className="w-full h-10 bg-gradient-to-r from-[#6DFF3B] to-[#5ce630] hover:from-[#5ce630] hover:to-[#4cd122] text-black font-bold rounded-xl text-xs cursor-pointer shadow-lg shadow-green-500/20 flex items-center justify-center gap-1.5"
+                    >
+                      <Ticket className="h-4 w-4" />
+                      View Host Master Pass 🎫
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
+
+              <DialogFooter className="gap-2 sm:gap-0 mt-2 border-t border-slate-100 dark:border-white/[0.08] pt-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLobbyOpen(false)}
+                  className="border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl cursor-pointer"
+                >
+                  Close Panel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDisbandSquad}
+                  className="rounded-xl cursor-pointer"
+                >
+                  Disband Squad
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <>
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      </span>
+                      Lobby Room: {squadLobby.sport}
+                    </DialogTitle>
+                    <DialogDescription className="text-slate-500 dark:text-white/60 text-xs mt-0.5">
+                      Match Lobby waiting room. Search and invite players to complete the team.
+                    </DialogDescription>
+                  </div>
+                  <Badge className="bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 text-emerald-600 dark:text-[#6DFF3B] text-[10px] uppercase font-semibold">
+                    {squadLobby.members.length} / {squadLobby.maxSize} Joined
+                  </Badge>
+                </div>
+              </DialogHeader>
+
+              {/* Members list */}
+              <div className="my-2 space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                {/* Join Requests */}
+                {joinRequests.length > 0 && (
+                  <div className="space-y-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl mb-3">
+                    <label className="text-[10px] uppercase tracking-wider text-amber-600 dark:text-amber-400 font-bold block flex items-center gap-1.5 animate-pulse">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                      </span>
+                      Pending Join Requests ({joinRequests.length})
+                    </label>
+                    <div className="space-y-2">
+                      {joinRequests.map((req) => (
+                        <div
+                          key={req.id}
+                          className="flex items-center justify-between p-2 rounded-xl bg-white/70 dark:bg-white/[0.03] border border-slate-100 dark:border-white/[0.05]"
+                        >
+                          {req.isGroup ? (
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="h-8 w-8 rounded-full bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                👥
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">Group: {req.groupName}</p>
+                                <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">
+                                  {req.members.map((m) => m.name.split(" ")[0]).join(", ")}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="h-8 w-8 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
+                                {req.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-xs text-slate-900 dark:text-white truncate">{req.name}</p>
+                                <p className="text-[9px] text-slate-500 dark:text-white/50 truncate">{req.skillLevel} • ★ {req.rating}</p>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              onClick={() => handleAcceptRequest(req)}
+                              className="h-7 px-3 bg-emerald-500 hover:bg-emerald-400 text-white text-[10px] font-bold rounded-lg cursor-pointer"
+                            >
+                              {req.isGroup ? "Accept Group" : "Accept"}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleDeclineRequest(req.id, req.isGroup ? req.groupName : req.name)}
+                              className="h-7 w-7 p-0 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-lg cursor-pointer"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-semibold block">Lobby Members</label>
+                  <Button
+                    size="sm"
+                    onClick={() => setIsInviteCardOpen(true)}
+                    className="h-7 text-[9px] px-2.5 bg-[#6DFF3B]/10 hover:bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] border border-[#6DFF3B]/20 rounded-xl font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Share2 className="h-3 w-3" /> Invite Card (WhatsApp)
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left">
+                  {squadLobby.members.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white font-medium">
+                            {member.name.split(" ").map(n => n[0]).join("").toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-xs truncate text-slate-900 dark:text-white flex items-center gap-1.5">
+                            {member.name}
+                            {member.role === "host" && (
+                              <span title="Lobby Host">👑</span>
+                            )}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground truncate capitalize">
+                            {member.role === "host" ? "Squad Leader" : `Player • ★ ${member.rating}`}
+                          </p>
+                        </div>
+                      </div>
+                      {member.role !== "host" && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="sm"
+                            onClick={() => handleTransferHost(member.id, member.name)}
+                            className="h-6 px-1.5 text-[8px] bg-[#6DFF3B]/10 hover:bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] border border-[#6DFF3B]/20 rounded-md font-bold cursor-pointer"
+                            title="Make Lobby Host"
+                          >
+                            👑 Make Host
+                          </Button>
+                          <button
+                            onClick={() => handleKickMember(member.id, member.name)}
+                            className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 hover:text-red-500 text-slate-400 dark:text-slate-500 transition cursor-pointer"
+                            title="Kick member"
+                          >
+                            <UserPlus className="h-3.5 w-3.5 rotate-45" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Show empty open slots */}
+                  {Array.from({ length: squadLobby.maxSize - squadLobby.members.length }).map((_, idx) => (
+                    <div
+                      key={`open-${idx}`}
+                      onClick={() => {
+                        setIsLobbyOpen(false);
+                        const searchInput = document.querySelector('input[placeholder="Search players..."]');
+                        if (searchInput) searchInput.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className="flex items-center justify-center p-2.5 rounded-xl border border-dashed border-slate-200 dark:border-white/[0.08] hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/5 transition cursor-pointer group text-slate-400 dark:text-white/35 min-h-[50px]"
+                    >
+                      <span className="text-[10px] font-medium flex items-center gap-1.5 group-hover:text-emerald-600 dark:group-hover:text-[#6DFF3B] transition-colors">
+                        <UserPlus className="h-3 w-3" />
+                        Open Slot
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Lobby progress indicator */}
+              <div className="pt-2 border-t border-slate-100 dark:border-white/[0.08] text-left">
+                {squadLobby.members.length < squadLobby.maxSize ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-medium">
+                      <span className="text-muted-foreground flex items-center gap-1.5">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600 dark:text-[#6DFF3B]" />
+                        Finding remaining players...
+                      </span>
+                      <span>{Math.round((squadLobby.members.length / squadLobby.maxSize) * 100)}% Complete</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 to-[#6DFF3B] transition-all duration-500"
+                        style={{ width: `${(squadLobby.members.length / squadLobby.maxSize) * 100}%` }}
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleAutoFillSquad}
+                        className="flex-1 h-9 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 rounded-lg text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        ⚡ Auto-Fill Squad
+                      </Button>
+                      
+                      <Button
+                        onClick={() => {
+                          setIsLobbyOpen(false);
+                          navigate("/squad-booking", { state: { squadLobby } });
+                        }}
+                        className="flex-1 h-9 bg-[#6DFF3B]/10 hover:bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] border border-[#6DFF3B]/20 rounded-lg text-xs font-semibold cursor-pointer"
+                      >
+                        Proceed with Current ({squadLobby.members.length})
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-[#6DFF3B]/10 border border-[#6DFF3B]/20 rounded-xl space-y-3 shadow-md shadow-[#6DFF3B]/5 animate-pulse">
+                    <div className="flex items-center gap-2">
+                      <Check className="h-5 w-5 text-emerald-600 dark:text-[#6DFF3B]" />
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white">Squad is Full & Ready!</h4>
+                        <p className="text-[10px] text-muted-foreground">All slots filled. You can now proceed to book a turf complex.</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setIsLobbyOpen(false);
+                        navigate("/squad-booking", { state: { squadLobby } });
+                      }}
+                      className="w-full h-9 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-lg text-xs font-semibold cursor-pointer"
+                    >
+                      Book turf for your Squad
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0 mt-2 border-t border-slate-100 dark:border-white/[0.08] pt-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLobbyOpen(false)}
+                  className="border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl cursor-pointer"
+                >
+                  Keep Searching
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDisbandSquad}
+                  className="rounded-xl cursor-pointer"
+                >
+                  Disband Squad
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* WhatsApp Invite Card Dialog */}
+      <Dialog open={isInviteCardOpen} onOpenChange={setIsInviteCardOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] text-slate-900 dark:text-white shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+              📲 WhatsApp Invite Card
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Share this invite card to WhatsApp or social media groups to recruit players!
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="border border-green-500/30 bg-[#6DFF3B]/5 p-5 rounded-2xl space-y-4 text-left font-sans shadow-inner">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] bg-[#6DFF3B]/20 text-emerald-600 dark:text-[#6DFF3B] font-black tracking-widest px-2 py-0.5 rounded-full uppercase">SportXClub Invite</span>
+              <Badge className="bg-[#6DFF3B] text-black text-[9px] font-bold">LIVE LOBBY</Badge>
+            </div>
+            
+            <div className="space-y-2">
+              <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                Join our {squadLobby.sport} Match! 🏏
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-white/70 leading-relaxed">
+                Hey friends! I've launched a Matchmaking Squad Lobby on SportXClub. We are looking for players to join us!
+              </p>
+            </div>
+
+            <div className="border-t border-slate-200 dark:border-white/[0.08] pt-3 grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Sport</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{squadLobby.sport}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Slots Filled</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{squadLobby.members.length} / {squadLobby.maxSize}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Min Skill Level</span>
+                <span className="font-bold text-[#6DFF3B]">{squadLobby.minSkill}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-muted-foreground uppercase font-mono block">Host</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">You (Host)</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-100 dark:bg-slate-900 p-2.5 rounded-xl text-[10px] font-mono text-slate-500 dark:text-slate-400 break-all select-all flex items-center justify-between border border-border/30">
+              <span>https://sportxclub.com/join-lobby?id=lobby-99</span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  navigator.clipboard.writeText(`🏆 *SportXClub Match Invitation* 🏆\n\nSport: ${squadLobby.sport}\nMin Skill: ${squadLobby.minSkill}\nSquad: ${squadLobby.members.length}/${squadLobby.maxSize} Joined\nHost: You (Host)\n\nJoin Link: https://sportxclub.com/join-lobby?id=lobby-99`);
+                  toast.success("📋 Invite message copied to clipboard!");
+                }}
+                className="h-6 w-6 p-0 hover:bg-slate-200 dark:hover:bg-slate-900 rounded cursor-pointer"
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0 mt-2 border-t border-slate-100 dark:border-white/[0.08] pt-3">
+          <DialogFooter>
             <Button
-              variant="outline"
-              onClick={() => setIsLobbyOpen(false)}
-              className="border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white rounded-xl cursor-pointer"
+              onClick={() => setIsInviteCardOpen(false)}
+              className="w-full bg-[#6DFF3B] text-black hover:bg-[#86ff60] font-bold rounded-xl h-10 text-xs cursor-pointer"
             >
-              Keep Searching
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDisbandSquad}
-              className="rounded-xl cursor-pointer"
-            >
-              Disband Squad
+              Done & Close
             </Button>
           </DialogFooter>
         </DialogContent>
