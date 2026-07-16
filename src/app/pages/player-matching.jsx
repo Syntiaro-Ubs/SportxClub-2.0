@@ -949,71 +949,63 @@ export function PlayerMatching() {
 
       {/* Create Squad Lobby Banner */}
       {!squadLobby.active ? (
-        <Card className="border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-[#13161c] rounded-[28px] relative overflow-hidden shadow-md dark:shadow-2xl min-h-[260px] flex items-center">
-          <div className="w-full p-6 md:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10 pr-6 lg:pr-[38%]">
-            <div className="flex items-start gap-4">
-              <div className="h-14 w-14 rounded-2xl bg-[#6DFF3B]/10 border border-[#6DFF3B]/30 flex items-center justify-center text-[#6DFF3B] shrink-0 shadow-lg shadow-[#6DFF3B]/5">
-                <Trophy className="h-7 w-7" />
+        <Card className="border border-slate-200 dark:border-white/[0.08] bg-slate-50/50 dark:bg-[#13161c] rounded-[32px] relative overflow-hidden shadow-md dark:shadow-2xl min-h-[320px] flex items-stretch">
+          {/* Left Content Area */}
+          <div className="w-full lg:w-[65%] p-6 md:p-10 flex flex-col justify-center relative z-10">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-6">
+              <div className="h-16 w-16 rounded-3xl bg-gradient-to-br from-[#6DFF3B]/20 to-[#6DFF3B]/5 border border-[#6DFF3B]/30 flex items-center justify-center text-emerald-600 dark:text-[#6DFF3B] shrink-0 shadow-lg shadow-emerald-500/10 dark:shadow-[#6DFF3B]/10">
+                <Trophy className="h-8 w-8" />
               </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              <div>
+                <h2 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mb-2">
                   Multiplayer Squad Matchmaking
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-white/60 max-w-xl leading-relaxed">
-                  Want to play with a squad? Launch a live Matchmaking Lobby! Other players can search and request to join your squad, or you can invite them directly. Fill all slots together and split costs before booking the turf.
-                </p>
-                <div className="flex items-center gap-2.5 pt-2 flex-wrap">
-                  <Badge variant="outline" className="text-[11px] py-1 border-slate-200 bg-white/50 dark:border-white/10 dark:bg-white/[0.02] text-slate-600 dark:text-white/60">
-                    👥 Host Approval Required
-                  </Badge>
-                  <Badge variant="outline" className="text-[11px] py-1 border-slate-200 bg-white/50 dark:border-white/10 dark:bg-white/[0.02] text-slate-600 dark:text-white/60">
-                    💳 Split cost or Pay Full
-                  </Badge>
-                  <Badge variant="outline" className="text-[11px] py-1 border-slate-200 bg-white/50 dark:border-white/10 dark:bg-white/[0.02] text-slate-600 dark:text-white/60">
-                    ⚡ Live match lobby room
-                  </Badge>
-                </div>
               </div>
             </div>
+            
+            <div className="flex items-center gap-3 flex-wrap mb-8">
+              <Badge variant="outline" className="px-4 py-2 text-xs border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] text-slate-700 dark:text-white/70 backdrop-blur-sm rounded-xl">
+                👥 Host Approval Required
+              </Badge>
+              <Badge variant="outline" className="px-4 py-2 text-xs border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] text-slate-700 dark:text-white/70 backdrop-blur-sm rounded-xl">
+                💳 Split cost or Pay Full
+              </Badge>
+              <Badge variant="outline" className="px-4 py-2 text-xs border-slate-200 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] text-slate-700 dark:text-white/70 backdrop-blur-sm rounded-xl">
+                ⚡ Live match lobby room
+              </Badge>
+            </div>
 
-            <div className="w-full flex flex-col sm:flex-row items-center justify-center lg:justify-end gap-3 lg:w-auto z-10">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
               <Button
                 onClick={() => setIsCreateLobbyOpen(true)}
-                className="w-full sm:w-auto bg-[#6DFF3B] text-black hover:bg-[#5ce630] rounded-xl font-bold px-5 h-11 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 text-xs shrink-0"
+                className="w-full sm:w-auto bg-[#6DFF3B] text-black hover:bg-[#5ce630] rounded-2xl font-bold px-8 h-14 text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(109,255,59,0.25)]"
               >
-                <Plus className="h-4 w-4" /> Create Squad Lobby
+                <Plus className="h-5 w-5" /> Create Squad Lobby
               </Button>
               
               <Button
                 onClick={() => navigate("/teams")}
                 variant="outline"
-                className="w-full sm:w-auto border-border/80 text-foreground hover:bg-muted bg-card/40 backdrop-blur-md rounded-xl font-bold px-5 h-11 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 text-xs shrink-0"
+                className="w-full sm:w-auto border-slate-300 dark:border-white/[0.15] text-slate-700 dark:text-white hover:bg-slate-100 dark:hover:bg-white/[0.08] bg-white/50 dark:bg-white/[0.02] backdrop-blur-md rounded-2xl font-bold px-8 h-14 text-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
               >
-                <Users className="h-4 w-4 text-[#6DFF3B]" /> Play in Another Team
-              </Button>
-
-              <Button
-                onClick={handleQuickMatchJoin}
-                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 rounded-xl font-bold px-5 h-11 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 text-xs shrink-0"
-              >
-                <Target className="h-4 w-4" /> Quick Match Join
+                <Users className="h-5 w-5 text-emerald-600 dark:text-[#6DFF3B]" /> Play in Another Team
               </Button>
             </div>
           </div>
 
-
-          {/* Styled Floating Image on the right side */}
-          <div className="hidden lg:block absolute right-0 top-0 bottom-0 w-[35%] h-full pointer-events-none">
-            <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-slate-50 dark:from-[#13161c] to-transparent z-10" />
+          {/* Right Image Area */}
+          <div className="hidden lg:block absolute right-0 top-0 bottom-0 w-[45%] h-full pointer-events-none overflow-hidden">
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-slate-50 via-slate-50/90 dark:from-[#13161c] dark:via-[#13161c]/90 to-transparent z-10" />
+            <div className="absolute inset-0 bg-[#6DFF3B]/5 mix-blend-overlay z-10" />
             <img
-              src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=600&q=80"
+              src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=800&q=80"
               alt="Matchmaking Squad"
-              className="w-full h-full object-cover object-center brightness-[0.85] dark:brightness-75"
+              className="w-full h-full object-cover object-center brightness-[0.85] dark:brightness-75 contrast-125 transition-transform duration-1000 hover:scale-105"
             />
           </div>
 
           {/* Decorative background blurs for non-lg layout */}
-          <div className="lg:hidden absolute right-0 top-0 w-32 h-32 bg-[#6DFF3B]/5 blur-[60px] pointer-events-none" />
+          <div className="lg:hidden absolute right-0 top-0 w-48 h-48 bg-[#6DFF3B]/10 blur-[80px] pointer-events-none" />
         </Card>
       ) : (
         <Card className="border border-[#6DFF3B]/20 bg-[#6DFF3B]/5 p-5 rounded-2xl relative overflow-hidden">

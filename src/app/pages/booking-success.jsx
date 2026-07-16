@@ -13,7 +13,7 @@ import {
 import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
 import { toast } from "sonner";
-
+import { jsPDF } from "jspdf";
 export function BookingSuccess() {
   // Read saved booking info
   let bookingData = null;
@@ -105,12 +105,11 @@ export function BookingSuccess() {
     }
   }
 
-  // Handle Download PDF Action
   const handleDownloadReceipt = () => {
     // Show a loading toast
     const loadingToastId = toast.loading("Generating receipt PDF...");
 
-    import("jspdf").then(({ jsPDF }) => {
+    try {
       const doc = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -223,15 +222,14 @@ export function BookingSuccess() {
       doc.setTextColor(120, 130, 140);
       doc.text("This is an electronically generated receipt. No physical signature is required.", 20, 267);
       doc.text("Thank you for playing with SportXClub!", 20, 273);
-
-      doc.save("SportX_Booking_Receipt_SX-260714-EP.pdf");
+      doc.save("SportXClub-Receipt.pdf");
       toast.dismiss(loadingToastId);
-      toast.success("Receipt PDF downloaded successfully!");
-    }).catch(err => {
-      console.error(err);
+      toast.success("Receipt downloaded successfully!");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
       toast.dismiss(loadingToastId);
-      toast.error("Failed to load PDF generator library");
-    });
+      toast.error("Failed to generate PDF. Please try again.");
+    }
   };
 
   return (

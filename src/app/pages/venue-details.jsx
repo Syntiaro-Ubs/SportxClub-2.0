@@ -19,6 +19,9 @@ import {
   Droplets,
   Shirt,
   Users,
+  Trophy,
+  Plus,
+  Target,
 } from "lucide-react";
 
 import { Badge } from "../components/ui/badge";
@@ -115,6 +118,68 @@ export function VenueDetails() {
   const [isMobileBookingOpen, setIsMobileBookingOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
+  const timeSlots = [
+    { startHour: 15, label: "03:00 PM", endLabel: "04:00 PM" },
+    { startHour: 16, label: "04:00 PM", endLabel: "05:00 PM" },
+    { startHour: 17, label: "05:00 PM", endLabel: "06:00 PM", bookedBy: "Team Alpha" },
+    { startHour: 18, label: "06:00 PM", endLabel: "07:00 PM" },
+    { startHour: 19, label: "07:00 PM", endLabel: "08:00 PM" },
+    { startHour: 20, label: "08:00 PM", endLabel: "09:00 PM" },
+    { startHour: 21, label: "09:00 PM", endLabel: "10:00 PM" },
+    { startHour: 22, label: "10:00 PM", endLabel: "11:00 PM", bookedBy: "Late Night Book" },
+  ];
+
+  const formatSlotRange = (startHour, hours) => {
+    const formatHour = (h) => {
+      const isPm = h >= 12 && h < 24;
+      let hourNum = h % 12;
+      if (hourNum === 0) hourNum = 12;
+      const amPm = h >= 24 || h < 12 ? "AM" : "PM";
+      const displayHour = h === 24 ? "12" : hourNum.toString();
+      const displayAmPm = h === 24 ? "AM" : amPm;
+      return `${displayHour.padStart(2, '0')}:00 ${displayAmPm}`;
+    };
+
+    const startStr = formatHour(startHour);
+    const endStr = formatHour(startHour + hours);
+    return `${startStr} - ${endStr}`;
+  };
+
+  const getStartHour = (timeStr) => {
+    return parseInt(timeStr.split(":")[0]);
+  };
+
+  const hourToTimeStr = (hour) => {
+    return `${hour.toString().padStart(2, '0')}:00`;
+  };
+
+  const isOverlapping = (startHour) => {
+    for (let i = 0; i < playHours; i++) {
+      const checkHour = startHour + i;
+      const slot = timeSlots.find(s => s.startHour === checkHour);
+      if (slot && slot.bookedBy) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  const isOutOfBounds = (startHour) => {
+    return startHour + playHours > 23;
+  };
+
+  useEffect(() => {
+    const currentHour = getStartHour(startTime);
+    if (isOverlapping(currentHour) || isOutOfBounds(currentHour)) {
+      const firstAvailable = timeSlots.find(
+        s => !s.bookedBy && !isOverlapping(s.startHour) && !isOutOfBounds(s.startHour)
+      );
+      if (firstAvailable) {
+        setStartTime(hourToTimeStr(firstAvailable.startHour));
+      }
+    }
+  }, [playHours]);
+
   const handleFavoriteClick = () => {
     setIsFavorite(!isFavorite);
     if (!isFavorite) {
@@ -199,29 +264,82 @@ export function VenueDetails() {
         </label>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-sm text-white/78">Select start time</p>
-        <label className="flex items-center gap-3 rounded-[18px] border border-white/[0.08] bg-white/[0.03] px-4 py-3">
-          <Calendar className="h-4 w-4 text-[#6DFF3B]" />
-          <input
-            type="time"
-            value={startTime}
-            onChange={(event) => setStartTime(event.target.value)}
-            className="w-full bg-transparent text-sm text-white outline-none"
-          />
-        </label>
+      <div className="space-y-3 pt-2">
+        <p className="text-sm text-white/78">Duration</p>
+        <Select value={playHours.toString()} onValueChange={(val) => setPlayHours(parseInt(val))}>
+          <SelectTrigger className="w-full h-[52px] rounded-[18px] border-white/[0.08] bg-white/[0.03] px-4 text-sm text-white hover:bg-white/[0.06] transition-colors">
+            <SelectValue placeholder="Select duration" />
+          </SelectTrigger>
+          <SelectContent
+            className="theme-adaptive rounded-[18px] border-white/[0.08] bg-[#101216] text-white"
+            style={{ backgroundColor: '#101216', borderColor: 'rgba(255,255,255,0.08)', color: 'white' }}
+          >
+            {[1, 2, 3, 4].map((hours) => (
+              <SelectItem
+                key={hours}
+                value={hours.toString()}
+                className="rounded-[12px] my-1 data-[highlighted]:bg-[#6DFF3B]/10 data-[highlighted]:text-[#6DFF3B] cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]"
+              >
+                {hours} {hours === 1 ? "Hour" : "Hours"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="space-y-3">
-        <p className="text-sm text-white/78">How many hours to play</p>
-        <Input
-          type="number"
-          min={1}
-          max={12}
-          value={playHours}
-          onChange={(event) => setPlayHours(Math.max(1, parseInt(event.target.value) || 1))}
-          className="w-full h-12 bg-transparent text-sm text-white outline-none rounded-[18px] border-white/[0.08] bg-white/[0.03] px-4 hover:bg-white/[0.06] transition-colors"
-        />
+      <div className="space-y-3 pt-2">
+        <p className="text-sm text-white/78 flex justify-between">
+          <span>Select start time</span>
+        </p>
+        <div className="grid gap-3 grid-cols-3">
+          {timeSlots.map((slot) => {
+            const slotHour = slot.startHour;
+            const isBooked = !!slot.bookedBy;
+            const overlaps = isOverlapping(slotHour);
+            const outOfBounds = isOutOfBounds(slotHour);
+            const isDisabled = isBooked || overlaps || outOfBounds;
+            
+            const isSelected = getStartHour(startTime) === slotHour;
+            
+            // Format time range with line break for PM/AM to match screenshot wrapping
+            const formatHour = (h) => {
+              let hourNum = h % 12;
+              if (hourNum === 0) hourNum = 12;
+              const amPm = h >= 24 || h < 12 ? "AM" : "PM";
+              const displayHour = h === 24 ? "12" : hourNum.toString();
+              return `${displayHour.padStart(2, '0')}:00 ${amPm}`;
+            };
+            const startStr = formatHour(slotHour);
+            const endStr = formatHour(slotHour + playHours);
+            const timeRange = `${startStr} - ${endStr}`;
+
+            return (
+              <button
+                key={slotHour}
+                type="button"
+                disabled={isDisabled}
+                onClick={() => setStartTime(hourToTimeStr(slotHour))}
+                className={`p-3 rounded-[16px] border flex flex-col items-center justify-center transition-all min-h-[80px] text-center relative ${
+                  isSelected
+                    ? "bg-[#6DFF3B] border-[#6DFF3B] shadow-md shadow-[#6DFF3B]/20"
+                    : isDisabled
+                    ? "bg-red-500/10 border-red-500/20 cursor-not-allowed"
+                    : "border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/[0.15] cursor-pointer"
+                }`}
+              >
+                <span className={`text-[11px] font-mono leading-relaxed max-w-[90px] mx-auto ${isSelected ? 'text-black font-bold' : isDisabled ? 'text-white/50' : 'text-white/70'}`}>
+                  {timeRange}
+                </span>
+                
+                <span className={`text-[9px] font-extrabold mt-1.5 uppercase tracking-wider ${
+                  isSelected ? 'text-black' : isDisabled ? 'text-red-400' : 'text-[#6DFF3B]/80'
+                }`}>
+                  {isDisabled ? 'Booked' : isSelected ? 'Selected' : 'Available'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="rounded-[20px] border border-[#6DFF3B]/18 bg-[#6DFF3B]/10 p-4">
@@ -240,7 +358,7 @@ export function VenueDetails() {
           <div className="flex justify-between items-start">
             <span className="shrink-0">Start Time:</span>
             <span className="text-white font-medium text-right max-w-[170px] break-words">
-              {startTime}
+              {formatSlotRange(getStartHour(startTime), playHours)}
             </span>
           </div>
           <div className="flex justify-between items-start">
@@ -335,7 +453,7 @@ export function VenueDetails() {
           Back to venues
         </Link>
 
-        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_390px]">
+        <div className="mt-6 grid gap-8 lg:grid-cols-1">
           <div className="space-y-6">
             <div className="overflow-hidden rounded-[28px] border border-white/[0.08] bg-[#101216]">
               <div className="relative w-full h-[280px] sm:h-auto sm:aspect-[16/9] overflow-hidden">
@@ -405,6 +523,8 @@ export function VenueDetails() {
               </div>
             </div>
 
+
+
             <Card className="rounded-[28px] border-white/[0.08] bg-[#101216]">
               <CardContent className="space-y-6 p-6 md:p-8">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -416,14 +536,7 @@ export function VenueDetails() {
                       Book with confidence
                     </h2>
                   </div>
-                  <div className="rounded-[20px] border border-[#6DFF3B]/18 bg-[#6DFF3B]/10 px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.22em] text-[#6DFF3B]/85">
-                      From
-                    </p>
-                    <p className="mt-1 text-2xl  text-white">
-                      ₹{venue.price}/hr
-                    </p>
-                  </div>
+
                 </div>
 
                 <p className="max-w-3xl text-sm leading-7 text-white/64 md:text-base">
@@ -567,76 +680,10 @@ export function VenueDetails() {
             </Card>
           </div>
 
-          <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
-            <Card className="rounded-[28px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
-              {renderBookingFlow()}
-            </Card>
-          </aside>
+
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.08] bg-[#050505]/94 px-4 pt-3.5 pb-[calc(14px+env(safe-area-inset-bottom))] backdrop-blur-2xl lg:hidden">
-          <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-white/45">
-                Next step
-              </p>
-              <p className="mt-1 text-sm  text-white">Choose your slot</p>
-            </div>
-            <Button
-              className="h-11 rounded-[16px] bg-[#6DFF3B] px-5  text-[#050505] hover:bg-[#86ff60]"
-              onClick={() => {
-                if (!currentUser) {
-                  toast.error("Please login first to book this venue.");
-                  navigate("/login");
-                } else {
-                  setIsMobileBookingOpen(true);
-                }
-              }}
-            >
-              Book now
-            </Button>
-          </div>
-        </div>
 
-        <AnimatePresence>
-          {isMobileBookingOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
-                onClick={() => setIsMobileBookingOpen(false)}
-              />
-
-              <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: 0 }}
-                exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85vh] flex-col rounded-t-[28px] border-t border-white/[0.08] bg-[#101216] lg:hidden"
-              >
-                {/* Grab handle */}
-                <div className="flex items-center justify-center pt-3 pb-1 shrink-0">
-                  <div className="h-1.5 w-12 rounded-full bg-white/20" />
-                </div>
-                {/* Sticky Header */}
-                <div className="px-6 pt-2 pb-4 border-b border-white/[0.06] shrink-0">
-                  <h2 className="text-xl text-white font-semibold">Select sport, date, and slot</h2>
-                </div>
-                {/* Scrollable Fields */}
-                <div className="flex-1 overflow-y-auto px-6 py-4">
-                  {renderBookingFields()}
-                </div>
-                {/* Sticky Footer Actions */}
-                <div className="px-6 py-4 border-t border-white/[0.06] bg-[#101216] shrink-0 pb-[calc(16px+env(safe-area-inset-bottom))]">
-                  {renderBookingActions()}
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
       </div>
     </div>
   );
