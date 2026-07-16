@@ -57,20 +57,41 @@ export function SquadBookingPage() {
   useEffect(() => {
     if (squadSize) {
       const sizeInt = parseInt(squadSize);
-      const total = sizeInt * 2;
-      setPlayerNames(Array(total).fill(""));
+      if (sizeInt > 0) {
+        const newNames = Array(sizeInt).fill("");
+        newNames[0] = "You (Host)"; // First player is always the host
+        setPlayerNames(newNames);
+      } else {
+        setPlayerNames([]);
+      }
     }
   }, [squadSize]);
 
   const handleAutoFill = () => {
     const mockNames = [
-      "Rahul S.", "Vikram M.", "Arjun K.", "Sneha P.", 
-      "Kabir Mehta", "Neha Sharma", "Amit Patel", 
+      "Rahul S.", "Vikram M.", "Arjun K.", "Sneha P.",
+      "Kabir Mehta", "Neha Sharma", "Amit Patel",
       "Rohan Das", "Priya K.", "Karan V.", "Anjali S.", "Deepak T."
     ];
-    setPlayerNames(prev => prev.map((name, i) => 
-      name.trim() === "" ? (mockNames[i % mockNames.length] + ` (${i+1})`) : name
+    setPlayerNames(prev => prev.map((name, i) =>
+      name.trim() === "" ? (mockNames[i % mockNames.length] + ` (${i + 1})`) : name
     ));
+  };
+
+  const handleBookTurfDirectly = () => {
+    let finalTeamName = teamName;
+    if (!teamName.trim()) {
+      finalTeamName = `${selectedSport || "My"} Squad FC`;
+      setTeamName(finalTeamName);
+    }
+
+    // Auto-fill all empty roster slots as "Player X"
+    setPlayerNames(prev => prev.map((name, i) =>
+      name.trim() === "" ? `Player ${i + 1}` : name
+    ));
+
+    toast.success(`Booking configured for ${finalTeamName || "Squad"}! Select a slot.`);
+    setStep(3);
   };
 
   const squadLobby = location.state?.squadLobby || {
@@ -177,7 +198,7 @@ export function SquadBookingPage() {
   const [paymentStep, setPaymentStep] = useState("select"); // "select" | "processing" | "success"
   const [paymentMethod, setPaymentMethod] = useState("upi"); // "upi" | "card" | "wallet" | "netbanking"
   const [processingMessage, setProcessingMessage] = useState("");
-  
+
   // Input fields state
   const [upiId, setUpiId] = useState("");
   const [cardNo, setCardNo] = useState("");
@@ -220,16 +241,16 @@ export function SquadBookingPage() {
 
     // Start payment processing steps simulation
     setPaymentStep("processing");
-    
+
     const steps = [
       "Securing connection to payment gateway...",
-      paymentMethod === "upi" 
-        ? "Sending payment request to your UPI app..." 
+      paymentMethod === "upi"
+        ? "Sending payment request to your UPI app..."
         : paymentMethod === "card"
-        ? "Authorizing card details with bank..."
-        : paymentMethod === "wallet"
-        ? "Deducting amount from SportX Wallet..."
-        : "Redirecting to bank secure portal...",
+          ? "Authorizing card details with bank..."
+          : paymentMethod === "wallet"
+            ? "Deducting amount from SportX Wallet..."
+            : "Redirecting to bank secure portal...",
       "Verifying transaction token...",
       "Completing secure settlement...",
     ];
@@ -244,7 +265,7 @@ export function SquadBookingPage() {
       } else {
         clearInterval(interval);
         setPaymentStep("success");
-        
+
         // Deduct from wallet if wallet selected
         if (paymentMethod === "wallet") {
           setWalletBalance(prev => prev - amountToPayNow);
@@ -266,14 +287,14 @@ export function SquadBookingPage() {
     toast.success(`Lobby booked successfully! Share the lobby code with others.`);
 
     const rangeStr = selectedSlotObj ? formatSlotRange(selectedSlotObj.startHour, playHours) : "N/A";
-    
+
     // Create new lobby object to save in global open lobbies
     const newLobby = {
       id: Date.now(),
       sport: selectedSport,
       teamName: teamName,
       currentPlayers: playerNames.filter(n => n.trim() !== "").length,
-      maxPlayers: parseInt(squadSize) * 2,
+      maxPlayers: parseInt(squadSize),
       time: rangeStr,
       priceTotal: amountToPayNow,
       date: "Today"
@@ -285,7 +306,14 @@ export function SquadBookingPage() {
 
     // Update active squad lobby (mock for receipt)
     const lobbyObj = {
-      ...squadLobby,
+      active: true,
+      sport: selectedSport,
+      maxSize: playerNames.length,
+      members: playerNames.map((name, idx) => ({
+        id: idx === 0 ? 99 : idx + 100,
+        name: name.trim() || `Player ${idx + 1}`,
+        role: idx === 0 ? "host" : "player"
+      })),
       paymentMode: "split",
       paidMembers: [99]
     };
@@ -333,7 +361,7 @@ export function SquadBookingPage() {
         <div className={step === 3 ? "max-w-5xl w-full mx-auto" : "max-w-3xl w-full mx-auto"}>
           <Card className="rounded-[28px] border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] shadow-xl overflow-hidden">
             <CardContent className="p-6 md:p-8 space-y-8">
-              
+
               {step === 1 ? (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -358,19 +386,26 @@ export function SquadBookingPage() {
                     {/* Squad Size */}
                     <div className="space-y-3">
                       <label className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/40 font-bold block">
-                        Squad Size
+                        Squad Size (Total Players)
                       </label>
-                      <Select value={squadSize} onValueChange={setSquadSize}>
-                        <SelectTrigger className="w-full h-14 px-4 rounded-xl border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white focus:ring-[#6DFF3B] focus:border-[#6DFF3B]">
-                          <SelectValue placeholder="Select squad size" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216]">
-                          <SelectItem value="5" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">5 vs 5 (10 Players)</SelectItem>
-                          <SelectItem value="7" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">7 vs 7 (14 Players)</SelectItem>
-                          <SelectItem value="9" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">9 vs 9 (18 Players)</SelectItem>
-                          <SelectItem value="11" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">11 vs 11 (22 Players)</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <input
+                        type="text"
+                        placeholder="e.g. 11 players"
+                        value={squadSize}
+                        maxLength={2}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          if (val === "0") {
+                            setSquadSize("");
+                          } else if (val !== "" && parseInt(val) > 50) {
+                            toast.error("Squad size cannot exceed 50 players!");
+                            setSquadSize("50");
+                          } else {
+                            setSquadSize(val);
+                          }
+                        }}
+                        className="h-14 w-full px-4 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#6DFF3B] focus:ring-1 focus:ring-[#6DFF3B]"
+                      />
                     </div>
                   </div>
 
@@ -421,15 +456,24 @@ export function SquadBookingPage() {
                       <label className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/40 font-bold block">
                         Player Roster ({playerNames.length} Players)
                       </label>
-                      <Button
-                        type="button"
-                        onClick={handleAutoFill}
-                        className="h-8 px-3 text-[11px] font-bold rounded-lg bg-[#6DFF3B]/10 text-emerald-700 dark:text-[#6DFF3B] hover:bg-[#6DFF3B]/20 border border-[#6DFF3B]/30 transition-all shadow-sm shadow-[#6DFF3B]/5"
-                      >
-                        Auto-Fill Remaining
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          onClick={handleBookTurfDirectly}
+                          className="h-8 px-3 text-[11px] font-bold rounded-lg bg-[#6DFF3B] text-black hover:bg-[#86ff60] transition-all shadow-sm shadow-[#6DFF3B]/10 cursor-pointer"
+                        >
+                          Book Turf
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleAutoFill}
+                          className="h-8 px-3 text-[11px] font-bold rounded-lg bg-[#6DFF3B]/10 text-emerald-700 dark:text-[#6DFF3B] hover:bg-[#6DFF3B]/20 border border-[#6DFF3B]/30 transition-all shadow-sm shadow-[#6DFF3B]/5 cursor-pointer"
+                        >
+                          Auto-Fill Remaining
+                        </Button>
+                      </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[320px] overflow-y-auto pr-2 pb-2">
                       {playerNames.map((name, index) => (
                         <div key={index} className="flex items-center gap-2">
@@ -438,19 +482,20 @@ export function SquadBookingPage() {
                           </div>
                           <Input
                             value={name}
+                            disabled={index === 0}
                             onChange={(e) => {
                               const newNames = [...playerNames];
                               newNames[index] = e.target.value;
                               setPlayerNames(newNames);
                             }}
-                            placeholder={`Player ${index + 1}`}
-                            className="h-11 rounded-xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] text-sm text-slate-900 dark:text-white focus-visible:ring-[#6DFF3B] focus-visible:border-[#6DFF3B]"
+                            placeholder={index === 0 ? "You (Host)" : `Player ${index + 1}`}
+                            className="h-11 rounded-xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] text-sm text-slate-900 dark:text-white focus-visible:ring-[#6DFF3B] focus-visible:border-[#6DFF3B] disabled:opacity-80"
                           />
                         </div>
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="pt-6 border-t border-slate-100 dark:border-white/[0.05] flex justify-end">
                     <Button
                       onClick={() => {
@@ -485,10 +530,10 @@ export function SquadBookingPage() {
                     <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                       {playerNames.map((name, index) => (
                         <div key={index} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]">
-                           <div className="h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 dark:bg-white/10 text-xs font-bold text-slate-700 dark:text-white/60">
-                             {index + 1}
-                           </div>
-                           <span className="text-sm font-semibold text-slate-900 dark:text-white">{name}</span>
+                          <div className="h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 dark:bg-white/10 text-xs font-bold text-slate-700 dark:text-white/60">
+                            {index + 1}
+                          </div>
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white">{name}</span>
                         </div>
                       ))}
                     </div>
@@ -503,7 +548,7 @@ export function SquadBookingPage() {
                         <p className="text-sm text-slate-500 dark:text-white/50 mb-4 max-w-xs">
                           Your squad is set up. Now select an available time slot for your match.
                         </p>
-                        <Button 
+                        <Button
                           onClick={() => setShowSlots(true)}
                           className="h-12 px-8 mt-2 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all shadow-lg shadow-[#6DFF3B]/20"
                         >
@@ -548,43 +593,42 @@ export function SquadBookingPage() {
 
                         <div className="grid grid-cols-2 gap-3">
                           {timeSlots.map((slot, i) => {
-                             const isBooked = isOverlapping(slot.startHour) || isOutOfBounds(slot.startHour);
-                             const price = slot.price * playHours;
-                             const rangeStr = formatSlotRange(slot.startHour, playHours);
+                            const isBooked = isOverlapping(slot.startHour) || isOutOfBounds(slot.startHour);
+                            const price = slot.price * playHours;
+                            const rangeStr = formatSlotRange(slot.startHour, playHours);
 
-                             return (
-                               <button
-                                 key={i}
-                                 disabled={isBooked}
-                                 onClick={() => {
-                                   setSelectedSlotObj(slot);
-                                   const initial = {};
-                                   playerNames.forEach((n, i) => { initial[i] = false; });
-                                   setPlayerPayments(initial);
-                                   setPaymentModalView("split_status");
-                                   setPaymentStep("select");
-                                   setIsPaymentModalOpen(true);
-                                 }}
-                                 className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all text-center relative ${
-                                   isBooked
-                                     ? "bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-slate-400/40 cursor-not-allowed"
-                                     : "border-[#6DFF3B]/30 hover:border-[#6DFF3B] hover:bg-[#6DFF3B]/5 text-slate-800 dark:text-white bg-white dark:bg-white/[0.02] cursor-pointer"
-                                 }`}
-                               >
-                                 <span className={`text-sm font-bold ${isBooked ? 'text-slate-500/40 opacity-50' : ''}`}>
-                                   {rangeStr}
-                                 </span>
-                                 {isBooked ? (
-                                   <span className="text-[10px] font-extrabold text-red-500 mt-1 uppercase tracking-wider">
-                                     Unavailable
-                                   </span>
-                                 ) : (
-                                   <span className="text-[10px] font-extrabold text-emerald-500 dark:text-[#6DFF3B] mt-1 tracking-wider">
-                                     Available • ₹{price}
-                                   </span>
-                                 )}
-                               </button>
-                             )
+                            return (
+                              <button
+                                key={i}
+                                disabled={isBooked}
+                                onClick={() => {
+                                  setSelectedSlotObj(slot);
+                                  const initial = {};
+                                  playerNames.forEach((n, i) => { initial[i] = false; });
+                                  setPlayerPayments(initial);
+                                  setPaymentModalView("split_status");
+                                  setPaymentStep("select");
+                                  setIsPaymentModalOpen(true);
+                                }}
+                                className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all text-center relative ${isBooked
+                                    ? "bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-slate-400/40 cursor-not-allowed"
+                                    : "border-[#6DFF3B]/30 hover:border-[#6DFF3B] hover:bg-[#6DFF3B]/5 text-slate-800 dark:text-white bg-white dark:bg-white/[0.02] cursor-pointer"
+                                  }`}
+                              >
+                                <span className={`text-sm font-bold ${isBooked ? 'text-slate-500/40 opacity-50' : ''}`}>
+                                  {rangeStr}
+                                </span>
+                                {isBooked ? (
+                                  <span className="text-[10px] font-extrabold text-red-500 mt-1 uppercase tracking-wider">
+                                    Unavailable
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-extrabold text-emerald-500 dark:text-[#6DFF3B] mt-1 tracking-wider">
+                                    Available • ₹{price}
+                                  </span>
+                                )}
+                              </button>
+                            )
                           })}
                         </div>
                       </div>
@@ -629,7 +673,7 @@ export function SquadBookingPage() {
                 {/* QR Code Section */}
                 <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-[24px] shadow-sm">
                   <div className="bg-white p-3 rounded-2xl shadow-inner border border-slate-100 mb-4">
-                     <QrCode className="w-32 h-32 text-slate-900" />
+                    <QrCode className="w-32 h-32 text-slate-900" />
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <Button
@@ -658,36 +702,37 @@ export function SquadBookingPage() {
                     {playerNames.map((name, idx) => {
                       if (!name.trim()) return null;
                       return (
-                      <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#101216] border border-slate-200 dark:border-white/[0.05]">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-white/60">
-                            {idx + 1}
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#101216] border border-slate-200 dark:border-white/[0.05]">
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-white/60">
+                              {idx + 1}
+                            </div>
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white max-w-[120px] truncate">{name} {idx === 0 && "(You)"}</span>
                           </div>
-                          <span className="text-sm font-semibold text-slate-900 dark:text-white max-w-[120px] truncate">{name} {idx === 0 && "(You)"}</span>
+                          {playerPayments[idx] ? (
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-[#6DFF3B] bg-emerald-500/10 dark:bg-[#6DFF3B]/10 px-2.5 py-1 rounded-lg">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Paid
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-1.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/10 px-2 py-1 rounded-lg">
+                                <Clock className="h-3 w-3" /> Pending
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setPlayerPayments(prev => ({ ...prev, [idx]: true }));
+                                  toast.success(`${name} marked as paid!`);
+                                }}
+                                className="h-6 px-2 text-[10px] bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-white/20"
+                              >
+                                Mark Paid
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                        {playerPayments[idx] ? (
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-[#6DFF3B] bg-emerald-500/10 dark:bg-[#6DFF3B]/10 px-2.5 py-1 rounded-lg">
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Paid
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                             <div className="flex items-center gap-1.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/10 px-2 py-1 rounded-lg">
-                               <Clock className="h-3 w-3" /> Pending
-                             </div>
-                             <Button
-                               size="sm"
-                               onClick={() => {
-                                 setPlayerPayments(prev => ({ ...prev, [idx]: true }));
-                                 toast.success(`${name} marked as paid!`);
-                               }}
-                               className="h-6 px-2 text-[10px] bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-white/20"
-                             >
-                               Mark Paid
-                             </Button>
-                          </div>
-                        )}
-                      </div>
-                    )})}
+                      )
+                    })}
                   </div>
                 </div>
               </div>
@@ -729,11 +774,10 @@ export function SquadBookingPage() {
                   {/* UPI */}
                   <Label
                     htmlFor="pay-upi"
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${
-                      paymentMethod === "upi"
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "upi"
                         ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
                         : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <RadioGroupItem value="upi" id="pay-upi" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />
@@ -763,11 +807,10 @@ export function SquadBookingPage() {
                   {/* Card */}
                   <Label
                     htmlFor="pay-card"
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${
-                      paymentMethod === "card"
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "card"
                         ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
                         : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <RadioGroupItem value="card" id="pay-card" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />
@@ -857,11 +900,10 @@ export function SquadBookingPage() {
                   {/* Net Banking */}
                   <Label
                     htmlFor="pay-netbanking"
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${
-                      paymentMethod === "netbanking"
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "netbanking"
                         ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
                         : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <RadioGroupItem value="netbanking" id="pay-netbanking" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />
@@ -894,11 +936,10 @@ export function SquadBookingPage() {
                   {/* Wallet */}
                   <Label
                     htmlFor="pay-wallet"
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${
-                      paymentMethod === "wallet"
+                    className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "wallet"
                         ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
                         : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <RadioGroupItem value="wallet" id="pay-wallet" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />

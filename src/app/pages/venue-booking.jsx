@@ -445,8 +445,8 @@ export function VenueBooking() {
                         <label key={option} className="flex items-center gap-3 cursor-pointer group">
                           <div className={cn(
                             "flex h-5 w-5 items-center justify-center rounded-full border-2 transition",
-                            sortBy === option 
-                              ? "border-[#4CFF3B]" 
+                            sortBy === option
+                              ? "border-[#4CFF3B]"
                               : "border-slate-300 group-hover:border-slate-400"
                           )}>
                             {sortBy === option && <div className="h-2.5 w-2.5 rounded-full bg-[#4CFF3B]" />}
@@ -470,8 +470,8 @@ export function VenueBooking() {
                         <label key={item} className="flex items-center gap-3 cursor-pointer group">
                           <div className={cn(
                             "flex h-5 w-5 items-center justify-center rounded-full border-2 transition",
-                            sport === item 
-                              ? "border-[#4CFF3B]" 
+                            sport === item
+                              ? "border-[#4CFF3B]"
                               : "border-slate-300 group-hover:border-slate-400"
                           )}>
                             {sport === item && <div className="h-2.5 w-2.5 rounded-full bg-[#4CFF3B]" />}
@@ -566,10 +566,10 @@ export function VenueBooking() {
               <div className="space-y-3">
                 <p className="text-sm text-white/78">Sport</p>
                 <Select value={sport} onValueChange={setSport}>
-                  <SelectTrigger className="h-10 rounded-xl border-white/[0.08] bg-[#050505]/50 text-white cursor-pointer">
+                  <SelectTrigger className="h-10 rounded-xl border border-slate-200 bg-white text-slate-900 dark:border-white/[0.08] dark:bg-[#050505]/50 dark:text-white cursor-pointer">
                     <SelectValue placeholder="All Sports" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#101216] border-white/[0.08] text-white rounded-xl">
+                  <SelectContent className="bg-white border border-slate-200 text-slate-900 dark:bg-[#101216] dark:border-white/[0.08] dark:text-white rounded-xl">
                     {sports.map((item) => (
                       <SelectItem key={item} value={item} className="cursor-pointer">
                         {item === "All" ? "All Sports" : item}
@@ -706,18 +706,26 @@ export function VenueBooking() {
                   whileHover={{ y: -6 }}
                 >
                   <div className="block h-full">
-                    <Card className="group relative flex flex-col h-[420px] md:h-[400px] overflow-hidden rounded-[24px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
+                    <Card className="always-dark group relative flex flex-col h-[420px] md:h-[400px] overflow-hidden rounded-[24px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
                       {/* Full Background Image */}
                       <ImageWithFallback
                         src={venue.image}
                         alt={venue.name}
                         className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
                       />
-                      {/* Overlay for Text Readability - 50% Right Side */}
-                      <div className="absolute inset-0 md:inset-auto md:absolute md:inset-y-0 md:right-0 w-full md:w-[50%] bg-gradient-to-t md:bg-gradient-to-l from-[#050505]/95 via-[#050505]/90 to-transparent pointer-events-none" />
-                      
+                      {/* Overlay for Text Readability - 50% Right or Left Side (Zig-Zag) */}
+                      <div className={cn(
+                        "absolute inset-0 md:inset-auto md:absolute md:inset-y-0 w-full md:w-[50%] bg-gradient-to-t pointer-events-none",
+                        index % 2 === 0
+                          ? "md:right-0 md:bg-gradient-to-l from-[#050505]/95 via-[#050505]/90 to-transparent"
+                          : "md:left-0 md:bg-gradient-to-r from-[#050505]/95 via-[#050505]/90 to-transparent"
+                      )} />
+
                       {/* Top Badges */}
-                      <div className="absolute left-6 top-6 flex gap-2 z-10">
+                      <div className={cn(
+                        "absolute top-6 flex gap-2 z-10",
+                        index % 2 === 0 ? "left-6" : "right-6 flex-row-reverse"
+                      )}>
                         {venue.badges.map((badge) => (
                           <img
                             key={badge}
@@ -730,56 +738,64 @@ export function VenueBooking() {
                       </div>
 
                       {/* Content Overlay */}
-                      <CardContent className="relative z-10 flex flex-col justify-end md:items-end flex-1 p-6 md:p-8 w-full h-full">
-                        <div className="flex flex-col items-end w-full md:max-w-[70%] lg:max-w-[50%] gap-5">
+                      <CardContent className={cn(
+                        "relative z-10 flex flex-col justify-end flex-1 p-6 md:p-8 w-full h-full",
+                        index % 2 === 0 ? "md:items-end" : "md:items-start"
+                      )}>
+                        <div className={cn(
+                          "flex flex-col w-full md:max-w-[70%] lg:max-w-[50%] gap-5",
+                          index % 2 === 0 ? "items-end" : "items-start"
+                        )}>
                           {/* Details */}
-                          <div className="flex flex-col items-end space-y-3 w-full">
-                            <div className="text-right">
-                              <h3 
+                          <div className={cn(
+                            "flex flex-col space-y-3 w-full",
+                            index % 2 === 0 ? "items-end" : "items-start"
+                          )}>
+                            <div className={index % 2 === 0 ? "text-right" : "text-left"}>
+                              <h3
                                 className="text-2xl font-bold uppercase tracking-tight"
                                 style={{ color: '#ffffff', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
                               >
                                 {venue.name}
                               </h3>
-                              <p 
-                                className="mt-1 flex items-center justify-end gap-1.5 text-sm font-medium"
+                              <p
+                                className={cn(
+                                  "mt-1 flex items-center gap-1.5 text-sm font-medium",
+                                  index % 2 === 0 ? "justify-end" : "justify-start"
+                                )}
                                 style={{ color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
                               >
                                 <MapPin className="w-4 h-4" /> {venue.location} • {venue.distance.toFixed(1)} km
                               </p>
                             </div>
 
-                            <div className="flex flex-wrap justify-end gap-2">
-                              <div className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#0A0A0A] whitespace-nowrap shadow-md">
+                            <div className={cn(
+                              "flex flex-wrap gap-4 items-center",
+                              index % 2 === 0 ? "justify-end" : "justify-start"
+                            )}>
+                              <div className="flex items-center text-xs font-bold text-white whitespace-nowrap">
                                 <Star className="inline-block h-3.5 w-3.5 fill-[#6DFF3B] text-[#6DFF3B] mr-1" />
                                 {venue.rating.toFixed(1)}
                               </div>
-                              <Badge className="rounded-full bg-white px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-[#0A0A0A] shadow-md font-bold">
+                              <span className="text-[0.68rem] uppercase tracking-[0.16em] text-white font-bold">
                                 {venue.sport}
-                              </Badge>
-                              <Badge className="rounded-full border border-[#6DFF3B]/30 bg-[#6DFF3B]/20 backdrop-blur-md px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-[#6DFF3B] shadow-sm">
+                              </span>
+                              <span className="text-[0.68rem] uppercase tracking-[0.16em] text-white font-bold">
                                 {venue.availableToday
                                   ? "Available today"
                                   : "Limited slots"}
-                              </Badge>
+                              </span>
                             </div>
 
-                            <div className="flex flex-wrap justify-end gap-2 pt-1 hidden md:flex">
-                              {venue.amenities.map((amenity) => (
-                                <div
-                                  key={amenity}
-                                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-[#050505]/40 backdrop-blur-md px-2.5 py-1 text-xs text-white/80"
-                                >
-                                  <ShieldCheck className="h-3 w-3 text-[#6DFF3B]" />
-                                  {amenity}
-                                </div>
-                              ))}
-                            </div>
+
                           </div>
 
                           {/* Buttons */}
-                          <div className="flex flex-wrap items-center justify-end gap-3 mt-2">
-                            <Button 
+                          <div className={cn(
+                            "flex flex-wrap items-center gap-3 mt-2",
+                            index % 2 === 0 ? "justify-end" : "justify-start"
+                          )}>
+                            <Button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 if (!currentUser) {
@@ -789,11 +805,11 @@ export function VenueBooking() {
                                   navigate(`/venues/${venue.id}`);
                                 }
                               }}
-                              className="group h-12 rounded-full border border-white/20 bg-[#050505]/40 backdrop-blur-md px-6 text-white font-bold uppercase tracking-wider transition-all hover:bg-white/10 hover:scale-105"
+                              className="group h-12 rounded-full border border-[#6DFF3B] bg-[#6DFF3B] px-6 text-[#050505] font-bold uppercase tracking-wider transition-all hover:bg-[#86ff60] hover:scale-105 shadow-[0_0_20px_rgb(109,255,59,0.3)]"
                             >
                               Details
                             </Button>
-                            <Button 
+                            <Button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setModeModalVenue(venue);
