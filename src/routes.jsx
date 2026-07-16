@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { Layout } from "./app/components/layout/layout";
 import { OwnerLayout } from "./app/components/layout/owner-layout";
 import { LandingPage } from "./app/pages/landing-page";
+import { BookingSuccess } from "./app/pages/booking-success";
 
 export const router = createBrowserRouter([
   {
@@ -196,10 +197,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/booking-success",
-        lazy: async () => {
-          const { BookingSuccess } = await import("./app/pages/booking-success");
-          return { Component: BookingSuccess };
-        },
+        element: <BookingSuccess />,
       },
       {
         path: "/venues/:id",
@@ -227,6 +225,13 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { SquadBookingPage } = await import("./app/pages/squad-booking");
           return { Component: SquadBookingPage };
+        },
+      },
+      {
+        path: "/open-lobbies",
+        lazy: async () => {
+          const { OpenLobbiesPage } = await import("./app/pages/open-lobbies");
+          return { Component: OpenLobbiesPage };
         },
       },
       {

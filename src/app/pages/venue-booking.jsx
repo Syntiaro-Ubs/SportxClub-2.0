@@ -16,7 +16,16 @@ import {
   Star,
   TimerReset,
   X,
+  User,
+  Users
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -253,6 +262,7 @@ export function VenueBooking() {
   const [ratingOnly, setRatingOnly] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeFilterTab, setActiveFilterTab] = useState("Sort");
+  const [modeModalVenue, setModeModalVenue] = useState(null);
 
   const filteredVenues = useMemo(() => {
     const filtered = venueData.filter((venue) => {
@@ -686,7 +696,7 @@ export function VenueBooking() {
           </div>
 
           {filteredVenues.length > 0 ? (
-            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6">
               {filteredVenues.map((venue, index) => (
                 <motion.div
                   key={venue.id}
@@ -695,105 +705,109 @@ export function VenueBooking() {
                   transition={{ duration: 0.35, delay: index * 0.04 }}
                   whileHover={{ y: -6 }}
                 >
-                  <Link
-                    to={`/venues/${venue.id}`}
-                    className="block h-full"
-                    onClick={(e) => {
-                      if (!currentUser) {
-                        e.preventDefault();
-                        toast.error("Please sign in first to view slots and book.");
-                        navigate("/login");
-                      }
-                    }}
-                  >
-                    <Card className="group h-full overflow-hidden rounded-[24px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        <ImageWithFallback
-                          src={venue.image}
-                          alt={venue.name}
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                        />
-
-                        <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.02),rgba(5,5,5,0.7))]" />
-                        <div className="absolute left-4 top-4 flex gap-2">
-                          {venue.badges.map((badge) => (
-                            <img
-                              key={badge}
-                              src={badge}
-                              alt=""
-                              aria-hidden="true"
-                              className="h-6 w-6"
-                            />
-                          ))}
-                        </div>
-                        <button
-                          type="button"
-                          aria-label={`Save ${venue.name}`}
-                          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#050505]/70 text-white/70 backdrop-blur-md transition hover:bg-[#050505]/90 hover:text-white"
-                        >
-                          <Heart className="h-4 w-4" />
-                        </button>
-                        <div className="absolute left-4 bottom-4 rounded-full border border-white/[0.08] bg-[#050505]/72 px-3 py-1.5 text-xs  text-white/90 backdrop-blur-md">
-                          {venue.distance.toFixed(1)} km away
-                        </div>
+                  <div className="block h-full">
+                    <Card className="group relative flex flex-col h-[420px] md:h-[400px] overflow-hidden rounded-[24px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
+                      {/* Full Background Image */}
+                      <ImageWithFallback
+                        src={venue.image}
+                        alt={venue.name}
+                        className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
+                      />
+                      {/* Overlay for Text Readability - 50% Right Side */}
+                      <div className="absolute inset-0 md:inset-auto md:absolute md:inset-y-0 md:right-0 w-full md:w-[50%] bg-gradient-to-t md:bg-gradient-to-l from-[#050505]/95 via-[#050505]/90 to-transparent pointer-events-none" />
+                      
+                      {/* Top Badges */}
+                      <div className="absolute left-6 top-6 flex gap-2 z-10">
+                        {venue.badges.map((badge) => (
+                          <img
+                            key={badge}
+                            src={badge}
+                            alt=""
+                            aria-hidden="true"
+                            className="h-7 w-7 drop-shadow-md"
+                          />
+                        ))}
                       </div>
 
-                      <CardContent className="space-y-4 p-5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-lg  text-white">
-                              {venue.name}
-                            </h3>
-                            <p className="mt-1 text-sm text-white/58">
-                              {venue.location}
-                            </p>
-                          </div>
-                          <div className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-sm text-white">
-                            <Star className="inline-block h-4 w-4 fill-[#6DFF3B] text-[#6DFF3B]" />{" "}
-                            {venue.rating.toFixed(1)}
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <Badge className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-white/72">
-                            {venue.sport}
-                          </Badge>
-                          <Badge className="rounded-full border border-emerald-500/20 bg-emerald-500/10 dark:border-[#6DFF3B]/20 dark:bg-[#6DFF3B]/10 px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-emerald-600 dark:text-[#6DFF3B]">
-                            {venue.availableToday
-                              ? "Available today"
-                              : "Limited slots"}
-                          </Badge>
-                        </div>
-
-                        <div className="grid gap-2">
-                          {venue.amenities.map((amenity) => (
-                            <div
-                              key={amenity}
-                              className="flex items-center gap-2 rounded-[16px] border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-white/66"
-                            >
-                              <ShieldCheck className="h-4 w-4 text-[#6DFF3B]" />
-                              {amenity}
+                      {/* Content Overlay */}
+                      <CardContent className="relative z-10 flex flex-col justify-end md:items-end flex-1 p-6 md:p-8 w-full h-full">
+                        <div className="flex flex-col items-end w-full md:max-w-[70%] lg:max-w-[50%] gap-5">
+                          {/* Details */}
+                          <div className="flex flex-col items-end space-y-3 w-full">
+                            <div className="text-right">
+                              <h3 
+                                className="text-2xl font-bold uppercase tracking-tight"
+                                style={{ color: '#ffffff', textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}
+                              >
+                                {venue.name}
+                              </h3>
+                              <p 
+                                className="mt-1 flex items-center justify-end gap-1.5 text-sm font-medium"
+                                style={{ color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
+                              >
+                                <MapPin className="w-4 h-4" /> {venue.location} • {venue.distance.toFixed(1)} km
+                              </p>
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="flex items-center justify-between gap-3 pt-1">
-                          <div>
-                            <p className="text-xs uppercase tracking-[0.22em] text-white/45">
-                              From
-                            </p>
-                            <p className="mt-1 text-xl  text-white">
-                              ₹{venue.price}/hr
-                            </p>
+                            <div className="flex flex-wrap justify-end gap-2">
+                              <div className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#0A0A0A] whitespace-nowrap shadow-md">
+                                <Star className="inline-block h-3.5 w-3.5 fill-[#6DFF3B] text-[#6DFF3B] mr-1" />
+                                {venue.rating.toFixed(1)}
+                              </div>
+                              <Badge className="rounded-full bg-white px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-[#0A0A0A] shadow-md font-bold">
+                                {venue.sport}
+                              </Badge>
+                              <Badge className="rounded-full border border-[#6DFF3B]/30 bg-[#6DFF3B]/20 backdrop-blur-md px-3 py-1 text-[0.68rem] uppercase tracking-[0.16em] text-[#6DFF3B] shadow-sm">
+                                {venue.availableToday
+                                  ? "Available today"
+                                  : "Limited slots"}
+                              </Badge>
+                            </div>
+
+                            <div className="flex flex-wrap justify-end gap-2 pt-1 hidden md:flex">
+                              {venue.amenities.map((amenity) => (
+                                <div
+                                  key={amenity}
+                                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-[#050505]/40 backdrop-blur-md px-2.5 py-1 text-xs text-white/80"
+                                >
+                                  <ShieldCheck className="h-3 w-3 text-[#6DFF3B]" />
+                                  {amenity}
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <Button className="group h-11 rounded-[16px] border border-[#6DFF3B] bg-transparent px-5 text-white transition-all hover:bg-[#6DFF3B] hover:text-[#050505]">
-                            View slots
-                            <ArrowRight className="h-4 w-4 text-[#6DFF3B] transition-colors group-hover:text-[#050505]" />
-                          </Button>
+
+                          {/* Buttons */}
+                          <div className="flex flex-wrap items-center justify-end gap-3 mt-2">
+                            <Button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!currentUser) {
+                                  toast.error("Please sign in first to view details.");
+                                  navigate("/login");
+                                } else {
+                                  navigate(`/venues/${venue.id}`);
+                                }
+                              }}
+                              className="group h-12 rounded-full border border-white/20 bg-[#050505]/40 backdrop-blur-md px-6 text-white font-bold uppercase tracking-wider transition-all hover:bg-white/10 hover:scale-105"
+                            >
+                              Details
+                            </Button>
+                            <Button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setModeModalVenue(venue);
+                              }}
+                              className="group h-12 rounded-full border border-[#6DFF3B] bg-[#6DFF3B] px-6 text-[#050505] font-bold uppercase tracking-wider transition-all hover:bg-[#86ff60] hover:scale-105 shadow-[0_0_20px_rgb(109,255,59,0.3)]"
+                            >
+                              Slots
+                              <ArrowRight className="h-4 w-4 ml-2 text-[#050505] transition-transform group-hover:translate-x-1" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
-                  </Link>
+                  </div>
                 </motion.div>
               ))}
             </div>
@@ -826,6 +840,61 @@ export function VenueBooking() {
           )}
         </div>
       </section>
+      {/* Mode Selection Modal */}
+      <Dialog open={!!modeModalVenue} onOpenChange={(open) => !open && setModeModalVenue(null)}>
+        <DialogContent className="sm:max-w-2xl rounded-[32px] border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#0A0A0A] text-slate-900 dark:text-white shadow-2xl p-8 overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[200px] bg-[#6DFF3B]/10 blur-[80px] rounded-full pointer-events-none" />
+
+          <DialogHeader className="mb-6 relative z-10 text-center">
+            <DialogTitle className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mb-2">
+              Choose Booking Mode
+            </DialogTitle>
+            <DialogDescription className="text-base text-slate-600 dark:text-white/60 max-w-sm mx-auto">
+              How would you like to experience <span className="text-slate-900 dark:text-white font-medium">{modeModalVenue?.name}</span>?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative z-10">
+            {/* Single Player Mode */}
+            <Button
+              onClick={() => {
+                setModeModalVenue(null);
+                navigate("/open-lobbies", { state: { venue: modeModalVenue } });
+              }}
+              className="group h-auto flex flex-col items-center text-center p-8 rounded-[24px] border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.05] hover:border-slate-300 dark:hover:border-white/20 hover:shadow-lg transition-all"
+            >
+              <div className="h-16 w-16 mb-4 rounded-full bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-white group-hover:scale-110 transition-transform duration-500">
+                <User className="h-7 w-7" />
+              </div>
+              <span className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                Single Player
+              </span>
+              <p className="text-sm text-slate-500 dark:text-white/50 leading-relaxed font-normal whitespace-normal">
+                Book a solo slot and join an open match with other players.
+              </p>
+            </Button>
+
+            {/* Create Own Lobby Mode */}
+            <Button
+              onClick={() => {
+                setModeModalVenue(null);
+                navigate("/squad-booking", { state: { venue: modeModalVenue } });
+              }}
+              className="group h-auto flex flex-col items-center text-center p-8 rounded-[24px] border border-emerald-500/30 dark:border-[#6DFF3B]/30 bg-[#6DFF3B]/10 dark:bg-[#6DFF3B]/5 hover:bg-[#6DFF3B]/20 dark:hover:bg-[#6DFF3B]/10 hover:border-emerald-500/60 dark:hover:border-[#6DFF3B]/60 hover:shadow-[0_0_30px_rgba(109,255,59,0.15)] transition-all"
+            >
+              <div className="h-16 w-16 mb-4 rounded-full bg-[#6DFF3B] text-black flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-[0_0_20px_rgba(109,255,59,0.4)]">
+                <Users className="h-7 w-7" />
+              </div>
+              <span className="text-xl font-bold text-emerald-700 dark:text-[#6DFF3B] mb-2">
+                Create Own Lobby
+              </span>
+              <p className="text-sm text-slate-600 dark:text-white/60 leading-relaxed font-normal whitespace-normal">
+                Reserve the entire turf, invite your squad, and split the cost.
+              </p>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
