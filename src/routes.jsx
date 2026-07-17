@@ -167,13 +167,7 @@ export const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      {
-        path: "/dashboard",
-        lazy: async () => {
-          const { HomeDashboard } = await import("./app/pages/home-dashboard");
-          return { Component: HomeDashboard };
-        },
-      },
+
       {
         path: "/player-dashboard",
         lazy: async () => {
@@ -213,13 +207,7 @@ export const router = createBrowserRouter([
           return { Component: Tournaments };
         },
       },
-      {
-        path: "/players",
-        lazy: async () => {
-          const { PlayerMatching } = await import("./app/pages/player-matching");
-          return { Component: PlayerMatching };
-        },
-      },
+
       {
         path: "/squad-booking",
         lazy: async () => {

@@ -560,7 +560,9 @@ export function VenueBooking() {
                     Refine your search
                   </h2>
                 </div>
-                <Filter className="h-5 w-5 text-[#6DFF3B]" />
+                <svg className="h-5 w-5 text-[#6DFF3B] filter drop-shadow-[0_0_5px_rgba(109,255,59,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                </svg>
               </div>
 
               <div className="space-y-3">
@@ -651,7 +653,10 @@ export function VenueBooking() {
                       Hide sold-out venues
                     </p>
                   </div>
-                  <TimerReset className="h-4 w-4 text-[#6DFF3B]" />
+                  <svg className="h-4.5 w-4.5 text-[#6DFF3B] filter drop-shadow-[0_0_4px_rgba(109,255,59,0.5)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
                 </button>
                 <button
                   type="button"
@@ -669,7 +674,15 @@ export function VenueBooking() {
                       Prioritize better-rated venues
                     </p>
                   </div>
-                  <Star className="h-4 w-4 text-[#6DFF3B]" />
+                  <svg className="h-4.5 w-4.5 text-[#6DFF3B] filter drop-shadow-[0_0_5px_rgba(109,255,59,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                    <defs>
+                      <linearGradient id="filterStarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#6DFF3B" />
+                        <stop offset="100%" stopColor="#4de01d" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="url(#filterStarGradient)" />
+                  </svg>
                 </button>
               </div>
 
@@ -721,21 +734,7 @@ export function VenueBooking() {
                           : "md:left-0 md:bg-gradient-to-r from-[#050505]/95 via-[#050505]/90 to-transparent"
                       )} />
 
-                      {/* Top Badges */}
-                      <div className={cn(
-                        "absolute top-6 flex gap-2 z-10",
-                        index % 2 === 0 ? "left-6" : "right-6 flex-row-reverse"
-                      )}>
-                        {venue.badges.map((badge) => (
-                          <img
-                            key={badge}
-                            src={badge}
-                            alt=""
-                            aria-hidden="true"
-                            className="h-7 w-7 drop-shadow-md"
-                          />
-                        ))}
-                      </div>
+
 
                       {/* Content Overlay */}
                       <CardContent className={cn(
@@ -765,7 +764,11 @@ export function VenueBooking() {
                                 )}
                                 style={{ color: '#ffffff', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}
                               >
-                                <MapPin className="w-4 h-4" /> {venue.location} • {venue.distance.toFixed(1)} km
+                                <svg className="w-4 h-4 inline-block filter drop-shadow-[0_0_4px_rgba(109,255,59,0.5)] mr-1" viewBox="0 0 24 24" fill="none" stroke="#6DFF3B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z" />
+                                  <circle cx="12" cy="10" r="3" fill="#6DFF3B" />
+                                </svg>
+                                <span>{venue.location} • {venue.distance.toFixed(1)} km</span>
                               </p>
                             </div>
 
@@ -774,7 +777,15 @@ export function VenueBooking() {
                               index % 2 === 0 ? "justify-end" : "justify-start"
                             )}>
                               <div className="flex items-center text-xs font-bold text-white whitespace-nowrap">
-                                <Star className="inline-block h-3.5 w-3.5 fill-[#6DFF3B] text-[#6DFF3B] mr-1" />
+                                <svg className="inline-block h-4 w-4 mr-1 text-[#6DFF3B] filter drop-shadow-[0_0_5px_rgba(109,255,59,0.5)]" viewBox="0 0 24 24" fill="currentColor">
+                                  <defs>
+                                    <linearGradient id={`starGradient-${venue.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                      <stop offset="0%" stopColor="#6DFF3B" />
+                                      <stop offset="100%" stopColor="#4de01d" />
+                                    </linearGradient>
+                                  </defs>
+                                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill={`url(#starGradient-${venue.id})`} />
+                                </svg>
                                 {venue.rating.toFixed(1)}
                               </div>
                               <span className="text-[0.68rem] uppercase tracking-[0.16em] text-white font-bold">
@@ -805,7 +816,7 @@ export function VenueBooking() {
                                   navigate(`/venues/${venue.id}`);
                                 }
                               }}
-                              className="group h-12 rounded-full border border-[#6DFF3B] bg-[#6DFF3B] px-6 text-[#050505] font-bold uppercase tracking-wider transition-all hover:bg-[#86ff60] hover:scale-105 shadow-[0_0_20px_rgb(109,255,59,0.3)]"
+                              className="group h-12 rounded-full border border-white bg-white px-6 text-[#050505] font-bold uppercase tracking-wider transition-all hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_20px_rgba(109,255,59,0.35)]"
                             >
                               Details
                             </Button>
@@ -814,7 +825,7 @@ export function VenueBooking() {
                                 e.stopPropagation();
                                 setModeModalVenue(venue);
                               }}
-                              className="group h-12 rounded-full border border-[#6DFF3B] bg-[#6DFF3B] px-6 text-[#050505] font-bold uppercase tracking-wider transition-all hover:bg-[#86ff60] hover:scale-105 shadow-[0_0_20px_rgb(109,255,59,0.3)]"
+                              className="group h-12 rounded-full border border-white bg-white px-6 text-[#050505] font-bold uppercase tracking-wider transition-all hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_20px_rgba(109,255,59,0.35)]"
                             >
                               Slots
                               <ArrowRight className="h-4 w-4 ml-2 text-[#050505] transition-transform group-hover:translate-x-1" />

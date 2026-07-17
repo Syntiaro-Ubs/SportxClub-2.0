@@ -181,7 +181,8 @@ html:not(.dark) .theme-adaptive [class*="bg-[radial-gradient"]:not(.always-dark 
 /* Ensure brand green text, icons, fills, and borders are readable in light mode */
 html:not(.dark) [class*="text-[#6DFF3B]"]:not([class*="hover"]),
 html:not(.dark) .text-primary {
-  color: #059669 !important; /* emerald-600 */
+  color: #059669 !important;
+  /* emerald-600 */
 }
 
 /* Hover states for brand green in light mode */
@@ -212,24 +213,32 @@ html:not(.dark) [class*="border-[#6DFF3B]"] {
 ::-webkit-scrollbar {
   display: none;
 }
-html, body {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+
+html,
+body {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
 }
 
 /* Always dark overrides for Hero card layout items to preserve high contrast text on image backgrounds */
 .text-always-white {
   color: #ffffff !important;
 }
+
 .text-always-white-90 {
   color: rgba(255, 255, 255, 0.9) !important;
 }
+
 .text-always-brand-green {
   color: #6DFF3B !important;
 }
+
 .bg-always-black-40 {
   background-color: rgba(0, 0, 0, 0.4) !important;
 }
+
 .border-always-white-20 {
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
