@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
-import { 
-  ArrowLeft, 
-  Users, 
-  Trophy, 
-  Calendar, 
-  MapPin, 
-  Lock, 
-  Smartphone, 
-  Wallet, 
-  Check, 
-  Loader2, 
-  Star, 
-  Flame, 
+import {
+  ArrowLeft,
+  Users,
+  Trophy,
+  Calendar,
+  MapPin,
+  Lock,
+  Smartphone,
+  Wallet,
+  Check,
+  Loader2,
+  Star,
+  Flame,
   Activity,
   Plus,
   ShieldCheck,
@@ -30,14 +30,14 @@ import { cn } from "../components/ui/utils";
 
 // Mock data for open lobbies with types and features
 const initialLobbies = [
-  { 
-    id: 1, 
-    sport: "Football", 
-    teamName: "Weekend Warriors FC", 
-    currentPlayers: 6, 
-    maxPlayers: 10, 
-    time: "18:00 - 19:00", 
-    priceTotal: 1500, 
+  {
+    id: 1,
+    sport: "Football",
+    teamName: "Weekend Warriors FC",
+    currentPlayers: 6,
+    maxPlayers: 10,
+    time: "18:00 - 19:00",
+    priceTotal: 1500,
     date: "Today",
     host: { name: "Rohan Das", rating: 4.8, avatar: "RD" },
     skillLevel: "Intermediate",
@@ -45,14 +45,14 @@ const initialLobbies = [
     type: "Casual",
     accent: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
   },
-  { 
-    id: 2, 
-    sport: "Football", 
-    teamName: "Night Owls FC", 
-    currentPlayers: 8, 
-    maxPlayers: 14, 
-    time: "20:00 - 22:00", 
-    priceTotal: 2800, 
+  {
+    id: 2,
+    sport: "Football",
+    teamName: "Night Owls FC",
+    currentPlayers: 8,
+    maxPlayers: 14,
+    time: "20:00 - 22:00",
+    priceTotal: 2800,
     date: "Today",
     host: { name: "Vikram Malhotra", rating: 4.9, avatar: "VM" },
     skillLevel: "Advanced",
@@ -60,14 +60,14 @@ const initialLobbies = [
     type: "Competitive",
     accent: "text-amber-500 bg-amber-500/10 border-amber-500/20"
   },
-  { 
-    id: 3, 
-    sport: "Cricket", 
-    teamName: "Powai Smashers XI", 
-    currentPlayers: 16, 
-    maxPlayers: 22, 
-    time: "16:00 - 18:00", 
-    priceTotal: 2200, 
+  {
+    id: 3,
+    sport: "Cricket",
+    teamName: "Powai Smashers XI",
+    currentPlayers: 16,
+    maxPlayers: 22,
+    time: "16:00 - 18:00",
+    priceTotal: 2200,
     date: "Tomorrow",
     host: { name: "Amit Patel", rating: 4.7, avatar: "AP" },
     skillLevel: "All Levels",
@@ -75,14 +75,14 @@ const initialLobbies = [
     type: "Friendly",
     accent: "text-blue-500 bg-blue-500/10 border-blue-500/20"
   },
-  { 
-    id: 4, 
-    sport: "Basketball", 
-    teamName: "Dunkin' Dynamos", 
-    currentPlayers: 3, 
-    maxPlayers: 10, 
-    time: "17:00 - 18:00", 
-    priceTotal: 1200, 
+  {
+    id: 4,
+    sport: "Basketball",
+    teamName: "Dunkin' Dynamos",
+    currentPlayers: 3,
+    maxPlayers: 10,
+    time: "17:00 - 18:00",
+    priceTotal: 1200,
     date: "Today",
     host: { name: "Kabir Mehta", rating: 4.6, avatar: "KM" },
     skillLevel: "Intermediate",
@@ -101,7 +101,27 @@ const getLobbies = () => {
     type: l.type || "Casual",
     accent: l.accent || "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
     description: l.description || "Freshly hosted lobby. Tap to join!"
-  })).sort((a, b) => b.id - a.id), ...initialLobbies]; 
+  })).sort((a, b) => b.id - a.id), ...initialLobbies];
+};
+
+const getJoinedPlayersList = (lobby) => {
+  if (!lobby) return [];
+  const list = [lobby.host.name];
+  const mockNames = [
+    "Rahul Sharma", "Arjun Kapoor", "Priya Patel", "Sneha Singh",
+    "Vikram Malhotra", "Amit Shah", "Kabir Sen", "Riya Sen",
+    "Sameer Rao", "Ananya Roy", "Rohan Das", "Surekha K."
+  ];
+  // Determine names deterministically based on lobby.id to avoid random shifts on render
+  let nameIndex = lobby.id % mockNames.length;
+  while (list.length < lobby.currentPlayers) {
+    const nextName = mockNames[nameIndex];
+    if (!list.includes(nextName)) {
+      list.push(nextName);
+    }
+    nameIndex = (nameIndex + 1) % mockNames.length;
+  }
+  return list;
 };
 
 export function OpenLobbiesPage() {
@@ -111,7 +131,7 @@ export function OpenLobbiesPage() {
 
   const [selectedSport, setSelectedSport] = useState("All");
   const [selectedLobby, setSelectedLobby] = useState(null);
-  
+
   // Payment Modal States
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentStep, setPaymentStep] = useState("select");
@@ -125,10 +145,11 @@ export function OpenLobbiesPage() {
   const [cardCvv, setCardCvv] = useState("");
   const [cardName, setCardName] = useState("");
 
-  const allLobbies = getLobbies();
-  const filteredLobbies = selectedSport === "All" 
-    ? allLobbies 
+  const allLobbies = getLobbies().filter(l => l.currentPlayers < l.maxPlayers);
+  const filteredLobbies = selectedSport === "All"
+    ? allLobbies
     : allLobbies.filter(l => l.sport === selectedSport);
+  const joinedLobbies = JSON.parse(localStorage.getItem("joined_lobbies") || "[]");
 
   const amountToPay = selectedLobby ? Math.ceil(selectedLobby.priceTotal / selectedLobby.maxPlayers) : 0;
 
@@ -173,13 +194,13 @@ export function OpenLobbiesPage() {
 
     setPaymentStep("processing");
     setProcessingMessage("Initiating secure connection...");
-    
+
     setTimeout(() => setProcessingMessage("Verifying slots availability..."), 1000);
     setTimeout(() => setProcessingMessage("Confirming split payment..."), 2000);
-    
+
     setTimeout(() => {
       setPaymentStep("success");
-      
+
       // Save last booking details to sessionStorage for the success screen
       const lobbyObj = {
         active: true,
@@ -190,7 +211,7 @@ export function OpenLobbiesPage() {
           { id: "m2", name: "You", role: "member" },
         ],
       };
-      
+
       sessionStorage.setItem("sportxclub_last_booking", JSON.stringify({
         squadLobby: lobbyObj,
         paymentMode: "split",
@@ -207,10 +228,17 @@ export function OpenLobbiesPage() {
 
       // Dynamically update localStorage to increment joined players count for this lobby
       const existingOpenLobbies = JSON.parse(localStorage.getItem("open_lobbies") || "[]");
-      const updatedOpenLobbies = existingOpenLobbies.map(l => 
+      const updatedOpenLobbies = existingOpenLobbies.map(l =>
         l.id === selectedLobby.id ? { ...l, currentPlayers: l.currentPlayers + 1 } : l
       );
       localStorage.setItem("open_lobbies", JSON.stringify(updatedOpenLobbies));
+
+      // Record this lobby as joined by the user!
+      const joinedLobbies = JSON.parse(localStorage.getItem("joined_lobbies") || "[]");
+      if (!joinedLobbies.includes(selectedLobby.id)) {
+        joinedLobbies.push(selectedLobby.id);
+        localStorage.setItem("joined_lobbies", JSON.stringify(joinedLobbies));
+      }
 
       setTimeout(() => navigate("/booking-success"), 1500);
     }, 3000);
@@ -221,7 +249,7 @@ export function OpenLobbiesPage() {
   return (
     <div className="theme-adaptive bg-slate-50 dark:bg-[#050505] text-slate-900 dark:text-white min-h-screen">
       <div className="mx-auto max-w-[1400px] px-4 py-6 pb-12 sm:px-6 lg:px-8 lg:py-10">
-        
+
         {/* Back Link */}
         <Link
           to="/venues"
@@ -235,7 +263,7 @@ export function OpenLobbiesPage() {
         <div className="mt-8 mb-10 relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] p-6 md:p-8 shadow-sm">
           {/* Ambient glowing background blur */}
           <div className="absolute top-0 right-1/4 w-[300px] h-[300px] bg-[#6DFF3B]/10 blur-[100px] rounded-full pointer-events-none" />
-          
+
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
             <div>
               <span className="text-[10px] font-black tracking-widest text-[#6DFF3B] bg-[#6DFF3B]/10 px-2.5 py-1 rounded-md mb-3 inline-block animate-pulse">
@@ -248,7 +276,7 @@ export function OpenLobbiesPage() {
                 Join an existing squad as a single player at <span className="text-slate-900 dark:text-[#6DFF3B] font-semibold">{venue.name}</span>. Pay only your individual split share.
               </p>
             </div>
-            
+
             <div className="flex gap-4 items-center shrink-0">
               <div className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-[#050505]/40 px-5 py-4 text-center min-w-[100px]">
                 <p className="text-3xl font-black text-slate-900 dark:text-[#6DFF3B]">{filteredLobbies.length}</p>
@@ -270,7 +298,7 @@ export function OpenLobbiesPage() {
             {sportsList.map((sport) => {
               const isActive = selectedSport === sport;
               const count = sport === "All" ? allLobbies.length : allLobbies.filter(l => l.sport === sport).length;
-              
+
               return (
                 <button
                   key={sport}
@@ -326,11 +354,11 @@ export function OpenLobbiesPage() {
               {filteredLobbies.map((lobby) => {
                 const splitPrice = Math.ceil(lobby.priceTotal / lobby.maxPlayers);
                 const slotsRemaining = lobby.maxPlayers - lobby.currentPlayers;
-                
+
                 return (
                   <Card key={lobby.id} className="rounded-[28px] border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216]/60 backdrop-blur-md shadow-sm hover:border-[#6DFF3B]/50 hover:shadow-[0_15px_40px_rgba(109,255,59,0.05)] hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between overflow-hidden">
                     <CardContent className="p-6 md:p-8 flex flex-col justify-between h-full space-y-6">
-                      
+
                       {/* Top Header Row */}
                       <div className="flex justify-between items-start gap-4">
                         <div>
@@ -355,7 +383,7 @@ export function OpenLobbiesPage() {
                             {lobby.description || "Friendly open session. Join us!"}
                           </p>
                         </div>
-                        
+
                         <div className="text-right shrink-0">
                           <p className="text-2xl font-black text-slate-900 dark:text-white">₹{splitPrice}</p>
                           <p className="text-[9px] text-slate-500 dark:text-white/40 uppercase font-bold tracking-wide mt-0.5">Split Share</p>
@@ -433,12 +461,21 @@ export function OpenLobbiesPage() {
 
                       {/* Join CTA */}
                       <div className="pt-2">
-                        <Button 
-                          onClick={() => handleJoinClick(lobby)}
-                          className="w-full h-12 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all shadow-md hover:shadow-lg hover:shadow-[#6DFF3B]/20 uppercase tracking-wider text-xs hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                          Join & Pay ₹{splitPrice}
-                        </Button>
+                        {joinedLobbies.includes(lobby.id) ? (
+                          <div 
+                            className="w-full h-12 bg-[#6DFF3B] text-black rounded-xl font-black flex items-center justify-center gap-1.5 cursor-not-allowed uppercase tracking-wider text-xs"
+                          >
+                            <Check className="h-4.5 w-4.5 text-black stroke-[3]" />
+                            Joined - Ready to Play ✓
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={() => handleJoinClick(lobby)}
+                            className="w-full h-12 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all shadow-md hover:shadow-lg hover:shadow-[#6DFF3B]/20 uppercase tracking-wider text-xs hover:scale-[1.02] active:scale-[0.98]"
+                          >
+                            Join & Pay ₹{splitPrice}
+                          </Button>
+                        )}
                       </div>
 
                     </CardContent>
@@ -470,6 +507,62 @@ export function OpenLobbiesPage() {
                   Select payment method and enter details to join <span className="text-slate-900 dark:text-white font-medium">{selectedLobby?.teamName}</span>.
                 </DialogDescription>
               </DialogHeader>
+
+              {/* Team/Lobby Details Card */}
+              <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl p-4.5 mb-4 text-left space-y-3 relative overflow-hidden">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-[#6DFF3B] bg-[#6DFF3B]/10 border border-[#6DFF3B]/20 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
+                      {selectedLobby?.sport} • {selectedLobby?.skillLevel || "All Levels"}
+                    </span>
+                    <h4 className="text-base font-black text-slate-800 dark:text-white leading-tight">
+                      {selectedLobby?.teamName}
+                    </h4>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">Total Court Fee</span>
+                    <span className="text-sm font-extrabold text-slate-700 dark:text-white/80">₹{selectedLobby?.priceTotal}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/50 dark:border-white/[0.05] text-xs">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Schedule Time</span>
+                    <span className="font-bold text-slate-700 dark:text-white/90">{selectedLobby?.time}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Lobby Host</span>
+                    <span className="font-bold text-slate-700 dark:text-white/90">{selectedLobby?.host?.name} ({selectedLobby?.host?.rating} ★)</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/50 dark:border-white/[0.05] text-xs flex justify-between items-center">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Squad Capacity</span>
+                    <span className="font-bold text-slate-700 dark:text-white/90">{selectedLobby?.currentPlayers} / {selectedLobby?.maxPlayers} Joined</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-[#6DFF3B] font-bold">
+                      {selectedLobby ? (selectedLobby.maxPlayers - selectedLobby.currentPlayers) : 0} Slots Left
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-2.5 border-t border-slate-200/50 dark:border-white/[0.05] text-xs">
+                  <span className="text-[10px] text-muted-foreground block uppercase font-semibold mb-1.5">Joined Players</span>
+                  <div className="flex flex-wrap gap-2">
+                    {getJoinedPlayersList(selectedLobby).map((player, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.05] px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-800 dark:text-white/90"
+                      >
+                        <span className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? "bg-[#6DFF3B]" : "bg-sky-400"}`} />
+                        {player} {idx === 0 && <span className="text-[9px] text-muted-foreground font-bold">(Host)</span>}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
               <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl p-4 mb-4 flex justify-between items-center shadow-inner">
                 <span className="text-sm text-slate-600 dark:text-white/60 font-semibold">Your Split Share</span>

@@ -44,6 +44,7 @@ export function BookingSuccess() {
   const [paidMemberIds, setPaidMemberIds] = useState(
     isSplit ? [hostId] : members.map(m => m.id)
   );
+  const paidMembers = members.filter(member => paidMemberIds.includes(member.id));
 
   // Simulate players payment completion after 10 seconds
   useEffect(() => {
@@ -349,24 +350,23 @@ export function BookingSuccess() {
                 </div>
               </div>
 
-              {/* Split Squad Details (Visible if split) */}
-              {isSplit && (
-                <div className="border-t border-border/20 pt-3 space-y-1.5 text-left text-xs">
-                  <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Split Payment Status</p>
-                  <div className="space-y-1.5">
-                    {members.map((member) => (
-                      <div key={member.id} className="flex justify-between items-center text-[11px] text-slate-600 dark:text-white/70">
-                        <span className="flex items-center gap-1 font-semibold text-slate-800 dark:text-white">
-                          <span>{member.name}</span>
-                          {member.role === "host" && <span className="text-[9px]">👑</span>}
-                        </span>
-                        <span className="font-semibold flex items-center gap-1.5">
-                          <span className="text-slate-800 dark:text-white">₹{costPerPlayer}</span>
-                          {paidMemberIds.includes(member.id) ? (
-                            <span className="text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] font-bold px-1.5 py-0.5 rounded-full transition-all duration-500">Paid</span>
-                          ) : (
-                            <span className="text-[8px] bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-1.5 py-0.5 rounded-full animate-pulse">Pending</span>
-                          )}
+              {/* Paid Players List */}
+              {paidMembers.length > 0 && (
+                <div className="border-t border-border/20 pt-3.5 space-y-2 text-left">
+                  <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider font-extrabold flex justify-between items-center">
+                    <span>Paid Teammates</span>
+                    <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] font-bold px-2 py-0.5 rounded-full">
+                      {paidMembers.length} Joined
+                    </span>
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {paidMembers.map((member) => (
+                      <div key={member.id} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] transition-all duration-300">
+                        <div className="h-5 w-5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] flex items-center justify-center text-[10px] font-black">
+                          ✓
+                        </div>
+                        <span className="text-xs font-semibold text-slate-700 dark:text-white/80 truncate max-w-[120px]">
+                          {member.name}
                         </span>
                       </div>
                     ))}
@@ -390,14 +390,14 @@ export function BookingSuccess() {
 
         <div className="pt-4 space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            <Link to="/dashboard" className="flex-1">
+            <Link to="/profile" className="flex-1">
               <Button size="lg" className="w-full shadow-lg shadow-primary/20">
-                Go to Dashboard
+                Go to Profile
               </Button>
             </Link>
-            <Link to="/players" className="flex-1">
+            <Link to="/venues" className="flex-1">
               <Button size="lg" variant="secondary" className="w-full">
-                Go to Match Lobby
+                Book Another Turf
               </Button>
             </Link>
           </div>

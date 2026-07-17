@@ -58,7 +58,6 @@ export function Footer() {
               links: [
                 { label: "Venues", to: "/venues" },
                 { label: "Tournaments", to: "/tournaments" },
-                { label: "Players", to: "/players" },
                 { label: "Community", to: "/community" },
               ],
             },
@@ -66,7 +65,7 @@ export function Footer() {
               title: "For business",
               links: [
                 { label: "Organizers", to: "/organizer-dashboard" },
-                { label: "Dashboard", to: "/dashboard" },
+                { label: "Player Details", to: "/profile" },
                 { label: "Support", to: "/profile" },
               ],
             },

@@ -242,7 +242,7 @@ export function VenueDetails() {
               <SelectItem
                 key={item}
                 value={item}
-                className="rounded-[12px] my-1 data-[highlighted]:bg-[#6DFF3B]/10 data-[highlighted]:text-[#6DFF3B] cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]"
+                className="rounded-[12px] my-1 text-slate-900 dark:text-white hover:text-primary focus:text-primary data-[highlighted]:text-primary hover:bg-[#6DFF3B]/10 focus:bg-[#6DFF3B]/10 data-[highlighted]:bg-[#6DFF3B]/10 cursor-pointer"
               >
                 {item}
               </SelectItem>
@@ -278,7 +278,7 @@ export function VenueDetails() {
               <SelectItem
                 key={hours}
                 value={hours.toString()}
-                className="rounded-[12px] my-1 data-[highlighted]:bg-[#6DFF3B]/10 data-[highlighted]:text-[#6DFF3B] cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]"
+                className="rounded-[12px] my-1 text-slate-900 dark:text-white hover:text-primary focus:text-primary data-[highlighted]:text-primary hover:bg-[#6DFF3B]/10 focus:bg-[#6DFF3B]/10 data-[highlighted]:bg-[#6DFF3B]/10 cursor-pointer"
               >
                 {hours} {hours === 1 ? "Hour" : "Hours"}
               </SelectItem>

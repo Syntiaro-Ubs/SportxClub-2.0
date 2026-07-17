@@ -50,6 +50,7 @@ export function SquadBookingPage() {
   const location = useLocation();
   const [selectedSport, setSelectedSport] = useState("");
   const [squadSize, setSquadSize] = useState("");
+  const [bookingType, setBookingType] = useState("lobby"); // "lobby" | "direct"
   const [step, setStep] = useState(1);
   const [teamName, setTeamName] = useState("");
   const [playerNames, setPlayerNames] = useState([]);
@@ -78,21 +79,6 @@ export function SquadBookingPage() {
     ));
   };
 
-  const handleBookTurfDirectly = () => {
-    let finalTeamName = teamName;
-    if (!teamName.trim()) {
-      finalTeamName = `${selectedSport || "My"} Squad FC`;
-      setTeamName(finalTeamName);
-    }
-
-    // Auto-fill all empty roster slots as "Player X"
-    setPlayerNames(prev => prev.map((name, i) =>
-      name.trim() === "" ? `Player ${i + 1}` : name
-    ));
-
-    toast.success(`Booking configured for ${finalTeamName || "Squad"}! Select a slot.`);
-    setStep(3);
-  };
 
   const squadLobby = location.state?.squadLobby || {
     active: true,
@@ -190,6 +176,7 @@ export function SquadBookingPage() {
 
   const amountToPayNow = selectedSlotObj ? selectedSlotObj.price * playHours : 0;
   const costPerPlayer = playerNames.length > 0 ? Math.ceil(amountToPayNow / playerNames.length) : amountToPayNow;
+  const displayPrice = paymentMode === "split" ? costPerPlayer : amountToPayNow;
 
   // Secure checkout & payment states
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -198,6 +185,36 @@ export function SquadBookingPage() {
   const [paymentStep, setPaymentStep] = useState("select"); // "select" | "processing" | "success"
   const [paymentMethod, setPaymentMethod] = useState("upi"); // "upi" | "card" | "wallet" | "netbanking"
   const [processingMessage, setProcessingMessage] = useState("");
+
+  // Simulate other players paying their share automatically in the Split & Pay modal
+  useEffect(() => {
+    if (isPaymentModalOpen && paymentModalView === "split_status") {
+      const pendingOthers = playerNames.map((name, idx) => ({ name, idx }))
+        .filter(({ name, idx }) => idx > 0 && name.trim() !== "" && !playerPayments[idx]);
+
+      if (pendingOthers.length > 0) {
+        const timer = setTimeout(() => {
+          // Mark all others as paid
+          setPlayerPayments(prev => {
+            const updated = { ...prev };
+            pendingOthers.forEach(({ idx }) => {
+              updated[idx] = true;
+            });
+            return updated;
+          });
+
+          // Show success toast
+          const guestNames = pendingOthers.map(p => p.name.trim()).join(", ");
+          toast.success(`${guestNames} paid their share!`, {
+            description: "Their split payments have been settled.",
+            duration: 4000,
+          });
+        }, 8000); // 8 seconds delay
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isPaymentModalOpen, paymentModalView, playerNames, playerPayments]);
 
   // Input fields state
   const [upiId, setUpiId] = useState("");
@@ -234,7 +251,7 @@ export function SquadBookingPage() {
         return;
       }
     }
-    if (paymentMethod === "wallet" && walletBalance < amountToPayNow) {
+    if (paymentMethod === "wallet" && walletBalance < displayPrice) {
       toast.error("Insufficient wallet balance. Please top up or choose another payment method.");
       return;
     }
@@ -268,7 +285,7 @@ export function SquadBookingPage() {
 
         // Deduct from wallet if wallet selected
         if (paymentMethod === "wallet") {
-          setWalletBalance(prev => prev - amountToPayNow);
+          setWalletBalance(prev => prev - displayPrice);
         }
 
         // Successfully paid, complete checkout
@@ -284,7 +301,11 @@ export function SquadBookingPage() {
   };
 
   const handleCheckout = () => {
-    toast.success(`Lobby booked successfully! Share the lobby code with others.`);
+    if (bookingType === "lobby") {
+      toast.success(`Lobby booked successfully! Share the lobby code with others.`);
+    } else {
+      toast.success(`Turf booked successfully! Slot reserved.`);
+    }
 
     const rangeStr = selectedSlotObj ? formatSlotRange(selectedSlotObj.startHour, playHours) : "N/A";
 
@@ -300,31 +321,40 @@ export function SquadBookingPage() {
       date: "Today"
     };
 
-    // Save to open lobbies list so it appears in single-player view
-    const existingOpenLobbies = JSON.parse(localStorage.getItem("open_lobbies") || "[]");
-    localStorage.setItem("open_lobbies", JSON.stringify([...existingOpenLobbies, newLobby]));
+    // Save to open lobbies list so it appears in single-player view (ONLY for Lobby Split bookings)
+    if (bookingType === "lobby" && paymentMode === "split") {
+      const existingOpenLobbies = JSON.parse(localStorage.getItem("open_lobbies") || "[]");
+      localStorage.setItem("open_lobbies", JSON.stringify([...existingOpenLobbies, newLobby]));
+    }
+
+    const activeMembers = playerNames
+      .map((name, idx) => {
+        const finalName = idx === 0 ? (name.trim() || "You (Host)") : name.trim();
+        return {
+          id: idx === 0 ? 99 : idx + 100,
+          name: finalName,
+          role: idx === 0 ? "host" : "player"
+        };
+      })
+      .filter(m => m.name !== "");
 
     // Update active squad lobby (mock for receipt)
     const lobbyObj = {
-      active: true,
+      active: bookingType === "lobby",
       sport: selectedSport,
-      maxSize: playerNames.length,
-      members: playerNames.map((name, idx) => ({
-        id: idx === 0 ? 99 : idx + 100,
-        name: name.trim() || `Player ${idx + 1}`,
-        role: idx === 0 ? "host" : "player"
-      })),
-      paymentMode: "split",
-      paidMembers: [99]
+      maxSize: parseInt(squadSize) || playerNames.length,
+      members: activeMembers,
+      paymentMode: paymentMode,
+      paidMembers: paymentMode === "split" ? [99] : activeMembers.map(m => m.id)
     };
     localStorage.setItem("active_squad_lobby", JSON.stringify(lobbyObj));
 
     // Save transaction state for the receipt download and Entry Pass screen
     sessionStorage.setItem("sportxclub_last_booking", JSON.stringify({
       squadLobby: lobbyObj,
-      paymentMode: "split",
-      amountToPayNow,
-      costPerPlayer: Math.ceil(amountToPayNow / newLobby.maxPlayers),
+      paymentMode: paymentMode,
+      amountToPayNow: displayPrice,
+      costPerPlayer: paymentMode === "split" ? costPerPlayer : amountToPayNow,
       totalPrice: amountToPayNow,
       venue,
       selectedDate: "Today",
@@ -341,14 +371,7 @@ export function SquadBookingPage() {
   return (
     <div className="theme-adaptive bg-slate-50 dark:bg-[#050505] text-slate-900 dark:text-white min-h-screen">
       <div className="mx-auto max-w-[1400px] px-4 py-6 pb-6 sm:px-6 lg:px-8 lg:py-8 lg:pb-8">
-        {/* Back Link */}
-        <Link
-          to="/players"
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] px-4 py-2 text-sm text-slate-600 dark:text-white/72 transition hover:border-[#6DFF3B]/25 hover:bg-[#6DFF3B]/10"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Find Players
-        </Link>
+
 
         {/* Title */}
         <div className="mt-6 mb-8">
@@ -371,14 +394,17 @@ export function SquadBookingPage() {
                         Select Sport
                       </label>
                       <Select value={selectedSport} onValueChange={setSelectedSport}>
-                        <SelectTrigger className="w-full h-14 px-4 rounded-xl border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white focus:ring-[#6DFF3B] focus:border-[#6DFF3B]">
+                        <SelectTrigger
+                          size="custom"
+                          className="!h-14 !w-full !px-4 !rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] text-sm text-slate-900 dark:text-white focus:outline-none focus:border-[#6DFF3B] focus:ring-1 focus:ring-[#6DFF3B]"
+                        >
                           <SelectValue placeholder="Choose a sport" />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216]">
-                          <SelectItem value="Football" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">Football</SelectItem>
-                          <SelectItem value="Cricket" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">Cricket</SelectItem>
-                          <SelectItem value="Basketball" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">Basketball</SelectItem>
-                          <SelectItem value="Tennis" className="cursor-pointer focus:bg-[#6DFF3B]/10 focus:text-[#6DFF3B]">Tennis</SelectItem>
+                          <SelectItem value="Football" className="cursor-pointer text-slate-900 dark:text-white hover:text-primary focus:text-primary data-[highlighted]:text-primary hover:bg-[#6DFF3B]/10 focus:bg-[#6DFF3B]/10 data-[highlighted]:bg-[#6DFF3B]/10">Football</SelectItem>
+                          <SelectItem value="Cricket" className="cursor-pointer text-slate-900 dark:text-white hover:text-primary focus:text-primary data-[highlighted]:text-primary hover:bg-[#6DFF3B]/10 focus:bg-[#6DFF3B]/10 data-[highlighted]:bg-[#6DFF3B]/10">Cricket</SelectItem>
+                          <SelectItem value="Basketball" className="cursor-pointer text-slate-900 dark:text-white hover:text-primary focus:text-primary data-[highlighted]:text-primary hover:bg-[#6DFF3B]/10 focus:bg-[#6DFF3B]/10 data-[highlighted]:bg-[#6DFF3B]/10">Basketball</SelectItem>
+                          <SelectItem value="Tennis" className="cursor-pointer text-slate-900 dark:text-white hover:text-primary focus:text-primary data-[highlighted]:text-primary hover:bg-[#6DFF3B]/10 focus:bg-[#6DFF3B]/10 data-[highlighted]:bg-[#6DFF3B]/10">Tennis</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -412,7 +438,6 @@ export function SquadBookingPage() {
                   <div className="pt-6 border-t border-slate-100 dark:border-white/[0.05] flex justify-end">
                     <Button
                       onClick={() => {
-                        toast.success("Lobby settings saved! Moving to next step...");
                         setStep(2);
                       }}
                       disabled={!selectedSport || !squadSize}
@@ -459,13 +484,6 @@ export function SquadBookingPage() {
                       <div className="flex items-center gap-2">
                         <Button
                           type="button"
-                          onClick={handleBookTurfDirectly}
-                          className="h-8 px-3 text-[11px] font-bold rounded-lg bg-[#6DFF3B] text-black hover:bg-[#86ff60] transition-all shadow-sm shadow-[#6DFF3B]/10 cursor-pointer"
-                        >
-                          Book Turf
-                        </Button>
-                        <Button
-                          type="button"
                           onClick={handleAutoFill}
                           className="h-8 px-3 text-[11px] font-bold rounded-lg bg-[#6DFF3B]/10 text-emerald-700 dark:text-[#6DFF3B] hover:bg-[#6DFF3B]/20 border border-[#6DFF3B]/30 transition-all shadow-sm shadow-[#6DFF3B]/5 cursor-pointer"
                         >
@@ -499,13 +517,24 @@ export function SquadBookingPage() {
                   <div className="pt-6 border-t border-slate-100 dark:border-white/[0.05] flex justify-end">
                     <Button
                       onClick={() => {
-                        toast.success("Team saved! Now select a slot.");
+                        let finalTeamName = teamName;
+                        if (!teamName.trim()) {
+                          finalTeamName = `${selectedSport || "My"} Squad FC`;
+                          setTeamName(finalTeamName);
+                        }
+
+                        // Clean player names (preserve empty strings for unentered ones)
+                        const cleanedPlayerNames = playerNames.map((name, i) => {
+                          if (i === 0) return name.trim() || "You (Host)";
+                          return name.trim();
+                        });
+                        setPlayerNames(cleanedPlayerNames);
+
                         setStep(3);
                       }}
-                      disabled={!teamName || playerNames.some(n => n.trim() === "")}
-                      className="h-12 px-8 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all shadow-lg shadow-[#6DFF3B]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-12 px-8 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all shadow-lg shadow-[#6DFF3B]/20"
                     >
-                      Complete Setup
+                      Book Turf
                     </Button>
                   </div>
                 </div>
@@ -528,7 +557,7 @@ export function SquadBookingPage() {
                       </Button>
                     </div>
                     <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                      {playerNames.map((name, index) => (
+                      {playerNames.filter(name => name.trim() !== "").map((name, index) => (
                         <div key={index} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 dark:border-white/[0.05] bg-slate-50/50 dark:bg-white/[0.01]">
                           <div className="h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-full bg-slate-200 dark:bg-white/10 text-xs font-bold text-slate-700 dark:text-white/60">
                             {index + 1}
@@ -606,13 +635,21 @@ export function SquadBookingPage() {
                                   const initial = {};
                                   playerNames.forEach((n, i) => { initial[i] = false; });
                                   setPlayerPayments(initial);
-                                  setPaymentModalView("split_status");
+                                  
+                                  const activeCount = playerNames.filter((n, idx) => idx === 0 ? true : n.trim() !== "").length;
+                                  if (bookingType === "direct" || activeCount === 1) {
+                                    setPaymentMode("full");
+                                    setPaymentModalView("checkout");
+                                  } else {
+                                    setPaymentModalView("choose_mode");
+                                  }
+                                  
                                   setPaymentStep("select");
                                   setIsPaymentModalOpen(true);
                                 }}
                                 className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all text-center relative ${isBooked
-                                    ? "bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-slate-400/40 cursor-not-allowed"
-                                    : "border-[#6DFF3B]/30 hover:border-[#6DFF3B] hover:bg-[#6DFF3B]/5 text-slate-800 dark:text-white bg-white dark:bg-white/[0.02] cursor-pointer"
+                                  ? "bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-slate-400/40 cursor-not-allowed"
+                                  : "border-[#6DFF3B]/30 hover:border-[#6DFF3B] hover:bg-[#6DFF3B]/5 text-slate-800 dark:text-white bg-white dark:bg-white/[0.02] cursor-pointer"
                                   }`}
                               >
                                 <span className={`text-sm font-bold ${isBooked ? 'text-slate-500/40 opacity-50' : ''}`}>
@@ -649,82 +686,146 @@ export function SquadBookingPage() {
           setIsPaymentModalOpen(open);
           if (!open) {
             setPaymentStep("select");
-            setPaymentModalView("split_status");
+            setPaymentModalView(bookingType === "direct" ? "checkout" : "choose_mode");
           }
         }
       }}>
         <DialogContent className="sm:max-w-md rounded-2xl border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] text-slate-900 dark:text-white shadow-2xl p-0 overflow-hidden">
+          {paymentModalView === "choose_mode" && (
+            <div className="p-6 space-y-6 text-center">
+              <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white">
+                Select Payment Mode
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-500 dark:text-white/60">
+                Choose how you'd like to pay for your turf slot reservation.
+              </DialogDescription>
+              <div className="grid grid-cols-1 gap-4 pt-2">
+                {/* Split Cost Option */}
+                <div
+                  onClick={() => {
+                    setPaymentMode("split");
+                    setPaymentModalView("split_status");
+                  }}
+                  className="flex flex-col items-center justify-center p-5 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:border-[#6DFF3B] hover:bg-[#6DFF3B]/5 transition-all cursor-pointer"
+                >
+                  <Users className="h-8 w-8 text-[#6DFF3B] mb-2" />
+                  <span className="font-bold text-sm text-slate-900 dark:text-white">Split Payment with Squad</span>
+                  <span className="text-[10px] text-slate-500 dark:text-white/50 mt-1">
+                    Pay your share now (₹{costPerPlayer}), friends join and pay their share later.
+                  </span>
+                </div>
+
+                {/* Pay Full Amount Option */}
+                <div
+                  onClick={() => {
+                    setPaymentMode("full");
+                    setPaymentModalView("checkout");
+                  }}
+                  className="flex flex-col items-center justify-center p-5 rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:border-[#6DFF3B] hover:bg-[#6DFF3B]/5 transition-all cursor-pointer"
+                >
+                  <CreditCard className="h-8 w-8 text-[#6DFF3B] mb-2" />
+                  <span className="font-bold text-sm text-slate-900 dark:text-white">Pay Full Amount</span>
+                  <span className="text-[10px] text-slate-500 dark:text-white/50 mt-1">
+                    Pay the full amount now (₹{amountToPayNow}) to complete booking instantly.
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {paymentModalView === "split_status" && (
             <div className="flex flex-col h-[85vh] max-h-[700px]">
               <div className="p-6 pb-4 border-b border-slate-200 dark:border-white/[0.08]">
                 <DialogTitle className="text-xl font-black text-slate-900 dark:text-white flex items-center justify-between">
-                  <span>Split & Pay</span>
-                  <div className="text-right">
-                    <div className="text-xs font-normal text-slate-500 dark:text-white/50 uppercase tracking-wider">Total Amount</div>
-                    <div className="text-emerald-600 dark:text-[#6DFF3B]">₹{amountToPayNow}</div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setPaymentModalView("choose_mode")}
+                      className="h-8 w-8 p-0 rounded-full flex items-center justify-center border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="font-extrabold text-lg text-slate-900 dark:text-white">Split & Pay</span>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                    <div className="text-[9px] font-bold text-slate-400 dark:text-white/40 uppercase tracking-widest mb-0.5">Total Booking Cost</div>
+                    <div className="text-base font-extrabold text-slate-900 dark:text-white bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1 rounded-xl flex items-center gap-1.5 shadow-sm">
+                      <span className="text-[10px] font-semibold text-slate-400 dark:text-white/50">Total:</span>
+                      <span className="text-emerald-600 dark:text-[#6DFF3B]">₹{amountToPayNow}</span>
+                    </div>
                   </div>
                 </DialogTitle>
-                <DialogDescription className="text-sm mt-2 text-slate-600 dark:text-white/60">
-                  Ask your squad to scan and pay their share of <strong className="text-slate-900 dark:text-white">₹{costPerPlayer}</strong> each.
+                <DialogDescription className="text-xs mt-3 text-slate-500 dark:text-white/60 font-medium leading-relaxed">
+                  Share this QR code with your squad members. Each player pays their split share of <strong className="text-emerald-600 dark:text-[#6DFF3B] font-black text-sm">₹{costPerPlayer}</strong>.
                 </DialogDescription>
               </div>
 
               <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/50 dark:bg-[#0A0A0A]">
                 {/* QR Code Section */}
-                <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.08] rounded-[24px] shadow-sm">
-                  <div className="bg-white p-3 rounded-2xl shadow-inner border border-slate-100 mb-4">
-                    <QrCode className="w-32 h-32 text-slate-900" />
+                <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-white/[0.01] border border-slate-150 dark:border-white/[0.04] rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.15)] relative overflow-hidden backdrop-blur-md">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/5 dark:bg-[#6DFF3B]/5 blur-3xl rounded-full pointer-events-none" />
+                  
+                  <div className="relative z-10 bg-gradient-to-tr from-slate-50 to-slate-100 dark:from-white/[0.02] dark:to-white/[0.06] p-5 rounded-[24px] border border-slate-200/50 dark:border-white/[0.08] mb-5 shadow-inner">
+                    <div className="bg-white p-4 rounded-2xl shadow-md border border-slate-100">
+                      <QrCode className="w-36 h-36 text-slate-900" />
+                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-center gap-3">
+                  
+                  <div className="relative z-10 flex items-center justify-center gap-3 w-full max-w-[280px]">
                     <Button
                       variant="outline"
                       onClick={() => toast.success("Payment Link sent via WhatsApp!")}
-                      className="h-9 px-3 rounded-xl border-[#25D366]/30 text-[#25D366] hover:bg-[#25D366]/10 hover:border-[#25D366] text-xs font-semibold flex items-center gap-2"
+                      className="flex-1 h-10 rounded-xl border-[#25D366]/20 bg-[#25D366]/5 dark:bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/15 hover:border-[#25D366]/40 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
                       <MessageCircle className="h-4 w-4" /> WhatsApp
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => toast.success("Payment Link copied!")}
-                      className="h-9 px-3 rounded-xl border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/5 text-xs font-semibold flex items-center gap-2"
+                      className="flex-1 h-10 rounded-xl border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-white/85 hover:bg-slate-100 dark:hover:bg-white/10 text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
-                      <Share2 className="h-4 w-4" /> Copy
+                      <Share2 className="h-4 w-4" /> Copy Link
                     </Button>
                   </div>
                 </div>
 
                 {/* Player Status List */}
-                <div className="space-y-3">
-                  <h4 className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/40 font-bold px-1 flex justify-between items-center">
-                    <span>Squad Status ({Object.values(playerPayments).filter(Boolean).length}/{playerNames.length} Paid)</span>
+                <div className="space-y-4">
+                  <h4 className="text-[10px] uppercase tracking-wider text-slate-400 dark:text-white/40 font-black px-1 flex justify-between items-center">
+                    <span>Squad Payment Tracker</span>
+                    <span className="text-slate-900 dark:text-[#6DFF3B] bg-slate-100 dark:bg-[#6DFF3B]/10 px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-[#6DFF3B]/10 font-bold">
+                      {Object.values(playerPayments).filter(Boolean).length} of {playerNames.filter((n, idx) => idx === 0 || n.trim() !== "").length} Paid
+                    </span>
                   </h4>
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {playerNames.map((name, idx) => {
-                      if (!name.trim()) return null;
+                      const finalName = idx === 0 ? (name.trim() || "You (Host)") : name.trim();
+                      if (!finalName) return null;
                       return (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-[#101216] border border-slate-200 dark:border-white/[0.05]">
+                        <div key={idx} className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-white/[0.01] border border-slate-150 dark:border-white/[0.04] shadow-sm hover:border-slate-200 dark:hover:border-white/[0.08] transition-all">
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-white/60">
+                            <div className="h-8 w-8 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/[0.05] flex items-center justify-center text-xs font-black text-slate-600 dark:text-white/60 shadow-sm">
                               {idx + 1}
                             </div>
-                            <span className="text-sm font-semibold text-slate-900 dark:text-white max-w-[120px] truncate">{name} {idx === 0 && "(You)"}</span>
+                            <span className="text-sm font-bold text-slate-800 dark:text-white/90 max-w-[130px] truncate">{finalName}</span>
                           </div>
                           {playerPayments[idx] ? (
-                            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-[#6DFF3B] bg-emerald-500/10 dark:bg-[#6DFF3B]/10 px-2.5 py-1 rounded-lg">
+                            <div className="flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-600 dark:text-[#6DFF3B] bg-emerald-500/10 dark:bg-[#6DFF3B]/10 px-3 py-1 rounded-full border border-emerald-500/20 dark:border-[#6DFF3B]/20 shadow-sm">
                               <CheckCircle2 className="h-3.5 w-3.5" /> Paid
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
-                              <div className="flex items-center gap-1.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/10 px-2 py-1 rounded-lg">
+                              <div className="flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 dark:border-amber-500/20">
                                 <Clock className="h-3 w-3" /> Pending
                               </div>
                               <Button
                                 size="sm"
                                 onClick={() => {
                                   setPlayerPayments(prev => ({ ...prev, [idx]: true }));
-                                  toast.success(`${name} marked as paid!`);
+                                  toast.success(`${finalName} marked as paid!`);
                                 }}
-                                className="h-6 px-2 text-[10px] bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white hover:bg-slate-300 dark:hover:bg-white/20"
+                                className="h-7 px-2.5 text-[10px] bg-slate-50 hover:bg-slate-100 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white/90 rounded-lg font-bold transition-all hover:border-emerald-500/30 cursor-pointer"
                               >
                                 Mark Paid
                               </Button>
@@ -737,11 +838,12 @@ export function SquadBookingPage() {
                 </div>
               </div>
 
-              <div className="p-6 border-t border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216]">
+              <div className="p-6 border-t border-slate-100 dark:border-white/[0.05] bg-white dark:bg-[#101216] shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
                 <Button
                   onClick={() => setPaymentModalView("checkout")}
-                  className="w-full h-12 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all shadow-lg shadow-[#6DFF3B]/20"
+                  className="w-full h-12 bg-gradient-to-r from-[#6DFF3B] to-[#86ff60] text-black hover:opacity-95 hover:scale-[1.01] rounded-xl font-extrabold text-sm transition-all shadow-lg shadow-[#6DFF3B]/20 hover:shadow-[#6DFF3B]/30 flex items-center justify-center gap-2 cursor-pointer"
                 >
+                  <Lock className="h-4 w-4" />
                   Pay My Share & Confirm (₹{costPerPlayer})
                 </Button>
               </div>
@@ -758,14 +860,25 @@ export function SquadBookingPage() {
                   </DialogTitle>
                   <Button
                     variant="ghost"
-                    onClick={() => setPaymentModalView("split_status")}
+                    onClick={() => {
+                      const activeCount = playerNames.filter((n, idx) => idx === 0 ? true : n.trim() !== "").length;
+                      if (bookingType === "direct" || activeCount === 1) {
+                        setIsPaymentModalOpen(false);
+                      } else {
+                        if (paymentMode === "split") {
+                          setPaymentModalView("split_status");
+                        } else {
+                          setPaymentModalView("choose_mode");
+                        }
+                      }
+                    }}
                     className="h-8 px-2 text-xs font-medium text-slate-500 hover:text-slate-900 dark:hover:text-white"
                   >
-                    Back to Split
+                    {(bookingType === "direct" || playerNames.filter((n, idx) => idx === 0 ? true : n.trim() !== "").length === 1) ? "Close" : "Back"}
                   </Button>
                 </div>
                 <DialogDescription className="text-slate-500 dark:text-white/60 text-xs text-left">
-                  Choose a payment method to pay your share of <strong className="text-emerald-600 dark:text-[#6DFF3B]">₹{costPerPlayer}</strong>
+                  Choose a payment method to pay <strong className="text-emerald-600 dark:text-[#6DFF3B]">₹{displayPrice}</strong>
                 </DialogDescription>
               </DialogHeader>
 
@@ -775,8 +888,8 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-upi"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "upi"
-                        ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
-                        : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -808,8 +921,8 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-card"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "card"
-                        ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
-                        : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -901,8 +1014,8 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-netbanking"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "netbanking"
-                        ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
-                        : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -937,8 +1050,8 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-wallet"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "wallet"
-                        ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
-                        : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
+                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -958,7 +1071,7 @@ export function SquadBookingPage() {
                     className="w-full h-11 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Lock className="h-4 w-4" />
-                    Pay ₹{costPerPlayer} Securely
+                    Pay ₹{displayPrice} Securely
                   </Button>
                 </DialogFooter>
               </form>

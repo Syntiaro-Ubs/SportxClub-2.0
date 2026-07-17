@@ -21,16 +21,14 @@ import { useAuth } from "../../providers/auth-provider";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Player Details", href: "/player-dashboard", icon: Activity },
   { name: "Turfs", href: "/venues", icon: MapPin },
   { name: "Tournaments", href: "/tournaments", icon: Trophy },
-  { name: "Players", href: "/players", icon: Users },
   { name: "Community", href: "/community", icon: MessageSquare },
 ];
 
 function getMobileTab(pathname) {
-  if (pathname === "/" || pathname === "/dashboard") return "home";
+  if (pathname === "/") return "home";
   if (pathname.startsWith("/venues")) return "explore";
   if (pathname.startsWith("/bookings") || pathname.startsWith("/payment"))
     return "bookings";
@@ -159,18 +157,8 @@ export function Layout() {
           {navigation
             .filter((item) => {
               if (
-                location.pathname === "/player-dashboard" &&
-                item.name === "Dashboard"
-              )
-                return false;
-              if (
-                location.pathname === "/dashboard" &&
-                item.name === "Player Dashboard"
-              )
-                return false;
-              if (
                 !currentUser &&
-                ["Player Dashboard", "Players", "Community"].includes(item.name)
+                ["Player Details", "Community"].includes(item.name)
               ) {
                 return false;
               }

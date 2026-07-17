@@ -111,17 +111,15 @@ export function MobileAppBar() {
   );
 
   const menuItems = [
-    { label: "Dashboard", to: "/dashboard", icon: Home },
     { label: "Player Details", to: "/player-dashboard", icon: Activity, requiresAuth: true },
     { label: "Turfs", to: "/venues", icon: MapPin },
     { label: "Tournaments", to: "/tournaments", icon: Trophy },
-    { label: "Players", to: "/players", icon: Users, requiresAuth: true },
     { label: "Community", to: "/community", icon: MessageSquare, requiresAuth: true },
     { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles },
     { label: "Teams", to: "/teams", icon: Users, requiresAuth: true },
     {
       label: "Notifications",
-      to: "/dashboard",
+      to: "/profile",
       icon: Bell,
       badge: 3,
       requiresAuth: true,
