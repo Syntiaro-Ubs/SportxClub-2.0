@@ -21,7 +21,7 @@ import { useAuth } from "../../providers/auth-provider";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 const navigation = [
-  { name: "Player Details", href: "/player-dashboard", icon: Activity },
+  // { name: "Player Details", href: "/player-dashboard", icon: Activity },
   { name: "Turfs", href: "/venues", icon: MapPin },
   { name: "Tournaments", href: "/tournaments", icon: Trophy },
   { name: "Community", href: "/community", icon: MessageSquare },
