@@ -823,7 +823,12 @@ export function VenueBooking() {
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setModeModalVenue(venue);
+                                if (!currentUser) {
+                                  toast.error("Please sign in first to view slots.");
+                                  navigate("/login");
+                                } else {
+                                  setModeModalVenue(venue);
+                                }
                               }}
                               className="group h-12 rounded-full border border-white bg-white px-6 text-[#050505] font-bold uppercase tracking-wider transition-all hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_20px_rgba(109,255,59,0.35)]"
                             >

@@ -111,7 +111,7 @@ export function MobileAppBar() {
   );
 
   const menuItems = [
-    { label: "Player Details", to: "/player-dashboard", icon: Activity, requiresAuth: true },
+    // { label: "Player Details", to: "/player-dashboard", icon: Activity, requiresAuth: true },
     { label: "Turfs", to: "/venues", icon: MapPin },
     { label: "Tournaments", to: "/tournaments", icon: Trophy },
     { label: "Community", to: "/community", icon: MessageSquare, requiresAuth: true },
