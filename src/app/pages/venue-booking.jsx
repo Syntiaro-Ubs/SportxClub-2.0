@@ -57,7 +57,7 @@ const venueData = [
     distance: 1.2,
     availableToday: true,
     availability: "Tonight slots available",
-    image: asset("/venues/turf-1.webp"),
+    image: asset("/venues/elite_turf_football.png"),
     badges: [asset("/venues/badge-top-rated.svg")],
     amenities: ["Flood lights", "Parking", "Verified venue"],
   },
@@ -73,7 +73,7 @@ const venueData = [
     distance: 2.5,
     availableToday: true,
     availability: "Few evening slots left",
-    image: asset("/venues/turf-2.webp"),
+    image: asset("/venues/metro_sports_park_cricket.jpg"),
     badges: [asset("/venues/badge-new.svg")],
     amenities: ["Wi-Fi", "Shower", "Secure payments"],
   },
@@ -153,7 +153,7 @@ const venueData = [
     distance: 3.2,
     availableToday: true,
     availability: "Slots available now",
-    image: asset("/venues/turf-1.webp"),
+    image: asset("/venues/champions_sports_arena_football.jpg"),
     badges: [asset("/venues/badge-top-rated.svg")],
     amenities: ["Flood lights", "Changing room", "Verified venue"],
   },
@@ -169,7 +169,7 @@ const venueData = [
     distance: 1.5,
     availableToday: true,
     availability: "Evening slots open",
-    image: asset("/sports/cat-padel.webp"),
+    image: asset("/sports/cat-tennis.webp"),
     badges: [asset("/venues/badge-new.svg")],
     amenities: ["Flood lights", "Pro coaching", "Parking"],
   },
@@ -217,7 +217,7 @@ const venueData = [
     distance: 3.5,
     availableToday: true,
     availability: "Available all day",
-    image: asset("/sports/cat-boxmma.webp"), // the asset is named boxmma but used for volleyball based on previous code
+    image: asset("/venues/new_volleyball_turf.png"),
     badges: [asset("/venues/badge-new.svg")],
     amenities: ["Net", "Locker room", "Verified venue"],
   },
@@ -253,9 +253,106 @@ const venueData = [
     badges: [asset("/venues/badge-new.svg")],
     amenities: ["Flood lights", "Pro coaching", "Parking"],
   },
+  {
+    id: 14,
+    name: "Navi Mumbai Football Arena",
+    location: "Vashi, Navi Mumbai",
+    city: "Navi Mumbai",
+    sport: "Football",
+    rating: 4.9,
+    reviews: 115,
+    price: 1100,
+    distance: 4.5,
+    availableToday: true,
+    availability: "Prime slots open",
+    image: asset("/venues/new_football_turf.png"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Flood lights", "Parking", "Verified venue"],
+  },
+  {
+    id: 15,
+    name: "Vashi Cricket Club",
+    location: "Sector 17, Vashi, Navi Mumbai",
+    city: "Navi Mumbai",
+    sport: "Cricket",
+    rating: 4.8,
+    reviews: 94,
+    price: 1000,
+    distance: 5.8,
+    availableToday: true,
+    availability: "Evening slots available",
+    image: asset("/venues/new_cricket_turf.png"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Shower", "Secure payments", "Real reviews"],
+  },
+  {
+    id: 16,
+    name: "Belapur Sports Complex",
+    location: "Belapur, Navi Mumbai",
+    city: "Navi Mumbai",
+    sport: "Badminton",
+    rating: 4.9,
+    reviews: 82,
+    price: 1200,
+    distance: 9.1,
+    availableToday: false,
+    availability: "Next slot tomorrow",
+    image: asset("/venues/new_badminton_turf.png"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Flood lights", "Locker room", "Easy refund"],
+  },
+  {
+    id: 17,
+    name: "Thane United Turf",
+    location: "Kapoorbawdi, Thane",
+    city: "Thane",
+    sport: "Football",
+    rating: 4.8,
+    reviews: 102,
+    price: 950,
+    distance: 3.6,
+    availableToday: true,
+    availability: "Slots available from 4 PM",
+    image: asset("/venues/new_football_turf_2.png"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Flood lights", "Parking", "Verified venue"],
+  },
+  {
+    id: 18,
+    name: "Ghodbunder Sports Arena",
+    location: "Ghodbunder Road, Thane",
+    city: "Thane",
+    sport: "Tennis",
+    rating: 4.9,
+    reviews: 120,
+    price: 1150,
+    distance: 6.8,
+    availableToday: true,
+    availability: "Morning slots open",
+    image: asset("/venues/new_tennis_turf.png"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["Parking", "Changing room", "Easy refund"],
+  },
+  {
+    id: 19,
+    name: "Majiwada Box Cricket",
+    location: "Majiwada, Thane",
+    city: "Thane",
+    sport: "Cricket",
+    rating: 4.8,
+    reviews: 73,
+    price: 900,
+    distance: 5.2,
+    availableToday: false,
+    availability: "Booking open for weekend",
+    image: asset("/venues/new_cricket_turf_2.png"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Flood lights", "Secure payments", "Verified venue"],
+  },
 ];
 
 const sports = [
+  "All",
   "Football",
   "Cricket",
   "Badminton",
@@ -406,26 +503,41 @@ export function VenueBooking() {
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-black/60 backdrop-blur-md shadow-2xl p-4 md:p-5 w-full max-w-[800px] mx-auto">
-              <div className="flex gap-2.5 items-center">
-                <label className="relative block flex-1">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
+            <div className="rounded-[24px] border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl p-2 w-full max-w-[800px] mx-auto transition-all hover:border-white/20">
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                {/* Search Input */}
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#6DFF3B]" />
                   <input
                     type="text"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search sports"
-                    className="h-12 rounded-[18px] border border-white/10 bg-black/40 pl-11 text-white placeholder:text-white/40 w-full hover:border-[#6DFF3B]/30 focus:border-[#6DFF3B] focus:outline-none transition-colors text-sm"
+                    placeholder="Search sports, venues or locations..."
+                    className="h-13 bg-transparent border-0 pl-12 pr-4 text-white placeholder:text-white/40 w-full focus:outline-none text-sm font-semibold"
                   />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setFilterOpen(true)}
-                  className="h-12 w-12 shrink-0 flex items-center justify-center rounded-[18px] bg-[#6DFF3B] text-[#050505] shadow-[0_4px_12px_rgba(109,255,59,0.25)] hover:bg-[#86ff60] transition-colors lg:hidden"
-                  aria-label="Open Filters"
-                >
-                  <SlidersHorizontal className="h-5 w-5" />
-                </button>
+                </div>
+
+
+
+                {/* Mobile Filter Trigger & Search Action Button */}
+                <div className="flex gap-2 p-1.5 sm:p-0">
+                  <button
+                    type="button"
+                    onClick={() => setFilterOpen(true)}
+                    className="h-12 w-12 shrink-0 flex items-center justify-center rounded-[18px] bg-white/10 border border-white/5 text-white hover:bg-white/15 transition-all lg:hidden"
+                    aria-label="Open Filters"
+                  >
+                    <SlidersHorizontal className="h-4.5 w-4.5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="flex-1 sm:flex-initial h-12 px-6 rounded-[18px] bg-[#6DFF3B] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#86ff60] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_4px_20px_rgba(109,255,59,0.3)] cursor-pointer"
+                  >
+                    <span>Search</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
 

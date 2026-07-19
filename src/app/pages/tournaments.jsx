@@ -133,28 +133,28 @@ export function Tournaments() {
             label: "Active Now",
             value: "12",
             icon: Trophy,
-            color: "text-blue-600",
+            color: "text-[#6DFF3B]",
             bg: "bg-blue-500/10",
           },
           {
             label: "Total Prize",
             value: "₹5.2L",
             icon: Medal,
-            color: "text-amber-600",
+            color: "text-[#6DFF3B]",
             bg: "bg-amber-500/10",
           },
           {
             label: "Total Players",
             value: "2.4K",
             icon: Users,
-            color: "text-green-600",
+            color: "text-[#6DFF3B]",
             bg: "bg-green-500/10",
           },
           {
             label: "Upcoming",
             value: "8",
             icon: Calendar,
-            color: "text-purple-600",
+            color: "text-[#6DFF3B]",
             bg: "bg-purple-500/10",
           },
         ].map((stat, index) => {
@@ -175,7 +175,7 @@ export function Tournaments() {
                     <p className="text-xl sm:text-2xl ">{stat.value}</p>
                   </div>
                   <div
-                    className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl ${stat.bg} ${stat.color}`}
+                    className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center ${stat.color}`}
                   >
                     <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
@@ -292,7 +292,7 @@ export function Tournaments() {
                 title="No tournaments found"
                 description="We couldn't find any tournaments matching your criteria. Check back later!"
                 actionText="Browse All"
-                onAction={() => {}}
+                onAction={() => { }}
               />
             )}
           </div>

@@ -191,7 +191,7 @@ export function Layout() {
             <Link to={currentUser.role === 'owner' ? '/owner-dashboard' : '/profile'}>
               <Button
                 variant="ghost"
-                className="rounded-full gap-2.5 text-muted-foreground hover:text-foreground px-2.5 h-10 cursor-pointer"
+                className="rounded-full gap-2.5 text-muted-foreground hover:text-foreground px-2.5 h-10 cursor-pointer border-0 border-transparent shadow-none focus:ring-0 focus-visible:ring-0 focus-visible:border-none focus-visible:outline-none"
               >
                 <Avatar className="h-6 w-6 border border-border/80">
                   {currentUser?.profilePicture && (

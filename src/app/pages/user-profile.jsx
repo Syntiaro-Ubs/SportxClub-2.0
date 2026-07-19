@@ -95,9 +95,9 @@ const getMappedSports = (selectedSports) => {
 };
 
 const achievements = [
-  { title: "100 Matches", icon: Trophy, color: "text-amber-500" },
-  { title: "Top Scorer", icon: Medal, color: "text-blue-500" },
-  { title: "Team Captain", icon: Bookmark, color: "text-emerald-500" },
+  { title: "100 Matches", icon: Trophy, color: "text-[#6DFF3B]" },
+  { title: "Top Scorer", icon: Medal, color: "text-[#6DFF3B]" },
+  { title: "Team Captain", icon: Bookmark, color: "text-[#6DFF3B]" },
 ];
 
 const matchHistory = [
@@ -218,62 +218,6 @@ function ConfettiCelebration({ active }) {
   );
 }
 
-const statsData = [
-  { 
-    label: "Win Rate", 
-    value: "75%", 
-    sport: "Cricket", 
-    icon: Trophy, 
-    colorClass: "amber",
-    details: "12 Wins out of 16 Matches",
-    progressValue: 75
-  },
-  { 
-    label: "Average Score", 
-    value: "45", 
-    sport: "Cricket", 
-    icon: Award, 
-    colorClass: "amber",
-    details: "+12.4% higher than last season",
-    progressValue: null
-  },
-  { 
-    label: "Goals Scored", 
-    value: "18", 
-    sport: "Football", 
-    icon: Target, 
-    colorClass: "emerald",
-    details: "Club Rank: #2 Overall",
-    progressValue: null
-  },
-  { 
-    label: "Assists", 
-    value: "12", 
-    sport: "Football", 
-    icon: Share2, 
-    colorClass: "emerald",
-    details: "8 direct key passes made",
-    progressValue: null
-  },
-  { 
-    label: "Aces", 
-    value: "34", 
-    sport: "Tennis", 
-    icon: Zap, 
-    colorClass: "sky",
-    details: "Avg 4.8 aces per set",
-    progressValue: null
-  },
-  { 
-    label: "Break Points Won", 
-    value: "68%", 
-    sport: "Tennis", 
-    icon: TrendingUp, 
-    colorClass: "sky",
-    details: "17 / 25 break points converted",
-    progressValue: 68
-  },
-];
 
 export function UserProfile() {
   const navigate = useNavigate();
@@ -601,6 +545,7 @@ export function UserProfile() {
             <div className="flex flex-col gap-6 md:flex-row md:items-start justify-between">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
                 <Avatar className="h-24 w-24 border border-primary/15 bg-background shadow-inner">
+                  <AvatarImage src={currentUser?.profilePicture} className="object-cover" />
                   <AvatarFallback className="bg-primary/10 text-2xl text-primary font-black">
                     {displayInitials}
                   </AvatarFallback>
@@ -687,7 +632,7 @@ export function UserProfile() {
             const Icon = achievement.icon;
             return (
               <div key={achievement.title} className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-4 shadow-sm text-left">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <div className="flex h-12 w-12 items-center justify-center">
                   <Icon className={`h-6 w-6 ${achievement.color}`} />
                 </div>
                 <p className="font-bold text-sm text-foreground">{achievement.title}</p>
@@ -727,7 +672,7 @@ export function UserProfile() {
                       <p className="text-xs text-muted-foreground mt-0.5">Booking ID: SX-92841</p>
                     </div>
                   </div>
-                  <Badge className="bg-[#6DFF3B]/15 text-[#6DFF3B] border border-[#6DFF3B]/30 font-bold px-3 py-1 rounded-full text-xs">CONFIRMED</Badge>
+                  <span className="text-[#6DFF3B] font-black tracking-wider text-xs uppercase">CONFIRMED</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -858,112 +803,73 @@ export function UserProfile() {
 
         <hr className="border-border/60" />
 
-        {/* 7. Performance Statistics */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-black text-left flex items-center gap-2 text-slate-800 dark:text-white">
-            <Medal className="h-5 w-5 text-primary" /> Performance Statistics
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 text-left">
-            {statsData.map((stat) => {
-              const IconComponent = stat.icon;
-              
-              // Color schemes mapping based on sport accent
-              const schemes = {
-                amber: {
-                  bg: "bg-amber-50/40 dark:bg-amber-950/10",
-                  border: "border-amber-100 dark:border-amber-900/30 hover:border-amber-300 dark:hover:border-amber-800/60",
-                  iconBg: "bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400",
-                  text: "text-amber-800 dark:text-amber-300",
-                  bar: "bg-amber-500",
-                  badge: "border-amber-200/60 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400"
-                },
-                emerald: {
-                  bg: "bg-emerald-50/40 dark:bg-emerald-950/10",
-                  border: "border-emerald-100 dark:border-emerald-900/30 hover:border-emerald-300 dark:hover:border-emerald-800/60",
-                  iconBg: "bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400",
-                  text: "text-emerald-800 dark:text-emerald-300",
-                  bar: "bg-emerald-500",
-                  badge: "border-emerald-200/60 dark:border-emerald-900/40 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400"
-                },
-                sky: {
-                  bg: "bg-sky-50/40 dark:bg-sky-950/10",
-                  border: "border-sky-100 dark:border-sky-900/30 hover:border-sky-300 dark:hover:border-sky-800/60",
-                  iconBg: "bg-sky-100 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400",
-                  text: "text-sky-800 dark:text-sky-300",
-                  bar: "bg-sky-500",
-                  badge: "border-sky-200/60 dark:border-sky-900/40 bg-sky-50 dark:bg-sky-950/20 text-sky-700 dark:text-sky-400"
-                }
-              };
-              
-              const color = schemes[stat.colorClass];
-              
-              return (
-                <div 
-                  key={`${stat.label}-${stat.sport}`} 
-                  className={`rounded-2xl border ${color.border} p-5 ${color.bg} transition-all duration-300 hover:scale-[1.02] hover:shadow-lg dark:hover:shadow-black/10 flex flex-col justify-between space-y-4 cursor-default group`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{stat.label}</p>
-                      <p className="text-3xl font-black text-slate-900 dark:text-white group-hover:scale-[1.03] transition-transform origin-left">{stat.value}</p>
-                    </div>
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${color.iconBg} transition-transform group-hover:rotate-6`}>
-                      <IconComponent className="h-5 w-5" />
-                    </div>
-                  </div>
-                  
-                  {stat.progressValue !== null ? (
-                    <div className="space-y-1.5 pt-1">
-                      <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                        <div className={`h-full ${color.bar} rounded-full transition-all duration-1000`} style={{ width: `${stat.progressValue}%` }} />
-                      </div>
-                      <p className="text-[10px] text-muted-foreground font-semibold flex justify-between">
-                        <span>Progress</span>
-                        <span>{stat.progressValue}%</span>
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="pt-2 text-[10px] font-bold text-muted-foreground/80 tracking-wide border-t border-slate-200/40 dark:border-white/[0.03]">
-                      {stat.details}
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center pt-2">
-                    <Badge variant="outline" className={`text-[9px] font-bold tracking-wider rounded-md py-0.5 px-2 uppercase ${color.badge}`}>
-                      {stat.sport}
-                    </Badge>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <hr className="border-border/60" />
-
         {/* 8. Match Logs / History */}
         <div className="space-y-4">
           <h2 className="text-xl font-black text-left flex items-center gap-2 text-slate-800 dark:text-white">
             <History className="h-5 w-5 text-primary" /> Match Logs & History
           </h2>
           <div className="space-y-4">
-            {matchHistory.map((match) => (
-              <div key={match.id} className="flex justify-between items-center p-4 rounded-2xl border border-border/50 bg-card shadow-sm text-left">
-                <div className="flex-1">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <h4 className="font-bold text-sm text-slate-800 dark:text-white">{match.venue}</h4>
-                    <Badge variant="outline" className="text-[10px] py-0.5 px-2 rounded-full border-border/85 text-muted-foreground">{match.sport}</Badge>
-                    <Badge className={match.result === "Won" ? "bg-emerald-500/10 text-emerald-500 font-bold border-0 hover:bg-emerald-500/15" : "bg-red-500/10 text-red-500 font-bold border-0 hover:bg-red-500/15"}>
-                      {match.result}
-                    </Badge>
+            {matchHistory.map((match) => {
+              const isWon = match.result === "Won";
+              const sportColors = {
+                Cricket: { bg: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
+                Football: { bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
+                Tennis: { bg: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
+              };
+              const colors = sportColors[match.sport] || { bg: "bg-primary/10 text-primary border-primary/20" };
+
+              return (
+                <div
+                  key={match.id}
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md hover:border-border text-left gap-4 relative overflow-hidden ${
+                    isWon ? "border-l-4 border-l-[#6DFF3B]" : "border-l-4 border-l-rose-500"
+                  }`}
+                >
+                  {/* Left Column: Sport Icon + Details */}
+                  <div className="flex items-center gap-4">
+                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${colors.bg} border`}>
+                      {match.sport.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-extrabold text-sm text-slate-800 dark:text-white leading-tight">
+                          {match.venue}
+                        </h4>
+                        <Badge variant="outline" className={`text-[9px] font-bold tracking-wider py-0.5 px-2 rounded-md ${colors.bg}`}>
+                          {match.sport}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>{match.date}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Trophy className="h-3 w-3 text-amber-500" /> {match.date}</span>
-                    <span className="font-semibold text-slate-700 dark:text-white/60">{match.score}</span>
+
+                  {/* Right Column: Result + Score details */}
+                  <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-border/40">
+                    <div className="text-left sm:text-right space-y-0.5">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Match Score</p>
+                      <p className="font-mono text-sm font-extrabold text-slate-800 dark:text-white">
+                        {match.score}
+                      </p>
+                    </div>
+                    
+                    <div className="shrink-0">
+                      <Badge
+                        className={`text-xs font-black px-3.5 py-1.5 rounded-xl border-0 ${
+                          isWon
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] hover:bg-emerald-500/15"
+                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15"
+                        }`}
+                      >
+                        {isWon ? "✓ WON" : "✗ LOST"}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
