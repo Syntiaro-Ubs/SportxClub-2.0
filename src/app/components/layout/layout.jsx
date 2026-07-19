@@ -145,12 +145,11 @@ export function Layout() {
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
       {/* Desktop Top Navbar */}
-      <header className="hidden md:flex h-16 items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-6 sticky top-0 z-50 w-full">
+      <header className="hidden md:flex h-[76px] items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-6 sticky top-0 z-50 w-full">
         <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2 h-[58px] translate-y-[4px]">
-            <Logo className="h-full" />
+          <Link to="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
+            <Logo />
           </Link>
-          <CitySelector />
         </div>
 
         <nav className="flex items-center gap-2">

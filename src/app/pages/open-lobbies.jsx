@@ -471,7 +471,7 @@ export function OpenLobbiesPage() {
                         ) : (
                           <Button
                             onClick={() => handleJoinClick(lobby)}
-                            className="w-full h-12 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all shadow-md hover:shadow-lg hover:shadow-[#6DFF3B]/20 uppercase tracking-wider text-xs hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full h-12 bg-white text-black hover:bg-[#6DFF3B] rounded-xl font-bold transition-all shadow-md hover:shadow-lg hover:shadow-[#6DFF3B]/20 uppercase tracking-wider text-xs hover:scale-[1.02] active:scale-[0.98]"
                           >
                             Join & Pay ₹{splitPrice}
                           </Button>

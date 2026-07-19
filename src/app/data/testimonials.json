@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "userName": "Rahul Sharma",
+    "userImage": "https://i.pravatar.cc/150?u=rahul",
+    "rating": 5,
+    "reviewText": "Amazing platform! Booking a turf has never been this easy.",
+    "status": "Approved",
+    "visibility": true
+  },
+  {
+    "id": 2,
+    "userName": "Priya Patel",
+    "userImage": "https://i.pravatar.cc/150?u=priya",
+    "rating": 4,
+    "reviewText": "Great variety of sports and venues. Highly recommend.",
+    "status": "Approved",
+    "visibility": true
+  }
+]

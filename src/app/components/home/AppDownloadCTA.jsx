@@ -81,8 +81,8 @@ export function AppDownloadCTA() {
           distance: "3.1 km",
           emoji: "🏏",
           turfs: [
-            { name: "Master Nets A", price: "₹800/hr", img: "https://images.unsplash.com/photo-1531415080290-bc9854503f37?w=150&q=80" },
-            { name: "Lord's Field B", price: "₹1,500/hr", img: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=150&q=80" }
+            { name: "Master Nets A", price: "₹800/hr", img: "/assets/venues/turf-2.webp" },
+            { name: "Lord's Field B", price: "₹1,500/hr", img: "/assets/venues/turf-2.webp" }
           ]
         };
       case "Badminton":
@@ -95,8 +95,8 @@ export function AppDownloadCTA() {
           distance: "1.8 km",
           emoji: "🏸",
           turfs: [
-            { name: "Smash Court A", price: "₹600/hr", img: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=150&q=80" },
-            { name: "Apex Shuttle Club", price: "₹800/hr", img: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=150&q=80" }
+            { name: "Smash Court A", price: "₹600/hr", img: "/assets/venues/turf-3.webp" },
+            { name: "Apex Shuttle Club", price: "₹800/hr", img: "/assets/venues/turf-3.webp" }
           ]
         };
       case "Football":
@@ -110,8 +110,8 @@ export function AppDownloadCTA() {
           distance: "2.5 km",
           emoji: "⚽",
           turfs: [
-            { name: "Premium Turf 1", price: "₹1,200/hr", img: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=150&q=80" },
-            { name: "Skyline Pitch B", price: "₹1,500/hr", img: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=150&q=80" }
+            { name: "Premium Turf 1", price: "₹1,200/hr", img: "/assets/venues/turf-1.webp" },
+            { name: "Skyline Pitch B", price: "₹1,500/hr", img: "/assets/venues/turf-5.webp" }
           ]
         };
     }

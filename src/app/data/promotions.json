@@ -1,0 +1,9 @@
+{
+  "image": "https://images.unsplash.com/photo-1518605368461-1e1252281146?w=1920&q=80",
+  "heading": "Weekend Special Offer!",
+  "description": "Get 20% off on all turf bookings this weekend. Use code WEEKEND20 at checkout.",
+  "buttonText": "Claim Offer",
+  "buttonUrl": "/venues",
+  "backgroundColor": "#1a365d",
+  "enabled": true
+}

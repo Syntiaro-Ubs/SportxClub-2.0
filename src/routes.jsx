@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { Layout } from "./app/components/layout/layout";
 import { OwnerLayout } from "./app/components/layout/owner-layout";
+import { AdminLayout } from "./app/components/layout/admin-layout";
 import { LandingPage } from "./app/pages/landing-page";
 import { BookingSuccess } from "./app/pages/booking-success";
 
@@ -36,6 +37,138 @@ export const router = createBrowserRouter([
       const { OwnerSetupPage } = await import("./app/pages/owner/setup");
       return { Component: OwnerSetupPage };
     },
+  },
+  {
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const { AdminDashboard } = await import("./app/pages/admin/dashboard");
+          return { Component: AdminDashboard };
+        },
+      },
+      {
+        path: "home-cms",
+        lazy: async () => {
+          const { AdminHomeCMS } = await import("./app/pages/admin/home-cms");
+          return { Component: AdminHomeCMS };
+        },
+      },
+      {
+        path: "users",
+        lazy: async () => {
+          const { AdminUsers } = await import("./app/pages/admin/users");
+          return { Component: AdminUsers };
+        },
+      },
+      {
+        path: "turf-owners",
+        lazy: async () => {
+          const { AdminTurfOwners } = await import("./app/pages/admin/turf-owners");
+          return { Component: AdminTurfOwners };
+        },
+      },
+      {
+        path: "turfs",
+        lazy: async () => {
+          const { AdminTurfs } = await import("./app/pages/admin/turfs");
+          return { Component: AdminTurfs };
+        },
+      },
+      {
+        path: "bookings",
+        lazy: async () => {
+          const { AdminBookings } = await import("./app/pages/admin/bookings");
+          return { Component: AdminBookings };
+        },
+      },
+      {
+        path: "games",
+        lazy: async () => {
+          const { AdminGames } = await import("./app/pages/admin/games");
+          return { Component: AdminGames };
+        },
+      },
+      {
+        path: "payments",
+        lazy: async () => {
+          const { AdminPayments } = await import("./app/pages/admin/payments");
+          return { Component: AdminPayments };
+        },
+      },
+      {
+        path: "passes",
+        lazy: async () => {
+          const { AdminPasses } = await import("./app/pages/admin/passes");
+          return { Component: AdminPasses };
+        },
+      },
+      {
+        path: "coupons",
+        lazy: async () => {
+          const { AdminCoupons } = await import("./app/pages/admin/coupons");
+          return { Component: AdminCoupons };
+        },
+      },
+      {
+        path: "banners",
+        lazy: async () => {
+          const { AdminBanners } = await import("./app/pages/admin/banners");
+          return { Component: AdminBanners };
+        },
+      },
+      {
+        path: "reviews",
+        lazy: async () => {
+          const { AdminReviews } = await import("./app/pages/admin/reviews");
+          return { Component: AdminReviews };
+        },
+      },
+      {
+        path: "support",
+        lazy: async () => {
+          const { AdminSupport } = await import("./app/pages/admin/support");
+          return { Component: AdminSupport };
+        },
+      },
+      {
+        path: "reports",
+        lazy: async () => {
+          const { AdminReports } = await import("./app/pages/admin/reports");
+          return { Component: AdminReports };
+        },
+      },
+      {
+        path: "analytics",
+        lazy: async () => {
+          const { AdminAnalytics } = await import("./app/pages/admin/analytics");
+          return { Component: AdminAnalytics };
+        },
+      },
+      {
+        path: "notifications",
+        lazy: async () => {
+          const { AdminNotifications } = await import("./app/pages/admin/notifications");
+          return { Component: AdminNotifications };
+        },
+      },
+      {
+        path: "settings",
+        lazy: async () => {
+          const { AdminSettings } = await import("./app/pages/admin/settings");
+          return { Component: AdminSettings };
+        },
+      },
+      {
+        path: "profile",
+        lazy: async () => {
+          const { AdminProfile } = await import("./app/pages/admin/profile");
+          return { Component: AdminProfile };
+        },
+      },
+    ]
   },
   {
     path: "/owner-dashboard",
