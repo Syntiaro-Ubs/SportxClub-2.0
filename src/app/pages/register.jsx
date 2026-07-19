@@ -200,7 +200,7 @@ export function RegisterPage() {
       setIsSuccess(true);
       setTimeout(() => {
         if (formData.role === "owner") navigate("/owner-setup");
-        else if (formData.role === "admin") navigate("/admin-dashboard");
+        else if (formData.role === "admin") navigate("/admin");
         else navigate("/");
       }, 1500);
     } else {

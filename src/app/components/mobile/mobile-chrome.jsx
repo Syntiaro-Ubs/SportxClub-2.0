@@ -116,7 +116,7 @@ export function MobileAppBar() {
     { label: "Tournaments", to: "/tournaments", icon: Trophy },
     { label: "Community", to: "/community", icon: MessageSquare, requiresAuth: true },
     { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles },
-    { label: "Teams", to: "/teams", icon: Users, requiresAuth: true },
+
     {
       label: "Notifications",
       to: "/profile",
@@ -141,7 +141,7 @@ export function MobileAppBar() {
   return (
     <>
       <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
-        <div className="flex h-16 items-center justify-between px-4">
+        <div className="flex h-[76px] items-center justify-between px-4">
           {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">
             {!isHomePage ? (
@@ -154,38 +154,29 @@ export function MobileAppBar() {
                 <ChevronLeft className="h-5 w-5" />
               </button>
             ) : (
-              <Link to="/" className="shrink-0 flex items-center h-[58px] w-auto translate-y-[4px]">
-                <Logo className="h-full" />
+              <Link to="/" className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
+                <Logo />
               </Link>
             )}
-            <div className="min-w-0 flex items-center">
-              {/* Preferred Location Selector (BookMyShow style) */}
-              <button
-                onClick={() => setIsOpen(true)}
-                className="flex items-center gap-1 text-[11px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer"
-              >
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate max-w-[90px] leading-none">
-                  {city === "All" ? "All Areas" : city}
-                </span>
-                <ChevronDown className="h-3 w-3 shrink-0 text-primary/80" />
-              </button>
-            </div>
+            {isHomePage && (
+              <div className="min-w-0 flex items-center">
+                {/* Preferred Location Selector (BookMyShow style) */}
+                <button
+                  onClick={() => setIsOpen(true)}
+                  className="flex items-center gap-1 text-[11px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer"
+                >
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate max-w-[90px] leading-none">
+                    {city === "All" ? "All Areas" : city}
+                  </span>
+                  <ChevronDown className="h-3 w-3 shrink-0 text-primary/80" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
-            {currentUser && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/profile')}
-                className="h-10.5 w-10.5 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs backdrop-blur-md cursor-pointer"
-                aria-label="Profile"
-              >
-                <UserCircle2 className="h-5 w-5" />
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="icon"
@@ -225,9 +216,9 @@ export function MobileAppBar() {
               className="fixed inset-y-0 right-0 z-55 w-[280px] max-w-[80vw] bg-[#f8faf9] dark:bg-[#020617] border-l border-border shadow-2xl flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
             >
               {/* Drawer Header */}
-              <div className="flex h-16 items-center justify-between px-5 border-b border-border/40">
-                <Link to="/" onClick={() => setMenuOpen(false)} className="shrink-0 flex items-center h-10 w-auto translate-y-[2px]">
-                  <Logo className="h-full" />
+              <div className="flex h-[76px] items-center justify-between px-5 border-b border-border/40">
+                <Link to="/" onClick={() => setMenuOpen(false)} className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
+                  <Logo />
                 </Link>
                 <Button
                   variant="ghost"

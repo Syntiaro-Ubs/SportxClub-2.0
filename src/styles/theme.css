@@ -110,22 +110,7 @@
   h5,
   h6 {
     @apply font-heading tracking-tight text-foreground;
-  }
-
-  h1 {
-    @apply text-4xl lg:text-5xl leading-tight;
-  }
-
-  h2 {
     @apply text-3xl lg:text-4xl leading-tight;
-  }
-
-  h3 {
-    @apply text-2xl leading-snug;
-  }
-
-  h4 {
-    @apply text-xl leading-snug;
   }
 
   p {

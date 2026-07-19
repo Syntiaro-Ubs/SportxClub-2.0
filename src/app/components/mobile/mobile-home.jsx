@@ -88,6 +88,7 @@ const sportsCategories = [
 
 const nearbyTurfs = [
   {
+    id: 4,
     name: "Victory Greens",
     sport: "Football",
     distance: "1.9 km",
@@ -95,6 +96,7 @@ const nearbyTurfs = [
     image: asset("/venues/turf-4.webp"),
   },
   {
+    id: 5,
     name: "Pro Match Grounds",
     sport: "Cricket",
     distance: "2.8 km",
@@ -102,6 +104,7 @@ const nearbyTurfs = [
     image: asset("/venues/turf-5.webp"),
   },
   {
+    id: 6,
     name: "Apex Turf Club",
     sport: "Basketball",
     distance: "4.1 km",
@@ -151,16 +154,19 @@ const offers = [
 
 const recommended = [
   {
+    id: 2,
     name: "Night Turf Special",
     detail: "After 7 PM slots",
     image: asset("/venues/turf-2.webp"),
   },
   {
+    id: 1,
     name: "Weekend Cricket Nets",
     detail: "Family friendly",
     image: asset("/venues/turf-1.webp"),
   },
   {
+    id: 3,
     name: "Indoor Smash Zone",
     detail: "Air-conditioned",
     image: asset("/venues/turf-3.webp"),
@@ -391,7 +397,7 @@ export function MobileHomePage() {
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="relative overflow-hidden rounded-[32px] p-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.35)] aspect-[4/3] flex flex-col justify-between always-dark border border-white/10"
+            className="relative overflow-hidden rounded-[32px] p-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.35)] aspect-[16/9] flex flex-col justify-between always-dark border border-white/10"
           >
             <div className="absolute inset-0 z-0">
               <AnimatePresence mode="popLayout">
@@ -426,6 +432,7 @@ export function MobileHomePage() {
                 {[...sportsCategories, ...sportsCategories].map((item, index) => (
                   <motion.button
                     key={`${item.name}-${index}`}
+                    onClick={() => navigate("/venues", { state: { sport: item.name } })}
                     whileTap={{ scale: 0.96 }}
                     style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none' }}
                     className="flex min-w-[76px] shrink-0 flex-col items-center gap-2 group cursor-pointer border-0"
@@ -458,47 +465,50 @@ export function MobileHomePage() {
 
           <section className="space-y-3">
             <SectionHeader title="Nearby turfs" />
-            <div className="space-y-3">
+            <div className="space-y-4">
               {nearbyTurfs.map((venue) => (
-                <Link key={venue.name} to="/venues" className="block">
+                <Link key={venue.name} to={`/venues/${venue.id}`} className="block group">
                   <motion.article
-                    whileTap={{ scale: 0.99 }}
-                    className="flex gap-3 rounded-[22px] border border-border/60 bg-card p-3 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.3)]"
+                    whileTap={{ scale: 0.985 }}
+                    className="relative flex items-center gap-4 rounded-[28px] border border-border/40 bg-card p-2.5 shadow-[0_8px_20px_-12px_rgba(15,23,42,0.15)] transition-all hover:shadow-[0_12px_24px_-12px_rgba(15,23,42,0.25)] hover:border-primary/30"
                   >
-                    <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[18px]">
+                    <div className="relative h-[110px] w-[110px] shrink-0 overflow-hidden rounded-[22px]">
                       <ImageWithFallback
                         src={venue.image}
                         alt={venue.name}
                         loading="lazy"
                         decoding="async"
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[0.65rem] font-bold text-foreground backdrop-blur-md shadow-sm border border-border/50">
+                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                        4.8
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-base  text-foreground">
-                            {venue.name}
-                          </h3>
-                          <p className="mt-1 text-sm text-muted-foreground">
+
+                    <div className="flex flex-1 flex-col justify-between py-1 pr-3 h-[110px]">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <Badge variant="outline" className="text-[0.6rem] px-2 py-0 border-primary/20 text-primary bg-primary/5 rounded-md font-semibold tracking-wide uppercase">
                             {venue.sport}
-                          </p>
+                          </Badge>
+                          <span className="text-[0.7rem] font-bold text-foreground bg-muted/60 px-2 py-0.5 rounded-md">{venue.price}</span>
                         </div>
-                        <div className="inline-flex items-center gap-1 rounded-full border border-amber-500/15 bg-amber-500/10 px-2.5 py-1 text-xs  text-amber-700">
-                          <Star className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
-                          4.8
+                        
+                        <h3 className="text-[1.05rem] font-bold text-foreground leading-tight line-clamp-1 mb-1">
+                          {venue.name}
+                        </h3>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-1 text-[0.75rem] text-muted-foreground font-medium">
+                          <MapPin className="h-3.5 w-3.5 text-primary/80" />
+                          <span className="truncate">{venue.distance} away</span>
                         </div>
-                      </div>
-                      <div className="mt-3 flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5">
-                          <MapPin className="h-4 w-4 text-primary" />
-                          {venue.distance}
-                        </span>
-                        <span className=" text-foreground">{venue.price}</span>
-                      </div>
-                      <div className="mt-3 inline-flex items-center gap-1 text-sm  text-primary">
-                        Explore slots
-                        <ArrowRight className="h-4 w-4" />
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </div>
                       </div>
                     </div>
                   </motion.article>
@@ -559,31 +569,41 @@ export function MobileHomePage() {
 
           <section className="space-y-3">
             <SectionHeader title="Recommended for you" />
-            <div className="grid gap-3 sm:grid-cols-3">
-              {recommended.map((item) => (
-                <motion.article
-                  key={item.name}
-                  whileTap={{ scale: 0.985 }}
-                  className="overflow-hidden rounded-[22px] border border-border/60 bg-card shadow-[0_10px_24px_-20px_rgba(15,23,42,0.28)]"
-                >
-                  <div className="relative aspect-[4/3]">
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              {recommended.map((item, index) => (
+                <Link key={item.name} to={`/venues/${item.id}`} className="min-w-[75%] sm:min-w-[40%] shrink-0 snap-center">
+                  <motion.article
+                    whileTap={{ scale: 0.985 }}
+                    className="relative w-full h-full overflow-hidden rounded-[24px] border border-white/10 shadow-xl group aspect-[16/9]"
+                  >
                     <ImageWithFallback
                       src={item.image}
                       alt={item.name}
                       loading="lazy"
                       decoding="async"
-                      className="h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-
-                    <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.02),rgba(5,5,5,0.56))]" />
-                  </div>
-                  <div className="p-3">
-                    <h3 className="text-sm  text-foreground">{item.name}</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {item.detail}
-                    </p>
-                  </div>
-                </motion.article>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/60 to-transparent" />
+                    
+                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col justify-end h-full z-10">
+                      <div className="mb-auto self-end">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-background/50 backdrop-blur-md border border-border/50 shadow-sm">
+                          <Sparkles className="h-3 w-3 text-amber-500" />
+                        </div>
+                      </div>
+                      <Badge className="w-fit mb-2 bg-primary/15 hover:bg-primary/25 text-primary border-primary/20 backdrop-blur-md transition-colors text-[0.65rem] px-2 py-0.5">
+                        Top Pick
+                      </Badge>
+                      <h3 className="text-lg font-bold text-foreground drop-shadow-sm leading-[1.15] mb-1 truncate">
+                        {item.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium truncate">
+                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                        {item.detail}
+                      </p>
+                    </div>
+                  </motion.article>
+                </Link>
               ))}
             </div>
           </section>

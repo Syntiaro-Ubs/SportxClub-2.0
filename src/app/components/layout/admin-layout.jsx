@@ -2,74 +2,54 @@ import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  LayoutDashboard,
-  MapPin,
-  CalendarDays,
-  Calendar,
-  IndianRupee,
-  Star,
-  Tag,
-  Menu,
-  X,
-  LogOut,
-  User,
-  Trophy,
+  LayoutDashboard, Users, MapPin, CalendarDays, Gamepad2, CreditCard,
+  Ticket, Tag, Image as ImageIcon, Star, LifeBuoy, BarChart3, PieChart,
+  Bell, Settings, UserCircle, Menu, X, LogOut, ChevronRight
 } from "lucide-react";
 import { Logo } from "../brand/Logo";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAuth } from "../../providers/auth-provider";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import {
-  Dialog,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { toast } from "sonner";
 
-const ownerNavigation = [
-  { name: "Dashboard", href: "/owner-dashboard", icon: LayoutDashboard },
-  { name: "My Turfs", href: "/owner-dashboard/turfs", icon: MapPin },
-  { name: "Bookings", href: "/owner-dashboard/bookings", icon: CalendarDays },
-  { name: "Tournaments & Events", href: "/owner-dashboard/tournaments", icon: Trophy },
-  { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
-  { name: "Revenue", href: "/owner-dashboard/revenue", icon: IndianRupee },
-  { name: "Reviews", href: "/owner-dashboard/reviews", icon: Star },
-  { name: "Promotions", href: "/owner-dashboard/promotions", icon: Tag },
+const adminNavigation = [
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Home Management", href: "/admin/home-cms", icon: LayoutDashboard },
+  { name: "Users", href: "/admin/users", icon: Users },
+  { name: "Turf Owners", href: "/admin/turf-owners", icon: UserCircle },
+  { name: "Turfs", href: "/admin/turfs", icon: MapPin },
+  { name: "Bookings", href: "/admin/bookings", icon: CalendarDays },
+  { name: "Game Lobbies", href: "/admin/games", icon: Gamepad2 },
+  { name: "Payments", href: "/admin/payments", icon: CreditCard },
+  { name: "Game Passes", href: "/admin/passes", icon: Ticket },
+  { name: "Coupons", href: "/admin/coupons", icon: Tag },
+  { name: "Banners", href: "/admin/banners", icon: ImageIcon },
+  { name: "Reviews", href: "/admin/reviews", icon: Star },
+  { name: "Support", href: "/admin/support", icon: LifeBuoy },
+  { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { name: "Analytics", href: "/admin/analytics", icon: PieChart },
+  { name: "Notifications", href: "/admin/notifications", icon: Bell },
+  { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Profile", href: "/admin/profile", icon: UserCircle },
 ];
 
-export function OwnerLayout() {
+export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, updateUser, logout } = useAuth();
+  const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Create a local override state for demo purposes (when not logged in)
-  const [demoProfile, setDemoProfile] = useState(() => {
-    return JSON.parse(localStorage.getItem("mockOwnerProfile")) || null;
-  });
-
-  const activeProfile = currentUser || demoProfile || {};
-
-  const ownerName = activeProfile.fullName || "Turf Owner";
-  const ownerEmail = activeProfile.email || "owner@sportxclub.com";
-
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  const getInitials = (name) => {
-    if (!name) return "TO";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
+  const currentRouteName = adminNavigation.find(
+    (n) => location.pathname === n.href || (n.href !== "/admin" && location.pathname.startsWith(n.href))
+  )?.name || "Admin Panel";
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -79,12 +59,9 @@ export function OwnerLayout() {
         </Link>
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto px-4 py-4 space-y-1">
-        {ownerNavigation.map((item) => {
+        {adminNavigation.map((item) => {
           const Icon = item.icon;
-          const isActive =
-            location.pathname === item.href ||
-            (item.href !== "/owner-dashboard" &&
-              location.pathname.startsWith(item.href));
+          const isActive = location.pathname === item.href || (item.href !== "/admin" && location.pathname.startsWith(item.href));
           return (
             <Link
               key={item.name}
@@ -103,11 +80,7 @@ export function OwnerLayout() {
         })}
       </div>
       <div className="p-4 mt-auto border-t border-border/40">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
-          onClick={handleLogout}
-        >
+        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground" onClick={handleLogout}>
           <LogOut className="h-5 w-5" />
           Sign Out
         </Button>
@@ -122,14 +95,10 @@ export function OwnerLayout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile Header */}
+      {/* Mobile Header and Main */}
       <div className="flex flex-col flex-1 md:pl-64">
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            className="-m-2.5 p-2.5 text-muted-foreground md:hidden"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
+          <button type="button" className="-m-2.5 p-2.5 text-muted-foreground md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <span className="sr-only">Open sidebar</span>
             <Menu className="h-6 w-6" aria-hidden="true" />
           </button>
@@ -137,33 +106,24 @@ export function OwnerLayout() {
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1 items-center">
               <h1 className="text-lg capitalize">
-                {ownerNavigation.find(
-                  (n) =>
-                    location.pathname === n.href ||
-                    (n.href !== "/owner-dashboard" &&
-                      location.pathname.startsWith(n.href)),
-                )?.name || "Admin Panel"}
+                {currentRouteName}
               </h1>
             </div>
             
             <div className="flex items-center gap-x-4 lg:gap-x-6">
+              <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
+                <Bell className="h-5 w-5" />
+                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive border-2 border-background"></span>
+              </button>
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2 rounded-full hover:bg-accent/50 p-1 pr-4 pl-1 transition-colors cursor-pointer border-0 bg-transparent">
                   <Avatar className="h-10 w-10 border-2 border-primary/10 transition-colors">
-                    {activeProfile.profilePicture ? (
-                      <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
-                    ) : (
-                      <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center font-semibold">
-                        {getInitials(ownerName)}
-                      </AvatarFallback>
-                    )}
+                    <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center font-semibold">AD</AvatarFallback>
                   </Avatar>
-                  <span className="hidden lg:block text-sm font-medium">
-                    {ownerName}
-                  </span>
+                  <span className="hidden lg:block text-sm font-medium">Super Admin</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuItem onClick={() => navigate("/owner-dashboard/profile")} className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => navigate("/admin/profile")} className="cursor-pointer">
                     View Profile
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -182,25 +142,17 @@ export function OwnerLayout() {
           {isMobileMenuOpen && (
             <>
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.5 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} exit={{ opacity: 0 }}
                 className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
                 onClick={() => setIsMobileMenuOpen(false)}
               />
               <motion.div
-                initial={{ x: "-100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "-100%" }}
+                initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }}
                 transition={{ type: "spring", bounce: 0, duration: 0.3 }}
                 className="fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-background shadow-xl md:hidden"
               >
                 <div className="absolute right-4 top-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                     <X className="h-6 w-6" />
                   </Button>
                 </div>
@@ -212,11 +164,10 @@ export function OwnerLayout() {
 
         <main className="flex-1">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-8 lg:px-8">
-            <Outlet context={{ activeProfile, setDemoProfile }} />
+            <Outlet />
           </div>
         </main>
       </div>
-
-      </div>
+    </div>
   );
 }

@@ -70,7 +70,7 @@ export function LoginPage() {
       setIsSuccess(true);
       setTimeout(() => {
         if (result.user.role === "owner" || loginType === "owner") navigate("/owner-dashboard");
-        else if (result.user.role === "admin") navigate("/admin-dashboard");
+        else if (result.user.role === "admin") navigate("/admin");
         else navigate("/");
       }, 1500);
     } else {

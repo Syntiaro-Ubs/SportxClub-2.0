@@ -205,6 +205,54 @@ const venueData = [
     badges: [asset("/venues/badge-new.svg")],
     amenities: ["Flood lights", "Locker room", "Real reviews"],
   },
+  {
+    id: 11,
+    name: "Spike Volleyball Arena",
+    location: "Khar, Mumbai",
+    city: "Mumbai",
+    sport: "Volleyball",
+    rating: 4.8,
+    reviews: 65,
+    price: 900,
+    distance: 3.5,
+    availableToday: true,
+    availability: "Available all day",
+    image: asset("/sports/cat-boxmma.webp"), // the asset is named boxmma but used for volleyball based on previous code
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Net", "Locker room", "Verified venue"],
+  },
+  {
+    id: 12,
+    name: "Octagon Box MMA",
+    location: "Bandra West, Mumbai",
+    city: "Mumbai",
+    sport: "Box MMA",
+    rating: 4.9,
+    reviews: 120,
+    price: 1500,
+    distance: 2.8,
+    availableToday: true,
+    availability: "Evening slots open",
+    image: asset("/sports/cat-boxmma.webp"),
+    badges: [asset("/venues/badge-top-rated.svg")],
+    amenities: ["AC", "Training gear", "Real reviews"],
+  },
+  {
+    id: 13,
+    name: "Ace Padel Courts",
+    location: "Powai, Mumbai",
+    city: "Mumbai",
+    sport: "Padel",
+    rating: 4.9,
+    reviews: 82,
+    price: 1300,
+    distance: 1.5,
+    availableToday: true,
+    availability: "Evening slots open",
+    image: asset("/sports/cat-padel.webp"),
+    badges: [asset("/venues/badge-new.svg")],
+    amenities: ["Flood lights", "Pro coaching", "Parking"],
+  },
 ];
 
 const sports = [
@@ -213,6 +261,9 @@ const sports = [
   "Badminton",
   "Basketball",
   "Tennis",
+  "Volleyball",
+  "Box MMA",
+  "Padel",
 ];
 const locations = ["All", "Mumbai", "Thane", "Navi Mumbai"];
 const sorts = ["Recommended", "Rating", "Price: Low to High", "Distance"];
@@ -232,6 +283,13 @@ export function VenueBooking() {
   useEffect(() => {
     if (locationState.state?.search) {
       setQuery(locationState.state.search);
+    }
+    if (locationState.state?.sport) {
+      setSport(locationState.state.sport);
+      setLocation("All");
+      setPriceRange([500, 2000]);
+      setAvailabilityOnly(false);
+      setRatingOnly(false);
     }
     if (locationState.state?.openFilters) {
       setFilterOpen(true);
@@ -257,8 +315,8 @@ export function VenueBooking() {
   };
 
   const [sortBy, setSortBy] = useState("Recommended");
-  const [priceRange, setPriceRange] = useState([700, 1600]);
-  const [availabilityOnly, setAvailabilityOnly] = useState(true);
+  const [priceRange, setPriceRange] = useState([500, 2000]);
+  const [availabilityOnly, setAvailabilityOnly] = useState(false);
   const [ratingOnly, setRatingOnly] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [activeFilterTab, setActiveFilterTab] = useState("Sort");
@@ -348,7 +406,7 @@ export function VenueBooking() {
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-black/60 backdrop-blur-md shadow-2xl p-4 md:p-5">
+            <div className="rounded-[24px] border border-white/10 bg-black/60 backdrop-blur-md shadow-2xl p-4 md:p-5 w-full max-w-[800px] mx-auto">
               <div className="flex gap-2.5 items-center">
                 <label className="relative block flex-1">
                   <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
@@ -527,7 +585,7 @@ export function VenueBooking() {
                   onClick={() => {
                     setSortBy("Recommended");
                     setSport("All");
-                    setPriceRange([700, 1600]);
+                    setPriceRange([500, 2000]);
                     setActiveFilterTab("Sort");
                   }}
                   className="text-sm font-semibold tracking-wide transition-colors uppercase text-slate-900 hover:text-[#4CFF3B]"
@@ -853,20 +911,6 @@ export function VenueBooking() {
                   Try widening the price range or switching the sport and
                   location filters.
                 </p>
-                <Button
-                  onClick={() => {
-                    setQuery("");
-                    setSport("All");
-                    setLocation("All");
-                    setSortBy("Recommended");
-                    setPriceRange([700, 1600]);
-                    setAvailabilityOnly(true);
-                    setRatingOnly(false);
-                  }}
-                  className="h-11 rounded-[16px] bg-[#6DFF3B] px-5  text-[#050505] hover:bg-[#86ff60]"
-                >
-                  Reset filters
-                </Button>
               </CardContent>
             </Card>
           )}
@@ -906,7 +950,7 @@ export function VenueBooking() {
               </p>
             </Button>
 
-            {/* Create Own Lobby Mode */}
+            {/* Book Turf Mode */}
             <Button
               onClick={() => {
                 setModeModalVenue(null);
@@ -918,7 +962,7 @@ export function VenueBooking() {
                 <Users className="h-7 w-7" />
               </div>
               <span className="text-xl font-bold text-emerald-700 dark:text-[#6DFF3B] mb-2">
-                Create Own Lobby
+                Book Turf
               </span>
               <p className="text-sm text-slate-600 dark:text-white/60 leading-relaxed font-normal whitespace-normal">
                 Reserve the entire turf, invite your squad, and split the cost.

@@ -304,6 +304,15 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const drawerRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleSearch = (e) => {
+    if (e.key === "Enter" && searchValue.trim()) {
+      navigate("/venues", { state: { search: searchValue.trim() } });
+      setSearchValue("");
+      setMenuOpen(false);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -419,6 +428,7 @@ export function Navbar() {
                 type="text"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
+                onKeyDown={handleSearch}
                 placeholder="Search venues, areas, sports..."
                 className={cn(
                   "w-full bg-transparent border-0 p-0 text-[0.825rem] lg:text-[0.875rem] font-normal outline-none focus:ring-0 focus:outline-none",
@@ -664,6 +674,7 @@ export function Navbar() {
               type="text"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={handleSearch}
               placeholder="Search venues, sports..."
               className={cn(
                 "w-full bg-transparent border-0 p-0 text-sm font-normal outline-none focus:ring-0",
@@ -1117,7 +1128,7 @@ function SportCard({ name, count, image, index }) {
       whileHover={{ y: -6, scale: 1.015 }}
       className="group shrink-0 snap-center w-[85vw] sm:w-auto"
     >
-      <Link to="/venues" className="block">
+      <Link to="/venues" state={{ sport: name }} className="block">
         <div
           className={cn(
             "relative aspect-[4/5] overflow-hidden rounded-3xl border transition-all duration-300 ease-out",
@@ -2189,8 +2200,7 @@ const galleryTurfs = [
     location: "Mumbai Central",
     rating: "4.9",
     reviews: 124,
-    image:
-      "https://images.unsplash.com/photo-1459865264687-595d652de67e?w=800&q=80",
+    image: asset("/venues/turf-1.webp"),
     className: "md:col-span-2 md:row-span-2",
   },
   {
@@ -2199,8 +2209,7 @@ const galleryTurfs = [
     location: "Andheri West",
     rating: "4.8",
     reviews: 89,
-    image:
-      "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&q=80",
+    image: asset("/venues/turf-3.webp"),
     className: "md:col-span-1 md:row-span-1",
   },
   {
@@ -2209,8 +2218,7 @@ const galleryTurfs = [
     location: "Bandra",
     rating: "4.7",
     reviews: 56,
-    image:
-      "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&q=80",
+    image: asset("/venues/turf-4.webp"),
     className: "md:col-span-1 md:row-span-1",
   },
   {
@@ -2219,8 +2227,7 @@ const galleryTurfs = [
     location: "South Mumbai",
     rating: "5.0",
     reviews: 210,
-    image:
-      "https://images.unsplash.com/photo-1505666287802-931dc83948e9?w=800&q=80",
+    image: asset("/venues/turf-6.webp"),
     className: "md:col-span-2 md:row-span-1",
   },
 ];

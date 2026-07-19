@@ -6,6 +6,19 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
+    // Seed default admin user if not exists
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    if (!users.some(u => u.role === "admin")) {
+      users.push({
+        id: "admin-1",
+        fullName: "System Admin",
+        email: "admin@sportxclub.com",
+        password: "admin123",
+        role: "admin",
+      });
+      localStorage.setItem("users", JSON.stringify(users));
+    }
+
     // Load logged in user from local storage on mount
     const user = localStorage.getItem("currentUser");
     if (user) {
