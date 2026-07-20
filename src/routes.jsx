@@ -355,13 +355,7 @@ export const router = createBrowserRouter([
           return { Component: OpenLobbiesPage };
         },
       },
-      {
-        path: "/teams",
-        lazy: async () => {
-          const { TeamManagement } = await import("./app/pages/team-management");
-          return { Component: TeamManagement };
-        },
-      },
+
       {
         path: "/community",
         lazy: async () => {
