@@ -616,11 +616,11 @@ export function UserProfile() {
             <span className="w-1.5 h-1.5 rounded-full bg-[#6DFF3B] shrink-0" />
             UPI & Card top-ups enabled. 100% refund-safe.
           </div>
-          <div className="flex gap-3 w-full md:w-auto shrink-0 z-10">
-            <Button variant="outline" className="rounded-2xl border-border px-6 h-12 text-sm font-semibold bg-muted/20 hover:bg-muted text-foreground cursor-pointer" onClick={() => setTxHistoryOpen(true)}>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 z-10">
+            <Button variant="outline" className="w-full sm:w-auto rounded-2xl border-border px-6 h-12 text-sm font-semibold bg-muted/20 hover:bg-muted text-foreground cursor-pointer" onClick={() => setTxHistoryOpen(true)}>
               <History className="h-4 w-4 mr-2" /> Transaction History
             </Button>
-            <Button className="rounded-2xl bg-[#6DFF3B] text-black hover:bg-[#86ff60] px-6 h-12 text-sm font-bold cursor-pointer" onClick={() => setTopUpOpen(true)}>
+            <Button className="w-full sm:w-auto rounded-2xl bg-[#6DFF3B] text-black hover:bg-[#86ff60] px-6 h-12 text-sm font-bold cursor-pointer" onClick={() => setTopUpOpen(true)}>
               + Top Up Wallet
             </Button>
           </div>

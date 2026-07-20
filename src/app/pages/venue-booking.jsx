@@ -505,31 +505,30 @@ export function VenueBooking() {
 
             <div className="rounded-[24px] border border-white/10 bg-black/40 backdrop-blur-md shadow-2xl p-2 w-full max-w-[800px] mx-auto transition-all hover:border-white/20">
               <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                {/* Search Input */}
-                <div className="relative flex-1">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#6DFF3B]" />
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Search sports, venues or locations..."
-                    className="h-13 bg-transparent border-0 pl-12 pr-4 text-white placeholder:text-white/40 w-full focus:outline-none text-sm font-semibold"
-                  />
-                </div>
-
-
-
-                {/* Mobile Filter Trigger & Search Action Button */}
-                <div className="flex gap-2 p-1.5 sm:p-0">
+                {/* Search Input and Mobile Filter in same row */}
+                <div className="flex items-center gap-2 w-full flex-1">
+                  <div className="relative flex-1">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#6DFF3B]" />
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Search sports, venues or locations..."
+                      className="h-13 bg-transparent border-0 pl-12 pr-4 text-white placeholder:text-white/40 w-full focus:outline-none text-sm font-semibold"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => setFilterOpen(true)}
-                    className="h-12 w-12 shrink-0 flex items-center justify-center rounded-[18px] bg-white/10 border border-white/5 text-white hover:bg-white/15 transition-all lg:hidden"
+                    className="h-12 w-12 shrink-0 flex items-center justify-center rounded-[18px] bg-white/10 border border-white/5 text-white hover:bg-white/15 transition-all lg:hidden cursor-pointer"
                     aria-label="Open Filters"
                   >
                     <SlidersHorizontal className="h-4.5 w-4.5" />
                   </button>
+                </div>
 
+                {/* Search Action Button */}
+                <div className="flex gap-2 p-1.5 sm:p-0">
                   <button
                     type="button"
                     className="flex-1 sm:flex-initial h-12 px-6 rounded-[18px] bg-[#6DFF3B] text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#86ff60] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_4px_20px_rgba(109,255,59,0.3)] cursor-pointer"
@@ -556,32 +555,27 @@ export function VenueBooking() {
             <motion.div
               key="filter-backdrop"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={() => setFilterOpen(false)}
-              className="fixed inset-0 z-[60] bg-transparent lg:hidden"
+              className="fixed inset-0 z-[60] bg-black/40 lg:hidden"
             />
             {/* Drawer */}
             <motion.div
               key="filter-drawer"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 26, stiffness: 260 }}
-              className="fixed bottom-0 left-0 right-0 z-[70] flex flex-col h-[75vh] rounded-t-[32px] overflow-hidden lg:hidden bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.1)]"
+              className="fixed top-0 bottom-0 right-0 z-[70] flex flex-col w-[85vw] max-w-[360px] h-full rounded-l-[32px] overflow-hidden lg:hidden bg-white shadow-[-10px_0_40px_rgba(0,0,0,0.1)]"
             >
-              {/* Drag handle */}
-              <div className="flex justify-center pt-3 pb-2 w-full shrink-0">
-                <div className="h-1 w-12 rounded-full bg-slate-300" />
-              </div>
-
               {/* Header */}
-              <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100 shrink-0 bg-white">
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100 shrink-0 bg-white">
                 <h2 className="text-xl font-semibold text-slate-900">Filter</h2>
                 <button
                   type="button"
                   onClick={() => setFilterOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full transition bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  className="flex h-8 w-8 items-center justify-center rounded-full transition bg-slate-100 text-slate-600 hover:bg-slate-200 cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -591,14 +585,14 @@ export function VenueBooking() {
               <div className="flex flex-1 overflow-hidden bg-white">
                 {/* Left Tabs Column */}
                 <div className="w-[35%] flex flex-col overflow-y-auto overflow-x-hidden border-r border-slate-100 bg-slate-50">
-                  {["Sort", "Sports", "Surfaces", "Amenities", "Price", "Radius", "Team Size", "Preferred Time"].map((tab) => (
+                  {["Sort", "Sports", "Price", "Radius", "Team Size", "Preferred Time"].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveFilterTab(tab)}
                       className={cn(
                         "w-full text-left px-4 py-4 text-sm font-medium transition-colors border-l-4",
                         activeFilterTab === tab
-                          ? "border-[#4CFF3B] text-[#4CFF3B] bg-[#E8FFE5]"
+                          ? "border-emerald-600 text-emerald-600 bg-emerald-50/50"
                           : "border-transparent text-slate-600 hover:bg-white"
                       )}
                     >
@@ -680,7 +674,7 @@ export function VenueBooking() {
                       </div>
                     </div>
                   )}
-                  {["Surfaces", "Amenities", "Radius", "Team Size", "Preferred Time"].includes(activeFilterTab) && (
+                  {["Radius", "Team Size", "Preferred Time"].includes(activeFilterTab) && (
                     <div className="flex h-full items-center justify-center">
                       <p className="text-sm text-center text-slate-400">
                         Options for {activeFilterTab} will appear here.

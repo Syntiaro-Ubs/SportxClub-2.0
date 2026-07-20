@@ -144,7 +144,7 @@ export function MobileAppBar() {
         <div className="flex h-[76px] items-center justify-between px-4">
           {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">
-            {!isHomePage ? (
+            {!isHomePage && (
               <button
                 type="button"
                 onClick={() => navigate(-1)}
@@ -153,11 +153,10 @@ export function MobileAppBar() {
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
-            ) : (
-              <Link to="/" className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
-                <Logo />
-              </Link>
             )}
+            <Link to="/" className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
+              <Logo />
+            </Link>
             {isHomePage && (
               <div className="min-w-0 flex items-center">
                 {/* Preferred Location Selector (BookMyShow style) */}
