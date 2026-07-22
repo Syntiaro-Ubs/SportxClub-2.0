@@ -11,105 +11,121 @@ import {
 } from "../ui/dialog";
 import { cn } from "../ui/utils";
 
-// Custom Monument SVG Icons for Popular Cities
+// Detailed Monument SVG Icons for Popular Cities matching Image 2
 const MumbaiIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-    {/* Gateway of India outline */}
-    <path d="M12 52V24L20 20L28 24V52" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M36 52V24L44 20L52 24V52" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M28 28H36V52H28V28Z" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M22 36C22 30 42 30 42 36V52H22V36Z" fill="currentColor" fillOpacity="0.1" />
-    <path d="M8 52H56" strokeLinecap="round" />
-    <circle cx="32" cy="16" r="3" />
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
+    {/* Gateway of India */}
+    <path d="M4 44H60" strokeLinecap="round" />
+    <path d="M8 44V16L14 12L20 16V44" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M44 44V16L50 12L56 16V44" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M20 20H44V44H20V20Z" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M25 44V28C25 24 39 24 39 28V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
+    <path d="M12 24H16M48 24H52M12 32H16M48 32H52" strokeLinecap="round" />
+    <path d="M14 12V8M50 12V8" strokeLinecap="round" />
+    <path d="M20 16C20 16 26 10 32 10C38 10 44 16 44 16" strokeLinecap="round" />
   </svg>
 );
 
 const DelhiIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-    {/* India Gate outline */}
-    <path d="M16 52V18H48V52" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M12 18H52V14H12V18Z" strokeLinecap="round" />
-    <path d="M26 52V36C26 32 38 32 38 36V52" fill="currentColor" fillOpacity="0.1" />
-    <path d="M8 52H56" strokeLinecap="round" />
-    <path d="M24 24H40" strokeLinecap="round" />
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
+    {/* India Gate */}
+    <path d="M6 44H58" strokeLinecap="round" />
+    <path d="M12 44V12H52V44" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M8 12H56V6H8V12Z" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M22 44V26C22 20 42 20 42 26V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
+    <path d="M18 16H46M18 20H46" strokeLinecap="round" />
   </svg>
 );
 
 const BengaluruIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-    {/* Palace / Vidhana Soudha dome */}
-    <path d="M14 52V28L32 16L50 28V52" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M24 52V34H40V52" strokeLinecap="round" fill="currentColor" fillOpacity="0.1" />
-    <circle cx="32" cy="24" r="4" />
-    <path d="M8 52H56" strokeLinecap="round" />
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
+    {/* Vidhana Soudha */}
+    <path d="M4 44H60" strokeLinecap="round" />
+    <path d="M8 44V24H56V44" strokeLinecap="round" />
+    <path d="M16 24V16H48V24" strokeLinecap="round" />
+    <path d="M26 16C26 12 32 8 32 8C32 8 38 12 38 16" fill="currentColor" fillOpacity="0.15" strokeLinecap="round" />
+    <path d="M24 44V32C24 28 40 28 40 32V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
+    <path d="M12 32H18M46 32H52M12 38H18M46 38H52" strokeLinecap="round" />
   </svg>
 );
 
 const HyderabadIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-    {/* Charminar 4 minarets */}
-    <path d="M14 52V14M24 52V24M40 52V24M50 52V14" strokeLinecap="round" />
-    <path d="M14 24H50" strokeLinecap="round" />
-    <path d="M24 38C24 32 40 32 40 38V52H24V38Z" fill="currentColor" fillOpacity="0.1" />
-    <path d="M8 52H56" strokeLinecap="round" />
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
+    {/* Charminar */}
+    <path d="M4 44H60" strokeLinecap="round" />
+    <path d="M10 44V8L14 4L18 8V44" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M46 44V8L50 4L54 8V44" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 22H46V44H18V22Z" strokeLinecap="round" />
+    <path d="M24 44V30C24 24 40 24 40 30V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
+    <path d="M22 16H42V22H22V16Z" strokeLinecap="round" />
   </svg>
 );
 
 const ChandigarhIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
     {/* Open Hand Monument */}
-    <path d="M32 52V28M32 28L20 18M32 28L44 18M32 28L28 14M32 28L36 14" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="32" cy="12" r="3" />
-    <path d="M16 52H48" strokeLinecap="round" />
+    <path d="M8 44H56" strokeLinecap="round" />
+    <path d="M24 44V32H40V44" strokeLinecap="round" />
+    <path d="M32 32V20" strokeLinecap="round" />
+    <path d="M32 20C26 14 18 16 18 16C18 16 22 24 32 20Z" fill="currentColor" fillOpacity="0.15" strokeLinecap="round" />
+    <path d="M32 20C38 12 48 14 48 14C48 14 42 22 32 20Z" fill="currentColor" fillOpacity="0.15" strokeLinecap="round" />
   </svg>
 );
 
 const AhmedabadIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-    {/* Jhulta Minar / Heritage Arch */}
-    <path d="M18 52V20L32 14L46 20V52" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M24 52V36C24 30 40 30 40 36V52" fill="currentColor" fillOpacity="0.1" />
-    <path d="M10 52H54" strokeLinecap="round" />
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
+    {/* Sidi Saiyyed / Fort Minarets */}
+    <path d="M4 44H60" strokeLinecap="round" />
+    <path d="M10 44V12L16 6L22 12V44" strokeLinecap="round" />
+    <path d="M42 44V12L48 6L54 12V44" strokeLinecap="round" />
+    <path d="M22 24H42V44H22V24Z" strokeLinecap="round" />
+    <path d="M26 44V32C26 28 38 28 38 32V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
   </svg>
 );
 
 const PuneIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
     {/* Shaniwar Wada Fort Gate */}
-    <path d="M16 52V22L32 16L48 22V52" strokeLinecap="round" />
-    <path d="M26 52V34H38V52" strokeLinecap="round" fill="currentColor" fillOpacity="0.1" />
-    <path d="M12 28H52" strokeLinecap="round" />
-    <path d="M8 52H56" strokeLinecap="round" />
+    <path d="M4 44H60" strokeLinecap="round" />
+    <path d="M10 44V20L16 16V44" strokeLinecap="round" />
+    <path d="M48 44V20L54 16V44" strokeLinecap="round" />
+    <path d="M16 24H48V44H16V24Z" strokeLinecap="round" />
+    <path d="M24 44V32C24 28 40 28 40 32V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
+    <path d="M20 20H44" strokeLinecap="round" />
   </svg>
 );
 
 const ChennaiIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
     {/* Temple Gopuram */}
-    <path d="M20 52L24 16H40L44 52" strokeLinecap="round" />
-    <path d="M22 40H42M24 30H40M26 20H38" strokeLinecap="round" />
-    <path d="M12 52H52" strokeLinecap="round" />
+    <path d="M4 44H60" strokeLinecap="round" />
+    <path d="M16 44L20 12H44L48 44" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18 36H46M20 28H44M22 20H42" strokeLinecap="round" />
+    <path d="M26 44V34C26 30 38 30 38 34V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
+    <path d="M32 12V6" strokeLinecap="round" />
   </svg>
 );
 
 const KolkataIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-    {/* Howrah Bridge */}
-    <path d="M12 52V24L32 14L52 24V52" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M12 36L52 36" strokeLinecap="round" />
-    <path d="M20 36L32 20L44 36" strokeLinecap="round" />
-    <path d="M8 52H56" strokeLinecap="round" />
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
+    {/* Victoria Memorial */}
+    <path d="M4 44H60" strokeLinecap="round" />
+    <path d="M8 44V28H56V44" strokeLinecap="round" />
+    <path d="M18 28V20H46V28" strokeLinecap="round" />
+    <path d="M26 20C26 14 32 10 32 10C32 10 38 14 38 20" fill="currentColor" fillOpacity="0.15" strokeLinecap="round" />
+    <path d="M26 44V34C26 30 38 30 38 34V44" fill="currentColor" fillOpacity="0.1" strokeLinecap="round" />
   </svg>
 );
 
 const KochiIcon = ({ className }) => (
-  <svg viewBox="0 0 64 64" fill="none" className={className} stroke="currentColor" strokeWidth="2">
-    {/* Palm Tree & Beach Nets */}
-    <path d="M32 52C32 52 30 32 24 24" strokeLinecap="round" />
-    <path d="M24 24C18 20 12 24 12 24C12 24 18 28 24 24Z" fill="currentColor" fillOpacity="0.1" />
-    <path d="M24 24C28 16 36 16 36 16C36 16 32 24 24 24Z" fill="currentColor" fillOpacity="0.1" />
-    <path d="M24 24C32 24 38 30 38 30C38 30 30 32 24 24Z" fill="currentColor" fillOpacity="0.1" />
-    <path d="M16 52H48" strokeLinecap="round" />
+  <svg viewBox="0 0 64 48" fill="none" className={className} stroke="currentColor" strokeWidth="1.6">
+    {/* Houseboat & Palm Trees */}
+    <path d="M4 44C12 40 52 40 60 44" strokeLinecap="round" />
+    <path d="M10 40C10 32 18 28 32 28C46 28 54 32 54 40" strokeLinecap="round" fill="currentColor" fillOpacity="0.1" />
+    <path d="M20 28V20H44V28" strokeLinecap="round" />
+    <path d="M50 44C50 44 48 24 42 16" strokeLinecap="round" />
+    <path d="M42 16C36 12 30 16 30 16C30 16 36 20 42 16Z" fill="currentColor" fillOpacity="0.15" strokeLinecap="round" />
+    <path d="M42 16C46 8 54 8 54 8C54 8 50 16 42 16Z" fill="currentColor" fillOpacity="0.15" strokeLinecap="round" />
   </svg>
 );
 
@@ -244,7 +260,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
             type="button"
             onClick={handleDetectLocation}
             disabled={isDetecting}
-            className="flex items-center gap-2.5 text-xs sm:text-sm font-extrabold text-rose-500 hover:text-rose-600 transition cursor-pointer"
+            className="flex items-center gap-2.5 text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
           >
             <LocateFixed className={cn("h-4 w-4", isDetecting && "animate-spin")} />
             <span>{isDetecting ? "Detecting location..." : "Detect my location"}</span>
@@ -265,7 +281,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                 Popular Cities
               </h4>
 
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 sm:gap-2 w-full select-none justify-items-center">
                 {filteredPopular.map((city) => {
                   const Icon = city.icon;
                   const isSelected = activeCity === city.name;
@@ -275,31 +291,25 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                       type="button"
                       onClick={() => handleSelect(city.name)}
                       className={cn(
-                        "flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all duration-200 group cursor-pointer text-center h-[96px]",
+                        "flex flex-col items-center justify-center transition-all duration-200 group cursor-pointer text-center w-full py-1 rounded-xl",
                         isSelected
                           ? isDark
-                            ? "border-[#6DFF3B] bg-[#6DFF3B]/10 text-[#6DFF3B] shadow-[0_0_15px_rgba(109,255,59,0.2)]"
-                            : "border-emerald-600 bg-emerald-50 text-emerald-700 shadow-md"
+                            ? "text-[#6DFF3B]"
+                            : "text-emerald-600"
                           : isDark
-                            ? "border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/20 text-white/90"
-                            : "border-slate-200 bg-slate-50/80 hover:bg-slate-100 hover:border-slate-300 text-slate-800"
+                            ? "text-white/60 hover:text-white"
+                            : "text-slate-500 hover:text-slate-900"
                       )}
                     >
-                      <div
+                      <div className="h-8 w-9 sm:h-10 sm:w-11 flex items-center justify-center mb-0.5 transition-transform group-hover:scale-110">
+                        <Icon className="h-7 w-9 sm:h-9 sm:w-10" />
+                      </div>
+                      <span
                         className={cn(
-                          "h-10 w-10 flex items-center justify-center transition-transform group-hover:scale-110 mb-1.5",
-                          isSelected
-                            ? isDark
-                              ? "text-[#6DFF3B]"
-                              : "text-emerald-600"
-                            : isDark
-                              ? "text-white/70 group-hover:text-white"
-                              : "text-slate-600 group-hover:text-slate-900"
+                          "text-[10px] sm:text-[11px] tracking-tight whitespace-nowrap text-center",
+                          isSelected ? "font-black" : "font-semibold"
                         )}
                       >
-                        <Icon className="h-8 w-8" />
-                      </div>
-                      <span className="text-xs font-extrabold tracking-tight whitespace-nowrap text-center">
                         {city.name}
                       </span>
                     </button>
@@ -352,7 +362,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                   <button
                     type="button"
                     onClick={() => setShowAllCities(!showAllCities)}
-                    className="inline-flex items-center gap-1 text-xs font-extrabold text-rose-500 hover:text-rose-600 transition cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
                   >
                     <span>{showAllCities ? "Hide all cities" : "View all cities"}</span>
                     {showAllCities ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}

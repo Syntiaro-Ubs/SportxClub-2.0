@@ -1075,10 +1075,10 @@ export function HeroSection() {
                 {/* Banner Content */}
                 <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-5 sm:p-8 md:p-10 md:max-w-xl lg:max-w-2xl z-10">
                   <div className="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2.5">
-                    <Badge className="rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest border border-[#6DFF3B]/60 bg-[#6DFF3B] text-black shadow-lg">
+                    <Badge className="rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest border-none bg-gradient-to-r from-[#6DFF3B] to-emerald-500 text-black shadow-lg">
                       {activeSlideData.tag}
                     </Badge>
-                    <span className="text-[11px] font-extrabold uppercase tracking-widest px-3 py-0.5 rounded-full border border-[#6DFF3B]/60 bg-[#6DFF3B] !text-black shadow-lg">
+                    <span className="text-[11px] font-extrabold uppercase tracking-widest px-3 py-0.5 rounded-full border-none bg-gradient-to-r from-[#6DFF3B] to-emerald-500 !text-black shadow-lg">
                       {activeSlideData.badgeText}
                     </span>
                   </div>
@@ -1093,7 +1093,7 @@ export function HeroSection() {
 
                   <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
                     <Link to={activeSlideData.primaryLink}>
-                      <Button className="h-9 sm:h-11 px-5 sm:px-7 rounded-full bg-[#6DFF3B] text-black font-extrabold text-xs sm:text-sm hover:bg-[#86ff60] transition-all hover:scale-105 shadow-xl shadow-[#6DFF3B]/30 cursor-pointer">
+                      <Button className="h-9 sm:h-11 px-5 sm:px-7 rounded-full bg-gradient-to-r from-[#6DFF3B] to-emerald-500 text-black font-extrabold text-xs sm:text-sm hover:from-[#86ff60] hover:to-emerald-400 transition-all hover:scale-105 shadow-xl shadow-emerald-500/25 cursor-pointer border-none">
                         {activeSlideData.primaryAction}
                       </Button>
                     </Link>
