@@ -8,6 +8,7 @@ import {
   ArrowRight,
   CalendarDays,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Locate,
   MapPin,
@@ -33,6 +34,7 @@ import {
 import { useIsMobile } from "../ui/use-mobile";
 
 import { Badge } from "../ui/badge";
+import { LocationModal } from "./LocationModal";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import {
@@ -404,32 +406,29 @@ export function Navbar() {
               <Logo />
             </Link>
           </div>
-
-          {/* Center Section: Sleek Search Bar */}
-          <div className="hidden md:flex items-center justify-center shrink-0 w-full max-w-[400px] lg:max-w-[460px] mx-4 relative">
+          {/* Center Section: Sleek Separate Search & Location Bars */}
+          <div className="hidden md:flex items-center gap-3 mx-4 relative shrink-0">
+            {/* Search Pill */}
             <div
               className={cn(
-                "flex items-center w-full rounded-full border px-4 py-2 shadow-sm transition-all duration-200 focus-within:ring-2",
+                "flex items-center w-[220px] lg:w-[260px] rounded-full border px-4 py-2 shadow-sm transition-all duration-200 focus-within:ring-2 focus-within:w-[260px] lg:focus-within:w-[300px]",
                 isDark
                   ? "border-white/[0.08] bg-white/[0.03] focus-within:border-[#6DFF3B]/30 focus-within:ring-[#6DFF3B]/10"
                   : "border-slate-200 bg-[#F1F3F6]/60 hover:bg-[#F1F3F6]/80 focus-within:bg-white focus-within:border-emerald-500/30 focus-within:ring-emerald-500/10",
               )}
             >
-              {/* Search Icon */}
               <Search
                 className={cn(
                   "h-4 w-4 shrink-0 mr-2.5",
                   isDark ? "text-[#6DFF3B]" : "text-emerald-600",
                 )}
               />
-
-              {/* Real Search Input */}
               <input
                 type="text"
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onKeyDown={handleSearch}
-                placeholder="Search venues, areas, sports..."
+                placeholder="Search venues..."
                 className={cn(
                   "w-full bg-transparent border-0 p-0 text-[0.825rem] lg:text-[0.875rem] font-normal outline-none focus:ring-0 focus:outline-none",
                   isDark
@@ -437,112 +436,39 @@ export function Navbar() {
                     : "placeholder:text-slate-400 text-slate-800",
                 )}
               />
+            </div>
 
-              {/* Divider Line */}
-              <div
-                className={cn(
-                  "h-4 w-[1px] shrink-0 mx-3",
-                  isDark ? "bg-white/[0.12]" : "bg-slate-300",
-                )}
-              />
-
-              {/* Location Selector (with Dialog Trigger) */}
-              <Dialog>
-                <DialogTrigger asChild>
-                  <button className="flex items-center gap-1.5 shrink-0 text-[0.825rem] lg:text-[0.875rem] transition hover:opacity-80 cursor-pointer">
-                    <MapPin
-                      className={cn(
-                        "h-3.5 w-3.5 shrink-0",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                      )}
-                    />
-                    <span className={isDark ? "text-white" : "text-slate-700"}>
-                      {activeCity === "All" ? "All Cities" : activeCity}
-                    </span>
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 shrink-0 transition-transform",
-                        isDark ? "text-white/40" : "text-slate-400",
-                      )}
-                    />
-                  </button>
-                </DialogTrigger>
-                <DialogContent
+            {/* Location Pill */}
+            <LocationModal
+              activeCity={activeCity}
+              onCitySelect={handleCitySelect}
+              trigger={
+                <button
                   className={cn(
-                    "sm:max-w-[425px]",
+                    "flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full border shadow-sm transition-all duration-200 cursor-pointer",
                     isDark
-                      ? "bg-[#101216] border-white/[0.08]"
-                      : "bg-white border-slate-200",
+                      ? "border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-white focus:ring-2 focus:ring-[#6DFF3B]/10"
+                      : "border-slate-200 bg-[#F1F3F6]/60 hover:bg-[#F1F3F6]/80 text-slate-700 focus:ring-2 focus:ring-emerald-500/10",
                   )}
                 >
-                  <DialogHeader>
-                    <DialogTitle
-                      className={cn(isDark ? "text-white" : "text-slate-900")}
-                    >
-                      Select your city
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="flex flex-col gap-4 mt-2">
-                    <button
-                      type="button"
-                      onClick={() => handleCitySelect("All")}
-                      className={cn(
-                        "flex items-center gap-3 w-full p-3 rounded-xl transition text-left",
-                        isDark
-                          ? "bg-[#6DFF3B]/10 text-[#6DFF3B] hover:bg-[#6DFF3B]/20"
-                          : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
-                      )}
-                    >
-                      <Locate className="h-5 w-5" />
-                      <div className="flex flex-col">
-                        <span className=" text-sm">All Cities</span>
-                        <span
-                          className={cn(
-                            "text-xs",
-                            isDark
-                              ? "text-[#6DFF3B]/70"
-                              : "text-emerald-600/70",
-                          )}
-                        >
-                          Detect my location
-                        </span>
-                      </div>
-                    </button>
-                    <div className="grid grid-cols-3 gap-3 mt-2">
-                      {cities.map((city) => (
-                        <button
-                          key={city}
-                          type="button"
-                          onClick={() => handleCitySelect(city)}
-                          className={cn(
-                            "flex flex-col items-center justify-center p-3 rounded-xl transition text-center gap-2 border",
-                            activeCity === city
-                              ? isDark
-                                ? "border-[#6DFF3B] bg-[#6DFF3B]/5 text-[#6DFF3B]"
-                                : "border-emerald-500 bg-emerald-50 text-emerald-700"
-                              : isDark
-                                ? "border-transparent hover:bg-white/[0.04] text-white/80 hover:text-white"
-                                : "border-transparent hover:bg-slate-50 text-slate-700 hover:text-slate-900",
-                          )}
-                        >
-                          <MapPin
-                            className={cn(
-                              "h-5 w-5",
-                              activeCity === city
-                                ? isDark
-                                  ? "text-[#6DFF3B]"
-                                  : "text-emerald-600"
-                                : "opacity-50",
-                            )}
-                          />
-                          <span className="text-xs">{city}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                  <MapPin
+                    className={cn(
+                      "h-3.5 w-3.5 shrink-0",
+                      isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                    )}
+                  />
+                  <span className="text-[0.825rem] lg:text-[0.875rem] font-semibold">
+                    {activeCity === "All" ? "All Cities" : activeCity}
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-3 w-3 shrink-0 transition-transform",
+                      isDark ? "text-white/40" : "text-slate-400",
+                    )}
+                  />
+                </button>
+              }
+            />
           </div>
 
           {/* Right Section: Sign In + Hamburger Menu Toggle */}
@@ -690,8 +616,10 @@ export function Navbar() {
                 isDark ? "bg-white/[0.12]" : "bg-slate-300",
               )}
             />
-            <Dialog>
-              <DialogTrigger asChild>
+            <LocationModal
+              activeCity={activeCity}
+              onCitySelect={handleCitySelect}
+              trigger={
                 <button className="flex items-center gap-1 shrink-0 text-xs cursor-pointer">
                   <MapPin
                     className={cn(
@@ -701,80 +629,8 @@ export function Navbar() {
                   />
                   <span>{activeCity === "All" ? "Cities" : activeCity}</span>
                 </button>
-              </DialogTrigger>
-              <DialogContent
-                className={cn(
-                  "sm:max-w-[425px]",
-                  isDark
-                    ? "bg-[#101216] border-white/[0.08]"
-                    : "bg-white border-slate-200",
-                )}
-              >
-                <DialogHeader>
-                  <DialogTitle
-                    className={cn(isDark ? "text-white" : "text-slate-900")}
-                  >
-                    Select your city
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="flex flex-col gap-4 mt-2">
-                  <button
-                    type="button"
-                    onClick={() => handleCitySelect("All")}
-                    className={cn(
-                      "flex items-center gap-3 w-full p-3 rounded-xl transition text-left",
-                      isDark
-                        ? "bg-[#6DFF3B]/10 text-[#6DFF3B] hover:bg-[#6DFF3B]/20"
-                        : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
-                    )}
-                  >
-                    <Locate className="h-5 w-5" />
-                    <div className="flex flex-col">
-                      <span className=" text-sm">All Cities</span>
-                      <span
-                        className={cn(
-                          "text-xs",
-                          isDark ? "text-[#6DFF3B]/70" : "text-emerald-600/70",
-                        )}
-                      >
-                        Detect my location
-                      </span>
-                    </div>
-                  </button>
-                  <div className="grid grid-cols-3 gap-3 mt-2">
-                    {cities.map((city) => (
-                      <button
-                        key={city}
-                        type="button"
-                        onClick={() => handleCitySelect(city)}
-                        className={cn(
-                          "flex flex-col items-center justify-center p-3 rounded-xl transition text-center gap-2 border",
-                          activeCity === city
-                            ? isDark
-                              ? "border-[#6DFF3B] bg-[#6DFF3B]/5 text-[#6DFF3B]"
-                              : "border-emerald-500 bg-emerald-50 text-emerald-700"
-                            : isDark
-                              ? "border-transparent hover:bg-white/[0.04] text-white/80 hover:text-white"
-                              : "border-transparent hover:bg-slate-50 text-slate-700 hover:text-slate-900",
-                        )}
-                      >
-                        <MapPin
-                          className={cn(
-                            "h-5 w-5",
-                            activeCity === city
-                              ? isDark
-                                ? "text-[#6DFF3B]"
-                                : "text-emerald-600"
-                              : "opacity-50",
-                          )}
-                        />
-                        <span className="text-xs">{city}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+              }
+            />
           </div>
         </div>
       </header>
@@ -998,116 +854,428 @@ function StatsRow() {
   );
 }
 
+const heroSlides = [
+  {
+    id: 0,
+    image: asset("/hero/unique-hero.jpg"),
+    tag: "EXCLUSIVE OFFER",
+    title: "Flat 15% Cashback on Early Bird & Night Turf Bookings",
+    description: "Book verified turfs before 11 AM or after 10 PM. Instant refund-safe slots & zero extra fees.",
+    badgeText: "LIMITED TIME",
+    primaryAction: "Book a Turf Now",
+    primaryLink: "/venues",
+    secondaryAction: "Explore Passes",
+    secondaryLink: "/venues",
+  },
+  {
+    id: 1,
+    image: asset("/hero/unique-hero-2.jpg"),
+    tag: "TOURNAMENT LEAGUE",
+    title: "City Five-A-Side Football Championship 2026",
+    description: "Compete with top local squads. Professional referees, FIFA turf quality & ₹2.5L total prize pool.",
+    badgeText: "FAST FILLING",
+    primaryAction: "Register Squad",
+    primaryLink: "/tournaments",
+    secondaryAction: "View Tournament Details",
+    secondaryLink: "/tournaments",
+  },
+  {
+    id: 2,
+    image: asset("/hero/unique-hero-3.jpg"),
+    tag: "MATCHMAKING & LOBBIES",
+    title: "Never Play Short – Join Open Lobbies in Your City",
+    description: "Find available players near you or create your own open lobby. Connect, play, and rate players.",
+    badgeText: "COMMUNITY FEATURE",
+    primaryAction: "Find Open Lobbies",
+    primaryLink: "/open-lobbies",
+    secondaryAction: "Book Squad Slot",
+    secondaryLink: "/squad-booking",
+  },
+  {
+    id: 3,
+    image: asset("/hero/unique-hero-4.jpg"),
+    tag: "CLUB PASS",
+    title: "SportX Club All-Access Priority Pass",
+    description: "Get up to 40% discount on regular bookings, priority slot reservation, and free cancellations.",
+    badgeText: "SAVINGS PASS",
+    primaryAction: "Get Club Pass",
+    primaryLink: "/venues",
+    secondaryAction: "Learn More",
+    secondaryLink: "/venues",
+  },
+  {
+    id: 4,
+    image: asset("/hero/unique-hero-5.jpg"),
+    tag: "PREMIUM VENUES",
+    title: "FIFA-Standard Floodlit Night Turfs & Arenas",
+    description: "High-lux pro lighting, shock-pad turfing, rooftop courts, and player lounge amenities.",
+    badgeText: "VERIFIED ARENAS",
+    primaryAction: "Browse All Venues",
+    primaryLink: "/venues",
+    secondaryAction: "View Night Slots",
+    secondaryLink: "/venues",
+  },
+];
+
+const recommendedVenues = [
+  {
+    id: 1,
+    name: "Champions Turf & Football Arena",
+    location: "Powai, Mumbai",
+    sport: "Football • Box Cricket",
+    rating: "4.9",
+    reviews: "128",
+    price: "₹1,200",
+    unit: "/ hr",
+    badge: "PROMOTED",
+    image: asset("/venues/champions_sports_arena_football.jpg"),
+  },
+  {
+    id: 2,
+    name: "Metro Sports Pitch & Stadium",
+    location: "Bandra West, Mumbai",
+    sport: "Cricket • Football",
+    rating: "4.8",
+    reviews: "96",
+    price: "₹1,500",
+    unit: "/ hr",
+    badge: "POPULAR",
+    image: asset("/venues/metro_sports_park_cricket.jpg"),
+  },
+  {
+    id: 3,
+    name: "Grand Playfield Badminton Club",
+    location: "Andheri West, Mumbai",
+    sport: "Badminton",
+    rating: "4.9",
+    reviews: "142",
+    price: "₹600",
+    unit: "/ hr",
+    badge: "FAST FILLING",
+    image: asset("/venues/grand_playfield_badminton.png"),
+  },
+  {
+    id: 4,
+    name: "GreenPark Pro Tennis Court",
+    location: "Juhu, Mumbai",
+    sport: "Lawn Tennis",
+    rating: "4.7",
+    reviews: "64",
+    price: "₹1,000",
+    unit: "/ hr",
+    badge: "TOP RATED",
+    image: asset("/venues/new_tennis_turf.png"),
+  },
+  {
+    id: 5,
+    name: "Spike & Jump Volleyball Arena",
+    location: "South Mumbai",
+    sport: "Volleyball",
+    rating: "5.0",
+    reviews: "210",
+    price: "₹1,800",
+    unit: "/ hr",
+    badge: "FEATURED",
+    image: asset("/venues/new_volleyball_turf.png"),
+  },
+];
+
 export function HeroSection() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
-  const isMobile = useIsMobile();
-  const [currentBg, setCurrentBg] = useState(0);
-
-  const bgImages = [
-    "/assets/hero/unique-hero.jpg",
-    "/assets/hero/unique-hero-2.jpg",
-    "/assets/hero/unique-hero-3.jpg",
-    "/assets/hero/unique-hero-4.jpg",
-    "/assets/hero/unique-hero-5.jpg",
-  ];
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
+    if (isPaused) return;
     const timer = setInterval(() => {
-      setCurrentBg((prev) => (prev + 1) % bgImages.length);
-    }, 6000);
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5000);
     return () => clearInterval(timer);
-  }, [bgImages.length]);
+  }, [isPaused]);
+
+  const prevSlideIndex = (currentSlide - 1 + heroSlides.length) % heroSlides.length;
+  const nextSlideIndex = (currentSlide + 1) % heroSlides.length;
+
+  const handlePrev = () => {
+    setCurrentSlide(prevSlideIndex);
+  };
+
+  const handleNext = () => {
+    setCurrentSlide(nextSlideIndex);
+  };
+
+  const activeSlideData = heroSlides[currentSlide];
+  const prevSlideData = heroSlides[prevSlideIndex];
+  const nextSlideData = heroSlides[nextSlideIndex];
 
   return (
-    <section className="always-dark relative isolate overflow-hidden bg-[#060813]">
-      <div className="absolute inset-0 -z-20 overflow-hidden">
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={currentBg}
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            className="absolute inset-0 bg-cover bg-no-repeat bg-center brightness-100 contrast-[1.02] saturate-[1.05]"
-            style={{ backgroundImage: `url(${bgImages[currentBg]})` }}
-          />
-        </AnimatePresence>
+    <section className={cn(
+      "relative w-full overflow-hidden pt-2 pb-8 md:pt-3 md:pb-12 isolate transition-colors duration-300",
+      isDark ? "bg-[#060813] text-white" : "bg-slate-50/90 text-slate-900"
+    )}>
+      {/* Ambient Glow Backdrop */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className={cn(
+          "absolute -top-32 left-1/2 -translate-x-1/2 h-[400px] w-[850px] rounded-full blur-[120px]",
+          isDark
+            ? "bg-gradient-to-b from-[#6DFF3B]/15 via-emerald-600/10 to-transparent"
+            : "bg-gradient-to-b from-emerald-500/20 via-teal-400/10 to-transparent"
+        )} />
       </div>
 
-      <div className="mx-auto flex min-h-[92svh] max-w-[1200px] flex-col justify-start pt-32 items-center px-4 sm:px-6 md:min-h-[94svh] lg:px-8 xl:min-h-[96svh]">
-        <div className="relative w-full max-w-[90vw] md:max-w-6xl flex flex-col items-center">
-          <div className="relative z-10 flex flex-col items-center text-center w-full max-w-[90vw] md:max-w-6xl">
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <Badge
-                className="rounded-full px-4 py-2 text-xs uppercase tracking-[0.26em] border border-[#6DFF3B]/20 bg-[#6DFF3B]/10 text-[#6DFF3B]"
+      <div className="relative w-full px-2 sm:px-4">
+
+        {/* BookMyShow Style Wide Banner Carousel Track (Edge-to-Edge Format) */}
+        <div
+          className="relative flex items-center justify-center h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px] gap-2.5 sm:gap-4 my-1 w-full"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          {/* Left Side Banner Preview (BookMyShow Clean Edge Banner) */}
+          <div
+            onClick={handlePrev}
+            className={cn(
+              "hidden md:block relative w-[11%] lg:w-[12%] h-full rounded-none overflow-hidden cursor-pointer shrink-0 transition-all duration-300 border select-none shadow-xl",
+              isDark
+                ? "border-white/15 bg-black/60 opacity-90 hover:opacity-100"
+                : "border-slate-300/80 bg-slate-200 opacity-90 hover:opacity-100"
+            )}
+          >
+            <img
+              src={prevSlideData.image}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-100"
+            />
+          </div>
+
+          {/* Center Main Banner Slide */}
+          <div className={cn(
+            "relative w-full md:w-[78%] lg:w-[76%] h-full rounded-none overflow-hidden border shrink-0 transition-all duration-500 shadow-2xl",
+            isDark
+              ? "border-white/20 bg-[#101216]"
+              : "border-slate-300/90 bg-white"
+          )}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, scale: 1.01 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.99 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                className="absolute inset-0"
               >
-                Premium sports booking
-              </Badge>
-            </motion.div>
+                {/* Background Banner Image (No Overlay / Clean Full Brightness) */}
+                <img
+                  src={activeSlideData.image}
+                  alt={activeSlideData.title}
+                  className="h-full w-full object-cover brightness-100 contrast-100"
+                />
 
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-              <h1
-                className="mt-2 font-light w-full max-w-none text-center text-5xl sm:text-7xl tracking-tighter lg:text-[5.2rem] lg:leading-[1.05] !text-white drop-shadow-md md:whitespace-nowrap"
+                {/* Banner Content */}
+                <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-5 sm:p-8 md:p-10 md:max-w-xl lg:max-w-2xl z-10">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2.5">
+                    <Badge className="rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest border border-[#6DFF3B]/60 bg-[#6DFF3B] text-black shadow-lg">
+                      {activeSlideData.tag}
+                    </Badge>
+                    <span className="text-[11px] font-extrabold uppercase tracking-widest px-3 py-0.5 rounded-full border border-[#6DFF3B]/60 bg-[#6DFF3B] !text-black shadow-lg">
+                      {activeSlideData.badgeText}
+                    </span>
+                  </div>
+
+                  <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-extrabold tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                    {activeSlideData.title}
+                  </h1>
+
+                  <p className="mt-1.5 text-xs sm:text-sm md:text-base !text-white line-clamp-2 leading-relaxed font-semibold drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
+                    {activeSlideData.description}
+                  </p>
+
+                  <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
+                    <Link to={activeSlideData.primaryLink}>
+                      <Button className="h-9 sm:h-11 px-5 sm:px-7 rounded-full bg-[#6DFF3B] text-black font-extrabold text-xs sm:text-sm hover:bg-[#86ff60] transition-all hover:scale-105 shadow-xl shadow-[#6DFF3B]/30 cursor-pointer">
+                        {activeSlideData.primaryAction}
+                      </Button>
+                    </Link>
+                    <Link to={activeSlideData.secondaryLink}>
+                      <Button variant="outline" className="h-9 sm:h-11 px-4 sm:px-6 rounded-full !border-white/50 !bg-black/70 !text-white hover:!bg-black/90 backdrop-blur-md text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-lg">
+                        {activeSlideData.secondaryAction}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Right Side Banner Preview (BookMyShow Clean Edge Banner) */}
+          <div
+            onClick={handleNext}
+            className={cn(
+              "hidden md:block relative w-[11%] lg:w-[12%] h-full rounded-none overflow-hidden cursor-pointer shrink-0 transition-all duration-300 border select-none shadow-xl",
+              isDark
+                ? "border-white/15 bg-black/60 opacity-90 hover:opacity-100"
+                : "border-slate-300/80 bg-slate-200 opacity-90 hover:opacity-100"
+            )}
+          >
+            <img
+              src={nextSlideData.image}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-100"
+            />
+          </div>
+
+          {/* BookMyShow Style Side Navigation Arrows */}
+          <button
+            onClick={handlePrev}
+            className="absolute left-1 md:left-[9.5%] lg:left-[10.5%] top-1/2 -translate-y-1/2 z-20 h-10 w-8 md:h-12 md:w-9 rounded-r-xl rounded-l-md flex items-center justify-center transition-all cursor-pointer bg-black/75 text-white hover:bg-[#6DFF3B] hover:text-black border border-white/20 shadow-2xl active:scale-95 backdrop-blur-md"
+            aria-label="Previous Slide"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+
+          <button
+            onClick={handleNext}
+            className="absolute right-1 md:right-[9.5%] lg:right-[10.5%] top-1/2 -translate-y-1/2 z-20 h-10 w-8 md:h-12 md:w-9 rounded-l-xl rounded-r-md flex items-center justify-center transition-all cursor-pointer bg-black/75 text-white hover:bg-[#6DFF3B] hover:text-black border border-white/20 shadow-2xl active:scale-95 backdrop-blur-md"
+            aria-label="Next Slide"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </div>
+
+        {/* Carousel Pagination Dots */}
+        <div className="flex items-center justify-center gap-2 mt-3 sm:mt-4">
+          {heroSlides.map((slide, idx) => (
+            <button
+              key={slide.id}
+              onClick={() => setCurrentSlide(idx)}
+              className={cn(
+                "h-2.5 rounded-full transition-all duration-300 cursor-pointer",
+                currentSlide === idx
+                  ? (isDark
+                    ? "w-8 bg-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.8)]"
+                    : "w-8 bg-emerald-600 shadow-[0_0_10px_rgba(5,150,105,0.4)]")
+                  : (isDark
+                    ? "w-2.5 bg-white/30 hover:bg-white/50"
+                    : "w-2.5 bg-slate-300 hover:bg-slate-400")
+              )}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Recommended Sports Venues Section */}
+        <div className="mt-8 sm:mt-12 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-4 sm:mb-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className={cn(
+                  "h-2 w-2 rounded-full animate-pulse",
+                  isDark ? "bg-[#6DFF3B]" : "bg-emerald-500"
+                )} />
+                <span className={cn(
+                  "text-xs font-bold uppercase tracking-widest",
+                  isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+                )}>
+                  Handpicked for you
+                </span>
+              </div>
+              <h2 className={cn(
+                "text-xl sm:text-2xl font-extrabold tracking-tight mt-0.5",
+                isDark ? "text-white" : "text-slate-900"
+              )}>
+                Recommended Venues
+              </h2>
+            </div>
+            <Link
+              to="/venues"
+              className={cn(
+                "flex items-center gap-1 text-xs sm:text-sm font-semibold transition-colors group cursor-pointer",
+                isDark ? "text-[#6DFF3B] hover:text-emerald-400" : "text-emerald-600 hover:text-emerald-700"
+              )}
+            >
+              <span>See All</span>
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Link>
+          </div>
+
+          {/* Grid of Poster-Style Cards (BookMyShow Movie Poster Format) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5">
+            {recommendedVenues.map((venue) => (
+              <motion.div
+                key={venue.id}
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.25 }}
+                className={cn(
+                  "group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300",
+                  isDark
+                    ? "border-white/10 bg-[#101216] shadow-xl hover:border-[#6DFF3B]/30"
+                    : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30"
+                )}
               >
-                Play. Book.{" "}
-                <span
-                  className="text-always-brand-green drop-shadow-[0_0_20px_rgba(109,255,59,0.3)]"
-                >
-                  Compete.
-                </span>
-              </h1>
-            </motion.div>
+                <Link to={`/venues/${venue.id}`} state={{ venue }} className="block relative aspect-[3/4] w-full overflow-hidden">
+                  <ImageWithFallback
+                    src={venue.image}
+                    alt={venue.name}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
-              <motion.p 
-                key={currentBg}
-                className="mt-2 text-center text-lg sm:text-xl md:text-2xl font-light tracking-wider text-white/90 max-w-2xl mx-auto font-['Poppins']"
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  hidden: { opacity: 1 },
-                  visible: {
-                    opacity: 1,
-                    transition: { staggerChildren: 0.1 }
-                  }
-                }}
-              >
-                <span className="text-always-brand-green drop-shadow-[0_0_20px_rgba(109,255,59,0.3)] inline-block">
-                  {"Let's begin".split("").map((char, index) => (
-                    <motion.span key={`l1-${index}`} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
-                      {char === " " ? "\u00A0" : char}
-                    </motion.span>
-                  ))}
-                </span>
-                <br />
-                <span className="inline-block text-white">
-                  {"where the game never stops".split("").map((char, index) => (
-                    <motion.span key={`l2-${index}`} variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}>
-                      {char === " " ? "\u00A0" : char}
-                    </motion.span>
-                  ))}
-                </span>
-              </motion.p>
+                  {/* Top Badges */}
+                  <div className="absolute top-2.5 left-2.5 z-10">
+                    <Badge className="rounded-md px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider bg-[#6DFF3B] text-black shadow-md border border-[#6DFF3B]/40">
+                      {venue.badge}
+                    </Badge>
+                  </div>
 
-            <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="mt-4 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
+                  <div className="absolute top-2.5 right-2.5 z-10">
+                    <Badge className={cn(
+                      "rounded-full px-2 py-0.5 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md shadow-md",
+                      isDark
+                        ? "bg-black/70 text-[#6DFF3B] border border-[#6DFF3B]/30"
+                        : "bg-white/95 text-emerald-700 border border-emerald-200"
+                    )}>
+                      <Star className="h-3 w-3 fill-current" />
+                      <span>{venue.rating}</span>
+                    </Badge>
+                  </div>
 
-              <Link to="/venues" className="w-full sm:w-auto">
-                <Button
-                  className="w-full sm:w-auto h-14 rounded-full px-8 text-base font-semibold backdrop-blur-md transition-all hover:scale-105 shadow-sm group border !border-[#6DFF3B] bg-transparent !text-white hover:bg-[#6DFF3B] hover:!text-[#050505]"
-                >
-                  Book a turf now
-                </Button>
-              </Link>
-              <Link to="/venues" className="w-full sm:w-auto">
-                <Button
-                  className="w-full sm:w-auto h-14 rounded-full px-8 text-base font-semibold backdrop-blur-md transition-all hover:scale-105 shadow-sm group border !border-[#6DFF3B] bg-transparent !text-white hover:bg-[#6DFF3B] hover:!text-[#050505]"
-                >
-                  List of our turfs
-                </Button>
-              </Link>
-            </motion.div>
+                  {/* Bottom Text inside poster image (Force White Text) */}
+                  <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
+                    <p className="text-[10px] font-bold text-[#6DFF3B] uppercase tracking-wider drop-shadow-md">
+                      {venue.sport}
+                    </p>
+                    <h3 className="text-sm font-extrabold !text-white leading-tight line-clamp-1 mt-0.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                      {venue.name}
+                    </h3>
+                    <div className="flex items-center gap-1 text-[10px] !text-white/90 mt-0.5 drop-shadow">
+                      <MapPin className="h-3 w-3 shrink-0 text-[#6DFF3B]" />
+                      <span className="line-clamp-1">{venue.location}</span>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Footer Action */}
+                <div className={cn(
+                  "p-2 sm:p-2.5 border-t flex items-center justify-center",
+                  isDark ? "bg-[#0d0f13] border-white/5" : "bg-slate-50 border-slate-100"
+                )}>
+                  <Link to={`/venues/${venue.id}`} state={{ venue }} className="w-full">
+                    <Button size="sm" className={cn(
+                      "w-full h-7 text-[11px] rounded-full font-extrabold cursor-pointer transition-all shadow-sm",
+                      isDark
+                        ? "bg-[#6DFF3B] text-black hover:bg-[#86ff60]"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                    )}>
+                      Book Slot
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
+
       </div>
     </section>
   );
@@ -1116,8 +1284,6 @@ export function HeroSection() {
 function SportCard({ name, count, image, index }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
 
   return (
     <motion.div
