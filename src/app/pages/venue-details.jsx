@@ -103,25 +103,25 @@ export function VenueDetails() {
   const passedVenue = location.state?.venue;
   const venue = passedVenue
     ? {
-        name: passedVenue.name,
-        location: passedVenue.location,
-        address: `${passedVenue.location}, Mumbai, Maharashtra`,
-        rating:
-          typeof passedVenue.rating === "number"
-            ? passedVenue.rating
-            : parseFloat(passedVenue.rating) || 4.9,
-        reviews: passedVenue.reviews || 128,
-        price:
-          typeof passedVenue.price === "number"
-            ? passedVenue.price
-            : parseInt(
-                String(passedVenue.price).replace(/[^0-9]/g, "") || "1200",
-              ),
-        sport: passedVenue.sport?.split("•")[0]?.trim() || "Football",
-        description: `${passedVenue.name} is built for fast discovery and confident booking. The venue combines FIFA-grade turfing, pro floodlighting, verified access, and 100% refund-safe terms.`,
-        image: passedVenue.image,
-        area: passedVenue.area || "8,500 Sq. Ft. (120ft × 70ft)",
-      }
+      name: passedVenue.name,
+      location: passedVenue.location,
+      address: `${passedVenue.location}, Mumbai, Maharashtra`,
+      rating:
+        typeof passedVenue.rating === "number"
+          ? passedVenue.rating
+          : parseFloat(passedVenue.rating) || 4.9,
+      reviews: passedVenue.reviews || 128,
+      price:
+        typeof passedVenue.price === "number"
+          ? passedVenue.price
+          : parseInt(
+            String(passedVenue.price).replace(/[^0-9]/g, "") || "1200",
+          ),
+      sport: passedVenue.sport?.split("•")[0]?.trim() || "Football",
+      description: `${passedVenue.name} is built for fast discovery and confident booking. The venue combines FIFA-grade turfing, pro floodlighting, verified access, and 100% refund-safe terms.`,
+      image: passedVenue.image,
+      area: passedVenue.area || "8,500 Sq. Ft. (120ft × 70ft)",
+    }
     : defaultVenue;
 
   const [selectedSport, setSelectedSport] = useState(
@@ -348,10 +348,10 @@ export function VenueDetails() {
   const isDateDisabled = (dateObj) => {
     const todayZero = new Date();
     todayZero.setHours(0, 0, 0, 0);
-    
+
     const compareDate = new Date(dateObj);
     compareDate.setHours(0, 0, 0, 0);
-    
+
     return compareDate < todayZero;
   };
 

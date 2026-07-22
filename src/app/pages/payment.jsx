@@ -97,11 +97,19 @@ export function Payment() {
   const isDark = resolvedTheme !== "light";
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [upiOption, setUpiOption] = useState("qr");
+  const [timeLeft, setTimeLeft] = useState(300);
   const [coupon, setCoupon] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [teammates, setTeammates] = useState([]);
   const [teammateInput, setTeammateInput] = useState("");
   const booking = useMemo(() => getBookingData(), []);
+
+  const subtotal = booking.price;
+  const convenienceFee = 45;
+  const discount = 100;
+  const tax = 135;
+  const total = subtotal + convenienceFee + tax - discount;
 
   const addTeammate = () => {
     if (!teammateInput.trim()) return;
@@ -129,6 +137,29 @@ export function Payment() {
   };
 
   useEffect(() => {
+    if (paymentMethod !== "upi" || upiOption !== "qr") return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 300));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [paymentMethod, upiOption]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const upiUri = useMemo(() => {
+    return `upi://pay?pa=sportxclub@icici&pn=SportXClub%202.0&am=${total}&cu=INR&tn=Booking%20for%20${encodeURIComponent(booking.venue)}`;
+  }, [total, booking.venue]);
+
+  const qrUrl = useMemo(() => {
+    // Standard sharp square modules using qrserver API
+    return `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upiUri)}&margin=0`;
+  }, [upiUri]);
+
+  useEffect(() => {
     if (!currentUser) {
       toast.error("Please login to proceed with payment.");
       navigate("/login");
@@ -148,18 +179,14 @@ export function Payment() {
     }, 2000);
   };
 
-  const subtotal = booking.price;
-  const convenienceFee = 45;
-  const discount = 100;
-  const tax = 135;
-  const total = subtotal + convenienceFee + tax - discount;
+
 
   return (
     <div className={cn(
       "min-h-screen transition-colors duration-300 isolate",
       isDark ? "bg-[#060813] text-white" : "bg-slate-50 text-slate-900"
     )}>
-      <div className="mx-auto max-w-[1400px] px-4 py-6 pb-6 sm:px-6 lg:px-8 lg:py-8 lg:pb-8">
+      <div className="mx-auto max-w-6xl px-4 py-6 pb-6 sm:px-6 lg:px-8 lg:py-8 lg:pb-8">
         <Button
           variant="ghost"
           className={cn(
@@ -208,58 +235,67 @@ export function Payment() {
         </div>
 
         {/* Sleek Stepper Timeline */}
-        <div className="mb-12 relative flex items-center justify-between max-w-3xl mx-auto px-4 select-none">
-          <div className={cn(
-            "absolute left-8 right-8 top-1/2 h-0.5 -translate-y-1/2 pointer-events-none z-0",
-            isDark ? "bg-white/[0.08]" : "bg-slate-200"
-          )} />
-          <div 
-            className="absolute left-8 top-1/2 h-0.5 -translate-y-1/2 bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-[#6DFF3B] dark:to-[#86ff60] transition-all duration-500 z-0" 
-            style={{ width: "75%" }} 
-          />
+        <div className="mb-12 relative max-w-3xl mx-auto select-none">
+          {/* Progress Connector Line Container */}
+          <div className="absolute left-[12.5%] right-[12.5%] top-5 h-0.5 -translate-y-1/2 pointer-events-none z-0">
+            {/* Background Line */}
+            <div className={cn(
+              "w-full h-full rounded-full",
+              isDark ? "bg-white/[0.08]" : "bg-slate-200"
+            )} />
+            {/* Progress Active Line */}
+            <div
+              className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-[#6DFF3B] dark:to-[#86ff60] transition-all duration-500 z-0"
+              style={{ width: "100%" }}
+            />
+          </div>
 
-          {checkoutFlow.map((step, index) => {
-            const isActive = index === 3;
-            const isCompleted = index < 3;
-            return (
-              <div key={step} className="relative z-10 flex flex-col items-center gap-2">
-                <div
-                  className={cn(
-                    "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 font-extrabold text-sm shadow-md",
-                    isCompleted
-                      ? "bg-emerald-600 border-emerald-600 text-white dark:bg-[#6DFF3B] dark:border-[#6DFF3B] dark:text-black shadow-[0_0_15px_rgba(109,255,59,0.2)]"
-                      : isActive
-                        ? isDark
-                          ? "bg-[#0d0f15] border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_20px_rgba(109,255,59,0.3)] scale-110"
-                          : "bg-white border-emerald-600 text-emerald-600 shadow-md scale-110"
-                        : isDark
-                          ? "bg-[#101216] border-white/10 text-white/40"
-                          : "bg-slate-100 border-slate-200 text-slate-400"
-                  )}
-                >
-                  {isCompleted ? (
-                    <Check className="h-4.5 w-4.5 stroke-[3px]" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
+          <div className="grid grid-cols-4 text-center relative z-10">
+            {checkoutFlow.map((step, index) => {
+              const isActive = index === 3;
+              const isCompleted = index < 3;
+              return (
+                <div key={step} className="flex flex-col items-center">
+                  {/* Step Circle */}
+                  <div
+                    className={cn(
+                      "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 font-extrabold text-sm shadow-md",
+                      isCompleted
+                        ? "bg-emerald-600 border-emerald-600 text-white dark:bg-[#6DFF3B] dark:border-[#6DFF3B] dark:text-black shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                        : isActive
+                          ? isDark
+                            ? "bg-[#0d0f15] border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_20px_rgba(109,255,59,0.3)] scale-110"
+                            : "bg-white border-emerald-600 text-emerald-600 shadow-md scale-110"
+                          : isDark
+                            ? "bg-[#101216] border-white/10 text-white/40"
+                            : "bg-slate-100 border-slate-200 text-slate-400"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-4.5 w-4.5 stroke-[3px]" />
+                    ) : (
+                      <span>{index + 1}</span>
+                    )}
+                  </div>
+                  {/* Step Label */}
+                  <span
+                    className={cn(
+                      "mt-3 text-[10px] font-bold uppercase tracking-wider text-center block max-w-[90px] mx-auto leading-normal hidden sm:block",
+                      isActive
+                        ? isDark ? "text-[#6DFF3B]" : "text-emerald-700"
+                        : isDark ? "text-white/40" : "text-slate-400"
+                    )}
+                  >
+                    {step}
+                  </span>
                 </div>
-                <span
-                  className={cn(
-                    "text-[10px] font-bold uppercase tracking-wider hidden sm:block",
-                    isActive
-                      ? isDark ? "text-[#6DFF3B]" : "text-emerald-700"
-                      : isDark ? "text-white/40" : "text-slate-400"
-                  )}
-                >
-                  {step}
-                </span>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_390px]">
-          <div className="space-y-6">
+        <div className="mt-8 grid gap-8 grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_390px]">
+          <div className="space-y-6 order-2 lg:order-1">
             <Card className={cn(
               "rounded-[28px] border overflow-hidden backdrop-blur-xl transition-all duration-300",
               isDark ? "border-white/10 bg-[#101216]/60 shadow-2xl" : "border-slate-200 bg-white shadow-md"
@@ -353,29 +389,178 @@ export function Payment() {
               </CardHeader>
               <CardContent className="space-y-6 p-6">
                 {paymentMethod === "upi" ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="upi-id" className={cn(
-                      "text-xs font-bold uppercase tracking-wider",
-                      isDark ? "text-white/70" : "text-slate-600"
+                  <div className="space-y-6">
+                    {/* Toggle between QR Code and UPI ID */}
+                    <div className={cn(
+                      "flex p-1 rounded-xl border",
+                      isDark ? "bg-white/5 border-white/5" : "bg-slate-100 border-slate-200"
                     )}>
-                      Enter UPI ID
-                    </Label>
-                    <Input
-                      id="upi-id"
-                      placeholder="example@okhdfcbank"
-                      className={cn(
-                        "h-12 rounded-[18px] border transition-all outline-none font-medium",
-                        isDark
-                          ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-[#6DFF3B]/50 focus:ring-1 focus:ring-[#6DFF3B]/50"
-                          : "border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50"
-                      )}
-                    />
-                    <p className={cn(
-                      "text-[10px] font-bold leading-normal",
-                      isDark ? "text-white/40" : "text-slate-400"
-                    )}>
-                      A payment request will be sent to your UPI app.
-                    </p>
+                      <button
+                        type="button"
+                        onClick={() => setUpiOption("qr")}
+                        className={cn(
+                          "flex-1 py-2 text-xs font-extrabold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
+                          upiOption === "qr"
+                            ? isDark
+                              ? "bg-[#6DFF3B] text-black shadow-sm"
+                              : "bg-emerald-600 text-white shadow-sm"
+                            : isDark
+                              ? "text-white/60 hover:text-white"
+                              : "text-slate-600 hover:text-slate-900"
+                        )}
+                      >
+                        Scan QR Code
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setUpiOption("id")}
+                        className={cn(
+                          "flex-1 py-2 text-xs font-extrabold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
+                          upiOption === "id"
+                            ? isDark
+                              ? "bg-[#6DFF3B] text-black shadow-sm"
+                              : "bg-emerald-600 text-white shadow-sm"
+                            : isDark
+                              ? "text-white/60 hover:text-white"
+                              : "text-slate-600 hover:text-slate-900"
+                        )}
+                      >
+                        Enter UPI ID
+                      </button>
+                    </div>
+
+                    {upiOption === "qr" ? (
+                      <div className="flex flex-col items-center justify-center space-y-6 py-4">
+                        {/* Payee Info Badge */}
+                        <div className={cn(
+                          "flex items-center gap-3 px-4 py-2.5 rounded-2xl border w-full max-w-[280px] justify-center shadow-sm",
+                          isDark ? "bg-[#0d0f15]/80 border-white/5" : "bg-slate-50 border-slate-200"
+                        )}>
+                          <span className={cn(
+                            "text-xs font-bold",
+                            isDark ? "text-white/60" : "text-slate-500"
+                          )}>
+                            Payee:
+                          </span>
+                          <span className={cn(
+                            "text-xs font-black uppercase tracking-wider",
+                            isDark ? "text-[#6DFF3B]" : "text-emerald-700"
+                          )}>
+                            SportXClub 2.0
+                          </span>
+                          <span className="text-slate-300 dark:text-white/10">|</span>
+                          <span className={cn(
+                            "text-xs font-black",
+                            isDark ? "text-white" : "text-slate-800"
+                          )}>
+                            ₹{total.toLocaleString()}
+                          </span>
+                        </div>
+
+                        {/* QR Code Container with Viewfinder focus brackets */}
+                        <div className="relative p-6 rounded-[32px] bg-white border border-slate-200 shadow-[0_15px_40px_rgba(0,0,0,0.08)] group transition-transform duration-300 hover:scale-[1.01]">
+                          {/* Viewfinder brackets [/] */}
+                          <div className="absolute top-4 left-4 h-4 w-4 border-t-2 border-l-2 border-emerald-600 rounded-tl pointer-events-none" />
+                          <div className="absolute top-4 right-4 h-4 w-4 border-t-2 border-r-2 border-emerald-600 rounded-tr pointer-events-none" />
+                          <div className="absolute bottom-4 left-4 h-4 w-4 border-b-2 border-l-2 border-emerald-600 rounded-bl pointer-events-none" />
+                          <div className="absolute bottom-4 right-4 h-4 w-4 border-b-2 border-r-2 border-emerald-600 rounded-br pointer-events-none" />
+
+                          {/* Pulsing glow overlay */}
+                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none blur-xl bg-emerald-500/5" />
+
+                          <div className="relative rounded-2xl overflow-hidden w-[200px] h-[200px] flex items-center justify-center bg-white">
+                            <img
+                              src={qrUrl}
+                              alt="UPI QR Code"
+                              className="w-full h-full object-contain select-none"
+                            />
+                            {/* Scanning laser line animation */}
+                            <div className="absolute left-0 right-0 h-0.5 animate-bounce bg-emerald-500/60 shadow-[0_0_8px_rgba(5,150,105,0.6)]" style={{ animationDuration: "3s" }} />
+                          </div>
+                        </div>
+
+                        {/* Supported Apps logo chips row */}
+                        <div className="flex items-center gap-3 opacity-80 select-none">
+                          <span className={cn(
+                            "text-[9px] font-black uppercase tracking-wider",
+                            isDark ? "text-white/40" : "text-slate-400"
+                          )}>
+                            Supported Apps:
+                          </span>
+                          <div className="flex gap-2">
+                            <span className={cn(
+                              "text-[9px] font-extrabold px-2 py-0.5 rounded border leading-none",
+                              isDark ? "bg-white/5 border-white/5 text-white/60" : "bg-slate-100 border-slate-200 text-slate-600"
+                            )}>GPay</span>
+                            <span className={cn(
+                              "text-[9px] font-extrabold px-2 py-0.5 rounded border leading-none",
+                              isDark ? "bg-white/5 border-white/5 text-white/60" : "bg-slate-100 border-slate-200 text-slate-600"
+                            )}>PhonePe</span>
+                            <span className={cn(
+                              "text-[9px] font-extrabold px-2 py-0.5 rounded border leading-none",
+                              isDark ? "bg-white/5 border-white/5 text-white/60" : "bg-slate-100 border-slate-200 text-slate-600"
+                            )}>Paytm</span>
+                          </div>
+                        </div>
+
+                        {/* QR Instructions and countdown timer */}
+                        <div className="text-center space-y-2">
+                          <p className={cn(
+                            "text-xs font-semibold max-w-[280px] mx-auto leading-relaxed",
+                            isDark ? "text-white/60" : "text-slate-500"
+                          )}>
+                            Open GPay, PhonePe, Paytm, or BHIM and scan this QR code to pay instantly.
+                          </p>
+
+                          {/* Countdown Indicator */}
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider transition-colors",
+                            timeLeft < 60
+                              ? "bg-rose-500/10 text-rose-500 border border-rose-500/20 animate-pulse"
+                              : isDark
+                                ? "bg-white/5 text-amber-400 border border-white/5"
+                                : "bg-amber-50 text-amber-700 border border-amber-200/60"
+                          )}>
+                            <span className="relative flex h-2 w-2">
+                              <span className={cn(
+                                "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                                timeLeft < 60 ? "bg-rose-400" : "bg-amber-400"
+                              )}></span>
+                              <span className={cn(
+                                "relative inline-flex rounded-full h-2 w-2",
+                                timeLeft < 60 ? "bg-rose-500" : "bg-amber-500"
+                              )}></span>
+                            </span>
+                            <span>QR Code expires in {formatTime(timeLeft)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3 pt-2">
+                        <Label htmlFor="upi-id" className={cn(
+                          "text-xs font-bold uppercase tracking-wider",
+                          isDark ? "text-white/70" : "text-slate-600"
+                        )}>
+                          Enter UPI ID
+                        </Label>
+                        <Input
+                          id="upi-id"
+                          placeholder="example@okhdfcbank"
+                          className={cn(
+                            "h-12 rounded-[18px] border transition-all outline-none font-medium",
+                            isDark
+                              ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-[#6DFF3B]/50 focus:ring-1 focus:ring-[#6DFF3B]/50"
+                              : "border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50"
+                          )}
+                        />
+                        <p className={cn(
+                          "text-[10px] font-bold leading-normal",
+                          isDark ? "text-white/40" : "text-slate-400"
+                        )}>
+                          A payment request will be sent to your UPI app.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="grid gap-4">
@@ -556,7 +741,7 @@ export function Payment() {
             </Card>
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start order-1 lg:order-2">
             <Card className={cn(
               "overflow-hidden rounded-[28px] border shadow-2xl transition-colors duration-300",
               isDark ? "border-white/10 bg-[#101216]/60" : "border-slate-200 bg-white"
