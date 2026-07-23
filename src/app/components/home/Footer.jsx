@@ -147,7 +147,7 @@ export function Footer() {
             "flex-1 text-[10px] md:text-xs font-light text-center",
             isDark ? "text-white/40" : "text-slate-400"
           )}>
-            Designed and developed By <a href="https://www.syntiaro.com/" target="_blank" rel="noopener noreferrer" className={cn("font-normal transition-colors", isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-600 hover:text-teal-700")}>SYNTIARO</a>
+            Designed and Powered By <a href="https://www.syntiaro.com/" target="_blank" rel="noopener noreferrer" className={cn("font-normal transition-colors", isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-600 hover:text-teal-700")}>SYNTIARO</a>
           </p>
           <div className="flex-1 flex flex-wrap gap-5 justify-center md:justify-end">
             <a href="#" className={cn("transition", isDark ? "hover:text-white" : "hover:text-slate-900")}>

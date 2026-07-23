@@ -156,7 +156,7 @@ export function GlobalFooter() {
       }`}>
         <div className="hidden md:block flex-1" />
         <p className="flex-1 text-[10px] md:text-xs font-light text-center order-2 md:order-1 mt-3 md:mt-0">
-          Designed and developed By{" "}
+          Designed and Powered By{" "}
           <a
             href="https://www.syntiaro.com/"
             target="_blank"

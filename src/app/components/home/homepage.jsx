@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import useEmblaCarousel from "embla-carousel-react";
 import { toast } from "sonner";
 import { useAuth } from "../../providers/auth-provider";
 import { motion, useInView, AnimatePresence } from "motion/react";
@@ -58,17 +59,17 @@ const sports = [
   {
     name: "Football",
     count: "1,248 venues",
-    image: asset("/sports/cat-football.webp"),
+    image: asset("/venues/new_football_turf_2.png"),
   },
   {
     name: "Cricket",
     count: "892 venues",
-    image: asset("/sports/cat-cricket.webp"),
+    image: asset("/venues/new_cricket_turf_2.png"),
   },
   {
     name: "Badminton",
     count: "734 venues",
-    image: asset("/sports/cat-badminton.webp"),
+    image: asset("/venues/new_badminton_turf.png"),
   },
   {
     name: "Basketball",
@@ -76,19 +77,19 @@ const sports = [
     image: asset("/sports/cat-basketball.webp"),
   },
   {
-    name: "Volleyball",
+    name: "Swimming",
     count: "418 venues",
-    image: asset("/sports/cat-boxmma.webp"),
+    image: asset("/sports/cat-swimming.webp"),
   },
   {
     name: "Tennis",
     count: "518 venues",
-    image: asset("/sports/cat-tennis.webp"),
+    image: asset("/venues/new_tennis_turf.png"),
   },
   {
-    name: "Swimming",
-    count: "302 venues",
-    image: asset("/sports/cat-swimming.webp"),
+    name: "Padel",
+    count: "102 venues",
+    image: asset("/sports/cat-padel.webp"),
   },
 ];
 
@@ -284,15 +285,21 @@ function AnimatedNumber({ value, suffix = "" }) {
 function SectionHeading({ eyebrow, title, description, centered = false }) {
   return (
     <div className={cn("max-w-3xl", centered && "mx-auto text-center")}>
-      <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-[#6DFF3B]/85">
-        {eyebrow}
-      </p>
-      <h2 className="mt-4 text-3xl  tracking-tight text-white md:text-4xl lg:text-[2.8rem] lg:leading-[1.04]">
-        {title}
-      </h2>
-      <p className="mt-4 text-base leading-8 text-white/66 md:text-lg">
-        {description}
-      </p>
+      {eyebrow && (
+        <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-[#6DFF3B]/85">
+          {eyebrow}
+        </p>
+      )}
+      {title && (
+        <h2 className="mt-4 text-3xl  tracking-tight text-white md:text-4xl lg:text-[2.8rem] lg:leading-[1.04]">
+          {title}
+        </h2>
+      )}
+      {description && (
+        <p className="mt-4 text-base leading-8 text-white/66 md:text-lg">
+          {description}
+        </p>
+      )}
     </div>
   );
 }
@@ -407,11 +414,11 @@ export function Navbar() {
             </Link>
           </div>
           {/* Center Section: Sleek Separate Search & Location Bars */}
-          <div className="hidden md:flex items-center gap-3 mx-4 relative shrink-0">
+          <div className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-6 relative shrink-0">
             {/* Search Pill */}
             <div
               className={cn(
-                "flex items-center w-[220px] lg:w-[260px] rounded-full border px-4 py-2 shadow-sm transition-all duration-200 focus-within:ring-2 focus-within:w-[260px] lg:focus-within:w-[300px]",
+                "flex items-center w-full rounded-full border px-4 py-2.5 shadow-sm transition-all duration-200 focus-within:ring-2",
                 isDark
                   ? "border-white/[0.08] bg-white/[0.03] focus-within:border-[#6DFF3B]/30 focus-within:ring-[#6DFF3B]/10"
                   : "border-slate-200 bg-[#F1F3F6]/60 hover:bg-[#F1F3F6]/80 focus-within:bg-white focus-within:border-emerald-500/30 focus-within:ring-emerald-500/10",
@@ -428,7 +435,7 @@ export function Navbar() {
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 onKeyDown={handleSearch}
-                placeholder="Search venues..."
+                placeholder="Search for venues, events, sports..."
                 className={cn(
                   "w-full bg-transparent border-0 p-0 text-[0.825rem] lg:text-[0.875rem] font-normal outline-none focus:ring-0 focus:outline-none",
                   isDark
@@ -437,56 +444,57 @@ export function Navbar() {
                 )}
               />
             </div>
-
-            {/* Location Pill */}
-            <LocationModal
-              activeCity={activeCity}
-              onCitySelect={handleCitySelect}
-              trigger={
-                <button
-                  className={cn(
-                    "flex items-center gap-1.5 shrink-0 px-4 py-2 rounded-full border shadow-sm transition-all duration-200 cursor-pointer",
-                    isDark
-                      ? "border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-white focus:ring-2 focus:ring-[#6DFF3B]/10"
-                      : "border-slate-200 bg-[#F1F3F6]/60 hover:bg-[#F1F3F6]/80 text-slate-700 focus:ring-2 focus:ring-emerald-500/10",
-                  )}
-                >
-                  <MapPin
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0",
-                      isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                    )}
-                  />
-                  <span className="text-[0.825rem] lg:text-[0.875rem] font-semibold">
-                    {activeCity === "All" ? "All Cities" : activeCity}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "h-3 w-3 shrink-0 transition-transform",
-                      isDark ? "text-white/40" : "text-slate-400",
-                    )}
-                  />
-                </button>
-              }
-            />
           </div>
 
           {/* Right Section: Sign In + Hamburger Menu Toggle */}
-          <div className="flex flex-1 items-center justify-end gap-4">
+          <div className="flex flex-1 items-center justify-end gap-3 md:gap-4">
+            
+            {/* Location Pill (Moved here) */}
+            <div className="hidden md:block">
+              <LocationModal
+                activeCity={activeCity}
+                onCitySelect={handleCitySelect}
+                trigger={
+                  <button
+                    className={cn(
+                      "group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] lg:text-[14px] font-medium transition-all cursor-pointer",
+                      isDark
+                        ? "bg-transparent text-[#6DFF3B]"
+                        : "bg-transparent text-emerald-600"
+                    )}
+                  >
+                    <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
+                    <span className="truncate max-w-[120px] leading-none">
+                      {activeCity === "All" ? "All Areas" : activeCity}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                    <span className={cn(
+                      "absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100",
+                      isDark ? "bg-[#6DFF3B]" : "bg-emerald-600"
+                    )} />
+                  </button>
+                }
+              />
+            </div>
+
             {/* Auth Section: Login or Profile */}
             {isLoggedIn ? (
               <div className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
                   className={cn(
-                    "flex h-10 items-center justify-center gap-2 rounded-full border shadow-sm transition px-4",
+                    "group relative flex h-10 items-center justify-center gap-2 transition px-2 lg:px-4 cursor-pointer rounded-md",
                     isDark
-                      ? "border-white/[0.08] bg-white/[0.03] text-[#6DFF3B] hover:bg-white/[0.06]"
-                      : "border-slate-200 bg-slate-50 text-emerald-600 hover:bg-slate-100",
+                      ? "bg-transparent text-[#6DFF3B]"
+                      : "bg-transparent text-emerald-600",
                   )}
                 >
                   <User className="h-5 w-5" />
                   <span className="text-sm font-medium">{userName}</span>
+                  <span className={cn(
+                    "absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100",
+                    isDark ? "bg-[#6DFF3B]" : "bg-emerald-600"
+                  )} />
                 </button>
 
                 {/* Profile Dropdown */}
@@ -857,7 +865,7 @@ function StatsRow() {
 const heroSlides = [
   {
     id: 0,
-    image: asset("/hero/unique-hero.jpg"),
+    image: asset("/hero/ai_hero_1.jpg"),
     tag: "EXCLUSIVE OFFER",
     title: "Flat 15% Cashback on Early Bird & Night Turf Bookings",
     description: "Book verified turfs before 11 AM or after 10 PM. Instant refund-safe slots & zero extra fees.",
@@ -868,20 +876,8 @@ const heroSlides = [
     secondaryLink: "/venues",
   },
   {
-    id: 1,
-    image: asset("/hero/unique-hero-2.jpg"),
-    tag: "TOURNAMENT LEAGUE",
-    title: "City Five-A-Side Football Championship 2026",
-    description: "Compete with top local squads. Professional referees, FIFA turf quality & ₹2.5L total prize pool.",
-    badgeText: "FAST FILLING",
-    primaryAction: "Register Squad",
-    primaryLink: "/tournaments",
-    secondaryAction: "View Tournament Details",
-    secondaryLink: "/tournaments",
-  },
-  {
     id: 2,
-    image: asset("/hero/unique-hero-3.jpg"),
+    image: asset("/hero/ai_hero_3.jpg"),
     tag: "MATCHMAKING & LOBBIES",
     title: "Never Play Short – Join Open Lobbies in Your City",
     description: "Find available players near you or create your own open lobby. Connect, play, and rate players.",
@@ -893,7 +889,7 @@ const heroSlides = [
   },
   {
     id: 3,
-    image: asset("/hero/unique-hero-4.jpg"),
+    image: asset("/hero/ai_hero_4.jpg"),
     tag: "CLUB PASS",
     title: "SportX Club All-Access Priority Pass",
     description: "Get up to 40% discount on regular bookings, priority slot reservation, and free cancellations.",
@@ -905,7 +901,7 @@ const heroSlides = [
   },
   {
     id: 4,
-    image: asset("/hero/unique-hero-5.jpg"),
+    image: asset("/hero/new_hero_5.jpg"),
     tag: "PREMIUM VENUES",
     title: "FIFA-Standard Floodlit Night Turfs & Arenas",
     description: "High-lux pro lighting, shock-pad turfing, rooftop courts, and player lounge amenities.",
@@ -986,32 +982,43 @@ export function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+
   useEffect(() => {
-    if (isPaused) return;
+    if (!emblaApi) return;
+    const onSelect = () => {
+      setCurrentSlide(emblaApi.selectedScrollSnap());
+    };
+    emblaApi.on("select", onSelect);
+    onSelect();
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi || isPaused) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+      emblaApi.scrollNext();
     }, 5000);
     return () => clearInterval(timer);
-  }, [isPaused]);
-
-  const prevSlideIndex = (currentSlide - 1 + heroSlides.length) % heroSlides.length;
-  const nextSlideIndex = (currentSlide + 1) % heroSlides.length;
+  }, [emblaApi, isPaused]);
 
   const handlePrev = () => {
-    setCurrentSlide(prevSlideIndex);
+    if (emblaApi) emblaApi.scrollPrev();
   };
 
   const handleNext = () => {
-    setCurrentSlide(nextSlideIndex);
+    if (emblaApi) emblaApi.scrollNext();
   };
 
-  const activeSlideData = heroSlides[currentSlide];
-  const prevSlideData = heroSlides[prevSlideIndex];
-  const nextSlideData = heroSlides[nextSlideIndex];
+  const handleDotClick = (index) => {
+    if (emblaApi) emblaApi.scrollTo(index);
+  };
 
   return (
     <section className={cn(
-      "relative w-full overflow-hidden pt-2 pb-8 md:pt-3 md:pb-12 isolate transition-colors duration-300",
+      "relative w-full overflow-hidden pt-0 pb-0 md:pt-0 md:pb-0 isolate transition-colors duration-300",
       isDark ? "bg-[#060813] text-white" : "bg-slate-50/90 text-slate-900"
     )}>
       {/* Ambient Glow Backdrop */}
@@ -1024,146 +1031,138 @@ export function HeroSection() {
         )} />
       </div>
 
-      <div className="relative w-full px-2 sm:px-4">
+      <div className="relative w-full">
 
         {/* BookMyShow Style Wide Banner Carousel Track (Edge-to-Edge Format) */}
         <div
-          className="relative flex items-center justify-center h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px] gap-2.5 sm:gap-4 my-1 w-full"
+          className="relative w-full mb-0 mt-0 group"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-          {/* Left Side Banner Preview (BookMyShow Clean Edge Banner) */}
-          <div
-            onClick={handlePrev}
-            className={cn(
-              "hidden md:block relative w-[11%] lg:w-[12%] h-full rounded-none overflow-hidden cursor-pointer shrink-0 transition-all duration-300 border select-none shadow-xl",
-              isDark
-                ? "border-white/15 bg-black/60 opacity-90 hover:opacity-100"
-                : "border-slate-300/80 bg-slate-200 opacity-90 hover:opacity-100"
-            )}
-          >
-            <img
-              src={prevSlideData.image}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-100"
-            />
-          </div>
+          <div className="overflow-hidden w-full cursor-grab active:cursor-grabbing" ref={emblaRef}>
+            <div className="flex touch-pan-y items-center h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px]">
+              {heroSlides.map((slide, index) => {
+                const isActive = currentSlide === index;
+                return (
+                  <div
+                    key={index}
+                    className="relative flex-[0_0_100%] min-w-0 h-full"
+                  >
+                    <div className={cn(
+                      "relative w-full h-full overflow-hidden border-y transition-all duration-500 shadow-2xl",
+                      isDark ? "border-white/20 bg-[#101216]" : "border-y-slate-300/90 bg-white",
+                      isActive ? "opacity-100" : "opacity-100 cursor-pointer"
+                    )}
+                    onClick={() => !isActive && handleDotClick(index)}>
+                      {/* Background Banner Image */}
+                      <img
+                        src={slide.image}
+                        alt={slide.title}
+                        className="absolute inset-0 h-full w-full object-cover brightness-100 contrast-100"
+                      />
 
-          {/* Center Main Banner Slide */}
-          <div className={cn(
-            "relative w-full md:w-[78%] lg:w-[76%] h-full rounded-none overflow-hidden border shrink-0 transition-all duration-500 shadow-2xl",
-            isDark
-              ? "border-white/20 bg-[#101216]"
-              : "border-slate-300/90 bg-white"
-          )}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide}
-                initial={{ opacity: 0, scale: 1.01 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.99 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                className="absolute inset-0"
-              >
-                {/* Background Banner Image (No Overlay / Clean Full Brightness) */}
-                <img
-                  src={activeSlideData.image}
-                  alt={activeSlideData.title}
-                  className="h-full w-full object-cover brightness-100 contrast-100"
-                />
+                      {/* Dark gradient for bottom text readability */}
+                      <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
-                {/* Banner Content */}
-                <div className="absolute inset-0 flex flex-col justify-end md:justify-center p-5 sm:p-8 md:p-10 md:max-w-xl lg:max-w-2xl z-10">
-                  <div className="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2.5">
-                    <Badge className="rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest border-none bg-gradient-to-r from-[#6DFF3B] to-emerald-500 text-black shadow-lg">
-                      {activeSlideData.tag}
-                    </Badge>
-                    <span className="text-[11px] font-extrabold uppercase tracking-widest px-3 py-0.5 rounded-full border-none bg-gradient-to-r from-[#6DFF3B] to-emerald-500 !text-black shadow-lg">
-                      {activeSlideData.badgeText}
-                    </span>
+                      {/* Banner Content (Only visible on active slide) */}
+                      <div className={cn("absolute inset-0 flex flex-col justify-end px-5 sm:px-8 md:px-10 pb-2 md:pb-4 md:max-w-xl lg:max-w-2xl z-10 transition-opacity duration-500", isActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+                        <div className="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2.5">
+                          <Badge className="rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest border border-white/50 bg-black/70 text-white backdrop-blur-md shadow-lg">
+                            {slide.tag}
+                          </Badge>
+                          <span className="text-[11px] font-extrabold uppercase tracking-widest px-3 py-0.5 rounded-full border border-white/50 bg-black/70 text-white backdrop-blur-md shadow-lg">
+                            {slide.badgeText}
+                          </span>
+                        </div>
+
+                        <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-extrabold tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                          {slide.title}
+                        </h1>
+
+                        <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
+                          <Link to={slide.primaryLink}>
+                            <Button variant="outline" className="h-9 sm:h-11 px-5 sm:px-7 rounded-full !border-white/50 !bg-transparent !text-white hover:!bg-white/20 backdrop-blur-md font-bold text-xs sm:text-sm transition-all hover:scale-105 shadow-lg cursor-pointer">
+                              {slide.primaryAction}
+                            </Button>
+                          </Link>
+                          <Link to={slide.secondaryLink}>
+                            <Button variant="outline" className="h-9 sm:h-11 px-4 sm:px-6 rounded-full !border-white/50 !bg-transparent !text-white hover:!bg-white/20 hover:!text-white backdrop-blur-md text-xs sm:text-sm font-bold cursor-pointer shadow-lg transition-all">
+                              {slide.secondaryAction}
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-
-                  <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-extrabold tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-                    {activeSlideData.title}
-                  </h1>
-
-                  <p className="mt-1.5 text-xs sm:text-sm md:text-base !text-white line-clamp-2 leading-relaxed font-semibold drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)]">
-                    {activeSlideData.description}
-                  </p>
-
-                  <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
-                    <Link to={activeSlideData.primaryLink}>
-                      <Button className="h-9 sm:h-11 px-5 sm:px-7 rounded-full bg-gradient-to-r from-[#6DFF3B] to-emerald-500 text-black font-extrabold text-xs sm:text-sm hover:from-[#86ff60] hover:to-emerald-400 transition-all hover:scale-105 shadow-xl shadow-emerald-500/25 cursor-pointer border-none">
-                        {activeSlideData.primaryAction}
-                      </Button>
-                    </Link>
-                    <Link to={activeSlideData.secondaryLink}>
-                      <Button variant="outline" className="h-9 sm:h-11 px-4 sm:px-6 rounded-full !border-white/50 !bg-black/70 !text-white hover:!bg-black/90 backdrop-blur-md text-xs sm:text-sm font-bold transition-all cursor-pointer shadow-lg">
-                        {activeSlideData.secondaryAction}
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Right Side Banner Preview (BookMyShow Clean Edge Banner) */}
-          <div
-            onClick={handleNext}
-            className={cn(
-              "hidden md:block relative w-[11%] lg:w-[12%] h-full rounded-none overflow-hidden cursor-pointer shrink-0 transition-all duration-300 border select-none shadow-xl",
-              isDark
-                ? "border-white/15 bg-black/60 opacity-90 hover:opacity-100"
-                : "border-slate-300/80 bg-slate-200 opacity-90 hover:opacity-100"
-            )}
-          >
-            <img
-              src={nextSlideData.image}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 brightness-100"
-            />
+                );
+              })}
+            </div>
           </div>
 
           {/* BookMyShow Style Side Navigation Arrows */}
           <button
             onClick={handlePrev}
-            className="absolute left-1 md:left-[9.5%] lg:left-[10.5%] top-1/2 -translate-y-1/2 z-20 h-10 w-8 md:h-12 md:w-9 rounded-r-xl rounded-l-md flex items-center justify-center transition-all cursor-pointer bg-black/75 text-white hover:bg-[#6DFF3B] hover:text-black border border-white/20 shadow-2xl active:scale-95 backdrop-blur-md"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 md:h-12 md:w-12 rounded-r-2xl flex items-center justify-center transition-all cursor-pointer bg-slate-50/90 backdrop-blur-md text-slate-800 hover:bg-white hover:scale-110 shadow-[4px_0_15px_rgba(0,0,0,0.15)] active:scale-95"
             aria-label="Previous Slide"
           >
-            <ChevronLeft className="h-6 w-6" />
+            <ChevronLeft className="h-6 w-6 pr-0.5" />
           </button>
 
           <button
             onClick={handleNext}
-            className="absolute right-1 md:right-[9.5%] lg:right-[10.5%] top-1/2 -translate-y-1/2 z-20 h-10 w-8 md:h-12 md:w-9 rounded-l-xl rounded-r-md flex items-center justify-center transition-all cursor-pointer bg-black/75 text-white hover:bg-[#6DFF3B] hover:text-black border border-white/20 shadow-2xl active:scale-95 backdrop-blur-md"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 md:h-12 md:w-12 rounded-l-2xl flex items-center justify-center transition-all cursor-pointer bg-slate-50/90 backdrop-blur-md text-slate-800 hover:bg-white hover:scale-110 shadow-[-4px_0_15px_rgba(0,0,0,0.15)] active:scale-95"
             aria-label="Next Slide"
           >
-            <ChevronRight className="h-6 w-6" />
+            <ChevronRight className="h-6 w-6 pl-0.5" />
           </button>
+          {/* Carousel Pagination Dots */}
+          <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 z-20">
+            {heroSlides.map((slide, idx) => (
+              <button
+                key={slide.id}
+                onClick={() => handleDotClick(idx)}
+                className={cn(
+                  "h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer",
+                  currentSlide === idx
+                    ? (isDark
+                      ? "w-6 sm:w-8 bg-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.8)]"
+                      : "w-6 sm:w-8 bg-[#059669] shadow-[0_0_10px_rgba(5,150,105,0.4)]")
+                    : "w-2 sm:w-2.5 bg-white/40 hover:bg-white/70"
+                )}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Carousel Pagination Dots */}
-        <div className="flex items-center justify-center gap-2 mt-3 sm:mt-4">
-          {heroSlides.map((slide, idx) => (
-            <button
-              key={slide.id}
-              onClick={() => setCurrentSlide(idx)}
-              className={cn(
-                "h-2.5 rounded-full transition-all duration-300 cursor-pointer",
-                currentSlide === idx
-                  ? (isDark
-                    ? "w-8 bg-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.8)]"
-                    : "w-8 bg-emerald-600 shadow-[0_0_10px_rgba(5,150,105,0.4)]")
-                  : (isDark
-                    ? "w-2.5 bg-white/30 hover:bg-white/50"
-                    : "w-2.5 bg-slate-300 hover:bg-slate-400")
-              )}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
-        </div>
+      </div>
+    </section>
+  );
+}
 
+export function RecommendedVenuesSection({ asSlider = false }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme !== "light";
+  const scrollRef = useRef(null);
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -350, behavior: "smooth" });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 350, behavior: "smooth" });
+    }
+  };
+
+  return (
+    <section className={cn(
+      "relative w-full overflow-hidden pb-8 md:pb-12 isolate transition-colors duration-300",
+      isDark ? "bg-[#060813] text-white" : "bg-slate-50/90 text-slate-900"
+    )}>
+      <div className="relative w-full">
         {/* Recommended Sports Venues Section */}
         <div className="mt-8 sm:mt-12 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-4 sm:mb-5">
@@ -1199,15 +1198,33 @@ export function HeroSection() {
             </Link>
           </div>
 
-          {/* Grid of Poster-Style Cards (BookMyShow Movie Poster Format) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5">
-            {recommendedVenues.map((venue) => (
-              <motion.div
-                key={venue.id}
-                whileHover={{ y: -5, scale: 1.02 }}
-                transition={{ duration: 0.25 }}
-                className={cn(
-                  "group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300",
+          {/* Dynamic Grid/Slider of Poster-Style Cards (BookMyShow Movie Poster Format) */}
+          <div className={cn(asSlider ? "relative group/section" : "")}>
+            {asSlider && (
+              <button
+                onClick={scrollLeft}
+                className="hidden md:flex absolute -left-4 sm:-left-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+              >
+                <ChevronLeft className="h-6 w-6 pr-0.5" />
+              </button>
+            )}
+
+            <div
+              ref={asSlider ? scrollRef : null}
+              className={cn(
+                asSlider
+                  ? "flex snap-x snap-mandatory overflow-x-auto gap-3 sm:gap-5 pb-6 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5"
+              )}
+            >
+              {recommendedVenues.map((venue) => (
+                <motion.div
+                  key={venue.id}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  transition={{ duration: 0.25 }}
+                  className={cn(
+                    "group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300",
+                    asSlider ? "w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px] flex-shrink-0 snap-start" : "",
                   isDark
                     ? "border-white/10 bg-[#101216] shadow-xl hover:border-[#6DFF3B]/30"
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30"
@@ -1264,8 +1281,8 @@ export function HeroSection() {
                     <Button size="sm" className={cn(
                       "w-full h-7 text-[11px] rounded-full font-extrabold cursor-pointer transition-all shadow-sm",
                       isDark
-                        ? "bg-[#6DFF3B] text-black hover:bg-[#86ff60]"
-                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                        ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black"
+                        : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
                     )}>
                       Book Slot
                     </Button>
@@ -1273,6 +1290,16 @@ export function HeroSection() {
                 </div>
               </motion.div>
             ))}
+            </div>
+
+            {asSlider && (
+              <button
+                onClick={scrollRight}
+                className="hidden md:flex absolute -right-4 sm:-right-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+              >
+                <ChevronRight className="h-6 w-6 pl-0.5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -1292,12 +1319,12 @@ function SportCard({ name, count, image, index }) {
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.45, delay: index * 0.05 }}
       whileHover={{ y: -6, scale: 1.015 }}
-      className="group shrink-0 snap-center w-[85vw] sm:w-auto"
+      className="group shrink-0 snap-center w-[45vw] sm:w-[calc(33.33%-5.33px)] md:w-[calc(25%-6px)] lg:w-[calc(16.666%-6.66px)]"
     >
       <Link to="/venues" state={{ sport: name }} className="block">
         <div
           className={cn(
-            "relative aspect-[4/5] overflow-hidden rounded-3xl border transition-all duration-300 ease-out",
+            "relative aspect-[2/3] overflow-hidden rounded-3xl border transition-all duration-300 ease-out",
             isDark
               ? "border-white/[0.08] bg-[#101216]"
               : "border-slate-300 bg-white shadow-sm hover:shadow-2xl hover:border-emerald-500/20",
@@ -1354,7 +1381,7 @@ function MoreSportsCard() {
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.45, delay: 0.35 }}
       whileHover={{ y: -6, scale: 1.015 }}
-      className="group shrink-0 snap-center w-[85vw] sm:w-auto"
+      className="group shrink-0 snap-center w-[45vw] sm:w-[calc(33.33%-10.66px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-12.8px)]"
     >
       <Link to="/venues" className="block h-full">
         <div
@@ -1656,21 +1683,51 @@ export function SportsBackgroundAnimation() {
 }
 
 export function SportsCategories() {
+  const scrollRef = useRef(null);
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -350, behavior: "smooth" });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 350, behavior: "smooth" });
+    }
+  };
+
   return (
-    <section className="py-12 md:py-16 relative overflow-hidden">
+    <section className="pt-[10px] pb-12 md:pb-16 relative overflow-hidden group/section">
       <SportsBackgroundAnimation />
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8 relative">
         <SectionHeading
           eyebrow="Popular sports"
-          title="Book the formats your community actually plays."
-          description="A clean category system keeps discovery fast while still feeling premium and intentional."
         />
 
-        <div className="mt-12 flex snap-x snap-mandatory overflow-x-auto gap-4 pb-6 sm:grid sm:grid-cols-2 xl:grid-cols-3 [-webkit-overflow-scrolling:touch]">
-          {sports.map((sport, index) => (
-            <SportCard key={sport.name} index={index} {...sport} />
-          ))}
-          <MoreSportsCard />
+        <div className="relative mt-4">
+          <button
+            onClick={scrollLeft}
+            className="hidden md:flex absolute -left-2 sm:-left-4 lg:-left-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+          >
+            <ChevronLeft className="h-6 w-6 pr-0.5" />
+          </button>
+
+          <div
+            ref={scrollRef}
+            className="flex snap-x snap-mandatory overflow-x-auto gap-2 pb-6 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {sports.map((sport, index) => (
+              <SportCard key={sport.name} index={index} {...sport} />
+            ))}
+          </div>
+
+          <button
+            onClick={scrollRight}
+            className="hidden md:flex absolute -right-2 sm:-right-4 lg:-right-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+          >
+            <ChevronRight className="h-6 w-6 pl-0.5" />
+          </button>
         </div>
       </div>
     </section>
@@ -2497,8 +2554,8 @@ export function HomePage() {
     >
       <Navbar />
       <HeroSection />
-      <StoreSection />
       <SportsCategories />
+      <StoreSection />
       <DiscoveryRails />
       <TurfGallery />
       <WhySportXClub />

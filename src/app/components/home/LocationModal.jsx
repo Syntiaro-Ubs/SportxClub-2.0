@@ -130,17 +130,31 @@ const KochiIcon = ({ className }) => (
 );
 
 const POPULAR_CITIES = [
-  { id: "mumbai", name: "Mumbai", icon: MumbaiIcon },
-  { id: "delhi", name: "Delhi-NCR", icon: DelhiIcon },
-  { id: "bengaluru", name: "Bengaluru", icon: BengaluruIcon },
-  { id: "hyderabad", name: "Hyderabad", icon: HyderabadIcon },
-  { id: "chandigarh", name: "Chandigarh", icon: ChandigarhIcon },
-  { id: "ahmedabad", name: "Ahmedabad", icon: AhmedabadIcon },
-  { id: "pune", name: "Pune", icon: PuneIcon },
-  { id: "chennai", name: "Chennai", icon: ChennaiIcon },
-  { id: "kolkata", name: "Kolkata", icon: KolkataIcon },
-  { id: "kochi", name: "Kochi", icon: KochiIcon },
+  { id: "mumbai", name: "Mumbai", image: "/cities/mumbai.png" },
+  { id: "delhi", name: "Delhi-NCR", image: "/cities/delhi.png" },
+  { id: "bengaluru", name: "Bengaluru", image: "/cities/bengaluru.png" },
+  { id: "hyderabad", name: "Hyderabad", image: "/cities/hyderabad.png" },
+  { id: "chandigarh", name: "Chandigarh", image: "/cities/chandigarh.png" },
+  { id: "ahmedabad", name: "Ahmedabad", image: "/cities/ahmedabad.png" },
+  { id: "pune", name: "Pune", image: "/cities/pune.png" },
+  { id: "chennai", name: "Chennai", image: "/cities/chennai.png" },
+  { id: "kolkata", name: "Kolkata", image: "/cities/kolkata.png" },
+  { id: "kochi", name: "Kochi", image: "/cities/kochi.png" },
 ];
+
+const SUB_LOCATIONS = {
+  "Mumbai": ["All Mumbai", "Andheri", "Bandra", "Borivali", "Juhu", "South Mumbai", "Powai", "Goregaon"],
+  "Delhi-NCR": ["All Delhi-NCR", "Connaught Place", "Gurugram", "Noida", "Saket", "Vasant Kunj", "Dwarka"],
+  "Bengaluru": ["All Bengaluru", "Koramangala", "Indiranagar", "Whitefield", "Jayanagar", "HSR Layout", "Malleswaram"],
+  "Hyderabad": ["All Hyderabad", "Banjara Hills", "Jubilee Hills", "HITEC City", "Gachibowli", "Madhapur"],
+  "Chandigarh": ["All Chandigarh", "Sector 17", "Sector 22", "Sector 35", "Mohali", "Panchkula"],
+  "Ahmedabad": ["All Ahmedabad", "Vastrapur", "SG Highway", "Navrangpura", "Satellite", "Bopal"],
+  "Pune": ["All Pune", "Koregaon Park", "Viman Nagar", "Hinjewadi", "Kothrud", "Wakad", "Baner"],
+  "Chennai": ["All Chennai", "T Nagar", "Adyar", "Velachery", "Anna Nagar", "Nungambakkam"],
+  "Kolkata": ["All Kolkata", "Park Street", "Salt Lake", "New Town", "Ballygunge", "Alipore"],
+  "Kochi": ["All Kochi", "Edappally", "Fort Kochi", "Kakkanad", "MG Road", "Palarivattom"],
+};
+
 
 const OTHER_CITIES = [
   "Aalo", "Abohar", "Abu Road", "Achampet", "Acharapakkam",
@@ -169,11 +183,21 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAllCities, setShowAllCities] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [selectedMainCity, setSelectedMainCity] = useState(null);
 
-  const handleSelect = (cityName) => {
-    onCitySelect(cityName);
+  const handleFinalSelect = (locationName) => {
+    onCitySelect(locationName);
     setOpen(false);
-    toast.success(`Location set to ${cityName}`);
+    setSelectedMainCity(null);
+    toast.success(`Location set to ${locationName}`);
+  };
+
+  const handleCityClick = (cityName) => {
+    if (SUB_LOCATIONS[cityName]) {
+      setSelectedMainCity(cityName === selectedMainCity ? null : cityName);
+    } else {
+      handleFinalSelect(cityName);
+    }
   };
 
   const handleDetectLocation = () => {
@@ -182,17 +206,17 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setIsDetecting(false);
-          handleSelect("Navi Mumbai");
+          handleFinalSelect("Navi Mumbai");
         },
         (error) => {
           setIsDetecting(false);
-          handleSelect("Navi Mumbai");
+          handleFinalSelect("Navi Mumbai");
         },
         { timeout: 3000 }
       );
     } else {
       setIsDetecting(false);
-      handleSelect("Navi Mumbai");
+      handleFinalSelect("Navi Mumbai");
     }
   };
 
@@ -203,10 +227,6 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
   const filteredOther = OTHER_CITIES.filter((c) =>
     c.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const displayedOtherCities = showAllCities
-    ? filteredOther
-    : filteredOther.slice(0, 35);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -228,7 +248,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
         <div className="relative shrink-0">
           <Search
             className={cn(
-              "absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5",
+              "absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px]",
               isDark ? "text-white/40" : "text-slate-400"
             )}
           />
@@ -238,10 +258,10 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search for your city"
             className={cn(
-              "w-full h-12 pl-12 pr-10 rounded-2xl border text-sm transition-all outline-none",
+              "w-full h-12 pl-12 pr-10 rounded-full border-[1.5px] text-[15px] font-medium transition-all outline-none bg-transparent",
               isDark
-                ? "border-white/10 bg-white/5 text-white placeholder:text-white/40 focus:border-[#6DFF3B] focus:ring-1 focus:ring-[#6DFF3B]"
-                : "border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                ? "border-[#6DFF3B] text-white placeholder:text-white/40 focus:ring-1 focus:ring-[#6DFF3B]"
+                : "border-[#059669] text-slate-900 placeholder:text-slate-400 focus:ring-1 focus:ring-[#059669]"
             )}
           />
           {searchTerm && (
@@ -255,15 +275,15 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
         </div>
 
         {/* 2. Detect My Location Button */}
-        <div className="shrink-0 border-b pb-4 border-slate-200 dark:border-white/10">
+        <div className="shrink-0 border-b pb-5 border-slate-100 dark:border-white/10 mt-[-6px]">
           <button
             type="button"
             onClick={handleDetectLocation}
             disabled={isDetecting}
-            className="flex items-center gap-2.5 text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
+            className="flex items-center gap-2 text-[15px] font-medium text-[#059669] dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer px-1"
           >
             <LocateFixed className={cn("h-4 w-4", isDetecting && "animate-spin")} />
-            <span>{isDetecting ? "Detecting location..." : "Detect my location"}</span>
+            <span>{isDetecting ? "Detecting location..." : "Allow my location"}</span>
           </button>
         </div>
 
@@ -274,40 +294,39 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
             <div className="space-y-4">
               <h4
                 className={cn(
-                  "text-xs font-extrabold uppercase tracking-widest text-center",
+                  "text-[11px] font-semibold uppercase tracking-[0.1em] text-center mb-6 mt-2",
                   isDark ? "text-white/60" : "text-slate-500"
                 )}
               >
                 Popular Cities
               </h4>
 
-              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1 sm:gap-2 w-full select-none justify-items-center">
+              <div className="flex overflow-x-auto gap-4 sm:gap-6 pb-2 pt-2 w-full select-none [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-2 snap-x snap-mandatory">
                 {filteredPopular.map((city) => {
-                  const Icon = city.icon;
-                  const isSelected = activeCity === city.name;
+                  const isSelected = activeCity === city.name || selectedMainCity === city.name;
                   return (
                     <button
                       key={city.id}
                       type="button"
-                      onClick={() => handleSelect(city.name)}
+                      onClick={() => handleCityClick(city.name)}
                       className={cn(
-                        "flex flex-col items-center justify-center transition-all duration-200 group cursor-pointer text-center w-full py-1 rounded-xl",
+                        "flex-shrink-0 snap-start flex flex-col items-center justify-center transition-all duration-200 group cursor-pointer text-center min-w-[64px] rounded-xl outline-none",
                         isSelected
                           ? isDark
                             ? "text-[#6DFF3B]"
-                            : "text-emerald-600"
+                            : "text-slate-800"
                           : isDark
                             ? "text-white/60 hover:text-white"
-                            : "text-slate-500 hover:text-slate-900"
+                            : "text-slate-500 hover:text-slate-800"
                       )}
                     >
-                      <div className="h-8 w-9 sm:h-10 sm:w-11 flex items-center justify-center mb-0.5 transition-transform group-hover:scale-110">
-                        <Icon className="h-7 w-9 sm:h-9 sm:w-10" />
+                      <div className="h-[46px] w-[46px] flex items-center justify-center mb-2.5 transition-transform group-hover:scale-105">
+                        <img src={city.image} alt={city.name} className={cn("h-full w-full object-contain", isDark ? "opacity-80 group-hover:opacity-100" : "opacity-90 group-hover:opacity-100")} />
                       </div>
                       <span
                         className={cn(
-                          "text-[10px] sm:text-[11px] tracking-tight whitespace-nowrap text-center",
-                          isSelected ? "font-black" : "font-semibold"
+                          "text-[11px] tracking-tight whitespace-nowrap text-center",
+                          isSelected ? "font-medium text-slate-800 dark:text-[#6DFF3B]" : "font-medium text-slate-500 dark:text-white/60"
                         )}
                       >
                         {city.name}
@@ -316,56 +335,105 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                   );
                 })}
               </div>
+
+              {selectedMainCity && SUB_LOCATIONS[selectedMainCity] && (
+                <div className="mt-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <div className="flex items-center justify-between mb-4">
+                     <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-white/90">
+                       Popular Areas in {selectedMainCity}
+                     </h5>
+                     <button onClick={() => setSelectedMainCity(null)} className="text-[11px] font-bold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 uppercase tracking-wide">
+                        Close
+                     </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
+                    {SUB_LOCATIONS[selectedMainCity].map(area => {
+                      const finalName = area.startsWith("All ") ? selectedMainCity : `${area}, ${selectedMainCity}`;
+                      const isAreaSelected = activeCity === finalName;
+                      return (
+                        <button
+                          key={area}
+                          onClick={() => handleFinalSelect(finalName)}
+                          className={cn(
+                            "px-4 py-2 text-xs sm:text-sm rounded-full transition-all font-semibold border shadow-sm",
+                            isAreaSelected
+                              ? isDark
+                                ? "bg-[#6DFF3B]/20 border-[#6DFF3B]/50 text-[#6DFF3B]"
+                                : "bg-emerald-100 border-emerald-300 text-emerald-800"
+                              : isDark
+                                ? "border-white/10 hover:bg-white/10 hover:text-white text-white/70"
+                                : "border-slate-200 hover:bg-slate-200 hover:text-slate-900 text-slate-600 bg-white"
+                          )}
+                        >
+                          {area}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* 4. Other Cities Section */}
           {filteredOther.length > 0 && (
-            <div className="space-y-4 pt-2">
-              <h4
-                className={cn(
-                  "text-xs font-extrabold uppercase tracking-widest text-center",
-                  isDark ? "text-white/60" : "text-slate-500"
-                )}
-              >
-                Other Cities
-              </h4>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2.5">
-                {displayedOtherCities.map((cityName) => {
-                  const isSelected = activeCity === cityName;
-                  return (
-                    <button
-                      key={cityName}
-                      type="button"
-                      onClick={() => handleSelect(cityName)}
-                      className={cn(
-                        "text-left text-xs py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer truncate font-medium",
-                        isSelected
-                          ? isDark
-                            ? "bg-[#6DFF3B]/20 text-[#6DFF3B] font-bold"
-                            : "bg-emerald-100 text-emerald-800 font-bold"
-                          : isDark
-                            ? "text-white/70 hover:text-white hover:bg-white/5"
-                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                      )}
-                    >
-                      {cityName}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* 5. Show All / Hide All Cities Toggle */}
-              {filteredOther.length > 35 && !searchTerm && (
-                <div className="text-center pt-4">
+            <div className="space-y-4 pt-2 text-center">
+              {(showAllCities || searchTerm) ? (
+                <>
+                  <h4
+                    className={cn(
+                      "text-xs font-extrabold uppercase tracking-widest text-center",
+                      isDark ? "text-white/60" : "text-slate-500"
+                    )}
+                  >
+                    Other Cities
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2.5 text-left">
+                    {filteredOther.map((cityName) => {
+                      const isSelected = activeCity === cityName;
+                      return (
+                        <button
+                          key={cityName}
+                          type="button"
+                          onClick={() => handleCityClick(cityName)}
+                          className={cn(
+                            "text-left text-xs py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer truncate font-medium",
+                            isSelected
+                              ? isDark
+                                ? "bg-[#6DFF3B]/20 text-[#6DFF3B] font-bold"
+                                : "bg-emerald-100 text-emerald-800 font-bold"
+                              : isDark
+                                ? "text-white/70 hover:text-white hover:bg-white/5"
+                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                          )}
+                        >
+                          {cityName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!searchTerm && (
+                    <div className="text-center pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllCities(false)}
+                        className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
+                      >
+                        <span>Hide all cities</span>
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center pt-6">
                   <button
                     type="button"
-                    onClick={() => setShowAllCities(!showAllCities)}
-                    className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
+                    onClick={() => setShowAllCities(true)}
+                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#059669] dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
                   >
-                    <span>{showAllCities ? "Hide all cities" : "View all cities"}</span>
-                    {showAllCities ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    <span>View all cities</span>
+                    <ChevronDown className="h-4 w-4" />
                   </button>
                 </div>
               )}

@@ -31,6 +31,7 @@ import { ThemeToggleButton } from "../ui/theme-toggle-button";
 import { toast } from "sonner";
 import { Logo } from "../brand/Logo";
 import { useAuth } from "../../providers/auth-provider";
+import { LocationModal } from "../home/LocationModal";
 
 export const mobileNavigation = [
   { key: "home", label: "Home", href: "/", icon: Home },
@@ -158,18 +159,25 @@ export function MobileAppBar() {
               <Logo />
             </Link>
             {isHomePage && (
-              <div className="min-w-0 flex items-center">
-                {/* Preferred Location Selector (BookMyShow style) */}
-                <button
-                  onClick={() => setIsOpen(true)}
-                  className="flex items-center gap-1 text-[11px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer"
-                >
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate max-w-[90px] leading-none">
-                    {city === "All" ? "All Areas" : city}
-                  </span>
-                  <ChevronDown className="h-3 w-3 shrink-0 text-primary/80" />
-                </button>
+              <div className="min-w-0 flex items-center relative">
+                <LocationModal
+                  activeCity={city}
+                  onCitySelect={handleCitySelect}
+                  trigger={
+                    <button
+                      className="group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer transition"
+                    >
+                      <MapPin className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate max-w-[90px] leading-none">
+                        {city === "All" ? "All Areas" : city}
+                      </span>
+                      <ChevronDown
+                        className="h-3.5 w-3.5 shrink-0 text-primary/80 transition-transform duration-200"
+                      />
+                      <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100" />
+                    </button>
+                  }
+                />
               </div>
             )}
           </div>
@@ -281,98 +289,7 @@ export function MobileAppBar() {
         )}
       </AnimatePresence>
 
-      {/* Bottom Drawer Overlay for City Selection */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Dark glass backdrop closer */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/60 z-50 backdrop-blur-xs"
-            />
 
-            {/* Native-style bottom sheet */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed bottom-0 inset-x-0 rounded-t-[32px] border-t border-border bg-card p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] z-55 max-h-[85vh] overflow-y-auto"
-            >
-              <div className="mx-auto w-12 h-1 bg-muted rounded-full mb-4" />
-              <h3 className="text-lg  text-foreground">
-                Select Playing Region
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1 mb-4">
-                Choose your city to view verified sports turfs near you.
-              </p>
-
-              <button
-                type="button"
-                className="flex w-full items-center gap-3 rounded-2xl bg-primary/10 p-4 text-primary text-sm font-medium transition-colors hover:bg-primary/20 cursor-pointer mb-3"
-                onClick={() => {
-                  toast?.success("Location accessed successfully");
-                  handleCitySelect("Mumbai"); // Simulated behavior
-                }}
-              >
-                <LocateFixed className="h-5 w-5" />
-                Use your current location
-              </button>
-
-              <div className="relative mb-4">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Search location..."
-                  value={locationQuery}
-                  onChange={(e) => setLocationQuery(e.target.value)}
-                  className="w-full rounded-full border border-border/60 bg-background py-3 pl-11 pr-4 text-sm text-foreground outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all"
-                />
-              </div>
-
-              <div className="space-y-2">
-                {filteredCities.map((c) => {
-                  const isSelected = city === c;
-                  return (
-                    <button
-                      key={c}
-                      onClick={() => handleCitySelect(c)}
-                      className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left text-xs  transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-primary bg-primary/10 text-primary shadow-sm"
-                          : "border-border bg-background hover:bg-muted text-foreground"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <MapPin
-                          className={`h-4.5 w-4.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
-                        />
-                        <span>{c === "All" ? "All Cities" : c}</span>
-                      </div>
-                      {isSelected && (
-                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                          <Check className="h-3.5 w-3.5 stroke-[3]" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                className="w-full mt-5 h-12 rounded-full border border-border text-sm  cursor-pointer"
-              >
-                Cancel
-              </Button>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </>
   );
 }
@@ -382,10 +299,10 @@ export function MobileBottomNav
   const { currentUser } = useAuth();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 md:hidden">
-      <div className="mx-auto max-w-screen-xl px-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
-        <div className="relative overflow-hidden rounded-[24px] border border-border/40 bg-background/80 shadow-[0_-18px_40px_-22px_rgba(15,23,42,0.4)] backdrop-blur-2xl">
+      <div className="mx-auto max-w-screen-xl pb-[env(safe-area-inset-bottom)]">
+        <div className="relative overflow-hidden border-t border-border/40 bg-background/80 shadow-[0_-18px_40px_-22px_rgba(15,23,42,0.4)] backdrop-blur-2xl">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-          <div className="grid grid-cols-5 px-2 py-2">
+          <div className="grid grid-cols-5 px-1 py-1">
             {mobileNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = item.key === activeTab;

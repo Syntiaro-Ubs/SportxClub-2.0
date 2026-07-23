@@ -67,13 +67,16 @@ function CitySelector() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 rounded-full border border-border bg-card/40 px-3.5 py-2 text-xs  transition hover:bg-accent hover:text-foreground text-foreground cursor-pointer"
+        className="group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] md:text-[14px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer transition"
       >
-        <MapPin className="h-4 w-4 text-primary shrink-0" />
-        <span>{city === "All" ? "All Cities" : city}</span>
+        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
+        <span className="truncate max-w-[120px] leading-none">
+          {city === "All" ? "All Areas" : city}
+        </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 shrink-0 text-primary/80 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         />
+        <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100" />
       </button>
 
       <AnimatePresence>
@@ -173,25 +176,31 @@ export function Layout() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  className={`group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-primary"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.name}
+                  <span>{item.name}</span>
+                  <span
+                    className={`absolute bottom-0 left-0 h-[2px] w-full bg-primary transition-transform duration-300 ease-out origin-left ${
+                      isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                    }`}
+                  />
                 </Link>
               );
             })}
         </nav>
 
         <div className="flex items-center gap-3">
+          <CitySelector />
           {currentUser ? (
             <Link to={currentUser.role === 'owner' ? '/owner-dashboard' : '/profile'}>
               <Button
                 variant="ghost"
-                className="rounded-full gap-2.5 text-muted-foreground hover:text-foreground px-2.5 h-10 cursor-pointer border-0 border-transparent shadow-none focus:ring-0 focus-visible:ring-0 focus-visible:border-none focus-visible:outline-none"
+                className="group relative rounded-md gap-2.5 text-muted-foreground hover:text-primary hover:bg-transparent px-3 h-10 cursor-pointer focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"
               >
                 <Avatar className="h-6 w-6 border border-border/80">
                   {currentUser?.profilePicture && (
@@ -204,13 +213,14 @@ export function Layout() {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-semibold leading-none">{displayName}</span>
+                <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100" />
               </Button>
             </Link>
           ) : (
             <Link to="/login">
               <Button 
                 variant="outline"
-                className="rounded-full bg-transparent border border-[#6DFF3B] text-foreground hover:bg-[#6DFF3B] hover:text-[#050505] transition-all px-5 text-sm font-semibold"
+                className="rounded-full bg-transparent border border-[#6DFF3B] text-foreground hover:bg-transparent hover:text-foreground hover:opacity-80 transition-all px-5 text-sm font-semibold"
               >
                 Login / Sign Up
               </Button>
