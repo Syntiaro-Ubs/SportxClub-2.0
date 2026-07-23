@@ -184,11 +184,6 @@ export function Layout() {
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.name}</span>
-                  <span
-                    className={`absolute bottom-0 left-0 h-[2px] w-full bg-primary transition-transform duration-300 ease-out origin-left ${
-                      isActive ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-                    }`}
-                  />
                 </Link>
               );
             })}
