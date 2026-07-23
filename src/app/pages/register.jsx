@@ -55,6 +55,9 @@ export function RegisterPage() {
     city: "Mumbai",
     phone: "",
     otp: "",
+    address: "",
+    state: "",
+    pincode: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -116,17 +119,19 @@ export function RegisterPage() {
       formData.email.includes("@") &&
       emailVerified &&
       formData.phone.length >= 10 &&
-      phoneVerified &&
-      formData.password.length >= 6 &&
-      formData.password === formData.confirmPassword
+      phoneVerified
     );
   };
 
   const isStep2Valid = () => {
+    const isPasswordValid =
+      formData.password.length >= 6 &&
+      formData.password === formData.confirmPassword;
+      
     if (formData.role === "athlete") {
-      return formData.selectedSports.length > 0;
+      return formData.selectedSports.length > 0 && isPasswordValid;
     }
-    return true;
+    return isPasswordValid;
   };
 
   const handleNext = () => {
@@ -411,6 +416,59 @@ export function RegisterPage() {
                       </div>
                     </div>
 
+                    {formData.role === "athlete" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5 md:col-span-2">
+                          <Label htmlFor="address">Address</Label>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                            <Input
+                              id="address"
+                              name="address"
+                              type="text"
+                              placeholder="123 Sports Avenue, Phase 1"
+                              className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
+                              value={formData.address}
+                              onChange={handleInputChange}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="state">State</Label>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                            <Input
+                              id="state"
+                              name="state"
+                              type="text"
+                              placeholder="Maharashtra"
+                              className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
+                              value={formData.state}
+                              onChange={handleInputChange}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="pincode">Pin Code</Label>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                            <Input
+                              id="pincode"
+                              name="pincode"
+                              type="text"
+                              placeholder="400001"
+                              className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
+                              value={formData.pincode}
+                              onChange={handleInputChange}
+                              required
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-1.5">
                       <Label htmlFor="email">Email Address</Label>
                       <div className="flex gap-2">
@@ -562,94 +620,7 @@ export function RegisterPage() {
                       </motion.div>
                     )}
 
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center">
-                        <Label htmlFor="password">Password</Label>
-                        {formData.password && (
-                          <span
-                            className={`text-xs  ${
-                              passwordStrength >= 3
-                                ? "text-emerald-500"
-                                : passwordStrength === 2
-                                  ? "text-amber-500"
-                                  : "text-rose-500"
-                            }`}
-                          >
-                            {strengthLabels[passwordStrength]}
-                          </span>
-                        )}
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
-                        <Input
-                          id="password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          className="pl-10 pr-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          required
-                        />
 
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition"
-                          aria-label={
-                            showPassword ? "Hide password" : "Show password"
-                          }
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4.5 w-4.5" />
-                          ) : (
-                            <Eye className="h-4.5 w-4.5" />
-                          )}
-                        </button>
-                      </div>
-                      {/* Password strength bar */}
-                      {formData.password && (
-                        <div className="grid grid-cols-4 gap-1.5 pt-1">
-                          {[1, 2, 3, 4].map((index) => (
-                            <div
-                              key={index}
-                              className={`h-1 rounded-full transition-all duration-300 ${
-                                index <= passwordStrength
-                                  ? strengthColors[passwordStrength]
-                                  : "bg-muted"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      )}
-                      <p className="text-[0.72rem] text-muted-foreground">
-                        Must be at least 6 characters with mixed letters and
-                        numbers.
-                      </p>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
-                          value={formData.confirmPassword}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                      {formData.confirmPassword &&
-                        formData.password !== formData.confirmPassword && (
-                          <p className="text-xs text-rose-500 ">
-                            Passwords do not match.
-                          </p>
-                        )}
-                    </div>
 
                     <div className="flex justify-center">
                       <Button
@@ -775,6 +746,95 @@ export function RegisterPage() {
                         </div>
                       </div>
                     )}
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <Label htmlFor="password">Password</Label>
+                        {formData.password && (
+                          <span
+                            className={`text-xs  ${
+                              passwordStrength >= 3
+                                ? "text-emerald-500"
+                                : passwordStrength === 2
+                                  ? "text-amber-500"
+                                  : "text-rose-500"
+                            }`}
+                          >
+                            {strengthLabels[passwordStrength]}
+                          </span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                        <Input
+                          id="password"
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pl-10 pr-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          required
+                        />
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition"
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4.5 w-4.5" />
+                          ) : (
+                            <Eye className="h-4.5 w-4.5" />
+                          )}
+                        </button>
+                      </div>
+                      {/* Password strength bar */}
+                      {formData.password && (
+                        <div className="grid grid-cols-4 gap-1.5 pt-1">
+                          {[1, 2, 3, 4].map((index) => (
+                            <div
+                              key={index}
+                              className={`h-1 rounded-full transition-all duration-300 ${
+                                index <= passwordStrength
+                                  ? strengthColors[passwordStrength]
+                                  : "bg-muted"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[0.72rem] text-muted-foreground">
+                        Must be at least 6 characters with mixed letters and
+                        numbers.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="confirmPassword">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
+                          value={formData.confirmPassword}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      {formData.confirmPassword &&
+                        formData.password !== formData.confirmPassword && (
+                          <p className="text-xs text-rose-500 ">
+                            Passwords do not match.
+                          </p>
+                        )}
+                    </div>
 
                     <div className="p-4 rounded-2xl border border-border bg-muted/20 text-xs text-muted-foreground space-y-1.5 mt-2">
                       <p className=" text-foreground">Terms and Conditions</p>

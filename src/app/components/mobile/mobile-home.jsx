@@ -298,7 +298,7 @@ function SearchBar() {
             type="button"
             onClick={startVoiceSearch}
             className={cn(
-              "flex h-11 w-11 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
               isListening
                 ? "border-red-500 bg-red-500/20 text-red-500 animate-pulse"
                 : "border-border/60 bg-background/90 hover:bg-muted"
@@ -310,7 +310,10 @@ function SearchBar() {
           <button
             type="button"
             onClick={() => navigate("/venues", { state: { openFilters: true } })}
-            className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-primary/20 bg-primary/10 text-primary shadow-sm hover:bg-primary/20 transition-all cursor-pointer"
+            className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
+              "border-border/60 bg-background/90 hover:bg-muted"
+            )}
             aria-label="Open filters"
           >
             <SlidersHorizontal className="h-4.5 w-4.5" />

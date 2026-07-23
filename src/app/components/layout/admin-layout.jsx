@@ -28,7 +28,6 @@ const adminNavigation = [
   { name: "Coupons", href: "/admin/coupons", icon: Tag },
   { name: "Banners", href: "/admin/banners", icon: ImageIcon },
   { name: "Reviews", href: "/admin/reviews", icon: Star },
-  { name: "Support", href: "/admin/support", icon: LifeBuoy },
   { name: "Reports", href: "/admin/reports", icon: BarChart3 },
   { name: "Analytics", href: "/admin/analytics", icon: PieChart },
   { name: "Notifications", href: "/admin/notifications", icon: Bell },

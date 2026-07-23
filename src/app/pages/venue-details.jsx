@@ -135,6 +135,7 @@ export function VenueDetails() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
+  const [cancelledSlots, setCancelledSlots] = useState([]);
 
   const timeSlots = [
     { startHour: 15, label: "03:00 PM", endLabel: "04:00 PM" },
@@ -440,16 +441,9 @@ export function VenueDetails() {
 
       <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
         {/* Bento Box Media Header Grid */}
-        <div
-          className={cn(
-            "grid grid-cols-1 lg:grid-cols-3 gap-3 rounded-[28px] overflow-hidden border p-3 mb-8 transition-colors duration-300",
-            isDark
-              ? "border-white/10 bg-[#101216] shadow-2xl"
-              : "border-slate-200 bg-white shadow-md",
-          )}
-        >
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-8">
           {/* Main Hero Photo (Spans 2 columns on desktop) */}
-          <div className="relative lg:col-span-2 aspect-[16/9] lg:aspect-auto h-[260px] sm:h-[340px] lg:h-[400px] rounded-[22px] overflow-hidden group">
+          <div className="relative lg:col-span-2 w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[400px] rounded-[22px] overflow-hidden group">
             <ImageWithFallback
               src={venue.image || gallery[0]}
               alt={venue.name}
@@ -464,8 +458,8 @@ export function VenueDetails() {
                   className={cn(
                     "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
                     isDark
-                      ? "bg-[#6DFF3B] text-black"
-                      : "bg-emerald-600 text-white",
+                      ? "bg-transparent text-[#6DFF3B]"
+                      : "bg-transparent text-white",
                   )}
                 >
                   FIFA Standard
@@ -474,8 +468,8 @@ export function VenueDetails() {
                   className={cn(
                     "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
                     isDark
-                      ? "bg-[#6DFF3B] text-black"
-                      : "bg-emerald-600 text-white",
+                      ? "bg-transparent text-[#6DFF3B]"
+                      : "bg-transparent text-white",
                   )}
                 >
                   Pro Lighting
@@ -484,8 +478,8 @@ export function VenueDetails() {
                   className={cn(
                     "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
                     isDark
-                      ? "bg-[#6DFF3B] text-black"
-                      : "bg-emerald-600 text-white",
+                      ? "bg-transparent text-[#6DFF3B]"
+                      : "bg-transparent text-white",
                   )}
                 >
                   📐 {venue.area}
@@ -495,23 +489,27 @@ export function VenueDetails() {
                 {venue.name}
               </h1>
               <div className="flex items-center gap-3 mt-2 text-xs sm:text-sm font-semibold !text-white/90">
-                <div className="flex items-center gap-1 text-[#6DFF3B]">
+                <div
+                  className={cn(
+                    "flex items-center gap-1",
+                    isDark ? "text-[#6DFF3B]" : "text-white"
+                  )}
+                >
                   <MapPin className="h-4 w-4 shrink-0" />
                   <span>{venue.location}</span>
                 </div>
-                <span>•</span>
                 <div
                   className={cn(
-                    "flex items-center gap-1 px-2.5 py-1 rounded-full border backdrop-blur-md",
+                    "flex items-center gap-1 px-1 rounded-full",
                     isDark
-                      ? "bg-[#6DFF3B] text-black border-transparent"
-                      : "bg-emerald-600 text-white border-transparent",
+                      ? "bg-transparent text-[#6DFF3B]"
+                      : "bg-transparent text-white",
                   )}
                 >
                   <Star
                     className={cn(
                       "h-3.5 w-3.5 fill-current",
-                      isDark ? "text-black" : "text-white",
+                      isDark ? "text-[#6DFF3B]" : "text-white",
                     )}
                   />
                   <span className="font-bold">
@@ -520,7 +518,7 @@ export function VenueDetails() {
                   <span
                     className={cn(
                       "text-[10px]",
-                      isDark ? "text-black/75" : "text-white/90",
+                      isDark ? "text-[#6DFF3B]/80" : "text-white/80",
                     )}
                   >
                     ({venue.reviews})
@@ -551,109 +549,7 @@ export function VenueDetails() {
         {/* 50 / 50 Split Layout Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           {/* Left Column (50% Screen): Venue Overview, Amenities, Map, Reviews */}
-          <div className="space-y-6">
-            {/* Overview & Trust Cards */}
-            <Card
-              className={cn(
-                "rounded-[28px] border transition-colors duration-300",
-                isDark
-                  ? "border-white/10 bg-[#101216] text-white shadow-xl"
-                  : "border-slate-200 bg-white text-slate-900 shadow-sm",
-              )}
-            >
-              <CardContent className="p-6 sm:p-8 space-y-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles
-                      className={cn(
-                        "h-4 w-4",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-bold uppercase tracking-widest",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                      )}
-                    >
-                      Overview
-                    </span>
-                  </div>
-                  <h2
-                    className={cn(
-                      "text-2xl font-extrabold mt-1 tracking-tight",
-                      isDark ? "text-white" : "text-slate-900",
-                    )}
-                  >
-                    Book With Confidence
-                  </h2>
-                </div>
-
-                <p
-                  className={cn(
-                    "text-sm sm:text-base leading-relaxed",
-                    isDark ? "text-white/70" : "text-slate-600",
-                  )}
-                >
-                  {venue.description}
-                </p>
-
-                {/* Trust Badges Trio */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  {[
-                    {
-                      title: "100% Verified",
-                      desc: "Inspected turf & lighting",
-                    },
-                    {
-                      title: "Refund Safe",
-                      desc: "Cancel up to 2 hrs before",
-                    },
-                    { title: "No Hidden Fee", desc: "Clear upfront rate" },
-                  ].map((item) => (
-                    <div
-                      key={item.title}
-                      className={cn(
-                        "rounded-2xl border p-3.5 flex items-start gap-3 transition-colors",
-                        isDark
-                          ? "border-white/10 bg-white/[0.02]"
-                          : "border-slate-200/80 bg-slate-50/80",
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "flex h-9 w-9 items-center justify-center rounded-full border shrink-0",
-                          isDark
-                            ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/30 text-[#6DFF3B]"
-                            : "bg-emerald-50 border-emerald-200 text-emerald-600",
-                        )}
-                      >
-                        <ShieldCheck className="h-4.5 w-4.5" />
-                      </div>
-                      <div>
-                        <p
-                          className={cn(
-                            "text-xs font-bold",
-                            isDark ? "text-white" : "text-slate-800",
-                          )}
-                        >
-                          {item.title}
-                        </p>
-                        <p
-                          className={cn(
-                            "text-[11px] mt-0.5",
-                            isDark ? "text-white/50" : "text-slate-500",
-                          )}
-                        >
-                          {item.desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
+          <div className="space-y-6 order-2 lg:order-1">
             {/* Amenities Section */}
             <Card
               className={cn(
@@ -928,7 +824,7 @@ export function VenueDetails() {
           </div>
 
           {/* Right Column (50% Screen): High-Converting Interactive Slot Booking Widget */}
-          <div className="lg:sticky lg:top-20 space-y-6">
+          <div className="lg:sticky lg:top-20 space-y-6 order-1 lg:order-2">
             <Card
               className={cn(
                 "rounded-[28px] border shadow-2xl overflow-hidden relative isolate transition-colors duration-300",
@@ -1010,18 +906,18 @@ export function VenueDetails() {
                       Available Format
                     </span>
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
                     {["Football", "Cricket", "Basketball"].map((sp) => (
                       <button
                         key={sp}
                         type="button"
                         onClick={() => setSelectedSport(sp)}
                         className={cn(
-                          "h-11 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                          "h-11 px-4 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 w-full",
                           selectedSport === sp
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border-2 border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_15px_rgba(109,255,59,0.2)] scale-[1.02]"
-                              : "bg-emerald-50/50 border-2 border-emerald-600 text-emerald-700 shadow-sm scale-[1.02]"
+                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                              : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 shadow-sm"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
                               : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
@@ -1057,19 +953,19 @@ export function VenueDetails() {
                       {formatDateLabel(selectedDate)}
                     </span>
                   </label>
-                  <div className="flex items-center gap-2">
-                    <div className="grid grid-cols-4 gap-2 flex-grow">
+                  <div className="flex items-center gap-3 lg:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4 flex-grow">
                       {dateOptions.map((opt) => (
                         <button
                           key={opt.iso}
                           type="button"
                           onClick={() => setSelectedDate(opt.iso)}
                           className={cn(
-                            "h-10 rounded-xl border text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center",
+                            "h-10 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center w-full",
                             selectedDate === opt.iso
                               ? isDark
-                                ? "bg-[#6DFF3B]/10 border-2 border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
-                                : "bg-emerald-50/50 border-2 border-emerald-600 text-emerald-700 font-extrabold shadow-md"
+                                ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
+                                : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
                               : isDark
                                 ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
                                 : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
@@ -1092,8 +988,8 @@ export function VenueDetails() {
                           "h-10 w-10 rounded-xl border transition-all flex items-center justify-center cursor-pointer",
                           isCustomDate
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border-2 border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.3)] scale-[1.02]"
-                              : "bg-emerald-50/50 border-2 border-emerald-600 text-emerald-700 shadow-sm scale-[1.02]"
+                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.3)]"
+                              : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 shadow-sm"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20"
                               : "border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800",
@@ -1221,18 +1117,18 @@ export function VenueDetails() {
                   >
                     3. Duration
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-3 lg:gap-4">
                     {[1, 2, 3].map((hrs) => (
                       <button
                         key={hrs}
                         type="button"
                         onClick={() => setPlayHours(hrs)}
                         className={cn(
-                          "h-10 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1",
+                          "h-10 px-4 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
                           playHours === hrs
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border-2 border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
-                              : "bg-emerald-50/50 border-2 border-emerald-600 text-emerald-700 font-extrabold shadow-md"
+                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
+                              : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
                               : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
@@ -1268,13 +1164,13 @@ export function VenueDetails() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
                     {timeSlots.map((slot) => {
                       const slotHour = slot.startHour;
-                      const isBooked = !!slot.bookedBy;
+                      const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
                       const overlaps = isOverlapping(slotHour);
                       const outOfBounds = isOutOfBounds(slotHour);
-                      const isDisabled = isBooked || overlaps || outOfBounds;
+                      const cannotSelect = isBooked || overlaps || outOfBounds;
                       const isSelected = getStartHour(startTime) === slotHour;
                       const slotPrice = getSlotPrice(slotHour, playHours);
 
@@ -1282,18 +1178,19 @@ export function VenueDetails() {
                         <button
                           key={slotHour}
                           type="button"
-                          disabled={isDisabled}
-                          onClick={() => setStartTime(hourToTimeStr(slotHour))}
+                          disabled={overlaps || outOfBounds}
+                          onClick={() => !cannotSelect && setStartTime(hourToTimeStr(slotHour))}
                           className={cn(
-                            "p-3 rounded-2xl border flex flex-col items-center justify-center transition-all min-h-[78px] text-center relative cursor-pointer",
+                            "py-3 px-5 rounded-2xl border flex flex-col items-center justify-center transition-all min-h-[78px] text-center relative",
+                            !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
                             isSelected
                               ? isDark
-                                ? "bg-[#6DFF3B]/10 border-2 border-[#6DFF3B] text-white shadow-[0_0_15px_rgba(109,255,59,0.2)] scale-[1.02]"
-                                : "bg-emerald-50/50 border-2 border-emerald-600 text-slate-900 shadow-sm scale-[1.02]"
-                              : isDisabled
+                                ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                                : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
+                              : cannotSelect
                                 ? isDark
-                                  ? "border-red-500/20 bg-red-500/10 opacity-50 cursor-not-allowed"
-                                  : "border-red-200 bg-red-50 text-red-700 opacity-60 cursor-not-allowed"
+                                  ? "border-red-500/20 bg-red-500/10 opacity-50"
+                                  : "border-red-200 bg-red-50 text-red-700 opacity-60"
                                 : isDark
                                   ? "border-white/10 bg-white/[0.03] text-white hover:border-[#6DFF3B]/50 hover:bg-white/[0.08]"
                                   : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
@@ -1302,7 +1199,7 @@ export function VenueDetails() {
                           <span
                             className={cn(
                               "text-xs font-bold",
-                              isDisabled
+                              cannotSelect
                                 ? isDark
                                   ? "text-white/40"
                                   : "text-red-400"
@@ -1314,7 +1211,7 @@ export function VenueDetails() {
                             {formatSlotRange(slotHour, playHours)}
                           </span>
 
-                          {!isDisabled && (
+                          {!cannotSelect && (
                             <span
                               className={cn(
                                 "text-[11px] font-black mt-0.5",
@@ -1329,23 +1226,43 @@ export function VenueDetails() {
 
                           <span
                             className={cn(
-                              "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider",
+                              "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
                               isSelected
                                 ? isDark
                                   ? "text-[#6DFF3B]"
                                   : "text-emerald-600"
-                                : isDisabled
+                                : cannotSelect
                                   ? "text-red-500"
                                   : isDark
                                     ? "text-[#6DFF3B]/70"
                                     : "text-emerald-600/70",
                             )}
                           >
-                            {isDisabled
-                              ? "Booked"
-                              : isSelected
-                                ? "Selected ✓"
-                                : "Available"}
+                            {cannotSelect ? (
+                              <>
+                                <span className="block">{isBooked ? "Booked" : "Unavailable"}</span>
+                                {isBooked && (
+                                  <>
+                                    <span className="block text-[7.5px] font-semibold opacity-80 mt-[2px] normal-case tracking-normal text-slate-500 dark:text-white/40">
+                                      Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
+                                    </span>
+                                    <div 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCancelledSlots([...cancelledSlots, slotHour]);
+                                      }}
+                                      className="absolute bottom-1.5 right-1.5 px-2 py-0.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm"
+                                    >
+                                      CANCEL
+                                    </div>
+                                  </>
+                                )}
+                              </>
+                            ) : isSelected ? (
+                              "Selected ✓"
+                            ) : (
+                              "Available"
+                            )}
                           </span>
                         </button>
                       );
@@ -1462,10 +1379,10 @@ export function VenueDetails() {
                     }
                   }}
                   className={cn(
-                    "group h-14 w-fit px-10 mx-auto rounded-full font-extrabold text-sm uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center gap-3 select-none",
+                    "group h-14 w-full sm:w-fit px-10 sm:ml-auto rounded-full font-extrabold text-sm uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center gap-3 select-none",
                     isDark
-                      ? "bg-gradient-to-r from-[#6DFF3B] to-[#4ade80] text-black hover:from-[#86ff60] hover:to-[#55ef6a] shadow-[0_4px_20px_rgba(109,255,59,0.25)] hover:shadow-[0_8px_30px_rgba(109,255,59,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
-                      : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-[0_4px_20px_rgba(5,150,105,0.2)] hover:shadow-[0_8px_30px_rgba(5,150,105,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]",
+                      ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_8px_30px_rgba(109,255,59,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+                      : "bg-white text-emerald-600 border border-slate-200 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm hover:shadow-[0_8px_30px_rgba(5,150,105,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]",
                   )}
                 >
                   <span>Proceed to Payment</span>
