@@ -56,7 +56,28 @@ const gallery = [
   asset("/venues/turf-2.webp"),
   asset("/venues/turf-3.webp"),
   asset("/venues/turf-4.webp"),
+  "https://images.unsplash.com/photo-1592709823125-a191f07a2a5e?w=600&q=80",
+  "https://images.unsplash.com/photo-1519766304817-4f37bda74a27?w=600&q=80",
+  "https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=600&q=80",
+  "https://images.unsplash.com/photo-1534158914592-062992fbe900?w=600&q=80",
+  "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600&q=80",
 ];
+
+const marqueeVerticalStyle = `
+  @keyframes marqueeVertical {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  .animate-marquee-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: marqueeVertical 22s linear infinite;
+  }
+  .animate-marquee-vertical:hover {
+    animation-play-state: paused;
+  }
+`;
 
 const amenities = [
   { icon: Maximize2, label: "Turf Area", desc: "8,500 Sq. Ft. (120ft × 70ft)" },
@@ -73,6 +94,7 @@ const reviewsList = [
     name: "Rahul Sharma",
     rating: 5,
     date: "2 days ago",
+    daysAgo: 2,
     comment:
       "Excellent facility with clean turf and fast booking. The lighting is top-notch for night matches!",
   },
@@ -80,6 +102,7 @@ const reviewsList = [
     name: "Priya Patel",
     rating: 5,
     date: "1 week ago",
+    daysAgo: 7,
     comment:
       "Very professional experience. The slot selection and instant booking flow feel super smooth.",
   },
@@ -87,6 +110,7 @@ const reviewsList = [
     name: "Arjun Malhotra",
     rating: 4,
     date: "2 weeks ago",
+    daysAgo: 14,
     comment:
       "Great lighting and easy access. Parking was hassle-free and staff was very cooperative.",
   },
@@ -132,10 +156,12 @@ export function VenueDetails() {
   );
   const [startTime, setStartTime] = useState("18:00");
   const [playHours, setPlayHours] = useState(1);
+  const [showCustomHours, setShowCustomHours] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [cancelledSlots, setCancelledSlots] = useState([]);
+  const [sortBy, setSortBy] = useState("recent");
 
   const timeSlots = [
     { startHour: 15, label: "03:00 PM", endLabel: "04:00 PM" },
@@ -443,7 +469,7 @@ export function VenueDetails() {
         {/* Bento Box Media Header Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-8">
           {/* Main Hero Photo (Spans 2 columns on desktop) */}
-          <div className="relative lg:col-span-2 w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[400px] rounded-[22px] overflow-hidden group">
+          <div className="relative lg:col-span-2 w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[400px] rounded-2xl overflow-hidden group">
             <ImageWithFallback
               src={venue.image || gallery[0]}
               alt={venue.name}
@@ -528,21 +554,27 @@ export function VenueDetails() {
             </div>
           </div>
 
-          {/* Secondary Bento Photos Stack */}
-          <div className="hidden lg:grid grid-cols-1 grid-rows-2 gap-3 h-[400px]">
-            {gallery.slice(1, 3).map((img, idx) => (
-              <div
-                key={idx}
-                className="relative rounded-[22px] overflow-hidden group h-full border border-slate-200 dark:border-white/5"
-              >
-                <ImageWithFallback
-                  src={img}
-                  alt={`Venue ${idx + 2}`}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
-              </div>
-            ))}
+          {/* Secondary Bento Photos Stack with Vertical Marquee */}
+          <div className="hidden lg:block relative h-[400px] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/5 select-none">
+            <style dangerouslySetInnerHTML={{ __html: marqueeVerticalStyle }} />
+
+
+
+            <div className="animate-marquee-vertical">
+              {gallery.slice(1).concat(gallery.slice(1)).map((img, idx) => (
+                <div
+                  key={idx}
+                  className="h-[194px] w-full shrink-0 relative rounded-2xl overflow-hidden group border border-slate-250 dark:border-white/5"
+                >
+                  <ImageWithFallback
+                    src={img}
+                    alt={`Venue Scroll ${idx}`}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -551,152 +583,127 @@ export function VenueDetails() {
           {/* Left Column (50% Screen): Venue Overview, Amenities, Map, Reviews */}
           <div className="space-y-6 order-2 lg:order-1">
             {/* Amenities Section */}
-            <Card
-              className={cn(
-                "rounded-[28px] border transition-colors duration-300",
-                isDark
-                  ? "border-white/10 bg-[#101216] text-white shadow-xl"
-                  : "border-slate-200 bg-white text-slate-900 shadow-sm",
-              )}
-            >
-              <CardContent className="p-6 sm:p-8">
+            <div className="space-y-4">
+              <h3
+                className={cn(
+                  "text-xl font-extrabold tracking-tight",
+                  isDark ? "text-white" : "text-slate-900",
+                )}
+              >
+                Venue Amenities
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {amenities.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div
+                      key={item.label}
+                      className={cn(
+                        "flex items-center gap-3 rounded-2xl border p-3.5 transition-all shadow-sm",
+                        isDark
+                          ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.05] hover:border-[#6DFF3B]/30"
+                          : "border-slate-200 bg-white hover:bg-slate-50/50 hover:border-emerald-300",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "flex h-10 w-10 items-center justify-center rounded-xl border shrink-0",
+                          isDark
+                            ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/20 text-[#6DFF3B]"
+                            : "bg-emerald-50 border-emerald-150 text-emerald-600",
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p
+                          className={cn(
+                            "text-xs font-bold",
+                            isDark ? "text-white" : "text-slate-800",
+                          )}
+                        >
+                          {item.label}
+                        </p>
+                        <p
+                          className={cn(
+                            "text-[10px]",
+                            isDark ? "text-white/50" : "text-slate-500",
+                          )}
+                        >
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Map & Directions */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <h3
                   className={cn(
-                    "text-xl font-extrabold tracking-tight mb-5",
+                    "text-xl font-extrabold tracking-tight",
                     isDark ? "text-white" : "text-slate-900",
                   )}
                 >
-                  Venue Amenities
+                  Location & Directions
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {amenities.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <div
-                        key={item.label}
-                        className={cn(
-                          "flex items-center gap-3 rounded-2xl border p-3.5 transition-all",
-                          isDark
-                            ? "border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-[#6DFF3B]/30"
-                            : "border-slate-200/80 bg-slate-50/80 hover:bg-slate-100 hover:border-emerald-300",
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "flex h-10 w-10 items-center justify-center rounded-xl border shrink-0",
-                            isDark
-                              ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/20 text-[#6DFF3B]"
-                              : "bg-emerald-50 border-emerald-200 text-emerald-600",
-                          )}
-                        >
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <p
-                            className={cn(
-                              "text-xs font-bold",
-                              isDark ? "text-white" : "text-slate-800",
-                            )}
-                          >
-                            {item.label}
-                          </p>
-                          <p
-                            className={cn(
-                              "text-[10px]",
-                              isDark ? "text-white/50" : "text-slate-500",
-                            )}
-                          >
-                            {item.desc}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Map & Directions */}
-            <Card
-              className={cn(
-                "rounded-[28px] border overflow-hidden transition-colors duration-300",
-                isDark
-                  ? "border-white/10 bg-[#101216] text-white shadow-xl"
-                  : "border-slate-200 bg-white text-slate-900 shadow-sm",
-              )}
-            >
-              <CardContent className="p-6 sm:p-8 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3
-                    className={cn(
-                      "text-xl font-extrabold tracking-tight",
-                      isDark ? "text-white" : "text-slate-900",
-                    )}
-                  >
-                    Location & Directions
-                  </h3>
-                  <a
-                    href={`https://maps.google.com/?q=${encodeURIComponent(venue.address)}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={cn(
-                      "flex items-center gap-1.5 text-xs font-bold transition-colors",
-                      isDark
-                        ? "text-[#6DFF3B] hover:underline"
-                        : "text-emerald-600 hover:underline",
-                    )}
-                  >
-                    <Navigation className="h-3.5 w-3.5" />
-                    <span>Get Directions</span>
-                  </a>
-                </div>
-
-                <div
+                <a
+                  href={`https://maps.google.com/?q=${encodeURIComponent(venue.address)}`}
+                  target="_blank"
+                  rel="noreferrer"
                   className={cn(
-                    "rounded-2xl border overflow-hidden h-[280px] relative transition-colors duration-300",
+                    "flex items-center gap-1.5 text-xs font-bold transition-colors",
                     isDark
-                      ? "border-white/10 bg-[#050505]"
-                      : "border-slate-200 bg-slate-100",
+                      ? "text-[#6DFF3B] hover:underline"
+                      : "text-emerald-600 hover:underline",
                   )}
                 >
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    frameBorder="0"
-                    style={{ border: 0 }}
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(venue.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                    allowFullScreen
-                    title="Venue Google Map"
-                    className="w-full h-full border-0 transition-opacity duration-300"
-                  />
-                </div>
-                <div
+                  <Navigation className="h-3.5 w-3.5" />
+                  <span>Get Directions</span>
+                </a>
+              </div>
+
+              <div
+                className={cn(
+                  "rounded-2xl border overflow-hidden h-[280px] relative transition-colors duration-300",
+                  isDark
+                    ? "border-white/10 bg-[#050505]"
+                    : "border-slate-200 bg-slate-100",
+                )}
+              >
+                <iframe
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  style={{ border: 0 }}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(venue.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  allowFullScreen
+                  title="Venue Google Map"
+                  className="w-full h-full border-0 transition-opacity duration-300"
+                />
+              </div>
+              <div
+                className={cn(
+                  "flex items-center gap-2 text-xs",
+                  isDark ? "text-white/70" : "text-slate-600",
+                )}
+              >
+                <MapPin
                   className={cn(
-                    "flex items-center gap-2 text-xs",
-                    isDark ? "text-white/70" : "text-slate-600",
+                    "h-4 w-4 shrink-0",
+                    isDark ? "text-[#6DFF3B]" : "text-emerald-600",
                   )}
                 >
-                  <MapPin
-                    className={cn(
-                      "h-4 w-4 shrink-0",
-                      isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                    )}
-                  />
-                  <span>{venue.address}</span>
-                </div>
-              </CardContent>
-            </Card>
+                </MapPin>
+                <span>{venue.address}</span>
+              </div>
+            </div>
 
             {/* Verified Player Reviews */}
-            <Card
-              className={cn(
-                "rounded-[28px] border transition-colors duration-300",
-                isDark
-                  ? "border-white/10 bg-[#101216] text-white shadow-xl"
-                  : "border-slate-200 bg-white text-slate-900 shadow-sm",
-              )}
-            >
-              <CardContent className="p-6 sm:p-8 space-y-5">
+            <div className="space-y-5">
                 <div
                   className={cn(
                     "flex items-center justify-between border-b pb-4",
@@ -754,15 +761,78 @@ export function VenueDetails() {
                   </div>
                 </div>
 
+                {/* Review Sorting Controls - UI/UX Premium Redesign */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
+                  <div className="flex items-center gap-1.5 shrink-0 select-none">
+                    <Sparkles className={cn(
+                      "h-3.5 w-3.5",
+                      isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+                    )} />
+                    <span className={cn(
+                      "text-[10px] font-black uppercase tracking-widest leading-none",
+                      isDark ? "text-white/40" : "text-slate-400"
+                    )}>
+                      Sort Reviews
+                    </span>
+                  </div>
+
+                  <div className={cn(
+                    "flex p-1 rounded-full border w-full sm:w-fit select-none transition-all duration-300",
+                    isDark
+                      ? "bg-white/[0.03] border-white/5"
+                      : "bg-[#f1f5f9] border-slate-200/80"
+                  )}>
+                    {[
+                      { key: "recent", label: "Most Recent" },
+                      { key: "highest", label: "Highest Rating" },
+                      { key: "lowest", label: "Lowest Rating" }
+                    ].map((opt) => {
+                      const isActive = sortBy === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => setSortBy(opt.key)}
+                          className={cn(
+                            "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
+                            isActive
+                              ? isDark
+                                ? "bg-[#6DFF3B] text-black shadow-md shadow-[#6DFF3B]/10 scale-100"
+                                : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100"
+                              : isDark
+                                ? "text-white/60 hover:text-white bg-transparent border-transparent"
+                                : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="space-y-3">
-                  {reviewsList.map((rev, idx) => (
+                  {[...reviewsList]
+                    .sort((a, b) => {
+                      if (sortBy === "highest") {
+                        if (b.rating !== a.rating) return b.rating - a.rating;
+                        return a.daysAgo - b.daysAgo;
+                      }
+                      if (sortBy === "lowest") {
+                        if (a.rating !== b.rating) return a.rating - b.rating;
+                        return a.daysAgo - b.daysAgo;
+                      }
+                      // Default: recent
+                      return a.daysAgo - b.daysAgo;
+                    })
+                    .map((rev, idx) => (
                     <div
                       key={idx}
                       className={cn(
-                        "rounded-2xl border p-4 space-y-2 transition-colors",
+                        "rounded-2xl border p-4 space-y-2 transition-colors shadow-sm",
                         isDark
-                          ? "border-white/10 bg-white/[0.02]"
-                          : "border-slate-200/80 bg-slate-50/80",
+                          ? "border-white/5 bg-white/[0.03]"
+                          : "border-slate-200 bg-white hover:bg-slate-50/30",
                       )}
                     >
                       <div className="flex items-center justify-between">
@@ -819,8 +889,7 @@ export function VenueDetails() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+            </div>
           </div>
 
           {/* Right Column (50% Screen): High-Converting Interactive Slot Booking Widget */}
@@ -870,14 +939,6 @@ export function VenueDetails() {
                     </h3>
                   </div>
                   <div className="text-right">
-                    <span
-                      className={cn(
-                        "text-2xl font-black",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                      )}
-                    >
-                      ₹{getSlotPrice(getStartHour(startTime), playHours)}
-                    </span>
                     <p
                       className={cn(
                         "text-[10px] font-bold uppercase tracking-wider",
@@ -1117,15 +1178,18 @@ export function VenueDetails() {
                   >
                     3. Duration
                   </label>
-                  <div className="grid grid-cols-3 gap-3 lg:gap-4">
+                  <div className="grid grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                     {[1, 2, 3].map((hrs) => (
                       <button
                         key={hrs}
                         type="button"
-                        onClick={() => setPlayHours(hrs)}
+                        onClick={() => {
+                          setPlayHours(hrs);
+                          setShowCustomHours(false);
+                        }}
                         className={cn(
-                          "h-10 px-4 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
-                          playHours === hrs
+                          "h-10 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
+                          playHours === hrs && !showCustomHours
                             ? isDark
                               ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
                               : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
@@ -1134,12 +1198,58 @@ export function VenueDetails() {
                               : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
                         )}
                       >
-                        <Clock className="h-3.5 w-3.5" />
+                        <Clock className="h-3.5 w-3.5 hidden xs:inline" />
                         <span>
                           {hrs} Hr{hrs > 1 ? "s" : ""}
                         </span>
                       </button>
                     ))}
+
+                    {showCustomHours ? (
+                      <div className={cn(
+                        "h-10 px-1 rounded-xl border text-[11px] font-bold transition-all flex items-center justify-between gap-1 w-full",
+                        isDark ? "border-[#6DFF3B] bg-[#6DFF3B]/10 text-[#6DFF3B]" : "border-emerald-600 bg-emerald-50/50 text-emerald-700"
+                      )}>
+                        <button
+                          type="button"
+                          onClick={() => setPlayHours(Math.max(1, playHours - 1))}
+                          className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 text-xs font-bold cursor-pointer"
+                        >
+                          -
+                        </button>
+                        <span className="font-extrabold whitespace-nowrap">{playHours} Hr{playHours > 1 ? "s" : ""}</span>
+                        <button
+                          type="button"
+                          onClick={() => setPlayHours(Math.min(24, playHours + 1))}
+                          className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-black/10 dark:hover:bg-white/10 text-xs font-bold cursor-pointer"
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCustomHours(true);
+                          if (playHours === 1 || playHours === 2 || playHours === 3) {
+                            setPlayHours(4);
+                          }
+                        }}
+                        className={cn(
+                          "h-10 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
+                          (playHours > 3 || showCustomHours)
+                            ? isDark
+                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
+                              : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
+                            : isDark
+                              ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+                              : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
+                        )}
+                      >
+                        <Clock className="h-3.5 w-3.5 hidden xs:inline" />
+                        <span>Custom</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1246,7 +1356,7 @@ export function VenueDetails() {
                                     <span className="block text-[7.5px] font-semibold opacity-80 mt-[2px] normal-case tracking-normal text-slate-500 dark:text-white/40">
                                       Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
                                     </span>
-                                    <div 
+                                    <div
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setCancelledSlots([...cancelledSlots, slotHour]);
@@ -1388,22 +1498,6 @@ export function VenueDetails() {
                   <span>Proceed to Payment</span>
                   <ArrowRight className="h-4.5 w-4.5 transition-transform duration-300 ease-out group-hover:translate-x-1.5" />
                 </Button>
-
-                {/* Trust Footer */}
-                <div
-                  className={cn(
-                    "flex items-center justify-center gap-2 text-[11px]",
-                    isDark ? "text-white/50" : "text-slate-500",
-                  )}
-                >
-                  <Lock
-                    className={cn(
-                      "h-3.5 w-3.5",
-                      isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                    )}
-                  />
-                  <span>256-Bit Encrypted • Instant Confirmation</span>
-                </div>
               </CardContent>
             </Card>
           </div>

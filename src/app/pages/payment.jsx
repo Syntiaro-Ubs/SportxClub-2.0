@@ -660,83 +660,50 @@ export function Payment() {
 
             <Card className={cn(
               "rounded-[28px] border overflow-hidden backdrop-blur-xl transition-all duration-300",
-              isDark ? "border-white/10 bg-[#101216]/60 shadow-2xl" : "border-slate-200 bg-white shadow-md"
+              isDark ? "border-white/10 bg-[#101216]/60" : "border-slate-200 bg-white"
             )}>
-              <CardHeader className={cn(
-                "border-b px-6 py-5",
-                isDark ? "border-white/5" : "border-slate-100"
-              )}>
-                <CardTitle className={cn(
-                  "flex items-center gap-2 text-lg font-extrabold tracking-tight",
-                  isDark ? "text-white" : "text-slate-900"
-                )}>
-                  <Users className={cn("h-5 w-5", isDark ? "text-[#6DFF3B]" : "text-emerald-600")} />
-                  <span>Split payment</span>
-                </CardTitle>
-              </CardHeader>
               <CardContent className="space-y-4 p-6">
-                <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className={cn("h-4.5 w-4.5", isDark ? "text-[#6DFF3B]" : "text-emerald-600")} />
                   <p className={cn(
-                    "text-xs leading-relaxed",
-                    isDark ? "text-white/60" : "text-slate-500"
-                  )}>
-                    Optionally split the cost with teammates after checkout.
-                  </p>
-
-                  <div className="flex flex-col gap-2.5 sm:flex-row">
-                    <Input
-                      placeholder="teammate@example.com"
-                      value={teammateInput}
-                      onChange={(e) => setTeammateInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") addTeammate();
-                      }}
-                      className={cn(
-                        "h-12 flex-grow rounded-[18px] border transition-all outline-none font-medium",
-                        isDark
-                          ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-[#6DFF3B]/50 focus:ring-1 focus:ring-[#6DFF3B]/50"
-                          : "border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50"
-                      )}
-                    />
-                    <Button
-                      onClick={addTeammate}
-                      className={cn(
-                        "h-12 rounded-[18px] px-6 font-bold cursor-pointer transition-all shrink-0",
-                        isDark
-                          ? "bg-white/10 text-white hover:bg-white/15"
-                          : "bg-slate-100 text-slate-800 hover:bg-slate-200"
-                      )}
-                    >
-                      Add player
-                    </Button>
-                  </div>
-
-                  {/* Teammates Chip list */}
-                  {teammates.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {teammates.map((email) => (
-                        <div
-                          key={email}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors",
-                            isDark
-                              ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/30 text-[#6DFF3B]"
-                              : "bg-emerald-50 border-emerald-300 text-emerald-800"
-                          )}
-                        >
-                          <span>{email}</span>
-                          <button
-                            type="button"
-                            onClick={() => removeTeammate(email)}
-                            className="p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    "text-xs font-bold uppercase tracking-wider",
+                    isDark ? "text-white" : "text-slate-900"
+                  )}>Refund Policy Rules</p>
                 </div>
+                
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-2 text-[10px] sm:text-xs border-b pb-1.5 border-slate-100 dark:border-white/5 font-semibold">
+                    <span className={isDark ? "text-white/40" : "text-slate-400"}>Cancellation Window</span>
+                    <span className="text-right text-emerald-600 dark:text-[#6DFF3B]">Refund Amount</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 text-xs">
+                    <span className={isDark ? "text-white/70" : "text-slate-600"}>&gt; 24 Hours before start</span>
+                    <span className="text-right font-extrabold text-slate-800 dark:text-white">100% Refund</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 text-xs">
+                    <span className={isDark ? "text-white/70" : "text-slate-600"}>12 - 24 Hours before start</span>
+                    <span className="text-right font-extrabold text-slate-800 dark:text-white">70% Refund</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 text-xs">
+                    <span className={isDark ? "text-white/70" : "text-slate-600"}>4 - 12 Hours before start</span>
+                    <span className="text-right font-extrabold text-slate-800 dark:text-white">50% Refund</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 text-xs">
+                    <span className={isDark ? "text-white/70" : "text-slate-600"}>&lt; 4 Hours before start</span>
+                    <span className="text-right font-extrabold text-rose-500 dark:text-rose-400">No Refund</span>
+                  </div>
+                </div>
+
+                <p className={cn(
+                  "text-[9px] leading-normal pt-1.5 border-t border-slate-100 dark:border-white/5",
+                  isDark ? "text-white/45" : "text-slate-400"
+                )}>
+                  * Refunds are processed instantly and credited back to the original source within 3-5 working days.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -893,24 +860,6 @@ export function Payment() {
                     Free cancellation up to 4 hours before the booking start time.
                   </p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className={cn(
-              "rounded-[28px] border overflow-hidden backdrop-blur-xl transition-all duration-300",
-              isDark ? "border-white/10 bg-[#101216]/60" : "border-slate-200 bg-white"
-            )}>
-              <CardContent className="space-y-2.5 p-6">
-                <p className={cn(
-                  "text-xs font-bold uppercase tracking-wider",
-                  isDark ? "text-white" : "text-slate-900"
-                )}>Refund policy note</p>
-                <p className={cn(
-                  "text-xs leading-relaxed",
-                  isDark ? "text-white/50" : "text-slate-500"
-                )}>
-                  Refund eligibility and cancellation windows are shown before payment, so there are no surprises after checkout.
-                </p>
               </CardContent>
             </Card>
           </aside>

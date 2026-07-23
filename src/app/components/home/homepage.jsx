@@ -283,20 +283,36 @@ function AnimatedNumber({ value, suffix = "" }) {
 }
 
 function SectionHeading({ eyebrow, title, description, centered = false }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme !== "light";
+
   return (
     <div className={cn("max-w-3xl", centered && "mx-auto text-center")}>
-      {eyebrow && (
-        <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-[#6DFF3B]/85">
-          {eyebrow}
-        </p>
+      {eyebrow && !title && (
+        <h2 className={cn(
+          "text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5",
+          centered && "justify-center"
+        )}>
+          <span className="h-5 sm:h-6 w-1 rounded-full bg-emerald-500 dark:bg-[#6DFF3B] shrink-0" />
+          <span>{eyebrow}</span>
+        </h2>
       )}
+
+      {eyebrow && title && (
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/20 dark:border-emerald-400/20 text-emerald-700 dark:text-[#6DFF3B] text-xs font-bold tracking-wider uppercase mb-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#6DFF3B] animate-pulse" />
+          {eyebrow}
+        </div>
+      )}
+
       {title && (
-        <h2 className="mt-4 text-3xl  tracking-tight text-white md:text-4xl lg:text-[2.8rem] lg:leading-[1.04]">
+        <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] font-black tracking-tight text-slate-900 dark:text-white leading-tight">
           {title}
         </h2>
       )}
+
       {description && (
-        <p className="mt-4 text-base leading-8 text-white/66 md:text-lg">
+        <p className="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
           {description}
         </p>
       )}
@@ -1099,22 +1115,7 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* BookMyShow Style Side Navigation Arrows */}
-          <button
-            onClick={handlePrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 md:h-12 md:w-12 rounded-r-2xl flex items-center justify-center transition-all cursor-pointer bg-slate-50/90 backdrop-blur-md text-slate-800 hover:bg-white hover:scale-110 shadow-[4px_0_15px_rgba(0,0,0,0.15)] active:scale-95"
-            aria-label="Previous Slide"
-          >
-            <ChevronLeft className="h-6 w-6 pr-0.5" />
-          </button>
 
-          <button
-            onClick={handleNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 h-10 w-10 md:h-12 md:w-12 rounded-l-2xl flex items-center justify-center transition-all cursor-pointer bg-slate-50/90 backdrop-blur-md text-slate-800 hover:bg-white hover:scale-110 shadow-[-4px_0_15px_rgba(0,0,0,0.15)] active:scale-95"
-            aria-label="Next Slide"
-          >
-            <ChevronRight className="h-6 w-6 pl-0.5" />
-          </button>
           {/* Carousel Pagination Dots */}
           <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 z-20">
             {heroSlides.map((slide, idx) => (
@@ -1125,8 +1126,8 @@ export function HeroSection() {
                   "h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer",
                   currentSlide === idx
                     ? (isDark
-                      ? "w-6 sm:w-8 bg-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.8)]"
-                      : "w-6 sm:w-8 bg-[#059669] shadow-[0_0_10px_rgba(5,150,105,0.4)]")
+                      ? "w-4 sm:w-5 bg-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.8)]"
+                      : "w-4 sm:w-5 bg-[#059669] shadow-[0_0_10px_rgba(5,150,105,0.4)]")
                     : "w-2 sm:w-2.5 bg-white/40 hover:bg-white/70"
                 )}
                 aria-label={`Go to slide ${idx + 1}`}
@@ -1698,11 +1699,11 @@ export function SportsCategories() {
   };
 
   return (
-    <section className="pt-[10px] pb-12 md:pb-16 relative overflow-hidden group/section">
+    <section className="pt-[10px] pb-2 md:pb-3 relative overflow-hidden group/section">
       <SportsBackgroundAnimation />
       <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8 relative">
         <SectionHeading
-          eyebrow="Popular sports"
+          eyebrow="Popular Sports"
         />
 
         <div className="relative mt-4">
@@ -2216,7 +2217,7 @@ export function StoreSection() {
   const isDark = resolvedTheme !== "light";
 
   return (
-    <section className="py-12 md:py-16 relative overflow-hidden">
+    <section className="pt-2 pb-12 md:pt-3 md:pb-16 relative overflow-hidden">
       <style dangerouslySetInnerHTML={{ __html: marqueeStyle }} />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <SectionHeading
