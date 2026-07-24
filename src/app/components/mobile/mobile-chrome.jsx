@@ -8,6 +8,7 @@ import {
   Compass,
   Home,
   Menu,
+  MoreVertical,
   Trophy,
   UserCircle2,
   MapPin,
@@ -142,7 +143,7 @@ export function MobileAppBar() {
   return (
     <>
       <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
-        <div className="flex h-[76px] items-center justify-between px-4">
+        <div className="flex h-[60px] items-center justify-between px-4">
           {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">
             {!isHomePage && (
@@ -158,6 +159,11 @@ export function MobileAppBar() {
             <Link to="/" className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
               <Logo />
             </Link>
+
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1">
             {isHomePage && (
               <div className="min-w-0 flex items-center relative">
                 <LocationModal
@@ -165,24 +171,21 @@ export function MobileAppBar() {
                   onCitySelect={handleCitySelect}
                   trigger={
                     <button
-                      className="group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer transition"
+                      className="group relative flex items-center gap-1 px-1.5 py-1.5 rounded-md text-[12px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer transition"
                     >
                       <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate max-w-[90px] leading-none">
+                      <span className="truncate max-w-[70px] leading-none">
                         {city === "All" ? "All Areas" : city}
                       </span>
                       <ChevronDown
-                        className="h-3.5 w-3.5 shrink-0 text-primary/80 transition-transform duration-200"
+                        className="h-3 w-3 shrink-0 text-primary/80 transition-transform duration-200"
                       />
                     </button>
                   }
                 />
               </div>
             )}
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2">
+            <ThemeToggleButton className="h-10.5 w-10.5 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs backdrop-blur-md cursor-pointer flex items-center justify-center shrink-0" />
             <Button
               variant="ghost"
               size="icon"
@@ -193,7 +196,7 @@ export function MobileAppBar() {
               {menuOpen ? (
                 <X className="h-4.5 w-4.5" />
               ) : (
-                <Menu className="h-4.5 w-4.5" />
+                <MoreVertical className="h-4.5 w-4.5" />
               )}
             </Button>
           </div>
@@ -301,7 +304,7 @@ export function MobileBottomNav
       <div className="mx-auto max-w-screen-xl pb-[env(safe-area-inset-bottom)]">
         <div className="relative overflow-hidden border-t border-border/40 bg-background/80 shadow-[0_-18px_40px_-22px_rgba(15,23,42,0.4)] backdrop-blur-2xl">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-          <div className="grid grid-cols-5 px-1 py-1">
+          <div className="grid grid-cols-5">
             {mobileNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = item.key === activeTab;
@@ -317,14 +320,14 @@ export function MobileBottomNav
                     to={item.key === 'profile' && currentUser?.role === 'owner' ? '/owner-dashboard' : item.href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "relative flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-[20px] px-1 text-[0.68rem]  transition-colors",
+                      "relative flex h-[50px] flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-[0.68rem] transition-colors",
                       isActive ? "text-primary" : "text-muted-foreground",
                     )}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="mobile-nav-active"
-                        className="absolute inset-0 rounded-[20px] bg-primary/10"
+                        className="absolute inset-0 rounded-2xl bg-primary/10"
                         transition={{
                           type: "spring",
                           stiffness: 520,
@@ -334,13 +337,13 @@ export function MobileBottomNav
                     )}
                     <span
                       className={cn(
-                        "relative z-10 flex h-9 w-9 items-center justify-center rounded-full transition-transform",
+                        "relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-transform",
                         isActive
                           ? "bg-primary/15 text-primary shadow-[0_8px_20px_-12px_rgba(34,197,94,0.8)]"
                           : "bg-transparent text-muted-foreground",
                       )}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-4 w-4" />
                     </span>
                     <span className="relative z-10 leading-none">
                       {item.label}

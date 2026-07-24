@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../providers/auth-provider";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -39,6 +39,10 @@ const sportsOptions = [
 
 export function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialType = searchParams.get("type") || "athlete";
+  
   const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -49,7 +53,7 @@ export function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "athlete", // athlete | owner | admin
+    role: initialType, // athlete | owner | admin
     selectedSports: [],
     skillLevel: "Intermediate", // Beginner | Intermediate | Pro
     city: "Mumbai",
@@ -358,7 +362,7 @@ export function RegisterPage() {
                     Step {step} of 2
                   </p>
                   <h1 className="text-2xl  tracking-tight sm:text-3xl">
-                    {step === 1 && "Create Account"}
+                    {step === 1 && (formData.role === "owner" ? "Turf Owner Signup" : "Create Account")}
                     {step === 2 && "Setup Profile"}
                   </h1>
                 </div>
@@ -380,24 +384,7 @@ export function RegisterPage() {
                 {/* STEP 1: ACCOUNT DETAILS */}
                 {step === 1 && (
                   <div className="space-y-3">
-                    {/* Account Type Selector */}
-                    <div className="flex p-1 space-x-1 rounded-xl bg-muted/50 border border-border/50 mb-2">
-                      {["athlete", "owner"].map((type) => (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => handleRoleSelect(type)}
-                          className={cn(
-                            "flex-1 rounded-lg py-2 text-xs transition-all duration-200",
-                            formData.role === type
-                              ? "bg-background text-foreground shadow-sm ring-1 ring-border"
-                              : "text-muted-foreground hover:text-foreground hover:bg-background/50",
-                          )}
-                        >
-                          {type === "athlete" ? "Player" : "Turf Owner"}
-                        </button>
-                      ))}
-                    </div>
+                    {/* Account Type Selector Removed */}
 
                     <div className="space-y-1.5">
                       <Label htmlFor="fullName">Full Name</Label>
@@ -714,37 +701,7 @@ export function RegisterPage() {
                         </div>
                       </>
                     ) : (
-                      <div className="space-y-4 pt-2">
-                        <div className="p-4 rounded-2xl border border-border bg-muted/20 space-y-2.5">
-                          <div className="flex gap-2">
-                            <Shield className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-xs ">Verification Required</p>
-                              <p className="text-[0.72rem] text-muted-foreground mt-0.5 leading-relaxed">
-                                To ensure the highest quality listings and match
-                                safety, SportXClub verifies all commercial venue
-                                owners and tournament organizers.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5">
-                          <Label htmlFor="city">City of Operation</Label>
-                          <div className="relative">
-                            <MapPin className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
-                            <Input
-                              id="city"
-                              name="city"
-                              type="text"
-                              placeholder="E.g. Mumbai, Delhi"
-                              className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
-                              value={formData.city}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                      <>{/* Removed owner specific fields per user request */}</>
                     )}
 
                     <div className="space-y-1.5">
@@ -846,7 +803,7 @@ export function RegisterPage() {
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex gap-3 pt-3">
+                    <div className="flex justify-between gap-3 pt-3">
                       <Button
                         type="button"
                         variant="outline"
@@ -859,7 +816,7 @@ export function RegisterPage() {
                       <Button
                         type="submit"
                         disabled={!isStep2Valid() || isSubmitting}
-                        className="flex-1 h-11 rounded-full bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60] hover:shadow-lg hover:shadow-[#6DFF3B]/20 transition-all flex items-center justify-center gap-1.5"
+                        className="h-11 px-6 rounded-full bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60] hover:shadow-lg hover:shadow-[#6DFF3B]/20 transition-all flex items-center justify-center gap-1.5"
                       >
                         {isSubmitting ? (
                           <span className="flex items-center gap-2">
@@ -868,7 +825,7 @@ export function RegisterPage() {
                           </span>
                         ) : (
                           <>
-                            Complete Registration
+                            Continue
                             <Check className="h-4.5 w-4.5" />
                           </>
                         )}
@@ -885,7 +842,7 @@ export function RegisterPage() {
         {!isSuccess && (
           <div className="text-center text-sm text-muted-foreground mt-4 pt-4 border-t border-border/40">
             Already have an account?{" "}
-            <Link to="/login" className="text-primary  hover:underline">
+            <Link to={`/login${formData.role === "owner" ? "?type=owner" : ""}`} className="text-primary hover:underline">
               Sign in
             </Link>
           </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../providers/auth-provider";
 import { motion } from "motion/react";
 import {
@@ -25,9 +25,13 @@ import { Footer } from "../components/home/Footer";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialType = searchParams.get("type") || "player";
+  
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState("player");
+  const [loginType, setLoginType] = useState(initialType);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -140,31 +144,16 @@ export function LoginPage() {
           // Sign In Form
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <h1 className="text-2xl  tracking-tight sm:text-3xl">Login</h1>
+              <h1 className="text-2xl  tracking-tight sm:text-3xl">
+                {loginType === "owner" ? "Turf Owner Login" : "Login"}
+              </h1>
               <p className="text-sm text-muted-foreground">
                 Enter your credentials below to access your account.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Account Type Selector */}
-              <div className="flex p-1 space-x-1 rounded-xl bg-muted/50 border border-border/50">
-                {["player", "owner"].map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setLoginType(type)}
-                    className={cn(
-                      "flex-1 rounded-lg py-2 text-xs transition-all duration-200",
-                      loginType === type
-                        ? "bg-background text-foreground shadow-sm ring-1 ring-border"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/50",
-                    )}
-                  >
-                    {type === "player" ? "Player" : "Turf Owner"}
-                  </button>
-                ))}
-              </div>
+              {/* Account Type Selector Removed */}
 
               <div className="space-y-1.5">
                 <Label htmlFor="email">Email Address</Label>
@@ -298,14 +287,14 @@ export function LoginPage() {
             {loginType === "owner" ? (
               <>
                 Want to add your turf to our platform?{" "}
-                <Link to="/register" className="text-primary hover:underline">
+                <Link to={`/register${loginType === "owner" ? "?type=owner" : ""}`} className="text-primary hover:underline">
                   Register your turf
                 </Link>
               </>
             ) : (
               <>
                 Don't have an account yet?{" "}
-                <Link to="/register" className="text-primary hover:underline">
+                <Link to={`/register${loginType === "owner" ? "?type=owner" : ""}`} className="text-primary hover:underline">
                   Sign up
                 </Link>
               </>

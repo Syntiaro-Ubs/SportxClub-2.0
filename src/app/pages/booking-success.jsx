@@ -9,6 +9,7 @@ import {
   MapPin,
   Download,
   ArrowRight,
+  QrCode,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
@@ -335,17 +336,8 @@ export function BookingSuccess() {
               {/* QR Code Container */}
               <div className="flex flex-col items-center justify-center pt-1">
                 <div className="bg-slate-50 dark:bg-black/40 p-3 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-white/[0.05] shadow-inner w-full max-w-[210px]">
-                  <div className="h-28 w-28 bg-[#050505] flex items-center justify-center p-1.5 rounded-xl">
-                    <div className="grid gap-[2px] h-full w-full" style={{ gridTemplateColumns: 'repeat(16, minmax(0, 1fr))' }}>
-                      {qrGrid.map((filled, idx) => (
-                        <div
-                          key={idx}
-                          className={`rounded-[1.2px] transition-all duration-300 ${
-                            filled ? "bg-[#6DFF3B]" : "bg-transparent"
-                          }`}
-                        />
-                      ))}
-                    </div>
+                  <div className="h-28 w-28 bg-white flex items-center justify-center p-2 rounded-xl">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-Ticket" alt="QR Code" className="h-full w-full object-contain mix-blend-multiply" />
                   </div>
                   <span className="text-[8px] font-mono text-slate-600 dark:text-white/50 mt-2 font-semibold tracking-[0.25em] uppercase">
                     Scan at Reception

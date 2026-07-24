@@ -25,6 +25,7 @@ import {
   Twitter,
   ShoppingCart,
   Menu,
+  MoreVertical,
   X,
   User,
   LogOut,
@@ -410,7 +411,11 @@ export function Navbar() {
       to: "/bookings",
       hasChevron: true,
       isCart: true,
-      badge: 2,
+    },
+    {
+      label: "Turf Owner Login",
+      to: "/login?type=owner",
+      hasChevron: true,
     },
   ];
 
@@ -466,7 +471,6 @@ export function Navbar() {
 
           {/* Right Section: Sign In + Hamburger Menu Toggle */}
           <div className="flex flex-1 items-center justify-end gap-3 md:gap-4">
-
             {/* Location Pill (Moved here) */}
             <div className="hidden md:block">
               <LocationModal
@@ -491,6 +495,18 @@ export function Navbar() {
               />
             </div>
 
+            {/* Theme Toggle Button */}
+            <div className="hidden md:block">
+              <ThemeToggleButton
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full border transition",
+                  isDark
+                    ? "border-white/[0.08] bg-white/[0.03] text-white/80 hover:bg-white/[0.06] hover:text-white"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                )}
+                variant="ghost"
+              />
+            </div>
             {/* Auth Section: Login or Profile */}
             {isLoggedIn ? (
               <div className="relative">
@@ -764,23 +780,6 @@ export function Navbar() {
                   </Link>
                 );
               })}
-
-              {/* Theme Toggle inside Menu */}
-              <div className="flex items-center justify-between w-full py-4 px-3 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150">
-                <span className={cn("text-sm tracking-wide", isDark ? "text-white/90" : "text-slate-800")}>
-                  Theme
-                </span>
-                <ThemeToggleButton
-                  className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition",
-                    isDark
-                      ? "border-white/[0.08] bg-white/[0.03] text-white/80 hover:bg-white/[0.06] hover:text-white"
-                      : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                  )}
-                  variant="ghost"
-                />
-              </div>
-
 
             </div>
           </motion.div>
@@ -1233,56 +1232,40 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
-                    {/* Top Badges */}
-                    <div className="absolute top-2.5 left-2.5 z-10">
-                      <Badge className="rounded-md px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider bg-[#6DFF3B] text-black shadow-md border border-[#6DFF3B]/40">
-                        {venue.badge}
-                      </Badge>
-                    </div>
+                    {/* Top Badges Removed as per user request */}
 
                     <div className="absolute top-2.5 right-2.5 z-10">
-                      <Badge className={cn(
-                        "rounded-full px-2 py-0.5 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md shadow-md",
-                        isDark
-                          ? "bg-black/70 text-[#6DFF3B] border border-[#6DFF3B]/30"
-                          : "bg-white/95 text-emerald-700 border border-emerald-200"
-                      )}>
-                        <Star className="h-3 w-3 fill-current" />
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-white drop-shadow-md">
+                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                         <span>{venue.rating}</span>
-                      </Badge>
-                    </div>
-
-                    {/* Bottom Text inside poster image (Force White Text) */}
-                    <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
-                      <p className="text-[10px] font-bold text-[#6DFF3B] uppercase tracking-wider drop-shadow-md">
-                        {venue.sport}
-                      </p>
-                      <h3 className="text-sm font-extrabold !text-white leading-tight line-clamp-1 mt-0.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-                        {venue.name}
-                      </h3>
-                      <div className="flex items-center gap-1 text-[10px] !text-white/90 mt-0.5 drop-shadow">
-                        <MapPin className="h-3 w-3 shrink-0 text-[#6DFF3B]" />
-                        <span className="line-clamp-1">{venue.location}</span>
+                        <span className="text-white/80 text-[9px] font-medium ml-0.5">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)} Reviews)</span>
                       </div>
                     </div>
-                  </Link>
 
-                  {/* Footer Action */}
-                  <div className={cn(
-                    "p-2 sm:p-2.5 border-t flex items-center justify-center",
-                    isDark ? "bg-[#0d0f13] border-white/5" : "bg-slate-50 border-slate-100"
-                  )}>
-                    <Link to={`/venues/${venue.id}`} state={{ venue }} className="w-full">
-                      <Button size="sm" className={cn(
-                        "w-full h-7 text-[11px] rounded-full font-extrabold cursor-pointer transition-all shadow-sm",
-                        isDark
-                          ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black"
-                          : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
-                      )}>
+                    {/* Bottom Overlay & Text */}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-1.5 px-2.5 z-10 flex items-end justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-extrabold text-[#6DFF3B] capitalize tracking-wider drop-shadow-sm mb-0.5">
+                          {venue.sport.toLowerCase()}
+                        </p>
+                        <div className="flex items-center gap-1.5 w-full">
+                          <h3 className="text-sm font-extrabold !text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                            {venue.name}
+                          </h3>
+                          <span className="text-[10px] !text-white/80 font-medium truncate shrink-0 drop-shadow">
+                            {venue.location}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={(e) => e.preventDefault()}
+                        className="bg-transparent text-white border border-white/50 hover:bg-white/10 hover:border-white font-semibold rounded-lg h-7 px-3 text-[10px] transition-colors shadow-none shrink-0"
+                      >
                         Book Slot
                       </Button>
-                    </Link>
-                  </div>
+                    </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
