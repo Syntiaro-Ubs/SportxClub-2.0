@@ -704,128 +704,128 @@ export function VenueDetails() {
 
             {/* Verified Player Reviews */}
             <div className="space-y-5">
-                <div
-                  className={cn(
-                    "flex items-center justify-between border-b pb-4",
-                    isDark ? "border-white/10" : "border-slate-200",
-                  )}
-                >
-                  <div>
-                    <h3
-                      className={cn(
-                        "text-xl font-extrabold tracking-tight",
-                        isDark ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      Player Reviews
-                    </h3>
-                    <p
-                      className={cn(
-                        "text-xs mt-0.5",
-                        isDark ? "text-white/50" : "text-slate-500",
-                      )}
-                    >
-                      Verified players who booked this venue
-                    </p>
-                  </div>
-                  <div
+              <div
+                className={cn(
+                  "flex items-center justify-between border-b pb-4",
+                  isDark ? "border-white/10" : "border-slate-200",
+                )}
+              >
+                <div>
+                  <h3
                     className={cn(
-                      "flex items-center gap-2 border px-3 py-1.5 rounded-2xl",
-                      isDark
-                        ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/30"
-                        : "bg-emerald-50 border-emerald-200",
+                      "text-xl font-extrabold tracking-tight",
+                      isDark ? "text-white" : "text-slate-900",
                     )}
                   >
-                    <Star
-                      className={cn(
-                        "h-4 w-4 fill-current",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        "text-sm font-black",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-700",
-                      )}
-                    >
-                      {venue.rating.toFixed(1)}
-                    </span>
-                    <span
-                      className={cn(
-                        "text-xs",
-                        isDark ? "text-white/60" : "text-slate-600",
-                      )}
-                    >
-                      ({venue.reviews})
-                    </span>
-                  </div>
+                    Player Reviews
+                  </h3>
+                  <p
+                    className={cn(
+                      "text-xs mt-0.5",
+                      isDark ? "text-white/50" : "text-slate-500",
+                    )}
+                  >
+                    Verified players who booked this venue
+                  </p>
                 </div>
-
-                {/* Review Sorting Controls - UI/UX Premium Redesign */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
-                  <div className="flex items-center gap-1.5 shrink-0 select-none">
-                    <Sparkles className={cn(
-                      "h-3.5 w-3.5",
-                      isDark ? "text-[#6DFF3B]" : "text-emerald-600"
-                    )} />
-                    <span className={cn(
-                      "text-[10px] font-black uppercase tracking-widest leading-none",
-                      isDark ? "text-white/40" : "text-slate-400"
-                    )}>
-                      Sort Reviews
-                    </span>
-                  </div>
-
-                  <div className={cn(
-                    "flex p-1 rounded-full border w-full sm:w-fit select-none transition-all duration-300",
+                <div
+                  className={cn(
+                    "flex items-center gap-2 border px-3 py-1.5 rounded-2xl",
                     isDark
-                      ? "bg-white/[0.03] border-white/5"
-                      : "bg-[#f1f5f9] border-slate-200/80"
+                      ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/30"
+                      : "bg-emerald-50 border-emerald-200",
+                  )}
+                >
+                  <Star
+                    className={cn(
+                      "h-4 w-4 fill-current",
+                      isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "text-sm font-black",
+                      isDark ? "text-[#6DFF3B]" : "text-emerald-700",
+                    )}
+                  >
+                    {venue.rating.toFixed(1)}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-xs",
+                      isDark ? "text-white/60" : "text-slate-600",
+                    )}
+                  >
+                    ({venue.reviews})
+                  </span>
+                </div>
+              </div>
+
+              {/* Review Sorting Controls - UI/UX Premium Redesign */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
+                <div className="flex items-center gap-1.5 shrink-0 select-none">
+                  <Sparkles className={cn(
+                    "h-3.5 w-3.5",
+                    isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+                  )} />
+                  <span className={cn(
+                    "text-[10px] font-black uppercase tracking-widest leading-none",
+                    isDark ? "text-white/40" : "text-slate-400"
                   )}>
-                    {[
-                      { key: "recent", label: "Most Recent" },
-                      { key: "highest", label: "Highest Rating" },
-                      { key: "lowest", label: "Lowest Rating" }
-                    ].map((opt) => {
-                      const isActive = sortBy === opt.key;
-                      return (
-                        <button
-                          key={opt.key}
-                          type="button"
-                          onClick={() => setSortBy(opt.key)}
-                          className={cn(
-                            "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
-                            isActive
-                              ? isDark
-                                ? "bg-[#6DFF3B] text-black shadow-md shadow-[#6DFF3B]/10 scale-100"
-                                : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100"
-                              : isDark
-                                ? "text-white/60 hover:text-white bg-transparent border-transparent"
-                                : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                    Sort Reviews
+                  </span>
                 </div>
 
-                <div className="space-y-3">
-                  {[...reviewsList]
-                    .sort((a, b) => {
-                      if (sortBy === "highest") {
-                        if (b.rating !== a.rating) return b.rating - a.rating;
-                        return a.daysAgo - b.daysAgo;
-                      }
-                      if (sortBy === "lowest") {
-                        if (a.rating !== b.rating) return a.rating - b.rating;
-                        return a.daysAgo - b.daysAgo;
-                      }
-                      // Default: recent
+                <div className={cn(
+                  "flex p-1 rounded-full border w-full sm:w-fit select-none transition-all duration-300",
+                  isDark
+                    ? "bg-white/[0.03] border-white/5"
+                    : "bg-[#f1f5f9] border-slate-200/80"
+                )}>
+                  {[
+                    { key: "recent", label: "Recent" },
+                    { key: "highest", label: "Highest Rating" },
+                    { key: "lowest", label: "Lowest Rating" }
+                  ].map((opt) => {
+                    const isActive = sortBy === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setSortBy(opt.key)}
+                        className={cn(
+                          "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
+                          isActive
+                            ? isDark
+                              ? "bg-[#6DFF3B] text-black shadow-md shadow-[#6DFF3B]/10 scale-100"
+                              : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100"
+                            : isDark
+                              ? "text-white/60 hover:text-white bg-transparent border-transparent"
+                              : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {[...reviewsList]
+                  .sort((a, b) => {
+                    if (sortBy === "highest") {
+                      if (b.rating !== a.rating) return b.rating - a.rating;
                       return a.daysAgo - b.daysAgo;
-                    })
-                    .map((rev, idx) => (
+                    }
+                    if (sortBy === "lowest") {
+                      if (a.rating !== b.rating) return a.rating - b.rating;
+                      return a.daysAgo - b.daysAgo;
+                    }
+                    // Default: recent
+                    return a.daysAgo - b.daysAgo;
+                  })
+                  .map((rev, idx) => (
                     <div
                       key={idx}
                       className={cn(
@@ -888,7 +888,7 @@ export function VenueDetails() {
                       </p>
                     </div>
                   ))}
-                </div>
+              </div>
             </div>
           </div>
 
@@ -1489,14 +1489,21 @@ export function VenueDetails() {
                     }
                   }}
                   className={cn(
-                    "group h-14 w-full sm:w-fit px-10 sm:ml-auto rounded-full font-extrabold text-sm uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center gap-3 select-none",
+                    "group h-14 w-full sm:w-fit pl-6 pr-3 sm:ml-auto rounded-2xl font-extrabold text-xs uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-between gap-6 select-none",
                     isDark
                       ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_8px_30px_rgba(109,255,59,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
                       : "bg-white text-emerald-600 border border-slate-200 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm hover:shadow-[0_8px_30px_rgba(5,150,105,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]",
                   )}
                 >
-                  <span>Proceed to Payment</span>
-                  <ArrowRight className="h-4.5 w-4.5 transition-transform duration-300 ease-out group-hover:translate-x-1.5" />
+                  <span className="translate-y-[0.5px]">Proceed to Payment</span>
+                  <div className={cn(
+                    "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300",
+                    isDark
+                      ? "bg-black/10 text-black group-hover:bg-[#6DFF3B]/20"
+                      : "bg-emerald-50 text-emerald-600 group-hover:bg-white group-hover:text-emerald-600 group-hover:scale-105"
+                  )}>
+                    <ArrowRight className="h-4.5 w-4.5 transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
+                  </div>
                 </Button>
               </CardContent>
             </Card>

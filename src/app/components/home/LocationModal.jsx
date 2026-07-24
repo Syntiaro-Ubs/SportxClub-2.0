@@ -275,7 +275,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
         </div>
 
         {/* 2. Detect My Location Button */}
-        <div className="shrink-0 border-b pb-5 border-slate-100 dark:border-white/10 mt-[-6px]">
+        <div className="shrink-0 mt-[-12px]">
           <button
             type="button"
             onClick={handleDetectLocation}
@@ -288,20 +288,20 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
         </div>
 
         {/* Scrollable Cities Container */}
-        <div className="overflow-y-auto pr-1 space-y-8 flex-1 custom-scrollbar">
+        <div className="overflow-y-auto pr-1 space-y-6 flex-1 custom-scrollbar">
           {/* 3. Popular Cities Section */}
           {filteredPopular.length > 0 && (
             <div className="space-y-4">
               <h4
                 className={cn(
-                  "text-[11px] font-semibold uppercase tracking-[0.1em] text-center mb-6 mt-2",
+                  "text-[11px] font-semibold uppercase tracking-[0.1em] text-center mb-6 mt-0",
                   isDark ? "text-white/60" : "text-slate-500"
                 )}
               >
                 Popular Cities
               </h4>
 
-              <div className="flex overflow-x-auto gap-4 sm:gap-6 pb-2 pt-2 w-full select-none [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-2 snap-x snap-mandatory">
+              <div className="grid grid-cols-10 gap-1.5 sm:gap-3 pb-2 pt-2 w-full select-none px-1">
                 {filteredPopular.map((city) => {
                   const isSelected = activeCity === city.name || selectedMainCity === city.name;
                   return (
@@ -310,7 +310,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                       type="button"
                       onClick={() => handleCityClick(city.name)}
                       className={cn(
-                        "flex-shrink-0 snap-start flex flex-col items-center justify-center transition-all duration-200 group cursor-pointer text-center min-w-[64px] rounded-xl outline-none",
+                        "flex flex-col items-center justify-start transition-all duration-200 group cursor-pointer text-center rounded-xl outline-none min-w-0 w-full",
                         isSelected
                           ? isDark
                             ? "text-[#6DFF3B]"
@@ -320,13 +320,13 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                             : "text-slate-500 hover:text-slate-800"
                       )}
                     >
-                      <div className="h-[46px] w-[46px] flex items-center justify-center mb-2.5 transition-transform group-hover:scale-105">
+                      <div className="h-7 w-7 sm:h-10 sm:w-10 md:h-12 md:w-12 flex items-center justify-center mb-2 transition-transform group-hover:scale-105">
                         <img src={city.image} alt={city.name} className={cn("h-full w-full object-contain", isDark ? "opacity-80 group-hover:opacity-100" : "opacity-90 group-hover:opacity-100")} />
                       </div>
                       <span
                         className={cn(
-                          "text-[11px] tracking-tight whitespace-nowrap text-center",
-                          isSelected ? "font-medium text-slate-800 dark:text-[#6DFF3B]" : "font-medium text-slate-500 dark:text-white/60"
+                          "text-[9px] sm:text-[11px] tracking-tight text-center leading-tight block w-full break-words hyphens-auto",
+                          isSelected ? "font-semibold text-slate-800 dark:text-[#6DFF3B]" : "font-medium text-slate-500 dark:text-white/60"
                         )}
                       >
                         {city.name}
@@ -339,12 +339,12 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
               {selectedMainCity && SUB_LOCATIONS[selectedMainCity] && (
                 <div className="mt-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
                   <div className="flex items-center justify-between mb-4">
-                     <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-white/90">
-                       Popular Areas in {selectedMainCity}
-                     </h5>
-                     <button onClick={() => setSelectedMainCity(null)} className="text-[11px] font-bold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 uppercase tracking-wide">
-                        Close
-                     </button>
+                    <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-white/90">
+                      Popular Areas in {selectedMainCity}
+                    </h5>
+                    <button onClick={() => setSelectedMainCity(null)} className="text-[11px] font-bold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 uppercase tracking-wide">
+                      Close
+                    </button>
                   </div>
                   <div className="flex flex-wrap gap-2 sm:gap-3">
                     {SUB_LOCATIONS[selectedMainCity].map(area => {
@@ -377,7 +377,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
 
           {/* 4. Other Cities Section */}
           {filteredOther.length > 0 && (
-            <div className="space-y-4 pt-2 text-center">
+            <div className={cn("text-center", (showAllCities || searchTerm) ? "space-y-4 pt-2" : "pt-0")}>
               {(showAllCities || searchTerm) ? (
                 <>
                   <h4
@@ -417,7 +417,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                       <button
                         type="button"
                         onClick={() => setShowAllCities(false)}
-                        className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
                       >
                         <span>Hide all cities</span>
                         <ChevronUp className="h-3.5 w-3.5" />
@@ -426,7 +426,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                   )}
                 </>
               ) : (
-                <div className="text-center pt-6">
+                <div className="text-center pt-0">
                   <button
                     type="button"
                     onClick={() => setShowAllCities(true)}

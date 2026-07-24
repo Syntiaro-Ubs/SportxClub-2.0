@@ -13,7 +13,7 @@ export function Footer() {
     <footer
       id="contact"
       className={cn(
-        "relative overflow-hidden border-t pb-10 pt-16 transition-colors duration-200",
+        "relative overflow-hidden border-t pb-4 pt-16 transition-colors duration-200",
         isDark ? "border-white/[0.08] bg-[#050505]" : "border-slate-200 bg-white"
       )}
     >
@@ -30,8 +30,8 @@ export function Footer() {
 
         <div className={cn(
           "absolute inset-0",
-          isDark 
-            ? "bg-[linear-gradient(180deg,rgba(5,5,5,0.72),#050505)]" 
+          isDark
+            ? "bg-[linear-gradient(180deg,rgba(5,5,5,0.72),#050505)]"
             : "bg-[linear-gradient(180deg,rgba(255,255,255,0.72),#ffffff)]"
         )} />
       </div>
@@ -72,6 +72,10 @@ export function Footer() {
             {
               title: "Social",
               links: [
+                {
+                  label: "LinkedIn",
+                  icon: asset("/icons/social-linkedin.svg"),
+                },
                 {
                   label: "Instagram",
                   icon: asset("/icons/social-instagram.svg"),
@@ -116,8 +120,8 @@ export function Footer() {
                       href="#"
                       className={cn(
                         "inline-flex h-11 w-11 items-center justify-center rounded-full border transition",
-                        isDark 
-                          ? "border-white/[0.08] bg-white/[0.04] hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10" 
+                        isDark
+                          ? "border-white/[0.08] bg-white/[0.04] hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10"
                           : "border-slate-200 bg-slate-50 hover:border-emerald-500/30 hover:bg-emerald-50"
                       )}
                       aria-label={link.label}
@@ -139,7 +143,7 @@ export function Footer() {
         </div>
 
         <div className={cn(
-          "mt-14 flex flex-col md:flex-row gap-4 border-t pt-6 text-sm items-center justify-between",
+          "mt-8 flex flex-col md:flex-row gap-4 border-t pt-4 text-sm items-center justify-between",
           isDark ? "border-white/[0.08] text-white/46" : "border-slate-200 text-slate-500"
         )}>
           <div className="flex-1 hidden md:block"></div>
@@ -147,7 +151,7 @@ export function Footer() {
             "flex-1 text-[10px] md:text-xs font-light text-center",
             isDark ? "text-white/40" : "text-slate-400"
           )}>
-            Designed and Powered By <a href="https://www.syntiaro.com/" target="_blank" rel="noopener noreferrer" className={cn("font-normal transition-colors", isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-600 hover:text-teal-700")}>SYNTIARO</a>
+            Powered By <a href="https://www.syntiaro.com/" target="_blank" rel="noopener noreferrer" className={cn("font-normal transition-colors", isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-600 hover:text-teal-700")}>SYNTIARO</a>
           </p>
           <div className="flex-1 flex flex-wrap gap-5 justify-center md:justify-end">
             <a href="#" className={cn("transition", isDark ? "hover:text-white" : "hover:text-slate-900")}>

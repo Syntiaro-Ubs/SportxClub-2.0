@@ -14,6 +14,8 @@ import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
+import { GlobalFooter } from "../components/layout/GlobalFooter";
+
 export function BookingSuccess() {
   // Read saved booking info
   let bookingData = null;
@@ -234,7 +236,8 @@ export function BookingSuccess() {
   };
 
   return (
-    <Container className="py-12 flex flex-col items-center">
+    <>
+      <Container className="py-12 flex flex-col items-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -412,5 +415,7 @@ export function BookingSuccess() {
         </div>
       </motion.div>
     </Container>
+    <GlobalFooter />
+    </>
   );
 }
