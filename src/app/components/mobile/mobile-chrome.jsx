@@ -174,7 +174,6 @@ export function MobileAppBar() {
                       <ChevronDown
                         className="h-3.5 w-3.5 shrink-0 text-primary/80 transition-transform duration-200"
                       />
-                      <span className="absolute bottom-0 left-0 h-[2px] w-full bg-primary transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100" />
                     </button>
                   }
                 />

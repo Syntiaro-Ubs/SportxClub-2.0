@@ -670,28 +670,28 @@ export function Payment() {
                     isDark ? "text-white" : "text-slate-900"
                   )}>Refund Policy Rules</p>
                 </div>
-                
+
                 <div className="space-y-2.5">
                   <div className="grid grid-cols-2 text-[10px] sm:text-xs border-b pb-1.5 border-slate-100 dark:border-white/5 font-semibold">
                     <span className={isDark ? "text-white/40" : "text-slate-400"}>Cancellation Window</span>
                     <span className="text-right text-emerald-600 dark:text-[#6DFF3B]">Refund Amount</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 text-xs">
                     <span className={isDark ? "text-white/70" : "text-slate-600"}>&gt; 24 Hours before start</span>
                     <span className="text-right font-extrabold text-slate-800 dark:text-white">100% Refund</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 text-xs">
                     <span className={isDark ? "text-white/70" : "text-slate-600"}>12 - 24 Hours before start</span>
                     <span className="text-right font-extrabold text-slate-800 dark:text-white">70% Refund</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 text-xs">
                     <span className={isDark ? "text-white/70" : "text-slate-600"}>4 - 12 Hours before start</span>
                     <span className="text-right font-extrabold text-slate-800 dark:text-white">50% Refund</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 text-xs">
                     <span className={isDark ? "text-white/70" : "text-slate-600"}>&lt; 4 Hours before start</span>
                     <span className="text-right font-extrabold text-rose-500 dark:text-rose-400">No Refund</span>

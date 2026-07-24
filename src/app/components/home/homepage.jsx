@@ -30,6 +30,8 @@ import {
   LogOut,
   Smartphone,
   Download,
+  CreditCard,
+  Headset,
 } from "lucide-react";
 
 import { useIsMobile } from "../ui/use-mobile";
@@ -173,25 +175,25 @@ const whyCards = [
     title: "Verified Venues",
     description:
       "Show only trusted venues with the right facilities, availability, and a booking experience players can rely on.",
-    icon: asset("/why-us/feature-verified-venues.svg"),
+    icon: ShieldCheck,
   },
   {
     title: "Secure Payments",
     description:
       "Keep every transaction clear and safe with a checkout flow that feels serious and dependable.",
-    icon: asset("/why-us/feature-secure-payment.svg"),
+    icon: CreditCard,
   },
   {
     title: "Instant Booking",
     description:
       "Convert interest into a confirmed slot quickly with a clean search, structured cards, and direct action.",
-    icon: asset("/why-us/feature-instant-booking.svg"),
+    icon: Zap,
   },
   {
     title: "24x7 Support",
     description:
       "Help is available when players, venues, or organizers need it most, without making the UI feel noisy.",
-    icon: asset("/why-us/feature-support.svg"),
+    icon: Headset,
   },
 ];
 
@@ -464,7 +466,7 @@ export function Navbar() {
 
           {/* Right Section: Sign In + Hamburger Menu Toggle */}
           <div className="flex flex-1 items-center justify-end gap-3 md:gap-4">
-            
+
             {/* Location Pill (Moved here) */}
             <div className="hidden md:block">
               <LocationModal
@@ -484,10 +486,6 @@ export function Navbar() {
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
                     <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80" />
-                    <span className={cn(
-                      "absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100",
-                      isDark ? "bg-[#6DFF3B]" : "bg-emerald-600"
-                    )} />
                   </button>
                 }
               />
@@ -507,10 +505,6 @@ export function Navbar() {
                 >
                   <User className="h-5 w-5" />
                   <span className="text-sm font-medium">{userName}</span>
-                  <span className={cn(
-                    "absolute bottom-0 left-0 h-[2px] w-full transition-transform duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100",
-                    isDark ? "bg-[#6DFF3B]" : "bg-emerald-600"
-                  )} />
                 </button>
 
                 {/* Profile Dropdown */}
@@ -1069,7 +1063,7 @@ export function HeroSection() {
                       isDark ? "border-white/20 bg-[#101216]" : "border-y-slate-300/90 bg-white",
                       isActive ? "opacity-100" : "opacity-100 cursor-pointer"
                     )}
-                    onClick={() => !isActive && handleDotClick(index)}>
+                      onClick={() => !isActive && handleDotClick(index)}>
                       {/* Background Banner Image */}
                       <img
                         src={slide.image}
@@ -1226,71 +1220,71 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                   className={cn(
                     "group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300",
                     asSlider ? "w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px] flex-shrink-0 snap-start" : "",
-                  isDark
-                    ? "border-white/10 bg-[#101216] shadow-xl hover:border-[#6DFF3B]/30"
-                    : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30"
-                )}
-              >
-                <Link to={`/venues/${venue.id}`} state={{ venue }} className="block relative aspect-[3/4] w-full overflow-hidden">
-                  <ImageWithFallback
-                    src={venue.image}
-                    alt={venue.name}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                    isDark
+                      ? "border-white/10 bg-[#101216] shadow-xl hover:border-[#6DFF3B]/30"
+                      : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30"
+                  )}
+                >
+                  <Link to={`/venues/${venue.id}`} state={{ venue }} className="block relative aspect-[3/4] w-full overflow-hidden">
+                    <ImageWithFallback
+                      src={venue.image}
+                      alt={venue.name}
+                      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
 
-                  {/* Top Badges */}
-                  <div className="absolute top-2.5 left-2.5 z-10">
-                    <Badge className="rounded-md px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider bg-[#6DFF3B] text-black shadow-md border border-[#6DFF3B]/40">
-                      {venue.badge}
-                    </Badge>
-                  </div>
-
-                  <div className="absolute top-2.5 right-2.5 z-10">
-                    <Badge className={cn(
-                      "rounded-full px-2 py-0.5 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md shadow-md",
-                      isDark
-                        ? "bg-black/70 text-[#6DFF3B] border border-[#6DFF3B]/30"
-                        : "bg-white/95 text-emerald-700 border border-emerald-200"
-                    )}>
-                      <Star className="h-3 w-3 fill-current" />
-                      <span>{venue.rating}</span>
-                    </Badge>
-                  </div>
-
-                  {/* Bottom Text inside poster image (Force White Text) */}
-                  <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
-                    <p className="text-[10px] font-bold text-[#6DFF3B] uppercase tracking-wider drop-shadow-md">
-                      {venue.sport}
-                    </p>
-                    <h3 className="text-sm font-extrabold !text-white leading-tight line-clamp-1 mt-0.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-                      {venue.name}
-                    </h3>
-                    <div className="flex items-center gap-1 text-[10px] !text-white/90 mt-0.5 drop-shadow">
-                      <MapPin className="h-3 w-3 shrink-0 text-[#6DFF3B]" />
-                      <span className="line-clamp-1">{venue.location}</span>
+                    {/* Top Badges */}
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <Badge className="rounded-md px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider bg-[#6DFF3B] text-black shadow-md border border-[#6DFF3B]/40">
+                        {venue.badge}
+                      </Badge>
                     </div>
-                  </div>
-                </Link>
 
-                {/* Footer Action */}
-                <div className={cn(
-                  "p-2 sm:p-2.5 border-t flex items-center justify-center",
-                  isDark ? "bg-[#0d0f13] border-white/5" : "bg-slate-50 border-slate-100"
-                )}>
-                  <Link to={`/venues/${venue.id}`} state={{ venue }} className="w-full">
-                    <Button size="sm" className={cn(
-                      "w-full h-7 text-[11px] rounded-full font-extrabold cursor-pointer transition-all shadow-sm",
-                      isDark
-                        ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black"
-                        : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
-                    )}>
-                      Book Slot
-                    </Button>
+                    <div className="absolute top-2.5 right-2.5 z-10">
+                      <Badge className={cn(
+                        "rounded-full px-2 py-0.5 text-[11px] font-bold flex items-center gap-1 backdrop-blur-md shadow-md",
+                        isDark
+                          ? "bg-black/70 text-[#6DFF3B] border border-[#6DFF3B]/30"
+                          : "bg-white/95 text-emerald-700 border border-emerald-200"
+                      )}>
+                        <Star className="h-3 w-3 fill-current" />
+                        <span>{venue.rating}</span>
+                      </Badge>
+                    </div>
+
+                    {/* Bottom Text inside poster image (Force White Text) */}
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10">
+                      <p className="text-[10px] font-bold text-[#6DFF3B] uppercase tracking-wider drop-shadow-md">
+                        {venue.sport}
+                      </p>
+                      <h3 className="text-sm font-extrabold !text-white leading-tight line-clamp-1 mt-0.5 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                        {venue.name}
+                      </h3>
+                      <div className="flex items-center gap-1 text-[10px] !text-white/90 mt-0.5 drop-shadow">
+                        <MapPin className="h-3 w-3 shrink-0 text-[#6DFF3B]" />
+                        <span className="line-clamp-1">{venue.location}</span>
+                      </div>
+                    </div>
                   </Link>
-                </div>
-              </motion.div>
-            ))}
+
+                  {/* Footer Action */}
+                  <div className={cn(
+                    "p-2 sm:p-2.5 border-t flex items-center justify-center",
+                    isDark ? "bg-[#0d0f13] border-white/5" : "bg-slate-50 border-slate-100"
+                  )}>
+                    <Link to={`/venues/${venue.id}`} state={{ venue }} className="w-full">
+                      <Button size="sm" className={cn(
+                        "w-full h-7 text-[11px] rounded-full font-extrabold cursor-pointer transition-all shadow-sm",
+                        isDark
+                          ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black"
+                          : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
+                      )}>
+                        Book Slot
+                      </Button>
+                    </Link>
+                  </div>
+                </motion.div>
+              ))}
             </div>
 
             {asSlider && (
@@ -1737,7 +1731,7 @@ export function SportsCategories() {
 
 export function DiscoveryRails() {
   return (
-    <section id="how-it-works" className="py-12 md:py-16">
+    <section id="how-it-works" className="pt-2 pb-4 md:pt-4 md:pb-6">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">
           <Card className="overflow-hidden rounded-[28px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
@@ -1842,7 +1836,7 @@ export function DiscoveryRails() {
 
 export function WhySportXClub() {
   return (
-    <section id="about" className="py-12 md:py-16">
+    <section id="about" className="pt-2 pb-12 md:pt-4 md:pb-16">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Why SportXClub"
@@ -1862,13 +1856,8 @@ export function WhySportXClub() {
             >
               <Card className="h-full rounded-[22px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
                 <CardContent className="flex h-full flex-col gap-5 p-6">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-[#6DFF3B]/18 bg-[#6DFF3B]/10">
-                    <img
-                      src={card.icon}
-                      alt=""
-                      aria-hidden="true"
-                      className="h-7 w-7 object-contain"
-                    />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-[#6DFF3B]/25 bg-[#6DFF3B]/10 shadow-[0_0_15px_rgba(109,255,59,0.15)]">
+                    <card.icon className="h-6 w-6 text-[#6DFF3B] filter drop-shadow-[0_2px_8px_rgba(109,255,59,0.3)]" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg  text-white">{card.title}</h3>
@@ -2197,28 +2186,116 @@ const storeProducts = [
   },
 ];
 
-const marqueeStyle = `
-  @keyframes marqueeStore {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-  }
-  .animate-marquee-store {
-    display: flex;
-    width: max-content;
-    animation: marqueeStore 24s linear infinite;
-  }
-  .animate-marquee-store:hover {
-    animation-play-state: paused;
-  }
-`;
-
 export function StoreSection() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
 
+  const containerRef = useRef(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeftVal = useRef(0);
+  const lastScrollTime = useRef(0);
+  const currentScrollLeft = useRef(0);
+
+  const handleMouseDown = (e) => {
+    isDown.current = true;
+    startX.current = e.pageX - containerRef.current.offsetLeft;
+    scrollLeftVal.current = containerRef.current.scrollLeft;
+    containerRef.current.style.cursor = "grabbing";
+  };
+
+  const handleMouseLeave = () => {
+    isDown.current = false;
+    if (containerRef.current) {
+      containerRef.current.style.cursor = "grab";
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDown.current = false;
+    if (containerRef.current) {
+      containerRef.current.style.cursor = "grab";
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDown.current) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5; // Scroll speed multiplier
+    containerRef.current.scrollLeft = scrollLeftVal.current - walk;
+  };
+
+  const handleWheel = () => {
+    lastScrollTime.current = Date.now();
+  };
+
+  const handleTouchStart = () => {
+    lastScrollTime.current = Date.now();
+  };
+
+  const handleTouchMove = () => {
+    lastScrollTime.current = Date.now();
+  };
+
+  const handleScroll = () => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Sync float ref with actual scroll position
+    currentScrollLeft.current = container.scrollLeft;
+
+    const halfWidth = container.scrollWidth / 2;
+    if (container.scrollLeft >= halfWidth) {
+      container.scrollLeft -= halfWidth;
+      currentScrollLeft.current = container.scrollLeft;
+      if (isDown.current) {
+        scrollLeftVal.current -= halfWidth;
+      }
+    } else if (container.scrollLeft <= 0) {
+      container.scrollLeft += halfWidth;
+      currentScrollLeft.current = container.scrollLeft;
+      if (isDown.current) {
+        scrollLeftVal.current += halfWidth;
+      }
+    }
+  };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    currentScrollLeft.current = container.scrollLeft;
+
+    let animationFrameId;
+    const speed = 1.0; // scroll speed in pixels per frame
+
+    const animate = () => {
+      const now = Date.now();
+      const isUserScrolling = now - lastScrollTime.current < 1500;
+
+      if (!isDown.current && !isUserScrolling) {
+        currentScrollLeft.current += speed;
+        
+        const halfWidth = container.scrollWidth / 2;
+        if (currentScrollLeft.current >= halfWidth) {
+          currentScrollLeft.current -= halfWidth;
+        }
+        
+        container.scrollLeft = currentScrollLeft.current;
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
   return (
-    <section className="pt-2 pb-12 md:pt-3 md:pb-16 relative overflow-hidden">
-      <style dangerouslySetInnerHTML={{ __html: marqueeStyle }} />
+    <section className="pt-2 pb-2 md:pt-3 md:pb-4 relative overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Pro Store"
@@ -2233,7 +2310,18 @@ export function StoreSection() {
         <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-[#050505] to-transparent z-10 pointer-events-none opacity-30" />
         <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-[#050505] to-transparent z-10 pointer-events-none opacity-30" />
 
-        <div className="animate-marquee-store flex gap-6">
+        <div
+          ref={containerRef}
+          onMouseDown={handleMouseDown}
+          onMouseLeave={handleMouseLeave}
+          onMouseUp={handleMouseUp}
+          onMouseMove={handleMouseMove}
+          onScroll={handleScroll}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          className="flex gap-6 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab select-none w-full"
+        >
           {/* First list iteration */}
           {storeProducts.map((product) => (
             <div
@@ -2463,7 +2551,7 @@ export function TurfGallery() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-12 md:py-16 relative overflow-hidden">
+    <section className="pt-0 pb-4 md:pb-6 relative overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <SectionHeading
           eyebrow="Gallery"
