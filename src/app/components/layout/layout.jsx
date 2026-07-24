@@ -154,7 +154,7 @@ export function Layout() {
           </Link>
         </div>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-8">
           {navigation
             .filter((item) => {
               if (
@@ -189,7 +189,6 @@ export function Layout() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <CitySelector />
           {currentUser ? (
             <Link to={currentUser.role === 'owner' ? '/owner-dashboard' : '/profile'}>
               <Button

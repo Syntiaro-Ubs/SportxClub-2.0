@@ -10,6 +10,16 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { cn } from "../ui/utils";
+import mumbaiImg from "../../../assets/cities/mumbai.png";
+import delhiImg from "../../../assets/cities/delhi.png";
+import bengaluruImg from "../../../assets/cities/bengaluru.png";
+import hyderabadImg from "../../../assets/cities/hyderabad.png";
+import chandigarhImg from "../../../assets/cities/chandigarh.png";
+import ahmedabadImg from "../../../assets/cities/ahmedabad.png";
+import puneImg from "../../../assets/cities/pune.png";
+import chennaiImg from "../../../assets/cities/chennai.png";
+import kolkataImg from "../../../assets/cities/kolkata.png";
+import kochiImg from "../../../assets/cities/kochi.png";
 
 // Detailed Monument SVG Icons for Popular Cities matching Image 2
 const MumbaiIcon = ({ className }) => (
@@ -130,16 +140,16 @@ const KochiIcon = ({ className }) => (
 );
 
 const POPULAR_CITIES = [
-  { id: "mumbai", name: "Mumbai", image: "/cities/mumbai.png" },
-  { id: "delhi", name: "Delhi-NCR", image: "/cities/delhi.png" },
-  { id: "bengaluru", name: "Bengaluru", image: "/cities/bengaluru.png" },
-  { id: "hyderabad", name: "Hyderabad", image: "/cities/hyderabad.png" },
-  { id: "chandigarh", name: "Chandigarh", image: "/cities/chandigarh.png" },
-  { id: "ahmedabad", name: "Ahmedabad", image: "/cities/ahmedabad.png" },
-  { id: "pune", name: "Pune", image: "/cities/pune.png" },
-  { id: "chennai", name: "Chennai", image: "/cities/chennai.png" },
-  { id: "kolkata", name: "Kolkata", image: "/cities/kolkata.png" },
-  { id: "kochi", name: "Kochi", image: "/cities/kochi.png" },
+  { id: "mumbai", name: "Mumbai", image: mumbaiImg },
+  { id: "delhi", name: "Delhi-NCR", image: delhiImg },
+  { id: "bengaluru", name: "Bengaluru", image: bengaluruImg },
+  { id: "hyderabad", name: "Hyderabad", image: hyderabadImg },
+  { id: "chandigarh", name: "Chandigarh", image: chandigarhImg },
+  { id: "ahmedabad", name: "Ahmedabad", image: ahmedabadImg },
+  { id: "pune", name: "Pune", image: puneImg },
+  { id: "chennai", name: "Chennai", image: chennaiImg },
+  { id: "kolkata", name: "Kolkata", image: kolkataImg },
+  { id: "kochi", name: "Kochi", image: kochiImg },
 ];
 
 const SUB_LOCATIONS = {
@@ -245,7 +255,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
         </DialogHeader>
 
         {/* 1. Top Search Bar */}
-        <div className="relative shrink-0">
+        <div className="relative shrink-0 w-[85%] sm:w-full mr-auto">
           <Search
             className={cn(
               "absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px]",
@@ -258,7 +268,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search for your city"
             className={cn(
-              "w-full h-12 pl-12 pr-10 rounded-full border-[1.5px] text-[15px] font-medium transition-all outline-none bg-transparent",
+              "w-full h-12 pl-12 pr-10 rounded-xl border-[1.5px] text-[15px] font-medium transition-all outline-none bg-transparent",
               isDark
                 ? "border-[#6DFF3B] text-white placeholder:text-white/40 focus:ring-1 focus:ring-[#6DFF3B]"
                 : "border-[#059669] text-slate-900 placeholder:text-slate-400 focus:ring-1 focus:ring-[#059669]"
@@ -288,20 +298,20 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
         </div>
 
         {/* Scrollable Cities Container */}
-        <div className="overflow-y-auto pr-1 space-y-6 flex-1 custom-scrollbar">
+        <div className="overflow-y-auto pr-1 space-y-3 sm:space-y-6 flex-1 custom-scrollbar">
           {/* 3. Popular Cities Section */}
           {filteredPopular.length > 0 && (
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-4">
               <h4
                 className={cn(
-                  "text-[11px] font-semibold uppercase tracking-[0.1em] text-center mb-6 mt-0",
+                  "text-[11px] font-semibold uppercase tracking-[0.1em] text-center mb-2 sm:mb-6 mt-0",
                   isDark ? "text-white/60" : "text-slate-500"
                 )}
               >
                 Popular Cities
               </h4>
 
-              <div className="grid grid-cols-10 gap-1.5 sm:gap-3 pb-2 pt-2 w-full select-none px-1">
+              <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5 sm:gap-4 pb-2 pt-2 w-full select-none px-1">
                 {filteredPopular.map((city) => {
                   const isSelected = activeCity === city.name || selectedMainCity === city.name;
                   return (
@@ -325,7 +335,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                       </div>
                       <span
                         className={cn(
-                          "text-[9px] sm:text-[11px] tracking-tight text-center leading-tight block w-full break-words hyphens-auto",
+                          "text-[8px] sm:text-[11px] tracking-tighter sm:tracking-tight text-center leading-tight block w-full whitespace-nowrap",
                           isSelected ? "font-semibold text-slate-800 dark:text-[#6DFF3B]" : "font-medium text-slate-500 dark:text-white/60"
                         )}
                       >

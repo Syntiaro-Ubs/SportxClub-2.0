@@ -17,6 +17,7 @@ import {
 
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { cn } from "../ui/utils";
 import { MobileAppBar, MobileBottomNav } from "./mobile-chrome";
@@ -278,11 +279,11 @@ function SearchBar() {
   return (
     <div className="relative">
       <div className={cn(
-        "rounded-[24px] border border-border/60 bg-card/80 p-3 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl transition",
+        "rounded-[24px] border border-border/60 bg-transparent p-3 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl transition",
         isListening ? "border-primary/50 ring-4 ring-primary/10" : "focus-within:border-primary/30 focus-within:ring-4 focus-within:ring-primary/10"
       )}>
         <div className="flex items-center gap-2">
-          <div className="flex h-11 flex-1 items-center gap-3 rounded-[18px] border border-border/60 bg-background/90 px-4">
+          <div className="flex h-11 flex-1 items-center gap-3 rounded-[18px] border border-border/60 bg-transparent px-4">
             <Search className="h-4.5 w-4.5 shrink-0 text-muted-foreground" />
             <input
               type="search"
@@ -301,23 +302,43 @@ function SearchBar() {
               "flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
               isListening
                 ? "border-red-500 bg-red-500/20 text-red-500 animate-pulse"
-                : "border-border/60 bg-background/90 hover:bg-muted"
+                : "border-border/60 bg-transparent hover:bg-muted"
             )}
             aria-label="Voice search"
           >
             <Mic className={cn("h-4.5 w-4.5", isListening && "scale-110")} />
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/venues", { state: { openFilters: true } })}
-            className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
-              "border-border/60 bg-background/90 hover:bg-muted"
-            )}
-            aria-label="Open filters"
-          >
-            <SlidersHorizontal className="h-4.5 w-4.5" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
+                  "border-border/60 bg-transparent hover:bg-muted"
+                )}
+                aria-label="Open filters"
+              >
+                <SlidersHorizontal className="h-4.5 w-4.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48 rounded-xl">
+              <DropdownMenuLabel>Quick Filters</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/venues", { state: { sort: "price_low" } })} className="cursor-pointer">
+                Price: Low to High
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/venues", { state: { sort: "rating" } })} className="cursor-pointer">
+                Highest Rated
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate("/venues", { state: { sort: "distance" } })} className="cursor-pointer">
+                Nearest to me
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/venues", { state: { openFilters: true } })} className="cursor-pointer font-medium text-primary focus:text-primary">
+                Advanced Filters
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -364,6 +385,7 @@ function CarouselCard({ title, copy, tint }) {
 }
 
 export function MobileHomePage() {
+  const navigate = useNavigate();
   const [currentBg, setCurrentBg] = useState(0);
   const { currentUser } = useAuth();
   const firstName = currentUser?.fullName ? currentUser.fullName.split(" ")[0] : "Rohan";
@@ -391,7 +413,7 @@ export function MobileHomePage() {
       <MobileAppBar />
 
       <main className="pb-[calc(108px+env(safe-area-inset-bottom))]">
-        <div className="space-y-6 px-4 py-4">
+        <div className="space-y-6 px-4 pb-4 pt-0">
           <div className="sticky top-16 z-40">
             <SearchBar />
           </div>
@@ -400,15 +422,15 @@ export function MobileHomePage() {
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="relative overflow-hidden rounded-[32px] p-6 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.35)] aspect-[16/9] flex flex-col justify-between always-dark border border-white/10"
+            className="!mt-1 -mx-2 relative overflow-hidden rounded-2xl p-5 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.35)] aspect-[21/9] flex flex-col justify-between always-dark border border-white/10"
           >
             <div className="absolute inset-0 z-0">
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence initial={false}>
                 <motion.div
                   key={currentBg}
-                  initial={{ opacity: 0, scale: 1.08 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "-100%" }}
                   transition={{ duration: 1.2, ease: "easeInOut" }}
                   className="absolute inset-0 bg-cover bg-no-repeat bg-center brightness-[0.75] saturate-[1.2]"
                   style={{ backgroundImage: `url(${bgImages[currentBg]})` }}
@@ -429,25 +451,17 @@ export function MobileHomePage() {
 
           <section className="space-y-3 sports-categories-container">
             <SectionHeader title="Sports categories" action="More" />
-            <div className="relative overflow-hidden">
-              <style dangerouslySetInnerHTML={{ __html: marqueeStyle }} />
-              <div className="animate-marquee-categories flex gap-3 w-max">
-                {[...sportsCategories, ...sportsCategories].map((item, index) => (
+            <div className="relative w-full">
+              <div className="flex overflow-x-auto snap-x snap-mandatory gap-2 pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {sportsCategories.map((item, index) => (
                   <motion.button
                     key={`${item.name}-${index}`}
                     onClick={() => navigate("/venues", { state: { sport: item.name } })}
                     whileTap={{ scale: 0.96 }}
-                    style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none' }}
-                    className="flex min-w-[76px] shrink-0 flex-col items-center gap-2 group cursor-pointer border-0"
+                    className="flex w-[calc(25%-6px)] min-w-[calc(25%-6px)] shrink-0 snap-start flex-col items-center gap-1 group cursor-pointer border-0 bg-transparent"
                   >
-                    <span
-                      style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none', background: 'transparent' }}
-                      className="flex h-[72px] w-[72px] items-center justify-center rounded-[20px] transition-all border-0 bg-transparent"
-                    >
-                      <span
-                        style={{ border: 'none', borderWidth: 0, outline: 'none', boxShadow: 'none', background: 'transparent' }}
-                        className="flex h-[56px] w-[56px] overflow-hidden rounded-xl relative border-0 bg-transparent"
-                      >
+                    <span className="flex w-full aspect-square max-w-[90px] items-center justify-center rounded-[20px] transition-all border-0 bg-transparent">
+                      <span className="flex w-[95%] aspect-square overflow-hidden rounded-xl relative border-0 bg-transparent">
                         <ImageWithFallback
                           src={item.image}
                           alt={item.name}
@@ -457,7 +471,7 @@ export function MobileHomePage() {
                         />
                       </span>
                     </span>
-                    <span className="text-center text-[0.75rem] leading-tight text-muted-foreground">
+                    <span className="text-center text-[0.75rem] md:text-[0.8rem] leading-tight text-muted-foreground truncate w-full px-0.5">
                       {item.name}
                     </span>
                   </motion.button>

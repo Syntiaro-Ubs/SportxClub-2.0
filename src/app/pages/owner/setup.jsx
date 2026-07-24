@@ -169,24 +169,6 @@ export function OwnerSetupPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Mock Admin Actions (for dev/demo purposes)
-  const mockAdminAction = (action) => {
-    if (action === "approve") {
-      setStatus("approved");
-      setTimeout(() => navigate("/owner-dashboard"), 1500);
-    }
-    if (action === "reject") {
-      setStatus("rejected");
-    }
-    if (action === "corrections") {
-      setStatus("corrections");
-      setCurrentStep(4);
-      setAdminFeedback({
-        rejectedSteps: [4, 7],
-        message: "Identity Verification documents are blurry. Please re-upload Aadhaar Front. Cover Image does not meet our quality guidelines."
-      });
-    }
-  };
 
   // Render Status Screens
   if (status === "submitting") {
@@ -212,14 +194,6 @@ export function OwnerSetupPage() {
             <h2 className="text-2xl font-bold tracking-tight">Pending Verification</h2>
             <p className="text-muted-foreground text-sm">Your turf owner profile has been submitted and is currently under review by our admin team. This usually takes 24-48 hours.</p>
           </div>
-          <div className="pt-6 border-t border-border/50 flex flex-col gap-3">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Developer Mock Actions</p>
-            <div className="flex gap-2 justify-center">
-              <Button size="sm" variant="outline" className="text-emerald-500" onClick={() => mockAdminAction("approve")}>Approve</Button>
-              <Button size="sm" variant="outline" className="text-rose-500" onClick={() => mockAdminAction("reject")}>Reject</Button>
-              <Button size="sm" variant="outline" className="text-amber-500" onClick={() => mockAdminAction("corrections")}>Request Corrections</Button>
-            </div>
-          </div>
         </motion.div>
       </div>
     );
@@ -234,7 +208,12 @@ export function OwnerSetupPage() {
           </div>
           <div className="space-y-2">
             <h2 className="text-2xl font-bold tracking-tight">Profile Approved!</h2>
-            <p className="text-muted-foreground text-sm">Welcome to SportXClub! Redirecting you to your Owner Dashboard...</p>
+            <p className="text-muted-foreground text-sm">Welcome to SportXClub! Your account has been verified by the admin.</p>
+          </div>
+          <div className="pt-4">
+            <Button onClick={() => navigate("/owner-dashboard")} className="w-full h-11 rounded-full bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60]">
+              Login to Dashboard
+            </Button>
           </div>
         </motion.div>
       </div>
@@ -401,10 +380,7 @@ export function OwnerSetupPage() {
 
             {currentStep === 3 && (
               <div className="space-y-6">
-                <div className="space-y-1.5">
-                  <Label>Business / Company Name</Label>
-                  <Input value={formData.business.businessName} onChange={(e) => updateSection('business', 'businessName', e.target.value)} className="h-11 rounded-xl" />
-                </div>
+                {/* Business Name section removed */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>Owner / Manager Name</Label>

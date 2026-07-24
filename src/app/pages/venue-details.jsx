@@ -56,11 +56,8 @@ const gallery = [
   asset("/venues/turf-2.webp"),
   asset("/venues/turf-3.webp"),
   asset("/venues/turf-4.webp"),
-  "https://images.unsplash.com/photo-1592709823125-a191f07a2a5e?w=600&q=80",
-  "https://images.unsplash.com/photo-1519766304817-4f37bda74a27?w=600&q=80",
-  "https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=600&q=80",
-  "https://images.unsplash.com/photo-1534158914592-062992fbe900?w=600&q=80",
-  "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600&q=80",
+  asset("/venues/turf-5.webp"),
+  asset("/venues/turf-6.webp"),
 ];
 
 const marqueeVerticalStyle = `
@@ -938,16 +935,7 @@ export function VenueDetails() {
                       Reserve Slot
                     </h3>
                   </div>
-                  <div className="text-right">
-                    <p
-                      className={cn(
-                        "text-[10px] font-bold uppercase tracking-wider",
-                        isDark ? "text-white/50" : "text-slate-500",
-                      )}
-                    >
-                      {playHours} hour{playHours > 1 ? "s" : ""} selected
-                    </p>
-                  </div>
+
                 </div>
 
                 {/* Step 1: Select Sport Pills */}
@@ -967,7 +955,7 @@ export function VenueDetails() {
                       Available Format
                     </span>
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:gap-4">
                     {["Football", "Cricket", "Basketball"].map((sp) => (
                       <button
                         key={sp}
@@ -1274,14 +1262,15 @@ export function VenueDetails() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 lg:gap-4">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
                     {timeSlots.map((slot) => {
                       const slotHour = slot.startHour;
                       const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
                       const overlaps = isOverlapping(slotHour);
                       const outOfBounds = isOutOfBounds(slotHour);
                       const cannotSelect = isBooked || overlaps || outOfBounds;
-                      const isSelected = getStartHour(startTime) === slotHour;
+                      const selectedStartHour = getStartHour(startTime);
+                      const isSelected = selectedStartHour !== null && slotHour >= selectedStartHour && slotHour < selectedStartHour + playHours;
                       const slotPrice = getSlotPrice(slotHour, playHours);
 
                       return (
@@ -1318,7 +1307,7 @@ export function VenueDetails() {
                                   : "text-slate-800",
                             )}
                           >
-                            {formatSlotRange(slotHour, playHours)}
+                            {formatSlotRange(slotHour, 1)}
                           </span>
 
                           {!cannotSelect && (
@@ -1445,11 +1434,11 @@ export function VenueDetails() {
                   >
                     <span
                       className={cn(
-                        "text-xs font-bold uppercase tracking-wider",
+                        "text-sm font-bold tracking-wider",
                         isDark ? "text-white" : "text-slate-900",
                       )}
                     >
-                      Total Payable:
+                      Total payable:
                     </span>
                     <span
                       className={cn(
@@ -1489,21 +1478,13 @@ export function VenueDetails() {
                     }
                   }}
                   className={cn(
-                    "group h-14 w-full sm:w-fit pl-6 pr-3 sm:ml-auto rounded-2xl font-extrabold text-xs uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-between gap-6 select-none",
+                    "group h-14 w-fit px-8 ml-auto rounded-2xl font-extrabold text-sm tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center select-none",
                     isDark
                       ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_8px_30px_rgba(109,255,59,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
                       : "bg-white text-emerald-600 border border-slate-200 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm hover:shadow-[0_8px_30px_rgba(5,150,105,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]",
                   )}
                 >
-                  <span className="translate-y-[0.5px]">Proceed to Payment</span>
-                  <div className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-300",
-                    isDark
-                      ? "bg-black/10 text-black group-hover:bg-[#6DFF3B]/20"
-                      : "bg-emerald-50 text-emerald-600 group-hover:bg-white group-hover:text-emerald-600 group-hover:scale-105"
-                  )}>
-                    <ArrowRight className="h-4.5 w-4.5 transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
-                  </div>
+                  <span className="translate-y-[0.5px]">Proceed to payment</span>
                 </Button>
               </CardContent>
             </Card>
