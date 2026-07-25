@@ -74,7 +74,7 @@ function CitySelector() {
           {city === "All" ? "All Areas" : city}
         </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 shrink-0 text-primary/80 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 shrink-0 text-black dark:text-white transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -233,13 +233,17 @@ export function Layout() {
           transition={{ duration: 0.22, ease: "easeOut" }}
           className={`flex-1 md:pb-0 ${
             hideMobileNav
-              ? "pb-[calc(76px+env(safe-area-inset-bottom))]"
+              ? "pb-0"
               : "pb-[calc(104px+env(safe-area-inset-bottom))]"
           }`}
         >
           <div
             className={
-              location.pathname.startsWith("/player-dashboard") || location.pathname.startsWith("/venues")
+              location.pathname.startsWith("/player-dashboard") ||
+              location.pathname.startsWith("/venues") ||
+              location.pathname.startsWith("/payment") ||
+              location.pathname.startsWith("/squad-booking") ||
+              location.pathname.startsWith("/booking-success")
                 ? "w-full"
                 : "px-4 py-5 md:px-6 md:py-6 lg:px-8 md:mx-auto md:max-w-7xl"
             }

@@ -43,6 +43,7 @@ const getBookingData = () => {
       const data = JSON.parse(saved);
       return {
         venue: data.venue,
+        image: data.image,
         location: "Powai, Mumbai",
         sport: data.sport,
         date: data.date,
@@ -174,6 +175,38 @@ export function Payment() {
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
+
+      // Save last booking details for booking-success page
+      const hasTeammates = teammates.length > 0;
+      const numPlayers = teammates.length + 1;
+      const finalPrice = total;
+      const costPer = hasTeammates ? Math.round(finalPrice / numPlayers) : finalPrice;
+
+      const successBookingData = {
+        paymentMode: hasTeammates ? "split" : "full",
+        costPerPlayer: costPer,
+        totalPrice: finalPrice,
+        selectedDate: formatBookingDate(booking.date),
+        startTime: booking.time,
+        playHours: 1,
+        venue: {
+          name: booking.venue,
+          location: `${booking.location}, Mumbai, Maharashtra`,
+        },
+        squadLobby: {
+          members: [
+            { id: "m1", name: "You (Host)", role: "host" },
+            ...teammates.map((name, idx) => ({
+              id: `m${idx + 2}`,
+              name,
+              role: "member",
+            })),
+          ],
+        },
+      };
+
+      sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(successBookingData));
+
       toast.success("Booking confirmed! Check your email for details.");
       navigate("/booking-success");
     }, 2000);
@@ -186,8 +219,9 @@ export function Payment() {
       "min-h-screen transition-colors duration-300 isolate",
       isDark ? "bg-[#060813] text-white" : "bg-slate-50 text-slate-900"
     )}>
-      <div className="mx-auto max-w-6xl px-4 py-6 pb-6 sm:px-6 lg:px-8 lg:py-8 lg:pb-8">
-        <Button
+      <div className="mx-auto max-w-6xl px-0 md:px-6 py-6 pb-6 md:py-8 md:pb-8">
+        <div className="px-4 md:px-0">
+          <Button
           variant="ghost"
           className={cn(
             "mb-6 -ml-2 inline-flex gap-2 rounded-full border px-4 py-2 cursor-pointer transition-all",
@@ -293,12 +327,13 @@ export function Payment() {
             })}
           </div>
         </div>
+      </div>
 
-        <div className="mt-8 grid gap-8 grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_390px]">
+        <div className="mt-8 grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_390px]">
           <div className="space-y-6 order-2 lg:order-1">
             <Card className={cn(
-              "rounded-[28px] border overflow-hidden backdrop-blur-xl transition-all duration-300",
-              isDark ? "border-white/10 bg-[#101216]/60 shadow-2xl" : "border-slate-200 bg-white shadow-md"
+              "rounded-none border-x-0 md:rounded-[28px] md:border overflow-hidden backdrop-blur-xl transition-all duration-300 shadow-none md:shadow-md",
+              isDark ? "border-y-white/10 bg-[#101216]/60 md:shadow-2xl" : "border-y-slate-200 bg-white"
             )}>
               <CardHeader className={cn(
                 "border-b px-6 py-5",
@@ -659,8 +694,8 @@ export function Payment() {
             </Card>
 
             <Card className={cn(
-              "rounded-[28px] border overflow-hidden backdrop-blur-xl transition-all duration-300",
-              isDark ? "border-white/10 bg-[#101216]/60" : "border-slate-200 bg-white"
+              "rounded-none border-x-0 md:rounded-[28px] md:border overflow-hidden backdrop-blur-xl transition-all duration-300 shadow-none md:shadow-md",
+              isDark ? "border-y-white/10 bg-[#101216]/60" : "border-y-slate-200 bg-white"
             )}>
               <CardContent className="space-y-4 p-6">
                 <div className="flex items-center gap-2">
@@ -710,17 +745,16 @@ export function Payment() {
 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start order-1 lg:order-2">
             <Card className={cn(
-              "overflow-hidden rounded-[28px] border shadow-2xl transition-colors duration-300",
-              isDark ? "border-white/10 bg-[#101216]/60" : "border-slate-200 bg-white"
+              "overflow-hidden rounded-none border-x-0 md:rounded-[28px] md:border shadow-none md:shadow-2xl transition-colors duration-300",
+              isDark ? "border-y-white/10 bg-[#101216]/60" : "border-y-slate-200 bg-white"
             )}>
               <div className="relative aspect-[16/10] overflow-hidden">
                 <ImageWithFallback
-                  src={asset("/venues/turf-1.webp")}
+                  src={booking.image || asset("/venues/turf-1.webp")}
                   alt={booking.venue}
                   className="h-full w-full object-cover"
                 />
 
-                <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.08),rgba(5,5,5,0.82))]" />
                 <div className={cn(
                   "absolute left-4 top-4 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider",
                   isDark
@@ -841,16 +875,13 @@ export function Payment() {
                     onClick={handlePayment}
                     disabled={isProcessing}
                     className={cn(
-                      "group h-14 w-fit px-10 mx-auto rounded-full font-extrabold text-sm uppercase tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center gap-3 select-none",
+                      "group h-14 w-fit px-10 mx-auto rounded-2xl font-extrabold text-sm transition-all duration-300 cursor-pointer flex items-center justify-center select-none",
                       isDark
-                        ? "bg-gradient-to-r from-[#6DFF3B] to-[#4ade80] text-black hover:from-[#86ff60] hover:to-[#55ef6a] shadow-[0_4px_20px_rgba(109,255,59,0.25)] hover:shadow-[0_8px_30px_rgba(109,255,59,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
-                        : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-[0_4px_20px_rgba(5,150,105,0.2)] hover:shadow-[0_8px_30px_rgba(5,150,105,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+                        ? "bg-transparent border-2 border-[#6DFF3B] text-white hover:border-emerald-400 hover:text-white hover:bg-[#6DFF3B]/5 shadow-[0_0_15px_rgba(109,255,59,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+                        : "bg-transparent border-2 border-emerald-600 text-black hover:border-emerald-800 hover:text-black hover:bg-emerald-50 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
                     )}
                   >
-                    <span>{isProcessing ? "Processing..." : "Complete booking"}</span>
-                    {!isProcessing && (
-                      <ArrowRight className="h-4.5 w-4.5 transition-transform duration-300 ease-out group-hover:translate-x-1.5" />
-                    )}
+                    <span>{isProcessing ? "Processing..." : "Complete Booking"}</span>
                   </Button>
 
                   <p className={cn(
@@ -890,13 +921,13 @@ export function Payment() {
               onClick={handlePayment}
               disabled={isProcessing}
               className={cn(
-                "group h-11 w-fit px-6 rounded-full font-extrabold text-xs uppercase tracking-wider transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 select-none",
+                "group h-11 w-fit px-6 rounded-xl font-extrabold text-xs transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 select-none",
                 isDark
-                  ? "bg-gradient-to-r from-[#6DFF3B] to-[#4ade80] text-black hover:from-[#86ff60] hover:to-[#55ef6a] shadow-[0_3px_15px_rgba(109,255,59,0.2)] hover:shadow-[0_6px_22px_rgba(109,255,59,0.35)] active:scale-[0.97]"
-                  : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-500 hover:to-teal-500 shadow-[0_3px_15px_rgba(5,150,105,0.15)] hover:shadow-[0_6px_22px_rgba(5,150,105,0.28)] active:scale-[0.97]"
+                  ? "bg-transparent border-2 border-[#6DFF3B] text-white hover:border-emerald-400 hover:text-white hover:bg-[#6DFF3B]/5 shadow-[0_0_12px_rgba(109,255,59,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.25)] active:scale-[0.97]"
+                  : "bg-transparent border-2 border-emerald-600 text-black hover:border-emerald-800 hover:text-black hover:bg-emerald-50 active:scale-[0.97]"
               )}
             >
-              <span>{isProcessing ? "Processing..." : "Pay now"}</span>
+              <span>{isProcessing ? "Processing..." : "Pay Now"}</span>
             </Button>
           </div>
         </div>

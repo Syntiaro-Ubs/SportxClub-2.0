@@ -178,7 +178,7 @@ export function MobileAppBar() {
                         {city === "All" ? "All Areas" : city}
                       </span>
                       <ChevronDown
-                        className="h-3 w-3 shrink-0 text-primary/80 transition-transform duration-200"
+                        className="h-3 w-3 shrink-0 text-black dark:text-white transition-transform duration-200"
                       />
                     </button>
                   }

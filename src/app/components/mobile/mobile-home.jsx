@@ -13,6 +13,10 @@ import {
   Star,
   Trophy,
   Waves,
+  ShieldCheck,
+  CreditCard,
+  Zap,
+  Headset,
 } from "lucide-react";
 
 import { Badge } from "../ui/badge";
@@ -22,6 +26,8 @@ import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { cn } from "../ui/utils";
 import { MobileAppBar, MobileBottomNav } from "./mobile-chrome";
 import { useAuth } from "../../providers/auth-provider";
+import { AppDownloadCTA } from "../home/AppDownloadCTA";
+import { GlobalFooter } from "../layout/GlobalFooter";
 
 const asset = (path) => `/assets${path}`;
 
@@ -87,6 +93,53 @@ const sportsCategories = [
   },
 ];
 
+const offers = [
+  {
+    title: "Early bird cashback",
+    value: "Flat 15% off",
+    description: "Use BOOKFIRST before 11 AM and save on select weekday slots.",
+    tag: "Limited time",
+    tint: "from-emerald-500/10 to-emerald-500/5 dark:from-emerald-500/20 dark:to-emerald-500/5",
+  },
+  {
+    title: "Tournament starter pack",
+    value: "Free listing",
+    description: "Launch your first event with verified venue discovery and bracket tools.",
+    tag: "Organizer offer",
+    tint: "from-blue-500/10 to-blue-500/5 dark:from-blue-500/20 dark:to-blue-500/5",
+  },
+  {
+    title: "Refund-safe booking",
+    value: "Easy cancellation",
+    description: "Clear refund rules, visible before payment, with trusted support.",
+    tag: "Trusted",
+    tint: "from-purple-500/10 to-purple-500/5 dark:from-purple-500/20 dark:to-purple-500/5",
+  },
+];
+
+const whyCards = [
+  {
+    title: "Verified Venues",
+    description: "Trusted venues with exact amenities and real-time availability.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Secure Payments",
+    description: "100% secure checkouts with direct refund policies.",
+    icon: CreditCard,
+  },
+  {
+    title: "Instant Booking",
+    description: "Find a court, choose a slot, and secure booking in seconds.",
+    icon: Zap,
+  },
+  {
+    title: "24x7 Support",
+    description: "Dedicated assistance whenever you need it.",
+    icon: Headset,
+  },
+];
+
 const nearbyTurfs = [
   {
     id: 4,
@@ -132,24 +185,6 @@ const tournaments = [
     date: "26 Jun",
     prize: "Registration closing",
     image: asset("/tournaments/tournament-3-cover.webp"),
-  },
-];
-
-const offers = [
-  {
-    title: "Early bird cashback",
-    copy: "Book your first weekend slot and get instant savings on select venues.",
-    tint: "from-primary/20 to-primary/5",
-  },
-  {
-    title: "Tournament starter pack",
-    copy: "Launch a league with verified venues, live registrations, and smooth check-in.",
-    tint: "from-emerald-500/20 to-emerald-500/5",
-  },
-  {
-    title: "Refund-safe booking",
-    copy: "Clear booking policies, trusted payments, and easy cancellation in one flow.",
-    tint: "from-lime-500/20 to-lime-500/5",
   },
 ];
 
@@ -391,7 +426,80 @@ export function MobileHomePage() {
   const firstName = currentUser?.fullName ? currentUser.fullName.split(" ")[0] : "Rohan";
   const displayCity = currentUser?.city || "Mumbai Central";
 
-  // Sports categories use Framer Motion marquee for infinite auto-scrolling
+  const scrollRef = useRef(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const isDragging = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const slider = scrollRef.current;
+    if (!slider) return;
+
+    let autoScrollId;
+    const scrollSpeed = 0.5; // Pixels per frame
+    let scrollPos = slider.scrollLeft;
+
+    const scrollStep = () => {
+      if (!slider) return;
+      scrollPos += scrollSpeed;
+      const maxScroll = slider.scrollWidth / 2;
+      if (maxScroll > 100 && scrollPos >= maxScroll) {
+        scrollPos -= maxScroll;
+      }
+      slider.scrollLeft = Math.floor(scrollPos);
+      autoScrollId = requestAnimationFrame(scrollStep);
+    };
+
+    if (!isPaused) {
+      scrollPos = slider.scrollLeft;
+      autoScrollId = requestAnimationFrame(scrollStep);
+    }
+
+    return () => {
+      cancelAnimationFrame(autoScrollId);
+    };
+  }, [isPaused]);
+
+  const handleMouseDown = (e) => {
+    isDown.current = true;
+    isDragging.current = false;
+    startX.current = e.pageX - scrollRef.current.offsetLeft;
+    scrollLeft.current = scrollRef.current.scrollLeft;
+    setIsPaused(true);
+  };
+
+  const handleMouseLeave = () => {
+    isDown.current = false;
+    setIsPaused(false);
+  };
+
+  const handleMouseUp = () => {
+    isDown.current = false;
+    setTimeout(() => {
+      setIsPaused(false);
+    }, 100);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDown.current) return;
+    e.preventDefault();
+    isDragging.current = true;
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX.current) * 1.5;
+    scrollRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  const handleTouchStart = () => {
+    setIsPaused(true);
+  };
+
+  const handleTouchEnd = () => {
+    setTimeout(() => {
+      setIsPaused(false);
+    }, 100);
+  };
 
   const bgImages = [
     "/assets/hero/slider-1.jpg",
@@ -412,9 +520,9 @@ export function MobileHomePage() {
     <div className="theme-adaptive min-h-dvh bg-background text-foreground">
       <MobileAppBar />
 
-      <main className="pb-[calc(108px+env(safe-area-inset-bottom))]">
-        <div className="space-y-6 px-4 pb-4 pt-0">
-          <div className="sticky top-16 z-40">
+      <div>
+        <div className="space-y-4 px-4 pb-4 pt-0">
+          <div className="relative z-10">
             <SearchBar />
           </div>
 
@@ -449,18 +557,31 @@ export function MobileHomePage() {
             </div>
           </motion.section>
 
-          <section className="space-y-3 sports-categories-container">
+          <section className="space-y-2 sports-categories-container">
             <SectionHeader title="Sports categories" action="More" />
             <div className="relative w-full">
-              <div className="flex overflow-x-auto snap-x snap-mandatory gap-2 pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {sportsCategories.map((item, index) => (
+              <div
+                ref={scrollRef}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                className="flex overflow-x-auto gap-2 pb-4 select-none cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {[...sportsCategories, ...sportsCategories].map((item, index) => (
                   <motion.button
                     key={`${item.name}-${index}`}
-                    onClick={() => navigate("/venues", { state: { sport: item.name } })}
+                    onClick={() => {
+                      if (!isDragging.current) {
+                        navigate("/venues", { state: { sport: item.name } });
+                      }
+                    }}
                     whileTap={{ scale: 0.96 }}
-                    className="flex w-[calc(25%-6px)] min-w-[calc(25%-6px)] shrink-0 snap-start flex-col items-center gap-1 group cursor-pointer border-0 bg-transparent"
+                    className="flex w-[calc(25%-6px)] min-w-[calc(25%-6px)] shrink-0 flex-col items-center gap-1 group cursor-pointer border-0 bg-transparent pointer-events-auto"
                   >
-                    <span className="flex w-full aspect-square max-w-[90px] items-center justify-center rounded-[20px] transition-all border-0 bg-transparent">
+                    <span className="flex w-full aspect-square max-w-[90px] items-center justify-center rounded-[20px] transition-all border-0 bg-transparent pointer-events-none">
                       <span className="flex w-[95%] aspect-square overflow-hidden rounded-xl relative border-0 bg-transparent">
                         <ImageWithFallback
                           src={item.image}
@@ -471,7 +592,7 @@ export function MobileHomePage() {
                         />
                       </span>
                     </span>
-                    <span className="text-center text-[0.75rem] md:text-[0.8rem] leading-tight text-muted-foreground truncate w-full px-0.5">
+                    <span className="text-center text-[0.75rem] md:text-[0.8rem] leading-tight text-muted-foreground truncate w-full px-0.5 pointer-events-none">
                       {item.name}
                     </span>
                   </motion.button>
@@ -480,7 +601,41 @@ export function MobileHomePage() {
             </div>
           </section>
 
-          <section className="space-y-3">
+          {/* Exclusive Offers Section */}
+          <section className="space-y-2">
+            <SectionHeader title="Exclusive offers" />
+            <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {offers.map((offer, index) => (
+                <motion.article
+                  key={`${offer.title}-${index}`}
+                  whileTap={{ scale: 0.985 }}
+                  className={cn(
+                    "min-w-[85%] rounded-[24px] border border-border/50 bg-gradient-to-br p-5 shadow-xs snap-center flex flex-col justify-between gap-4",
+                    offer.tint
+                  )}
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] uppercase font-extrabold tracking-widest text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">
+                        {offer.tag}
+                      </span>
+                      <span className="text-xs font-black text-foreground">{offer.value}</span>
+                    </div>
+                    <h3 className="mt-3 text-base font-bold text-foreground leading-snug">{offer.title}</h3>
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{offer.description}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="h-9 w-fit rounded-full border-primary/20 bg-background/50 hover:bg-primary hover:text-primary-foreground text-xs font-semibold px-4 cursor-pointer mt-1"
+                  >
+                    Claim Offer
+                  </Button>
+                </motion.article>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-2">
             <SectionHeader title="Nearby turfs" />
             <div className="space-y-4">
               {nearbyTurfs.map((venue) => (
@@ -499,7 +654,7 @@ export function MobileHomePage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                       <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[0.65rem] font-bold text-foreground backdrop-blur-md shadow-sm border border-border/50">
-                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                        <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
                         4.8
                       </div>
                     </div>
@@ -512,12 +667,12 @@ export function MobileHomePage() {
                           </Badge>
                           <span className="text-[0.7rem] font-bold text-foreground bg-muted/60 px-2 py-0.5 rounded-md">{venue.price}</span>
                         </div>
-                        
+
                         <h3 className="text-[1.05rem] font-bold text-foreground leading-tight line-clamp-1 mb-1">
                           {venue.name}
                         </h3>
                       </div>
-                      
+
                       <div className="flex items-center justify-between mt-auto">
                         <div className="flex items-center gap-1 text-[0.75rem] text-muted-foreground font-medium">
                           <MapPin className="h-3.5 w-3.5 text-primary/80" />
@@ -534,7 +689,7 @@ export function MobileHomePage() {
             </div>
           </section>
 
-          <section className="space-y-3">
+          <section className="space-y-2">
             <SectionHeader title="Popular tournaments" />
             <div className="relative overflow-hidden">
               <style dangerouslySetInnerHTML={{ __html: marqueeStyle }} />
@@ -545,46 +700,46 @@ export function MobileHomePage() {
                     whileTap={{ scale: 0.985 }}
                     className="w-[280px] shrink-0 overflow-hidden rounded-[24px] border border-border/60 bg-card shadow-[0_12px_28px_-22px_rgba(15,23,42,0.32)]"
                   >
-                  <div className="relative aspect-[16/10]">
-                    <ImageWithFallback
-                      src={item.image}
-                      alt={item.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-full w-full object-cover"
-                    />
+                    <div className="relative aspect-[16/10]">
+                      <ImageWithFallback
+                        src={item.image}
+                        alt={item.title}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover"
+                      />
 
-                    <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.04),rgba(5,5,5,0.68))]" />
-                    <Badge className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[0.65rem]  uppercase tracking-[0.18em] text-white backdrop-blur-md">
-                      Upcoming
-                    </Badge>
-                  </div>
-                  <div className="space-y-3 p-4">
-                    <div>
-                      <h3 className="text-base  text-foreground">
-                        {item.title}
-                      </h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {item.date}
-                      </p>
+                      <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.04),rgba(5,5,5,0.68))]" />
+                      <Badge className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/35 px-3 py-1 text-[0.65rem]  uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                        Upcoming
+                      </Badge>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm  text-primary">{item.prize}</p>
-                      <Button
-                        variant="ghost"
-                        className="h-10 rounded-full px-4 text-sm  text-foreground"
-                      >
-                        Join
-                      </Button>
+                    <div className="space-y-3 p-4">
+                      <div>
+                        <h3 className="text-base  text-foreground">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {item.date}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm  text-primary">{item.prize}</p>
+                        <Button
+                          variant="ghost"
+                          className="h-10 rounded-full px-4 text-sm  text-foreground"
+                        >
+                          Join
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </motion.article>
-              ))}
-            </div>
+                  </motion.article>
+                ))}
+              </div>
             </div>
           </section>
 
-          <section className="space-y-3">
+          <section className="space-y-2">
             <SectionHeader title="Recommended for you" />
             <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {recommended.map((item, index) => (
@@ -601,7 +756,7 @@ export function MobileHomePage() {
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/60 to-transparent" />
-                    
+
                     <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col justify-end h-full z-10">
                       <div className="mb-auto self-end">
                         <div className="flex h-7 w-7 items-center justify-center rounded-full bg-background/50 backdrop-blur-md border border-border/50 shadow-sm">
@@ -615,7 +770,7 @@ export function MobileHomePage() {
                         {item.name}
                       </h3>
                       <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium truncate">
-                        <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+                        <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
                         {item.detail}
                       </p>
                     </div>
@@ -627,7 +782,7 @@ export function MobileHomePage() {
 
 
 
-          <section className="space-y-3">
+          <section className="space-y-2">
             <SectionHeader title="Trending activities" />
             <div className="relative overflow-hidden">
               <motion.div
@@ -663,8 +818,36 @@ export function MobileHomePage() {
               </motion.div>
             </div>
           </section>
+
+          {/* Why Choose Us Section */}
+          <section className="space-y-2">
+            <SectionHeader title="Why Choose SportXClub" />
+            <div className="grid grid-cols-2 gap-3">
+              {whyCards.map((card, index) => {
+                const Icon = card.icon;
+                return (
+                  <div
+                    key={index}
+                    className="p-4 rounded-[22px] border border-border/50 bg-card/60 shadow-xs flex flex-col justify-between"
+                  >
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground mb-1">{card.title}</h4>
+                      <p className="text-[10px] leading-relaxed text-muted-foreground">{card.description}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* App Download Section */}
+          <AppDownloadCTA />
         </div>
-      </main>
+        <GlobalFooter />
+      </div>
 
       <MobileBottomNav activeTab="home" />
     </div>
