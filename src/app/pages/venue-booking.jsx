@@ -5,6 +5,26 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../components/ui/utils";
 import { Button } from "../components/ui/button";
 
+const getArrowClass = (items, side) => {
+  if (items.length <= 2) return "hidden";
+  
+  let responsiveClass = "absolute top-[40%] z-20 h-10 w-8 md:h-12 md:w-10 flex items-center justify-center active:scale-75 transition-all opacity-100 cursor-pointer";
+  
+  if (side === "left") {
+    responsiveClass += " left-1 md:-left-12 lg:-left-16";
+  } else {
+    responsiveClass += " right-1 md:-right-12 lg:-right-16";
+  }
+  
+  if (items.length === 3) {
+    responsiveClass += " lg:hidden";
+  } else if (items.length === 4) {
+    responsiveClass += " xl:hidden";
+  }
+  
+  return responsiveClass;
+};
+
 const demoVenues = [
   { id: 1, badge: "TOP RATED", rating: 4.7, sports: "FOOTBALL", name: "Andheri Football Arena", location: "Andheri, Mumbai", image: "/assets/venues/turf-1.webp" },
   { id: 2, badge: "FEATURED", rating: 4.7, sports: "CRICKET", name: "Andheri Cricket Box", location: "Andheri, Mumbai", image: "/assets/venues/new_cricket_turf.png" },
@@ -300,6 +320,9 @@ const demoVenues = [
   { id: 292, badge: "PROMOTED", rating: 4.4, sports: "LAWN TENNIS", name: "Hinjewadi Lawn tennis Arena", location: "Hinjewadi, Pune", image: "/assets/venues/new_tennis_turf.png" },
   { id: 293, badge: "TOP RATED", rating: 4.5, sports: "VOLLEYBALL", name: "Hinjewadi Volleyball Arena", location: "Hinjewadi, Pune", image: "/assets/venues/new_volleyball_turf.png" },
   { id: 294, badge: "NEW", rating: 4.3, sports: "PADEL", name: "Hinjewadi Padel Arena", location: "Hinjewadi, Pune", image: "/assets/venues/turf-4.webp" },
+  { id: 451, badge: "TOP RATED", rating: 4.8, sports: "CRICKET", name: "Hinjewadi Sports Hub - Pitch B", location: "Hinjewadi, Pune", image: "/assets/venues/new_cricket_turf_2.png" },
+  { id: 452, badge: "PROMOTED", rating: 4.7, sports: "CRICKET", name: "Grand Arena Cricket Box", location: "Hinjewadi, Pune", image: "/assets/venues/metro_sports_park_cricket.jpg" },
+  { id: 453, badge: "FEATURED", rating: 4.9, sports: "CRICKET", name: "Lords Indoor Cricket Turf", location: "Hinjewadi, Pune", image: "/assets/venues/turf-2.webp" },
   { id: 295, badge: "FEATURED", rating: 4.4, sports: "FOOTBALL", name: "Kothrud Football Arena", location: "Kothrud, Pune", image: "/assets/venues/turf-1.webp" },
   { id: 296, badge: "TOP RATED", rating: 4.4, sports: "CRICKET", name: "Kothrud Cricket Box", location: "Kothrud, Pune", image: "/assets/venues/turf-2.webp" },
   { id: 297, badge: "FEATURED", rating: 4.8, sports: "BADMINTON", name: "Kothrud Badminton Arena", location: "Kothrud, Pune", image: "/assets/venues/new_badminton_turf.png" },
@@ -601,10 +624,10 @@ export function VenueBooking() {
     return (
       <div
         key={venue.id}
-        className="w-[280px] sm:w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)] xl:w-[calc(25%-9px)] flex-shrink-0 snap-start bg-white dark:bg-[#0f172a] rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-200 dark:border-slate-800 flex flex-col group cursor-pointer"
+        className="w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)] xl:w-[calc(25%-9px)] flex-shrink-0 snap-start bg-white dark:bg-[#0f172a] rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-200 dark:border-slate-800 flex flex-col group cursor-pointer"
         onClick={() => navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } })}
       >
-        <div className="relative h-[400px] w-full overflow-hidden">
+        <div className="relative h-[240px] sm:h-[350px] md:h-[400px] w-full overflow-hidden">
           <img
             src={venue.image}
             alt={venue.name}
@@ -614,26 +637,24 @@ export function VenueBooking() {
             }}
           />
 
-          {/* Top Badges Removed as per user request */}
-
           {/* Bottom Overlay & Text */}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-20 pb-2 px-3 z-10 flex items-end justify-between gap-2">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-2.5 px-2.5 z-10 flex items-end justify-between gap-1">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2.5 mb-1.5">
-                <p className="text-[#39FF14] text-[10px] font-extrabold tracking-widest capitalize drop-shadow-sm">
-                  {venue.sports.toLowerCase()}
-                </p>
-                <div className="flex items-center gap-1 text-[11px] text-white font-semibold shrink-0">
-                  <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+              <div className="flex items-center gap-2.5 mb-1.5 w-full whitespace-nowrap text-[9px] sm:text-[10px] leading-none">
+                <span className="text-[#39FF14] font-extrabold tracking-wider uppercase drop-shadow-sm shrink-0">
+                  {venue.sports}
+                </span>
+                <div className="flex items-center gap-0.5 text-white font-semibold shrink-0">
+                  <Star className="w-2.5 h-2.5 fill-emerald-500 text-emerald-500 shrink-0" />
                   <span>{venue.rating.toFixed(1)}</span>
-                  <span className="text-white/80 text-[9px] font-medium ml-0.5">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)} Reviews)</span>
+                  <span className="text-white/70 font-medium ml-0.5">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)})</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5 w-full">
-                <h3 className="text-white font-bold text-[14px] leading-tight truncate">
+              <div className="flex flex-col gap-0.5 w-full">
+                <h3 className="text-white font-bold text-[12px] sm:text-[14px] leading-snug line-clamp-2">
                   {venue.name}
                 </h3>
-                <span className="text-white/80 text-[11px] font-medium truncate shrink-0">
+                <span className="text-white/80 text-[9px] sm:text-[11px] font-medium truncate">
                   {venue.location}
                 </span>
               </div>
@@ -643,7 +664,7 @@ export function VenueBooking() {
                 e.stopPropagation();
                 navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
               }}
-              className="bg-transparent text-white border border-white/50 hover:bg-white/10 hover:border-white font-semibold rounded-lg h-8 px-3 text-[11px] transition-colors shadow-none shrink-0"
+              className="bg-transparent text-white border border-white/40 hover:bg-white/10 hover:border-white font-bold rounded-lg h-7 px-2 text-[10px] sm:text-[11px] transition-colors shadow-none shrink-0"
             >
               Book Slot
             </Button>
@@ -679,59 +700,59 @@ export function VenueBooking() {
                 className="absolute left-0 top-full mt-3 w-[280px] z-50 origin-top-left"
               >
                 <div className="w-full bg-white/95 dark:bg-[#0f172a]/95 rounded-[24px] border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-[0_20px_60px_rgb(0,0,0,0.15)] backdrop-blur-2xl">
-                <div className="flex flex-col gap-5 w-full">
-                  
-                  <div className="w-full">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Sport</h4>
-                    <CustomSelect
-                      value={selectedSport}
-                      onChange={(val) => setSelectedSport(val)}
-                      options={sportsList}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Price</h4>
-                    <CustomSelect
-                      value={sortByPrice}
-                      onChange={(val) => {
-                        setSortByPrice(val);
-                        setSortField("Price");
-                      }}
-                      options={["Low to High", "High to Low"]}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Rating</h4>
-                    <CustomSelect
-                      value={sortByRating}
-                      onChange={(val) => {
-                        setSortByRating(val);
-                        setSortField("Rating");
-                      }}
-                      options={["High to Low", "Low to High"]}
-                    />
-                  </div>
+                  <div className="flex flex-col gap-5 w-full">
 
-                  <Button
-                    onClick={() => {
-                      setSelectedSport("All Sports");
-                      setSelectedLocation("All Cities");
-                      setSortByPrice("Low to High");
-                      setSortByRating("High to Low");
-                      setSortField("Price");
-                      localStorage.setItem("preferred-city", "All Cities");
-                      window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
-                    }}
-                    className="w-full bg-slate-100 hover:bg-slate-200/80 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-slate-300 border border-slate-200/60 dark:border-white/[0.05] rounded-xl h-[42px] font-bold shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 opacity-80" />
-                    Reset Filters
-                  </Button>
+                    <div className="w-full">
+                      <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Sport</h4>
+                      <CustomSelect
+                        value={selectedSport}
+                        onChange={(val) => setSelectedSport(val)}
+                        options={sportsList}
+                      />
+                    </div>
+                    <div className="w-full">
+                      <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Price</h4>
+                      <CustomSelect
+                        value={sortByPrice}
+                        onChange={(val) => {
+                          setSortByPrice(val);
+                          setSortField("Price");
+                        }}
+                        options={["Low to High", "High to Low"]}
+                      />
+                    </div>
+                    <div className="w-full">
+                      <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Rating</h4>
+                      <CustomSelect
+                        value={sortByRating}
+                        onChange={(val) => {
+                          setSortByRating(val);
+                          setSortField("Rating");
+                        }}
+                        options={["High to Low", "Low to High"]}
+                      />
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        setSelectedSport("All Sports");
+                        setSelectedLocation("All Cities");
+                        setSortByPrice("Low to High");
+                        setSortByRating("High to Low");
+                        setSortField("Price");
+                        localStorage.setItem("preferred-city", "All Cities");
+                        window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
+                      }}
+                      className="w-full bg-slate-100 hover:bg-slate-200/80 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-slate-300 border border-slate-200/60 dark:border-white/[0.05] rounded-xl h-[42px] font-bold shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 opacity-80" />
+                      Reset Filters
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Content */}
@@ -753,12 +774,14 @@ export function VenueBooking() {
 
           {/* Recommended Venues Slider */}
           <div className="relative group/section">
-            <button
-              onClick={scrollLeft1}
-              className="hidden md:flex absolute -left-8 sm:-left-12 lg:-left-16 top-[40%] z-20 h-10 w-10 md:h-12 md:w-12 items-center justify-center text-slate-800 dark:text-white hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer drop-shadow-md"
-            >
-              <ChevronLeft className="h-8 w-8 md:h-10 md:w-10 stroke-[3]" />
-            </button>
+            {premiumVenues.length > 2 && (
+              <button
+                onClick={scrollLeft1}
+                className={getArrowClass(premiumVenues, "left")}
+              >
+                <ChevronLeft strokeWidth={4} className="h-7 w-7 md:h-9 md:w-9 text-white drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.85)]" />
+              </button>
+            )}
 
             <div
               ref={scrollRef1}
@@ -773,12 +796,14 @@ export function VenueBooking() {
               )}
             </div>
 
-            <button
-              onClick={scrollRight1}
-              className="hidden md:flex absolute -right-8 sm:-right-12 lg:-right-16 top-[40%] z-20 h-10 w-10 md:h-12 md:w-12 items-center justify-center text-slate-800 dark:text-white hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer drop-shadow-md"
-            >
-              <ChevronRight className="h-8 w-8 md:h-10 md:w-10 stroke-[3]" />
-            </button>
+            {premiumVenues.length > 2 && (
+              <button
+                onClick={scrollRight1}
+                className={getArrowClass(premiumVenues, "right")}
+              >
+                <ChevronRight strokeWidth={4} className="h-7 w-7 md:h-9 md:w-9 text-white drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.85)]" />
+              </button>
+            )}
           </div>
 
           {/* Explore Other Venues Header */}
@@ -792,12 +817,14 @@ export function VenueBooking() {
 
           {/* Explore Other Venues Slider */}
           <div className="relative group/section">
-            <button
-              onClick={scrollLeft2}
-              className="hidden md:flex absolute -left-8 sm:-left-12 lg:-left-16 top-[40%] z-20 h-10 w-10 md:h-12 md:w-12 items-center justify-center text-slate-800 dark:text-white hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer drop-shadow-md"
-            >
-              <ChevronLeft className="h-8 w-8 md:h-10 md:w-10 stroke-[3]" />
-            </button>
+            {otherVenues.length > 2 && (
+              <button
+                onClick={scrollLeft2}
+                className={getArrowClass(otherVenues, "left")}
+              >
+                <ChevronLeft strokeWidth={4} className="h-7 w-7 md:h-9 md:w-9 text-white drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.85)]" />
+              </button>
+            )}
 
             <div
               ref={scrollRef2}
@@ -828,12 +855,14 @@ export function VenueBooking() {
               )}
             </div>
 
-            <button
-              onClick={scrollRight2}
-              className="hidden md:flex absolute -right-8 sm:-right-12 lg:-right-16 top-[40%] z-20 h-10 w-10 md:h-12 md:w-12 items-center justify-center text-slate-800 dark:text-white hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer drop-shadow-md"
-            >
-              <ChevronRight className="h-8 w-8 md:h-10 md:w-10 stroke-[3]" />
-            </button>
+            {otherVenues.length > 2 && (
+              <button
+                onClick={scrollRight2}
+                className={getArrowClass(otherVenues, "right")}
+              >
+                <ChevronRight strokeWidth={4} className="h-7 w-7 md:h-9 md:w-9 text-white drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.85)]" />
+              </button>
+            )}
           </div>
         </div>
       </div>

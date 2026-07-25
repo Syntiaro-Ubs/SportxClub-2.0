@@ -47,20 +47,13 @@ export function BookingSuccess() {
   const [paidMemberIds, setPaidMemberIds] = useState(
     isSplit ? [hostId] : members.map(m => m.id)
   );
-  const paidMembers = members.filter(member => paidMemberIds.includes(member.id));
+  const paidMembers = members.filter(member => member.role === "host" && paidMemberIds.includes(member.id));
 
   // Simulate players payment completion after 10 seconds
   useEffect(() => {
     if (isSplit && paidMemberIds.length < members.length) {
       const timer = setTimeout(() => {
         setPaidMemberIds(members.map(m => m.id));
-        
-        // Find other members who transitioned to paid
-        const guestNames = members.filter(m => m.id !== hostId).map(m => m.name).join(", ");
-        toast.success(`${guestNames || "All team members"} paid their share!`, {
-          description: "Split billing is fully settled. Booking is 100% secured.",
-          duration: 5000,
-        });
       }, 10000); // 10 seconds
       return () => clearTimeout(timer);
     }
@@ -238,26 +231,65 @@ export function BookingSuccess() {
 
   return (
     <>
-      <Container className="py-12 flex flex-col items-center">
+      <Container className="pt-12 pb-4 md:pb-12 flex flex-col items-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, type: "spring" }}
         className="text-center space-y-6 max-w-lg w-full"
       >
-        <div className="flex justify-center">
-          <div className="h-24 w-24 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center text-green-600 shadow-xl shadow-green-500/10">
-            <CheckCircle2 className="h-14 w-14" />
-          </div>
+        <div className="flex justify-center relative">
+          {/* Ambient success glow background */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/10 dark:bg-[#6DFF3B]/5 rounded-full blur-3xl pointer-events-none" />
+          
+          {/* Animated premium glass badge */}
+          <motion.div
+            initial={{ scale: 0.5, rotate: -15 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+            className="relative h-24 w-24 flex items-center justify-center"
+          >
+            {/* Outer pulsing ring */}
+            <div className="absolute inset-0 rounded-full bg-emerald-500/10 dark:bg-[#6DFF3B]/10 animate-ping opacity-75" />
+            
+            {/* Layered border glow */}
+            <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 dark:from-[#6DFF3B] dark:to-emerald-400 opacity-20 blur-sm" />
+            
+            {/* Main glass coin */}
+            <div className="relative h-20 w-20 rounded-full bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/10 flex items-center justify-center shadow-xl shadow-emerald-500/10 dark:shadow-[#6DFF3B]/10">
+              <div className="h-14 w-14 rounded-full bg-emerald-500/10 dark:bg-[#6DFF3B]/10 flex items-center justify-center text-emerald-600 dark:text-[#6DFF3B]">
+                <CheckCircle2 className="h-9 w-9 stroke-[2.5px]" />
+              </div>
+            </div>
+          </motion.div>
         </div>
 
-        <div className="space-y-2">
-          <h1 className="text-4xl tracking-tight text-slate-900 dark:text-white font-bold">Booking Confirmed!</h1>
-          <p className="text-muted-foreground text-lg">
+        <div className="space-y-3 px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:bg-[#6DFF3B]/10 dark:text-[#6DFF3B] mb-2.5 border border-emerald-500/20 dark:border-[#6DFF3B]/20">
+              ⚡ Reservation Settled
+            </span>
+            <h1 className="text-3xl sm:text-4xl tracking-tight text-slate-900 dark:text-white font-black leading-tight">
+              Booking Confirmed!
+            </h1>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="text-slate-500 dark:text-white/60 text-sm sm:text-base max-w-md mx-auto leading-relaxed font-semibold"
+          >
             Your slot at{" "}
-            <span className="text-foreground font-semibold">{venueName}</span> has
-            been reserved.
-          </p>
+            <span className="text-emerald-700 dark:text-[#6DFF3B] font-extrabold underline decoration-emerald-500/30 dark:decoration-[#6DFF3B]/30 decoration-2 underline-offset-4">
+              {venueName}
+            </span>{" "}
+            has been successfully reserved.
+          </motion.p>
         </div>
 
         {/* Entry Pass / Ticket */}
@@ -384,14 +416,14 @@ export function BookingSuccess() {
         </div>
 
         <div className="pt-4 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-row gap-3 w-full">
             <Link to="/profile" className="flex-1">
-              <Button size="lg" className="w-full shadow-lg shadow-primary/20">
+              <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-[#6DFF3B] dark:text-[#6DFF3B] dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-[#6DFF3B]/5 transition-all duration-300">
                 Go to Profile
               </Button>
             </Link>
             <Link to="/venues" className="flex-1">
-              <Button size="lg" variant="secondary" className="w-full">
+              <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-[#6DFF3B] dark:text-[#6DFF3B] dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-[#6DFF3B]/5 transition-all duration-300">
                 Book Another Turf
               </Button>
             </Link>

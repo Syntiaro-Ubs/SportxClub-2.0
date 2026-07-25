@@ -35,6 +35,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { cn } from "../components/ui/utils";
+import { GlobalFooter } from "../components/layout/GlobalFooter";
 
 const asset = (path) => `/assets${path}`;
 
@@ -111,6 +112,38 @@ const reviewsList = [
     comment:
       "Great lighting and easy access. Parking was hassle-free and staff was very cooperative.",
   },
+  {
+    name: "Amit Verma",
+    rating: 3,
+    date: "3 weeks ago",
+    daysAgo: 21,
+    comment:
+      "The turf quality is good, but they should really improve the water dispenser and washroom facilities.",
+  },
+  {
+    name: "Siddharth Rao",
+    rating: 2,
+    date: "1 month ago",
+    daysAgo: 30,
+    comment:
+      "The court was double booked and we had to wait for 30 minutes. Customer support was slow in resolving the slot dispute.",
+  },
+  {
+    name: "Neha Gupta",
+    rating: 5,
+    date: "1 month ago",
+    daysAgo: 32,
+    comment:
+      "Superb experience! Highly recommended for weekend corporate matches. Booking was quick.",
+  },
+  {
+    name: "Rohan Das",
+    rating: 1,
+    date: "2 months ago",
+    daysAgo: 60,
+    comment:
+      "Extremely poor lighting! One of the floodlights was broken, making it impossible to play in the corners. Waste of money.",
+  }
 ];
 
 export function VenueDetails() {
@@ -159,6 +192,7 @@ export function VenueDetails() {
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [cancelledSlots, setCancelledSlots] = useState([]);
   const [sortBy, setSortBy] = useState("recent");
+  const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
 
   const timeSlots = [
     { startHour: 15, label: "03:00 PM", endLabel: "04:00 PM" },
@@ -275,16 +309,14 @@ export function VenueDetails() {
 
   // Date Quick Select Options
   const today = new Date();
-  const dateOptions = Array.from({ length: 4 }).map((_, idx) => {
+  const dateOptions = Array.from({ length: 2 }).map((_, idx) => {
     const d = new Date();
     d.setDate(today.getDate() + idx);
     const iso = d.toISOString().split("T")[0];
     const label =
       idx === 0
         ? "Today"
-        : idx === 1
-          ? "Tomorrow"
-          : d.toLocaleDateString("en-US", { weekday: "short", day: "numeric" });
+        : "Tomorrow";
     return { iso, label };
   });
 
@@ -462,7 +494,7 @@ export function VenueDetails() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-[1440px] px-4 pt-6 pb-2 sm:px-6 lg:px-8 lg:pt-8 lg:pb-6">
         {/* Bento Box Media Header Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-8">
           {/* Main Hero Photo (Spans 2 columns on desktop) */}
@@ -526,13 +558,13 @@ export function VenueDetails() {
                     "flex items-center gap-1 px-1 rounded-full",
                     isDark
                       ? "bg-transparent text-[#6DFF3B]"
-                      : "bg-transparent text-white",
+                      : "bg-transparent text-[#10B981]",
                   )}
                 >
                   <Star
                     className={cn(
                       "h-3.5 w-3.5 fill-current",
-                      isDark ? "text-[#6DFF3B]" : "text-white",
+                      isDark ? "text-[#6DFF3B]" : "text-[#10B981]",
                     )}
                   />
                   <span className="font-bold">
@@ -672,14 +704,12 @@ export function VenueDetails() {
                 )}
               >
                 <iframe
-                  width="100%"
-                  height="100%"
                   frameBorder="0"
                   style={{ border: 0 }}
                   src={`https://maps.google.com/maps?q=${encodeURIComponent(venue.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
                   allowFullScreen
                   title="Venue Google Map"
-                  className="w-full h-full border-0 transition-opacity duration-300"
+                  className="absolute -top-14 -left-14 w-[calc(100%+112px)] h-[calc(100%+112px)] border-0 transition-opacity duration-300"
                 />
               </div>
               <div
@@ -822,6 +852,7 @@ export function VenueDetails() {
                     // Default: recent
                     return a.daysAgo - b.daysAgo;
                   })
+                  .slice(0, visibleReviewsCount)
                   .map((rev, idx) => (
                     <div
                       key={idx}
@@ -863,16 +894,13 @@ export function VenueDetails() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-0.5">
-                          {Array.from({ length: rev.rating }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={cn(
-                                "h-3.5 w-3.5 fill-current",
-                                isDark ? "text-[#6DFF3B]" : "text-amber-500",
-                              )}
-                            />
-                          ))}
+                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 shrink-0">
+                          <span className={cn("text-[11px] font-extrabold", isDark ? "text-white" : "text-slate-800")}>
+                            {rev.rating.toFixed(1)}
+                          </span>
+                          <Star
+                            className="h-3 w-3 fill-emerald-500 text-emerald-500"
+                          />
                         </div>
                       </div>
                       <p
@@ -885,6 +913,40 @@ export function VenueDetails() {
                       </p>
                     </div>
                   ))}
+
+                {reviewsList.length > 3 && (
+                  <div className="flex justify-center pt-2">
+                    {visibleReviewsCount < reviewsList.length ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setVisibleReviewsCount((prev) => prev + 3)}
+                        className={cn(
+                          "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
+                          isDark
+                            ? "border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10 text-[#6DFF3B] bg-[#6DFF3B]/5"
+                            : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
+                        )}
+                      >
+                        Show More Reviews
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setVisibleReviewsCount(3)}
+                        className={cn(
+                          "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
+                          isDark
+                            ? "border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10 text-[#6DFF3B] bg-[#6DFF3B]/5"
+                            : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
+                        )}
+                      >
+                        Show Less Reviews
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1002,28 +1064,26 @@ export function VenueDetails() {
                       {formatDateLabel(selectedDate)}
                     </span>
                   </label>
-                  <div className="flex items-center gap-3 lg:gap-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4 flex-grow">
-                      {dateOptions.map((opt) => (
-                        <button
-                          key={opt.iso}
-                          type="button"
-                          onClick={() => setSelectedDate(opt.iso)}
-                          className={cn(
-                            "h-10 px-2 rounded-xl border text-[11px] font-bold transition-all cursor-pointer flex items-center justify-center w-full",
-                            selectedDate === opt.iso
-                              ? isDark
-                                ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
-                                : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
-                              : isDark
-                                ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
-                                : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-3 w-full">
+                    {dateOptions.slice(0, 2).map((opt) => (
+                      <button
+                        key={opt.iso}
+                        type="button"
+                        onClick={() => setSelectedDate(opt.iso)}
+                        className={cn(
+                          "h-10 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center flex-1",
+                          selectedDate === opt.iso
+                            ? isDark
+                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
+                              : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
+                            : isDark
+                              ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
+                              : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200",
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
 
                     {/* Calendar Icon Button */}
                     <div className="relative shrink-0">
@@ -1307,7 +1367,7 @@ export function VenueDetails() {
                                   : "text-slate-800",
                             )}
                           >
-                            {formatSlotRange(slotHour, 1)}
+                            {formatSlotRange(slotHour, 1).replace(/ PM -| AM -/g, " -")}
                           </span>
 
                           {!cannotSelect && (
@@ -1337,26 +1397,26 @@ export function VenueDetails() {
                                     : "text-emerald-600/70",
                             )}
                           >
-                            {cannotSelect ? (
-                              <>
-                                <span className="block">{isBooked ? "Booked" : "Unavailable"}</span>
-                                {isBooked && (
-                                  <>
-                                    <span className="block text-[7.5px] font-semibold opacity-80 mt-[2px] normal-case tracking-normal text-slate-500 dark:text-white/40">
-                                      Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
-                                    </span>
-                                    <div
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setCancelledSlots([...cancelledSlots, slotHour]);
-                                      }}
-                                      className="absolute bottom-1.5 right-1.5 px-2 py-0.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm"
-                                    >
-                                      CANCEL
-                                    </div>
-                                  </>
-                                )}
-                              </>
+                             {cannotSelect ? (
+                               <div className="flex flex-col items-center w-full">
+                                 <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
+                                 {isBooked && (
+                                   <div className="flex flex-col items-center mt-1 w-full gap-0.5">
+                                     <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white/50 leading-none">
+                                       Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
+                                     </span>
+                                     <div
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         setCancelledSlots([...cancelledSlots, slotHour]);
+                                       }}
+                                       className="px-1.5 py-0.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm mt-0.5"
+                                     >
+                                       CANCEL
+                                     </div>
+                                   </div>
+                                 )}
+                               </div>
                             ) : isSelected ? (
                               "Selected ✓"
                             ) : (
@@ -1453,6 +1513,7 @@ export function VenueDetails() {
 
                 {/* CTA Button */}
                 <Button
+                  variant="outline"
                   onClick={() => {
                     if (!currentUser) {
                       toast.error("Please sign in first to continue booking.");
@@ -1462,6 +1523,7 @@ export function VenueDetails() {
                         "sportxclub_booking",
                         JSON.stringify({
                           venue: venue.name,
+                          image: venue.image || gallery[0],
                           sport: selectedSport,
                           date: selectedDate,
                           time: formatSlotRange(
@@ -1478,10 +1540,10 @@ export function VenueDetails() {
                     }
                   }}
                   className={cn(
-                    "group h-14 w-fit px-8 ml-auto rounded-2xl font-extrabold text-sm tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center select-none",
+                    "group h-11 w-fit px-6 mx-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center select-none bg-transparent border-2",
                     isDark
-                      ? "bg-white text-black hover:bg-[#6DFF3B] hover:text-black shadow-[0_4px_20px_rgba(255,255,255,0.1)] hover:shadow-[0_8px_30px_rgba(109,255,59,0.45)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
-                      : "bg-white text-emerald-600 border border-slate-200 hover:border-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm hover:shadow-[0_8px_30px_rgba(5,150,105,0.35)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]",
+                      ? "border-[#6DFF3B] text-[#6DFF3B] hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97]"
+                      : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97]",
                   )}
                 >
                   <span className="translate-y-[0.5px]">Proceed to payment</span>
@@ -1491,6 +1553,7 @@ export function VenueDetails() {
           </div>
         </div>
       </div>
+      <GlobalFooter />
     </div>
   );
 }

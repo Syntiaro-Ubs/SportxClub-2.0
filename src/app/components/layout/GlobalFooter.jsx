@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Logo } from "../brand/Logo";
+import { cn } from "../ui/utils";
 
 export function GlobalFooter() {
   const { resolvedTheme } = useTheme();
@@ -12,6 +13,7 @@ export function GlobalFooter() {
   }, []);
 
   const isDark = !mounted || resolvedTheme !== "light";
+  const [failedSocials, setFailedSocials] = useState({});
 
   const columns = [
     {
@@ -85,15 +87,15 @@ export function GlobalFooter() {
   ];
 
   return (
-    <footer className={`w-full pt-16 pb-6 px-6 md:px-12 border-t mt-12 transition-all duration-300 text-left ${isDark
+    <footer className={`w-full pt-5 sm:pt-10 pb-5 sm:pb-6 px-6 md:px-12 border-t mt-4 sm:mt-8 transition-all duration-300 text-left ${isDark
       ? "bg-[#090D16] border-white/[0.05] text-white"
       : "bg-[#FBFBFA] border-slate-200 text-slate-800"
       }`}>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr] gap-10 items-start">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1.2fr] gap-5 lg:gap-8 items-start">
         {/* Left Column: Logo, description, and app badges */}
-        <div className="space-y-6 max-w-md">
+        <div className="space-y-2.5 sm:space-y-4 max-w-md">
           <Logo />
-          <p className={`text-sm leading-relaxed transition-colors duration-300 ${isDark ? "text-white/60" : "text-slate-650"
+          <p className={`text-xs leading-relaxed transition-colors duration-300 ${isDark ? "text-white/60" : "text-slate-650"
             }`}>
             SportXClub is the premium way to discover, book, and compete across the best sports venues and tournaments.
           </p>
@@ -102,17 +104,17 @@ export function GlobalFooter() {
 
         {/* Platform & For Business Columns */}
         {columns.map((column) => (
-          <div key={column.title} className="space-y-5">
-            <h4 className={`text-[11px] uppercase font-bold tracking-[0.24em] ${isDark ? "text-white/50" : "text-slate-400"
+          <div key={column.title} className="space-y-2 sm:space-y-3">
+            <h4 className={`text-[10px] uppercase font-bold tracking-[0.24em] ${isDark ? "text-white/50" : "text-slate-400"
               }`}>
               {column.title}
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-1.5 sm:space-y-2">
               {column.links.map((link) => (
                 <li key={link.label}>
                   <Link
                     to={link.to}
-                    className={`text-sm transition-colors ${isDark ? "text-white/70 hover:text-[#6DFF3B]" : "text-slate-600 hover:text-emerald-600"
+                    className={`text-xs transition-colors ${isDark ? "text-white/70 hover:text-[#6DFF3B]" : "text-slate-600 hover:text-emerald-600"
                       }`}
                   >
                     {link.label}
@@ -124,52 +126,60 @@ export function GlobalFooter() {
         ))}
 
         {/* Social Column */}
-        <div className="space-y-5">
-          <h4 className={`text-[11px] uppercase font-bold tracking-[0.24em] ${isDark ? "text-white/50" : "text-slate-400"
-            }`}>
+        <div className="space-y-2 sm:space-y-3">
+            <h4 className={`text-[10px] uppercase font-bold tracking-[0.24em] ${isDark ? "text-white/50" : "text-slate-400"
+              }`}>
             Social
           </h4>
-          <div className="flex flex-wrap gap-3">
-            {socialLinks.map((social) => (
-              <a
-                key={social.label}
-                href={`#${social.label.toLowerCase()}`}
-                className={`h-11 w-11 rounded-full flex items-center justify-center border transition-all hover:scale-105 active:scale-95 relative overflow-hidden ${isDark
-                  ? "bg-white/[0.04] border-white/[0.08] text-white hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10 hover:text-[#6DFF3B]"
-                  : "bg-white border-slate-200 text-emerald-650 hover:border-emerald-500/30 hover:bg-emerald-50 hover:text-emerald-600"
-                  }`}
-                aria-label={social.label}
-              >
-                <img
-                  src={social.icon}
-                  alt={social.label}
-                  className="h-5 w-5 opacity-80 absolute inset-0 m-auto"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                  }}
-                />
-                {social.fallback}
-              </a>
-            ))}
+          <div className="flex flex-wrap gap-2.5">
+            {socialLinks.map((social) => {
+              const hasFailed = failedSocials[social.label];
+              return (
+                <a
+                  key={social.label}
+                  href={`#${social.label.toLowerCase()}`}
+                  className={`h-11 w-11 rounded-full flex items-center justify-center border transition-all hover:scale-105 active:scale-95 relative overflow-hidden ${isDark
+                    ? "bg-white/[0.04] border-white/[0.08] text-white hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10 hover:text-[#6DFF3B]"
+                    : "bg-white border-slate-200 text-emerald-650 hover:border-emerald-500/30 hover:bg-emerald-50 hover:text-emerald-600"
+                    }`}
+                  aria-label={social.label}
+                >
+                  {!hasFailed ? (
+                    <img
+                      src={social.icon}
+                      alt={social.label}
+                      className="h-5 w-5 opacity-80 absolute inset-0 m-auto"
+                      onError={() => {
+                        setFailedSocials((prev) => ({ ...prev, [social.label]: true }));
+                      }}
+                    />
+                  ) : (
+                    social.fallback
+                  )}
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      <div className={`max-w-7xl mx-auto border-t mt-8 pt-4 flex flex-col md:flex-row items-center justify-between text-sm transition-colors duration-300 ${isDark ? "border-white/[0.08] text-white/40" : "border-slate-200 text-slate-500"
+      <div className={`max-w-7xl mx-auto border-t mt-6 pt-4 flex flex-row items-center justify-between text-[8.5px] sm:text-[10px] transition-colors duration-300 ${isDark ? "border-white/[0.08] text-white/65" : "border-slate-200 text-slate-700"
         }`}>
-        <div className="hidden md:block flex-1" />
-        <p className="flex-1 text-[10px] md:text-xs font-light text-center order-2 md:order-1 mt-3 md:mt-0">
+        <p className="font-light text-left text-[7.5px] sm:text-[9px] tracking-wide">
           Powered By{" "}
           <a
             href="https://www.syntiaro.com/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-teal-500 font-normal hover:text-teal-400 transition-colors"
+            className={cn(
+              "font-medium transition-colors",
+              isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-700 hover:text-teal-800"
+            )}
           >
             SYNTIARO
           </a>
         </p>
-        <div className="flex-1 flex gap-6 justify-center md:justify-end order-1 md:order-2">
+        <div className="flex gap-3 sm:gap-4 justify-end">
           <Link to="/" className={`hover:underline ${isDark ? "hover:text-white" : "hover:text-slate-900"}`}>
             Privacy
           </Link>

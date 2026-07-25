@@ -489,7 +489,7 @@ export function Navbar() {
                     <span className="truncate max-w-[120px] leading-none">
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80 text-black dark:text-white" />
                   </button>
                 }
               />
@@ -1084,7 +1084,7 @@ export function HeroSection() {
                           </span>
                         </div>
 
-                        <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-extrabold tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                        <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-normal tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
                           {slide.title}
                         </h1>
 
@@ -1120,7 +1120,7 @@ export function HeroSection() {
                   currentSlide === idx
                     ? (isDark
                       ? "w-4 sm:w-5 bg-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.8)]"
-                      : "w-4 sm:w-5 bg-[#059669] shadow-[0_0_10px_rgba(5,150,105,0.4)]")
+                      : "w-4 sm:w-5 bg-[#10B981] shadow-[0_0_10px_rgba(16,185,129,0.4)]")
                     : "w-2 sm:w-2.5 bg-white/40 hover:bg-white/70"
                 )}
                 aria-label={`Go to slide ${idx + 1}`}
@@ -1197,9 +1197,9 @@ export function RecommendedVenuesSection({ asSlider = false }) {
             {asSlider && (
               <button
                 onClick={scrollLeft}
-                className="hidden md:flex absolute -left-4 sm:-left-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+                className="hidden md:flex absolute -left-4 sm:-left-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
               >
-                <ChevronLeft className="h-6 w-6 pr-0.5" />
+                <ChevronLeft className="h-6 w-6 pr-0.5" strokeWidth={3.5} />
               </button>
             )}
 
@@ -1235,10 +1235,10 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                     {/* Top Badges Removed as per user request */}
 
                     <div className="absolute top-2.5 right-2.5 z-10">
-                      <div className="flex items-center gap-1 text-[11px] font-bold text-white drop-shadow-md">
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        <span>{venue.rating}</span>
-                        <span className="text-white/80 text-[9px] font-medium ml-0.5">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)} Reviews)</span>
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-white drop-shadow-md leading-none">
+                        <Star className="h-3 w-3 fill-emerald-500 text-emerald-500 shrink-0" />
+                        <span className="leading-none">{venue.rating}</span>
+                        <span className="text-white/80 text-[9px] font-medium ml-0.5 leading-none">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)} Reviews)</span>
                       </div>
                     </div>
 
@@ -1248,11 +1248,11 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                         <p className="text-[11px] font-extrabold text-[#6DFF3B] capitalize tracking-wider drop-shadow-sm mb-0.5">
                           {venue.sport.toLowerCase()}
                         </p>
-                        <div className="flex items-center gap-1.5 w-full">
-                          <h3 className="text-sm font-extrabold !text-white leading-tight truncate drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+                        <div className="flex flex-col gap-0.5 w-full">
+                          <h3 className="text-sm font-extrabold !text-white leading-snug line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                             {venue.name}
                           </h3>
-                          <span className="text-[10px] !text-white/80 font-medium truncate shrink-0 drop-shadow">
+                          <span className="text-[10px] !text-white/80 font-medium truncate drop-shadow">
                             {venue.location}
                           </span>
                         </div>
@@ -1273,9 +1273,9 @@ export function RecommendedVenuesSection({ asSlider = false }) {
             {asSlider && (
               <button
                 onClick={scrollRight}
-                className="hidden md:flex absolute -right-4 sm:-right-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+                className="hidden md:flex absolute -right-4 sm:-right-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
               >
-                <ChevronRight className="h-6 w-6 pl-0.5" />
+                <ChevronRight className="h-6 w-6 pl-0.5" strokeWidth={3.5} />
               </button>
             )}
           </div>
@@ -1686,9 +1686,9 @@ export function SportsCategories() {
         <div className="relative mt-4">
           <button
             onClick={scrollLeft}
-            className="hidden md:flex absolute -left-2 sm:-left-4 lg:-left-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+            className="hidden md:flex absolute -left-2 sm:-left-4 lg:-left-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
           >
-            <ChevronLeft className="h-6 w-6 pr-0.5" />
+            <ChevronLeft className="h-6 w-6 pr-0.5" strokeWidth={3.5} />
           </button>
 
           <div
@@ -1702,9 +1702,9 @@ export function SportsCategories() {
 
           <button
             onClick={scrollRight}
-            className="hidden md:flex absolute -right-2 sm:-right-4 lg:-right-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white text-black shadow-lg hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+            className="hidden md:flex absolute -right-2 sm:-right-4 lg:-right-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
           >
-            <ChevronRight className="h-6 w-6 pl-0.5" />
+            <ChevronRight className="h-6 w-6 pl-0.5" strokeWidth={3.5} />
           </button>
         </div>
       </div>
@@ -2259,12 +2259,12 @@ export function StoreSection() {
 
       if (!isDown.current && !isUserScrolling) {
         currentScrollLeft.current += speed;
-        
+
         const halfWidth = container.scrollWidth / 2;
         if (currentScrollLeft.current >= halfWidth) {
           currentScrollLeft.current -= halfWidth;
         }
-        
+
         container.scrollLeft = currentScrollLeft.current;
       }
       animationFrameId = requestAnimationFrame(animate);
