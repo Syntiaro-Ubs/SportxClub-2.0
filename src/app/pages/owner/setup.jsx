@@ -164,6 +164,21 @@ export function OwnerSetupPage() {
   const handleSubmit = async () => {
     setStatus("submitting");
     await new Promise(r => setTimeout(r, 2000));
+    
+    // Save to pending approvals database
+    const pendingTurfsStr = localStorage.getItem("pending_turf_approvals");
+    const pendingTurfs = pendingTurfsStr ? JSON.parse(pendingTurfsStr) : [];
+    
+    const newTurfData = {
+      ...formData,
+      id: "TURF" + Math.random().toString(36).substr(2, 6).toUpperCase(),
+      createdAt: new Date().toISOString(),
+      ownerId: currentUser?.id || "owner-123"
+    };
+    
+    pendingTurfs.push(newTurfData);
+    localStorage.setItem("pending_turf_approvals", JSON.stringify(pendingTurfs));
+
     setStatus("pending");
     localStorage.removeItem("ownerSetupForm");
     window.scrollTo({ top: 0, behavior: 'smooth' });

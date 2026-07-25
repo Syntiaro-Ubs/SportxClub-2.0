@@ -32,6 +32,7 @@ import {
   X,
   Edit,
   Play,
+  ClipboardList,
 } from "lucide-react";
 
 const tournaments = [
@@ -75,8 +76,8 @@ const pendingApprovals = [
 const fixtures = [
   {
     id: 1,
-    team1: "Mumbai Warriors",
-    team2: "Delhi Strikers",
+    team1: "Mumbai Strikers",
+    team2: "Delhi Warriors",
     date: "Jun 18, 2026",
     time: "6:00 PM",
     venue: "Elite Sports Arena",
@@ -97,7 +98,7 @@ export function TournamentOrganizerDashboard() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl ">Tournament Organizer Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Tournament Organizer Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Create and manage sports tournaments
           </p>
@@ -159,7 +160,7 @@ export function TournamentOrganizerDashboard() {
         {[
           { label: "Active Tournaments", value: "3", icon: Trophy },
           { label: "Total Teams", value: "45", icon: Users },
-          { label: "Pending Approvals", value: "8", icon: Calendar },
+          { label: "Pending Approvals", value: "8", icon: ClipboardList },
           { label: "Matches Today", value: "5", icon: Play },
         ].map((stat) => {
           const Icon = stat.icon;
@@ -170,7 +171,7 @@ export function TournamentOrganizerDashboard() {
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
                   <Icon className="h-5 w-5 text-primary" />
                 </div>
-                <p className="text-2xl ">{stat.value}</p>
+                <p className="text-2xl font-bold">{stat.value}</p>
               </CardContent>
             </Card>
           );
@@ -180,7 +181,7 @@ export function TournamentOrganizerDashboard() {
       {/* My Tournaments */}
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle>My Tournaments</CardTitle>
+          <CardTitle className="text-lg font-semibold">My Tournaments</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {tournaments.map((tournament) => (
@@ -190,7 +191,7 @@ export function TournamentOrganizerDashboard() {
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <h4 className="">{tournament.name}</h4>
+                  <h4 className="font-semibold text-lg">{tournament.name}</h4>
                   <Badge variant="outline">{tournament.sport}</Badge>
                   <Badge
                     className={
@@ -240,7 +241,7 @@ export function TournamentOrganizerDashboard() {
         <TabsContent value="approvals">
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Pending Team Approvals</CardTitle>
+              <CardTitle className="text-lg font-semibold">Pending Team Approvals</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {pendingApprovals.map((team) => (
@@ -249,7 +250,7 @@ export function TournamentOrganizerDashboard() {
                   className="flex items-center justify-between p-4 rounded-lg border border-border/50"
                 >
                   <div>
-                    <h4 className=" mb-1">{team.teamName}</h4>
+                    <h4 className="font-semibold mb-1">{team.teamName}</h4>
                     <p className="text-sm text-muted-foreground">
                       Captain: {team.captain} • {team.members} members •
                       Submitted {team.submitted}
@@ -278,7 +279,7 @@ export function TournamentOrganizerDashboard() {
           <Card className="border-border/50">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Tournament Fixtures</CardTitle>
+                <CardTitle className="text-lg font-semibold">Tournament Fixtures</CardTitle>
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />
                   Generate Fixtures
@@ -293,13 +294,13 @@ export function TournamentOrganizerDashboard() {
                 >
                   <div className="grid grid-cols-3 items-center gap-4 mb-3">
                     <div className="text-right">
-                      <p className="">{fixture.team1}</p>
+                      <p className="font-medium">{fixture.team1}</p>
                     </div>
                     <div className="text-center">
                       <span className="text-2xl ">VS</span>
                     </div>
                     <div>
-                      <p className="">{fixture.team2}</p>
+                      <p className="font-medium">{fixture.team2}</p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-sm text-muted-foreground pt-3 border-t border-border/50">
@@ -318,12 +319,12 @@ export function TournamentOrganizerDashboard() {
         <TabsContent value="scores">
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Update Live Scores</CardTitle>
+              <CardTitle className="text-lg font-semibold">Update Live Scores</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="p-4 rounded-lg border border-border/50 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="">Mumbai Warriors vs Delhi Strikers</h4>
+                  <h4 className="font-semibold">{`Mumbai Strikers vs Delhi Warriors`}</h4>
                   <Badge className="bg-red-500 hover:bg-red-600">
                     <Play className="h-3 w-3 mr-1" />
                     Live
@@ -331,18 +332,18 @@ export function TournamentOrganizerDashboard() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Mumbai Warriors Score</Label>
+                    <Label>Mumbai Strikers Score</Label>
                     <Input placeholder="156/4" className="mt-2" />
                   </div>
                   <div>
-                    <Label>Delhi Strikers Score</Label>
+                    <Label>Delhi Warriors Score</Label>
                     <Input placeholder="142/8" className="mt-2" />
                   </div>
                 </div>
                 <div>
                   <Label>Match Status</Label>
                   <Input
-                    placeholder="12.3 overs - Mumbai Warriors batting"
+                    placeholder="12.3 overs - Mumbai Strikers batting"
                     className="mt-2"
                   />
                 </div>
