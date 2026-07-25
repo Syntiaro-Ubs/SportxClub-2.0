@@ -50,7 +50,7 @@ export function CalendarView() {
         }
 
       } catch (err) {
-        setError(err.message || "Failed to load data");
+        console.error("API not available, rendering empty calendar:", err);
       } finally {
         setIsLoading(false);
       }
@@ -97,18 +97,6 @@ export function CalendarView() {
     return (
       <div className="flex h-[400px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-[400px] flex-col items-center justify-center text-destructive space-y-4">
-        <AlertCircle className="h-12 w-12" />
-        <p className="text-lg">{error}</p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
       </div>
     );
   }

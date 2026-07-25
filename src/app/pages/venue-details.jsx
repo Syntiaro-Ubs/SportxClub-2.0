@@ -1540,7 +1540,7 @@ export function VenueDetails() {
                     }
                   }}
                   className={cn(
-                    "group h-11 w-fit px-6 mx-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center select-none bg-transparent border-2",
+                    "group h-11 w-fit px-6 ml-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center select-none bg-transparent border-2",
                     isDark
                       ? "border-[#6DFF3B] text-[#6DFF3B] hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97]"
                       : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97]",
