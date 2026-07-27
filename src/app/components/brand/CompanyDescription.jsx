@@ -30,7 +30,7 @@ export function CompanyDescription() {
         {/* Left Column: Headline and description */}
         <div className="lg:col-span-6 space-y-4">
           <span className={`text-[10px] font-bold tracking-widest uppercase ${
-            isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+            isDark ? "text-emerald-600" : "text-emerald-600"
           }`}>
             Who We Are
           </span>

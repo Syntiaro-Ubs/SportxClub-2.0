@@ -147,7 +147,7 @@ export function Layout() {
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
       {/* Desktop Top Navbar */}
-      <header className="hidden md:flex h-[76px] items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-6 sticky top-0 z-50 w-full">
+      <header className="hidden md:flex h-[76px] items-center justify-between border-b border-border/40 bg-background/80 dark:bg-[#333333]/80 backdrop-blur-xl px-6 sticky top-0 z-50 w-full">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
             <Logo />
@@ -212,7 +212,7 @@ export function Layout() {
             <Link to="/login">
               <Button 
                 variant="outline"
-                className="rounded-full bg-transparent border border-[#6DFF3B] text-foreground hover:bg-transparent hover:text-foreground hover:opacity-80 transition-all px-5 text-sm font-semibold"
+                className="rounded-full bg-transparent border border-emerald-600 text-foreground hover:bg-transparent hover:text-foreground hover:opacity-80 transition-all px-5 text-sm font-semibold"
               >
                 Login / Sign Up
               </Button>

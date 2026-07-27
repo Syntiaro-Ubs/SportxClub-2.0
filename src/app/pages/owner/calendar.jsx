@@ -172,7 +172,7 @@ export function CalendarView() {
                     "w-full gap-2 h-11 font-extrabold rounded-xl text-xs transition-all duration-300 cursor-pointer shadow-xs",
                     isDateDisabled 
                       ? "bg-white dark:bg-slate-900 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-300 dark:hover:border-red-800 hover:scale-[1.02]" 
-                      : "bg-white dark:bg-slate-900 text-emerald-600 dark:text-[#6DFF3B] border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-[#6DFF3B] dark:hover:border-[#6DFF3B] hover:scale-[1.02]"
+                      : "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-600 border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-600 dark:hover:border-emerald-600 hover:scale-[1.02]"
                   )}
                   onClick={toggleDateStatus}
                   disabled={isPastDate}
@@ -291,7 +291,7 @@ export function CalendarView() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.08 }}
-                        className="p-5 rounded-2xl border border-border/50 bg-background/80 hover:bg-[#6DFF3B]/5 dark:hover:bg-[#6DFF3B]/5 hover:border-[#6DFF3B]/30 hover:scale-[1.01] hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row gap-4 sm:items-center justify-between group relative overflow-hidden"
+                        className="p-5 rounded-2xl border border-border/50 bg-background/80 hover:bg-emerald-600/5 dark:hover:bg-emerald-600/5 hover:border-emerald-600/30 hover:scale-[1.01] hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row gap-4 sm:items-center justify-between group relative overflow-hidden"
                       >
                         {/* Decorative vertical status bar */}
                         <div className={cn(

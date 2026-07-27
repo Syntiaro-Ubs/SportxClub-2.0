@@ -239,7 +239,7 @@ export function Payment() {
           <div>
             <p className={cn(
               "text-[10px] uppercase tracking-widest font-black",
-              isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+              isDark ? "text-emerald-600" : "text-emerald-600"
             )}>
               Checkout
             </p>
@@ -260,7 +260,7 @@ export function Payment() {
           <div className={cn(
             "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wider",
             isDark
-              ? "border-[#6DFF3B]/20 bg-[#6DFF3B]/10 text-[#6DFF3B]"
+              ? "border-emerald-600/20 bg-emerald-600/10 text-emerald-600"
               : "border-emerald-300 bg-emerald-50 text-emerald-700"
           )}>
             <ShieldCheck className="h-4.5 w-4.5" />
@@ -279,7 +279,7 @@ export function Payment() {
             )} />
             {/* Progress Active Line */}
             <div
-              className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-[#6DFF3B] dark:to-[#86ff60] transition-all duration-500 z-0"
+              className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-emerald-600 dark:to-emerald-700 transition-all duration-500 z-0"
               style={{ width: "100%" }}
             />
           </div>
@@ -295,10 +295,10 @@ export function Payment() {
                     className={cn(
                       "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 font-extrabold text-sm shadow-md",
                       isCompleted
-                        ? "bg-emerald-600 border-emerald-600 text-white dark:bg-[#6DFF3B] dark:border-[#6DFF3B] dark:text-black shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                        ? "bg-emerald-600 border-emerald-600 text-white dark:bg-emerald-600 dark:border-emerald-600 dark:text-black shadow-[0_0_15px_rgba(109,255,59,0.2)]"
                         : isActive
                           ? isDark
-                            ? "bg-[#0d0f15] border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_20px_rgba(109,255,59,0.3)] scale-110"
+                            ? "bg-[#0d0f15] border-emerald-600 text-emerald-600 shadow-[0_0_20px_rgba(109,255,59,0.3)] scale-110"
                             : "bg-white border-emerald-600 text-emerald-600 shadow-md scale-110"
                           : isDark
                             ? "bg-[#101216] border-white/10 text-white/40"
@@ -316,7 +316,7 @@ export function Payment() {
                     className={cn(
                       "mt-3 text-[10px] font-bold uppercase tracking-wider text-center block max-w-[90px] mx-auto leading-normal hidden sm:block",
                       isActive
-                        ? isDark ? "text-[#6DFF3B]" : "text-emerald-700"
+                        ? isDark ? "text-emerald-600" : "text-emerald-700"
                         : isDark ? "text-white/40" : "text-slate-400"
                     )}
                   >
@@ -360,7 +360,7 @@ export function Payment() {
                           "flex flex-col items-center text-center p-5 rounded-[22px] border transition-all duration-300 cursor-pointer select-none gap-3 relative overflow-hidden group",
                           isSelected
                             ? isDark
-                              ? "border-[#6DFF3B] bg-[#6DFF3B]/10 text-white shadow-[0_0_20px_rgba(109,255,59,0.15)] scale-[1.02]"
+                              ? "border-emerald-600 bg-emerald-600/10 text-white shadow-[0_0_20px_rgba(109,255,59,0.15)] scale-[1.02]"
                               : "border-emerald-600 bg-emerald-50/50 text-slate-800 shadow-md scale-[1.02]"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:border-white/20 hover:text-white"
@@ -370,7 +370,7 @@ export function Payment() {
                         {isSelected && (
                           <div className={cn(
                             "absolute top-3 right-3 h-5 w-5 rounded-full flex items-center justify-center text-xs font-bold",
-                            isDark ? "bg-[#6DFF3B] text-black" : "bg-emerald-600 text-white"
+                            isDark ? "bg-emerald-600 text-black" : "bg-emerald-600 text-white"
                           )}>
                             <Check className="h-3 w-3 stroke-[3px]" />
                           </div>
@@ -380,7 +380,7 @@ export function Payment() {
                           "h-12 w-12 rounded-full border flex items-center justify-center transition-all duration-300",
                           isSelected
                             ? isDark
-                              ? "border-[#6DFF3B]/30 bg-[#6DFF3B]/20 text-[#6DFF3B]"
+                              ? "border-emerald-600/30 bg-emerald-600/20 text-emerald-600"
                               : "border-emerald-500/30 bg-emerald-100 text-emerald-700"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/50 group-hover:text-white"
@@ -437,7 +437,7 @@ export function Payment() {
                           "flex-1 py-2 text-xs font-extrabold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
                           upiOption === "qr"
                             ? isDark
-                              ? "bg-[#6DFF3B] text-black shadow-sm"
+                              ? "bg-emerald-600 text-black shadow-sm"
                               : "bg-emerald-600 text-white shadow-sm"
                             : isDark
                               ? "text-white/60 hover:text-white"
@@ -453,7 +453,7 @@ export function Payment() {
                           "flex-1 py-2 text-xs font-extrabold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
                           upiOption === "id"
                             ? isDark
-                              ? "bg-[#6DFF3B] text-black shadow-sm"
+                              ? "bg-emerald-600 text-black shadow-sm"
                               : "bg-emerald-600 text-white shadow-sm"
                             : isDark
                               ? "text-white/60 hover:text-white"
@@ -479,7 +479,7 @@ export function Payment() {
                           </span>
                           <span className={cn(
                             "text-xs font-black uppercase tracking-wider",
-                            isDark ? "text-[#6DFF3B]" : "text-emerald-700"
+                            isDark ? "text-emerald-600" : "text-emerald-700"
                           )}>
                             SportXClub 2.0
                           </span>
@@ -584,7 +584,7 @@ export function Payment() {
                           className={cn(
                             "h-12 rounded-[18px] border transition-all outline-none font-medium",
                             isDark
-                              ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-[#6DFF3B]/50 focus:ring-1 focus:ring-[#6DFF3B]/50"
+                              ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-emerald-600/50 focus:ring-1 focus:ring-emerald-600/50"
                               : "border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50"
                           )}
                         />
@@ -612,7 +612,7 @@ export function Payment() {
                         className={cn(
                           "h-12 rounded-[18px] border transition-all outline-none font-medium",
                           isDark
-                            ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-[#6DFF3B]/50 focus:ring-1 focus:ring-[#6DFF3B]/50"
+                            ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-emerald-600/50 focus:ring-1 focus:ring-emerald-600/50"
                             : "border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50"
                         )}
                       />
@@ -631,7 +631,7 @@ export function Payment() {
                           className={cn(
                             "h-12 rounded-[18px] border transition-all outline-none font-medium",
                             isDark
-                              ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-[#6DFF3B]/50 focus:ring-1 focus:ring-[#6DFF3B]/50"
+                              ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-emerald-600/50 focus:ring-1 focus:ring-emerald-600/50"
                               : "border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50"
                           )}
                         />
@@ -649,7 +649,7 @@ export function Payment() {
                           className={cn(
                             "h-12 rounded-[18px] border transition-all outline-none font-medium",
                             isDark
-                              ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-[#6DFF3B]/50 focus:ring-1 focus:ring-[#6DFF3B]/50"
+                              ? "border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-emerald-600/50 focus:ring-1 focus:ring-emerald-600/50"
                               : "border-slate-200 bg-slate-50 text-slate-800 placeholder:text-slate-400 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50"
                           )}
                         />
@@ -662,14 +662,14 @@ export function Payment() {
                 <div className={cn(
                   "rounded-[22px] border p-4 transition-colors duration-300",
                   isDark
-                    ? "border-[#6DFF3B]/20 bg-[#6DFF3B]/5"
+                    ? "border-emerald-600/20 bg-emerald-600/5"
                     : "border-emerald-500/20 bg-emerald-50/50"
                 )}>
                   <div className="flex items-start gap-3.5">
                     <div className={cn(
                       "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border",
                       isDark
-                        ? "border-[#6DFF3B]/20 bg-[#0d0f15]/80 text-[#6DFF3B]"
+                        ? "border-emerald-600/20 bg-[#0d0f15]/80 text-emerald-600"
                         : "border-emerald-500/20 bg-white text-emerald-600"
                     )}>
                       <Lock className="h-4.5 w-4.5" />
@@ -699,7 +699,7 @@ export function Payment() {
             )}>
               <CardContent className="space-y-4 p-6">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className={cn("h-4.5 w-4.5", isDark ? "text-[#6DFF3B]" : "text-emerald-600")} />
+                  <ShieldCheck className={cn("h-4.5 w-4.5", isDark ? "text-emerald-600" : "text-emerald-600")} />
                   <p className={cn(
                     "text-xs font-bold uppercase tracking-wider",
                     isDark ? "text-white" : "text-slate-900"
@@ -709,7 +709,7 @@ export function Payment() {
                 <div className="space-y-2.5">
                   <div className="grid grid-cols-2 text-[10px] sm:text-xs border-b pb-1.5 border-slate-100 dark:border-white/5 font-semibold">
                     <span className={isDark ? "text-white/40" : "text-slate-400"}>Cancellation Window</span>
-                    <span className="text-right text-emerald-600 dark:text-[#6DFF3B]">Refund Amount</span>
+                    <span className="text-right text-emerald-600 dark:text-emerald-600">Refund Amount</span>
                   </div>
 
                   <div className="grid grid-cols-2 text-xs">
@@ -758,7 +758,7 @@ export function Payment() {
                 <div className={cn(
                   "absolute left-4 top-4 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider",
                   isDark
-                    ? "border-[#6DFF3B]/20 bg-[#6DFF3B]/10 text-[#6DFF3B]"
+                    ? "border-emerald-600/20 bg-emerald-600/10 text-emerald-600"
                     : "border-emerald-300 bg-emerald-50 text-emerald-700"
                 )}>
                   Booking summary
@@ -787,7 +787,7 @@ export function Payment() {
                     <Badge className={cn(
                       "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none",
                       isDark
-                        ? "bg-[#6DFF3B]/10 text-[#6DFF3B]"
+                        ? "bg-emerald-600/10 text-emerald-600"
                         : "bg-emerald-50 text-emerald-700"
                     )}>
                       {booking.sport}
@@ -797,14 +797,14 @@ export function Payment() {
                     "flex items-center gap-2 text-xs font-semibold",
                     isDark ? "text-white/70" : "text-slate-600"
                   )}>
-                    <Calendar className={cn("h-4 w-4", isDark ? "text-[#6DFF3B]" : "text-emerald-600")} />
+                    <Calendar className={cn("h-4 w-4", isDark ? "text-emerald-600" : "text-emerald-600")} />
                     <span>{formatBookingDate(booking.date)}</span>
                   </div>
                   <div className={cn(
                     "flex items-center gap-2 text-xs font-semibold",
                     isDark ? "text-white/70" : "text-slate-600"
                   )}>
-                    <Clock className={cn("h-4 w-4", isDark ? "text-[#6DFF3B]" : "text-emerald-600")} />
+                    <Clock className={cn("h-4 w-4", isDark ? "text-emerald-600" : "text-emerald-600")} />
                     <span>{booking.time}</span>
                   </div>
                 </div>
@@ -826,7 +826,7 @@ export function Payment() {
                   </div>
                   <div className={cn(
                     "flex items-center justify-between text-sm",
-                    isDark ? "text-[#6DFF3B]" : "text-emerald-700"
+                    isDark ? "text-emerald-600" : "text-emerald-700"
                   )}>
                     <span className="inline-flex items-center gap-1.5">
                       <Gift className="h-4 w-4 shrink-0" />
@@ -863,7 +863,7 @@ export function Payment() {
                   <Badge className={cn(
                     "rounded-full border-none px-3 py-1 text-xs uppercase tracking-wider font-extrabold",
                     isDark
-                      ? "bg-[#6DFF3B]/10 text-[#6DFF3B]"
+                      ? "bg-emerald-600/10 text-emerald-600"
                       : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                   )}>
                     Save ₹{discount}
@@ -877,7 +877,7 @@ export function Payment() {
                     className={cn(
                       "group h-14 w-fit px-10 mx-auto rounded-2xl font-extrabold text-sm transition-all duration-300 cursor-pointer flex items-center justify-center select-none",
                       isDark
-                        ? "bg-transparent border-2 border-[#6DFF3B] text-white hover:border-emerald-400 hover:text-white hover:bg-[#6DFF3B]/5 shadow-[0_0_15px_rgba(109,255,59,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
+                        ? "bg-transparent border-2 border-emerald-600 text-white hover:border-emerald-400 hover:text-white hover:bg-emerald-600/5 shadow-[0_0_15px_rgba(109,255,59,0.15)] hover:shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
                         : "bg-transparent border-2 border-emerald-600 text-black hover:border-emerald-800 hover:text-black hover:bg-emerald-50 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97]"
                     )}
                   >
@@ -912,7 +912,7 @@ export function Payment() {
               </p>
               <p className={cn(
                 "mt-0.5 text-base font-black",
-                isDark ? "text-[#6DFF3B]" : "text-emerald-700"
+                isDark ? "text-emerald-600" : "text-emerald-700"
               )}>
                 ₹{total.toLocaleString()}
               </p>
@@ -923,7 +923,7 @@ export function Payment() {
               className={cn(
                 "group h-11 w-fit px-6 rounded-xl font-extrabold text-xs transition-all duration-300 cursor-pointer flex items-center justify-center gap-2 select-none",
                 isDark
-                  ? "bg-transparent border-2 border-[#6DFF3B] text-white hover:border-emerald-400 hover:text-white hover:bg-[#6DFF3B]/5 shadow-[0_0_12px_rgba(109,255,59,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.25)] active:scale-[0.97]"
+                  ? "bg-transparent border-2 border-emerald-600 text-white hover:border-emerald-400 hover:text-white hover:bg-emerald-600/5 shadow-[0_0_12px_rgba(109,255,59,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.25)] active:scale-[0.97]"
                   : "bg-transparent border-2 border-emerald-600 text-black hover:border-emerald-800 hover:text-black hover:bg-emerald-50 active:scale-[0.97]"
               )}
             >

@@ -9,13 +9,13 @@
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
-  --primary: #6DFF3B;
+  --primary: #059669;
   --primary-foreground: #0f172a;
   --secondary: #0f172a;
   --secondary-foreground: #ffffff;
   --muted: #f3f4f6;
   --muted-foreground: #526075;
-  --accent: #6DFF3B;
+  --accent: #059669;
   --accent-foreground: #0f172a;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -25,7 +25,7 @@
   --switch-background: #e2e8f0;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #6DFF3B;
+  --ring: #059669;
   --radius: 0.75rem;
 
   /* Typography Scale */
@@ -48,7 +48,7 @@
   --card-foreground: #f8fafc;
   --popover: #0f172a;
   --popover-foreground: #f8fafc;
-  --primary: #6DFF3B;
+  --primary: #059669;
   --primary-foreground: #020617;
   --secondary: #334155;
   --secondary-foreground: #f8fafc;
@@ -60,7 +60,7 @@
   --destructive-foreground: #ffffff;
   --border: rgba(248, 250, 252, 0.15);
   --input: rgba(248, 250, 252, 0.15);
-  --ring: #6DFF3B;
+  --ring: #059669;
 }
 
 @theme inline {
@@ -164,7 +164,7 @@ html:not(.dark) .theme-adaptive [class*="bg-[radial-gradient"]:not(.always-dark 
 }
 
 /* Ensure brand green text, icons, fills, and borders are readable in light mode */
-html:not(.dark) [class*="text-[#6DFF3B]"]:not([class*="hover"]),
+html:not(.dark) [class*="text-emerald-600"]:not([class*="hover"]),
 html:not(.dark) .text-primary {
   color: #059669 !important;
   /* emerald-600 */
@@ -172,25 +172,25 @@ html:not(.dark) .text-primary {
 
 /* Hover states for brand green in light mode */
 html:not(.dark) [class*="hover:text-primary"]:hover,
-html:not(.dark) [class*="hover:text-[#6DFF3B]"]:hover {
+html:not(.dark) [class*="hover:text-emerald-600"]:hover {
   color: #059669 !important;
 }
 
 /* Group-hover states for brand green in light mode */
 html:not(.dark) .group:hover [class*="group-hover:text-primary"],
-html:not(.dark) .group:hover [class*="group-hover:text-[#6DFF3B]"] {
+html:not(.dark) .group:hover [class*="group-hover:text-emerald-600"] {
   color: #059669 !important;
 }
 
-html:not(.dark) [class*="fill-[#6DFF3B]"] {
+html:not(.dark) [class*="fill-emerald-600"] {
   fill: #059669 !important;
 }
 
-html:not(.dark) [class*="stroke-[#6DFF3B]"] {
+html:not(.dark) [class*="stroke-emerald-600"] {
   stroke: #059669 !important;
 }
 
-html:not(.dark) [class*="border-[#6DFF3B]"] {
+html:not(.dark) [class*="border-emerald-600"] {
   border-color: rgba(5, 150, 105, 0.3) !important;
 }
 
@@ -217,7 +217,7 @@ body {
 }
 
 .text-always-brand-green {
-  color: #6DFF3B !important;
+  color: #059669 !important;
 }
 
 .bg-always-black-40 {
@@ -262,7 +262,7 @@ body {
 }
 
 .dark .scrollbar-visible::-webkit-scrollbar-thumb {
-  background: #6DFF3B !important; /* neon green in dark mode */
+  background: #059669 !important; /* neon green in dark mode */
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb:hover {

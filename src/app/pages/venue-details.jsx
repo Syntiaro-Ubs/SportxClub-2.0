@@ -433,14 +433,14 @@ export function VenueDetails() {
             className={cn(
               "flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer",
               isDark
-                ? "text-white/70 hover:text-[#6DFF3B]"
+                ? "text-white/70 hover:text-emerald-600"
                 : "text-slate-600 hover:text-emerald-600",
             )}
           >
             <ArrowRight
               className={cn(
                 "h-4 w-4 rotate-180",
-                isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                isDark ? "text-emerald-600" : "text-emerald-600",
               )}
             />
             <span>Back to Venues</span>
@@ -451,7 +451,7 @@ export function VenueDetails() {
               className={cn(
                 "rounded-full border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider",
                 isDark
-                  ? "bg-[#6DFF3B]/10 text-[#6DFF3B] border-[#6DFF3B]/30"
+                  ? "bg-emerald-600/10 text-emerald-600 border-emerald-600/30"
                   : "bg-emerald-50 text-emerald-700 border-emerald-300",
               )}
             >
@@ -513,7 +513,7 @@ export function VenueDetails() {
                   className={cn(
                     "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
                     isDark
-                      ? "bg-transparent text-[#6DFF3B]"
+                      ? "bg-transparent text-emerald-600"
                       : "bg-transparent text-white",
                   )}
                 >
@@ -523,7 +523,7 @@ export function VenueDetails() {
                   className={cn(
                     "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
                     isDark
-                      ? "bg-transparent text-[#6DFF3B]"
+                      ? "bg-transparent text-emerald-600"
                       : "bg-transparent text-white",
                   )}
                 >
@@ -533,7 +533,7 @@ export function VenueDetails() {
                   className={cn(
                     "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
                     isDark
-                      ? "bg-transparent text-[#6DFF3B]"
+                      ? "bg-transparent text-emerald-600"
                       : "bg-transparent text-white",
                   )}
                 >
@@ -547,7 +547,7 @@ export function VenueDetails() {
                 <div
                   className={cn(
                     "flex items-center gap-1",
-                    isDark ? "text-[#6DFF3B]" : "text-white"
+                    isDark ? "text-emerald-600" : "text-white"
                   )}
                 >
                   <MapPin className="h-4 w-4 shrink-0" />
@@ -557,14 +557,14 @@ export function VenueDetails() {
                   className={cn(
                     "flex items-center gap-1 px-1 rounded-full",
                     isDark
-                      ? "bg-transparent text-[#6DFF3B]"
+                      ? "bg-transparent text-emerald-600"
                       : "bg-transparent text-[#10B981]",
                   )}
                 >
                   <Star
                     className={cn(
                       "h-3.5 w-3.5 fill-current",
-                      isDark ? "text-[#6DFF3B]" : "text-[#10B981]",
+                      isDark ? "text-emerald-600" : "text-[#10B981]",
                     )}
                   />
                   <span className="font-bold">
@@ -573,7 +573,7 @@ export function VenueDetails() {
                   <span
                     className={cn(
                       "text-[10px]",
-                      isDark ? "text-[#6DFF3B]/80" : "text-white/80",
+                      isDark ? "text-emerald-600/80" : "text-white/80",
                     )}
                   >
                     ({venue.reviews})
@@ -630,7 +630,7 @@ export function VenueDetails() {
                       className={cn(
                         "flex items-center gap-3 rounded-2xl border p-3.5 transition-all shadow-sm",
                         isDark
-                          ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.05] hover:border-[#6DFF3B]/30"
+                          ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.05] hover:border-emerald-600/30"
                           : "border-slate-200 bg-white hover:bg-slate-50/50 hover:border-emerald-300",
                       )}
                     >
@@ -638,7 +638,7 @@ export function VenueDetails() {
                         className={cn(
                           "flex h-10 w-10 items-center justify-center rounded-xl border shrink-0",
                           isDark
-                            ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/20 text-[#6DFF3B]"
+                            ? "bg-emerald-600/10 border-emerald-600/20 text-emerald-600"
                             : "bg-emerald-50 border-emerald-150 text-emerald-600",
                         )}
                       >
@@ -686,7 +686,7 @@ export function VenueDetails() {
                   className={cn(
                     "flex items-center gap-1.5 text-xs font-bold transition-colors",
                     isDark
-                      ? "text-[#6DFF3B] hover:underline"
+                      ? "text-emerald-600 hover:underline"
                       : "text-emerald-600 hover:underline",
                   )}
                 >
@@ -721,7 +721,7 @@ export function VenueDetails() {
                 <MapPin
                   className={cn(
                     "h-4 w-4 shrink-0",
-                    isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                    isDark ? "text-emerald-600" : "text-emerald-600",
                   )}
                 >
                 </MapPin>
@@ -759,20 +759,20 @@ export function VenueDetails() {
                   className={cn(
                     "flex items-center gap-2 border px-3 py-1.5 rounded-2xl",
                     isDark
-                      ? "bg-[#6DFF3B]/10 border-[#6DFF3B]/30"
+                      ? "bg-emerald-600/10 border-emerald-600/30"
                       : "bg-emerald-50 border-emerald-200",
                   )}
                 >
                   <Star
                     className={cn(
                       "h-4 w-4 fill-current",
-                      isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                      isDark ? "text-emerald-600" : "text-emerald-600",
                     )}
                   />
                   <span
                     className={cn(
                       "text-sm font-black",
-                      isDark ? "text-[#6DFF3B]" : "text-emerald-700",
+                      isDark ? "text-emerald-600" : "text-emerald-700",
                     )}
                   >
                     {venue.rating.toFixed(1)}
@@ -793,7 +793,7 @@ export function VenueDetails() {
                 <div className="flex items-center gap-1.5 shrink-0 select-none">
                   <Sparkles className={cn(
                     "h-3.5 w-3.5",
-                    isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+                    isDark ? "text-emerald-600" : "text-emerald-600"
                   )} />
                   <span className={cn(
                     "text-[10px] font-black uppercase tracking-widest leading-none",
@@ -824,7 +824,7 @@ export function VenueDetails() {
                           "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
                           isActive
                             ? isDark
-                              ? "bg-[#6DFF3B] text-black shadow-md shadow-[#6DFF3B]/10 scale-100"
+                              ? "bg-emerald-600 text-black shadow-md shadow-emerald-600/10 scale-100"
                               : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100"
                             : isDark
                               ? "text-white/60 hover:text-white bg-transparent border-transparent"
@@ -869,7 +869,7 @@ export function VenueDetails() {
                             className={cn(
                               "h-8 w-8 rounded-full border font-bold text-xs flex items-center justify-center",
                               isDark
-                                ? "bg-[#6DFF3B]/20 border-[#6DFF3B]/40 text-[#6DFF3B]"
+                                ? "bg-emerald-600/20 border-emerald-600/40 text-emerald-600"
                                 : "bg-emerald-100 border-emerald-300 text-emerald-800",
                             )}
                           >
@@ -924,7 +924,7 @@ export function VenueDetails() {
                         className={cn(
                           "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
                           isDark
-                            ? "border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10 text-[#6DFF3B] bg-[#6DFF3B]/5"
+                            ? "border-emerald-600/30 hover:bg-emerald-600/10 text-emerald-600 bg-emerald-600/5"
                             : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
                         )}
                       >
@@ -938,7 +938,7 @@ export function VenueDetails() {
                         className={cn(
                           "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
                           isDark
-                            ? "border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10 text-[#6DFF3B] bg-[#6DFF3B]/5"
+                            ? "border-emerald-600/30 hover:bg-emerald-600/10 text-emerald-600 bg-emerald-600/5"
                             : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
                         )}
                       >
@@ -957,7 +957,7 @@ export function VenueDetails() {
               className={cn(
                 "rounded-[28px] border shadow-2xl overflow-hidden relative isolate transition-colors duration-300",
                 isDark
-                  ? "border-[#6DFF3B]/30 bg-[#0d0f15] text-white"
+                  ? "border-emerald-600/30 bg-[#0d0f15] text-white"
                   : "border-slate-200 bg-white text-slate-900",
               )}
             >
@@ -965,7 +965,7 @@ export function VenueDetails() {
               <div
                 className={cn(
                   "absolute top-0 right-0 h-40 w-40 rounded-full blur-3xl pointer-events-none",
-                  isDark ? "bg-[#6DFF3B]/10" : "bg-emerald-500/10",
+                  isDark ? "bg-emerald-600/10" : "bg-emerald-500/10",
                 )}
               />
 
@@ -982,7 +982,7 @@ export function VenueDetails() {
                       className={cn(
                         "rounded-full font-extrabold text-[10px] uppercase tracking-wider px-2.5 py-0.5 mb-1",
                         isDark
-                          ? "bg-[#6DFF3B] text-black"
+                          ? "bg-emerald-600 text-black"
                           : "bg-emerald-600 text-white",
                       )}
                     >
@@ -1011,7 +1011,7 @@ export function VenueDetails() {
                     <span>1. Select Sport</span>
                     <span
                       className={
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+                        isDark ? "text-emerald-600" : "text-emerald-600"
                       }
                     >
                       Available Format
@@ -1027,7 +1027,7 @@ export function VenueDetails() {
                           "h-11 px-4 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 w-full",
                           selectedSport === sp
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                              ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 shadow-[0_0_15px_rgba(109,255,59,0.2)]"
                               : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 shadow-sm"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
@@ -1058,7 +1058,7 @@ export function VenueDetails() {
                     <span>2. Select Date</span>
                     <span
                       className={
-                        isDark ? "text-[#6DFF3B] font-extrabold" : "text-emerald-700 font-extrabold"
+                        isDark ? "text-emerald-600 font-extrabold" : "text-emerald-700 font-extrabold"
                       }
                     >
                       {formatDateLabel(selectedDate)}
@@ -1074,7 +1074,7 @@ export function VenueDetails() {
                           "h-10 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center flex-1",
                           selectedDate === opt.iso
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
+                              ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 font-extrabold shadow-md"
                               : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
@@ -1097,7 +1097,7 @@ export function VenueDetails() {
                           "h-10 w-10 rounded-xl border transition-all flex items-center justify-center cursor-pointer",
                           isCustomDate
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.3)]"
+                              ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 shadow-[0_0_12px_rgba(109,255,59,0.3)]"
                               : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 shadow-sm"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:border-white/20"
@@ -1120,7 +1120,7 @@ export function VenueDetails() {
                             className={cn(
                               "absolute right-0 top-12 z-50 w-72 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl transition-colors duration-300",
                               isDark
-                                ? "bg-[#0d0f15]/95 border-[#6DFF3B]/20 text-white"
+                                ? "bg-[#0d0f15]/95 border-emerald-600/20 text-white"
                                 : "bg-white/95 border-slate-200 text-slate-800"
                             )}
                           >
@@ -1191,7 +1191,7 @@ export function VenueDetails() {
                                       "h-8 w-8 text-[11px] font-bold rounded-lg flex items-center justify-center transition-all cursor-pointer",
                                       isSelected
                                         ? isDark
-                                          ? "bg-[#6DFF3B]/20 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-sm"
+                                          ? "bg-emerald-600/20 border border-emerald-600 text-emerald-600 font-extrabold shadow-sm"
                                           : "bg-emerald-50 border border-emerald-600 text-emerald-700 font-extrabold shadow-sm"
                                         : isDisabled
                                           ? "text-slate-300 dark:text-white/10 cursor-not-allowed line-through opacity-40"
@@ -1239,7 +1239,7 @@ export function VenueDetails() {
                           "h-10 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
                           playHours === hrs && !showCustomHours
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
+                              ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 font-extrabold shadow-md"
                               : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
@@ -1256,7 +1256,7 @@ export function VenueDetails() {
                     {showCustomHours ? (
                       <div className={cn(
                         "h-10 px-1 rounded-xl border text-[11px] font-bold transition-all flex items-center justify-between gap-1 w-full",
-                        isDark ? "border-[#6DFF3B] bg-[#6DFF3B]/10 text-[#6DFF3B]" : "border-emerald-600 bg-emerald-50/50 text-emerald-700"
+                        isDark ? "border-emerald-600 bg-emerald-600/10 text-emerald-600" : "border-emerald-600 bg-emerald-50/50 text-emerald-700"
                       )}>
                         <button
                           type="button"
@@ -1287,7 +1287,7 @@ export function VenueDetails() {
                           "h-10 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
                           (playHours > 3 || showCustomHours)
                             ? isDark
-                              ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-[#6DFF3B] font-extrabold shadow-md"
+                              ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 font-extrabold shadow-md"
                               : "bg-emerald-50/50 border border-emerald-600 text-emerald-700 font-extrabold shadow-md"
                             : isDark
                               ? "border-white/10 bg-white/5 text-white/80 hover:bg-white/10"
@@ -1315,7 +1315,7 @@ export function VenueDetails() {
                     <span
                       className={cn(
                         "text-[10px] font-bold",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                        isDark ? "text-emerald-600" : "text-emerald-600",
                       )}
                     >
                       🟢 Available
@@ -1344,14 +1344,14 @@ export function VenueDetails() {
                             !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
                             isSelected
                               ? isDark
-                                ? "bg-[#6DFF3B]/10 border border-[#6DFF3B] text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                                ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
                                 : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
                               : cannotSelect
                                 ? isDark
                                   ? "border-red-500/20 bg-red-500/10 opacity-50"
                                   : "border-red-200 bg-red-50 text-red-700 opacity-60"
                                 : isDark
-                                  ? "border-white/10 bg-white/[0.03] text-white hover:border-[#6DFF3B]/50 hover:bg-white/[0.08]"
+                                  ? "border-white/10 bg-white/[0.03] text-white hover:border-emerald-600/50 hover:bg-white/[0.08]"
                                   : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
                           )}
                         >
@@ -1375,7 +1375,7 @@ export function VenueDetails() {
                               className={cn(
                                 "text-[11px] font-black mt-0.5",
                                 isDark
-                                  ? "text-[#6DFF3B]"
+                                  ? "text-emerald-600"
                                   : "text-emerald-700",
                               )}
                             >
@@ -1388,12 +1388,12 @@ export function VenueDetails() {
                               "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
                               isSelected
                                 ? isDark
-                                  ? "text-[#6DFF3B]"
+                                  ? "text-emerald-600"
                                   : "text-emerald-600"
                                 : cannotSelect
                                   ? "text-red-500"
                                   : isDark
-                                    ? "text-[#6DFF3B]/70"
+                                    ? "text-emerald-600/70"
                                     : "text-emerald-600/70",
                             )}
                           >
@@ -1464,7 +1464,7 @@ export function VenueDetails() {
                     <span
                       className={cn(
                         "font-bold",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                        isDark ? "text-emerald-600" : "text-emerald-600",
                       )}
                     >
                       FREE (₹0)
@@ -1480,7 +1480,7 @@ export function VenueDetails() {
                     <span
                       className={cn(
                         "font-bold",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                        isDark ? "text-emerald-600" : "text-emerald-600",
                       )}
                     >
                       {formatSlotRange(getStartHour(startTime), playHours)}
@@ -1503,7 +1503,7 @@ export function VenueDetails() {
                     <span
                       className={cn(
                         "text-xl font-black",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                        isDark ? "text-emerald-600" : "text-emerald-600",
                       )}
                     >
                       ₹{getSlotPrice(getStartHour(startTime), playHours)}
@@ -1542,7 +1542,7 @@ export function VenueDetails() {
                   className={cn(
                     "group h-11 w-fit px-6 ml-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center select-none bg-transparent border-2",
                     isDark
-                      ? "border-[#6DFF3B] text-[#6DFF3B] hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97]"
+                      ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97]"
                       : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97]",
                   )}
                 >

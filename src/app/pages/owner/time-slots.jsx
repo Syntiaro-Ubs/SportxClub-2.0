@@ -95,6 +95,20 @@ const getBookingDetailsMock = (time) => {
   }
 };
 
+// Format time range e.g. "06:00" -> "06:00 am - 07:00 am"
+const formatTimeRange = (time) => {
+  const startHour = parseInt(time.split(':')[0], 10);
+  const startPeriod = startHour >= 12 ? 'pm' : 'am';
+  const start12 = startHour > 12 ? startHour - 12 : (startHour === 0 ? 12 : startHour);
+  
+  const endHour = startHour + 1;
+  const endPeriod = endHour >= 12 && endHour < 24 ? 'pm' : 'am';
+  const end12 = endHour > 12 ? endHour - 12 : (endHour === 0 ? 12 : endHour);
+
+  // e.g. 06:00 am - 07:00am
+  return `${start12.toString().padStart(2, '0')}:00 ${startPeriod} - ${end12.toString().padStart(2, '0')}:00${endPeriod}`;
+};
+
 // Custom styled Premium Calendar dropdown
 function CustomCalendar({ selectedDate, onSelect }) {
   const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date());
@@ -153,9 +167,9 @@ function CustomCalendar({ selectedDate, onSelect }) {
           let btnClasses = "h-8 w-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer ";
 
           if (isSelected) {
-            btnClasses += "bg-[#6DFF3B] text-black shadow-md shadow-[#6DFF3B]/30 hover:opacity-95";
+            btnClasses += "bg-emerald-600 text-black shadow-md shadow-emerald-600/30 hover:opacity-95";
           } else if (isToday) {
-            btnClasses += "border border-[#6DFF3B]/45 text-[#6DFF3B] hover:bg-[#6DFF3B]/10";
+            btnClasses += "border border-emerald-600/45 text-emerald-600 hover:bg-emerald-600/10";
           } else if (!isCurrentMonth) {
             btnClasses += "text-muted-foreground/25 hover:bg-muted/30 font-normal";
           } else {
@@ -190,6 +204,8 @@ export function TimeSlots() {
   // Manual Booking State
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [selectedSlotForBooking, setSelectedSlotForBooking] = useState(null);
+  const [playHours, setPlayHours] = useState(1);
+  const [hoveredSlotInfo, setHoveredSlotInfo] = useState(null);
   const [bookingDetails, setBookingDetails] = useState({
     customerName: "",
     customerPhone: "",
@@ -292,9 +308,39 @@ export function TimeSlots() {
 
   const handleSlotClick = (turf, slot, slotIdx) => {
     if (turf.status === 'Closed' || slot.status !== 'Available') return;
+
+    let canBook = true;
+    for (let i = 0; i < playHours; i++) {
+      if (slotIdx + i >= turf.slots.length || turf.slots[slotIdx + i].status !== 'Available') {
+        canBook = false;
+        break;
+      }
+    }
+
+    if (!canBook) {
+      toast.error(`Cannot book ${playHours} consecutive hour(s) from this slot. Please select another slot or reduce duration.`);
+      return;
+    }
+
     setSelectedSlotForBooking({ turf, slot, slotIdx });
     setBookingDetails({ customerName: "", customerPhone: "", paymentMethod: "cash" });
     setIsBookingModalOpen(true);
+    setHoveredSlotInfo(null);
+  };
+
+  const handleSlotMouseEnter = (turf, slotIdx) => {
+    let canBook = true;
+    for (let i = 0; i < playHours; i++) {
+      if (slotIdx + i >= turf.slots.length || turf.slots[slotIdx + i].status !== 'Available') {
+        canBook = false;
+        break;
+      }
+    }
+    setHoveredSlotInfo({ turfId: turf.id, startIdx: slotIdx, isValid: canBook });
+  };
+
+  const handleSlotMouseLeave = () => {
+    setHoveredSlotInfo(null);
   };
 
   const handleBookingSubmit = (e) => {
@@ -302,12 +348,17 @@ export function TimeSlots() {
     if (!selectedSlotForBooking) return;
 
     const { turf, slot, slotIdx } = selectedSlotForBooking;
+    
+    let totalPrice = 0;
 
     // Simulate database update locally in state
     const updatedTurfs = turfs.map(t => {
       if (t.id === turf.id) {
         const updatedSlots = [...t.slots];
-        updatedSlots[slotIdx] = { ...slot, status: 'Booked' };
+        for (let i = 0; i < playHours; i++) {
+          totalPrice += updatedSlots[slotIdx + i].price;
+          updatedSlots[slotIdx + i] = { ...updatedSlots[slotIdx + i], status: 'Booked' };
+        }
         return { ...t, slots: updatedSlots };
       }
       return t;
@@ -315,14 +366,27 @@ export function TimeSlots() {
 
     setTurfs(updatedTurfs);
 
+    const endTime = turf.slots[slotIdx + playHours - 1].time;
+    const endHour = parseInt(endTime.split(':')[0]) + 1;
+    
+    const formatTime12 = (hour) => {
+      const h = hour % 24;
+      const period = h >= 12 ? 'pm' : 'am';
+      const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      return `${h12.toString().padStart(2, '0')}:00 ${period}`;
+    };
+    
+    const startHour = parseInt(slot.time.split(':')[0]);
+    const passTimeStr = `${formatTime12(startHour)} - ${formatTime12(endHour)}`;
+
     // Generate boarding ticket details
     const pass = {
       id: "BKG" + Math.random().toString(36).substr(2, 6).toUpperCase(),
       date: format(selectedDate, 'MMM dd, yyyy'),
-      time: slot.time,
+      time: passTimeStr,
       turfName: turf.name,
       location: turf.location,
-      price: slot.price,
+      price: totalPrice,
       customerName: bookingDetails.customerName || "Walk-in Customer",
       customerPhone: bookingDetails.customerPhone || "N/A",
       paymentMethod: bookingDetails.paymentMethod
@@ -388,6 +452,23 @@ export function TimeSlots() {
 
         {/* Dynamic Legend Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 w-full lg:w-auto">
+          {/* Duration Selector */}
+          <div className="flex items-center gap-1 bg-background/50 p-1 rounded-xl border border-border/40 mr-2">
+            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest px-1 hidden sm:inline-block">Duration:</span>
+            {[1, 2, 3, 4].map(hrs => (
+              <button
+                key={hrs}
+                onClick={() => setPlayHours(hrs)}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                  playHours === hrs
+                    ? 'bg-emerald-600 text-black shadow-sm'
+                    : 'text-muted-foreground hover:bg-muted/40'
+                }`}
+              >
+                {hrs} Hr
+              </button>
+            ))}
+          </div>
           {/* Available Pill */}
           <button
             onClick={() => handleLegendClick("Available")}
@@ -556,23 +637,36 @@ export function TimeSlots() {
                   )}
 
                   {/* Grid Slots */}
-                  <div className={`grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
+                  <div className={`grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
                     }`}>
                     {turf.slots.map((slot, idx) => {
                       const isFilteredOut = selectedLegendFilter !== "all" && slot.status !== selectedLegendFilter;
 
                       // Render Available Slot
                       if (slot.status === 'Available') {
+                        const isHoveredGroup = hoveredSlotInfo && 
+                          hoveredSlotInfo.turfId === turf.id && 
+                          idx >= hoveredSlotInfo.startIdx && 
+                          idx < hoveredSlotInfo.startIdx + playHours;
+                          
+                        const hoverValidClass = isHoveredGroup && hoveredSlotInfo.isValid
+                          ? 'bg-emerald-600 border-emerald-600 text-black scale-[1.05] shadow-lg shadow-primary/15'
+                          : isHoveredGroup && !hoveredSlotInfo.isValid
+                          ? 'bg-rose-500/20 border-rose-500/50 text-rose-500'
+                          : 'bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600/10';
+
                         return (
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`p-3 rounded-xl border border-border/80 bg-white dark:bg-slate-900 text-foreground flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:text-black hover:scale-[1.05] hover:shadow-lg hover:shadow-primary/15 shadow-sm min-h-[72px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            onMouseEnter={() => handleSlotMouseEnter(turf, idx)}
+                            onMouseLeave={handleSlotMouseLeave}
+                            className={`p-3 rounded-xl border border-border/80 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 shadow-sm min-h-[72px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <span className="font-semibold text-xs">{slot.time}</span>
+                            <span className="font-semibold text-xs whitespace-nowrap">{formatTimeRange(slot.time)}</span>
                             <span className="text-[9px] uppercase tracking-wider font-bold opacity-70">Available</span>
-                            <span className="text-[9px] font-extrabold mt-1 bg-muted/65 group-hover:bg-black/15 px-2 py-0.5 rounded-full">₹{slot.price}</span>
+                            <span className={`text-[9px] font-extrabold mt-1 px-2 py-0.5 rounded-full ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-black/15' : 'bg-muted/65'}`}>₹{slot.price}</span>
                           </div>
                         );
                       }
@@ -587,7 +681,7 @@ export function TimeSlots() {
                               }`}
                           >
                             <Lock className="w-3.5 h-3.5 text-muted-foreground/60" />
-                            <span className="font-semibold text-xs text-foreground/80 mt-1">{slot.time}</span>
+                            <span className="font-semibold text-xs text-foreground/80 mt-1 whitespace-nowrap">{formatTimeRange(slot.time)}</span>
                             <span className="text-[9px] uppercase tracking-wider font-bold opacity-50">Booked</span>
 
                             {/* Styled Hover Card Tooltip (radix mockup tooltip) */}
@@ -616,7 +710,7 @@ export function TimeSlots() {
                               }`}
                           >
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                            <span className="font-semibold text-xs mt-1">{slot.time}</span>
+                            <span className="font-semibold text-xs mt-1 whitespace-nowrap">{formatTimeRange(slot.time)}</span>
                             <span className="text-[9px] uppercase tracking-wider font-bold opacity-80">Maintenance</span>
                           </div>
                         );
@@ -695,7 +789,15 @@ export function TimeSlots() {
 
             <div className="flex justify-between items-center bg-muted/40 p-4 rounded-xl border border-border/50 mt-4 shadow-inner">
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Total Amount Due</span>
-              <span className="text-lg font-black text-primary">₹{selectedSlotForBooking?.slot.price}</span>
+              <span className="text-lg font-black text-primary">
+                ₹{selectedSlotForBooking && Array.from({ length: playHours }).reduce((sum, _, i) => {
+                  const idx = selectedSlotForBooking.slotIdx + i;
+                  if (idx < selectedSlotForBooking.turf.slots.length) {
+                    return sum + selectedSlotForBooking.turf.slots[idx].price;
+                  }
+                  return sum;
+                }, 0)}
+              </span>
             </div>
 
             <DialogFooter className="mt-6 gap-2">
@@ -709,7 +811,7 @@ export function TimeSlots() {
               </Button>
               <Button
                 type="submit"
-                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B] hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 cursor-pointer shadow-xs"
+                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 cursor-pointer shadow-xs"
               >
                 Confirm & Generate Pass
               </Button>
@@ -879,14 +981,14 @@ export function TimeSlots() {
                   const body = encodeURIComponent(`Hi ${generatedPass?.customerName},\n\nYour booking at ${generatedPass?.turfName} is confirmed.\n\nDate: ${generatedPass?.date}\nTime: ${generatedPass?.time}\nBooking ID: ${generatedPass?.id}\nAmount: ₹${generatedPass?.price}\n\nThank you!`);
                   window.location.href = `mailto:${generatedPass?.customerPhone}?subject=${subject}&body=${body}`;
                 }}
-                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B] hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
                 <Mail className="w-4 h-4" />
                 Email Pass
               </Button>
               <Button
                 onClick={handlePrintPass}
-                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B] hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
                 <Printer className="w-4 h-4" />
                 Print Pass

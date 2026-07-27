@@ -40,7 +40,7 @@ export const mobileNavigation = [
   {
     key: "bookings",
     label: "Bookings",
-    href: "/bookings",
+    href: "/venues",
     icon: CalendarCheck2,
   },
   {
@@ -142,7 +142,7 @@ export function MobileAppBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
+      <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 dark:bg-[#333333]/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
         <div className="flex h-[60px] items-center justify-between px-4">
           {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">
@@ -185,7 +185,6 @@ export function MobileAppBar() {
                 />
               </div>
             )}
-            <ThemeToggleButton className="h-10.5 w-10.5 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs backdrop-blur-md cursor-pointer flex items-center justify-center shrink-0" />
             <Button
               variant="ghost"
               size="icon"
@@ -281,10 +280,22 @@ export function MobileAppBar() {
                 })}
               </div>
 
-              {/* Theme Toggle inside Menu Drawer Footer */}
-              <div className="border-t border-border/40 p-5 bg-muted/20 flex items-center justify-between">
-                <span className="text-sm tracking-wide text-left text-foreground">Theme</span>
-                <ThemeToggleButton className="h-9 w-9 rounded-full border border-border/60 shadow-xs cursor-pointer" />
+              {/* Powered by Footer */}
+              <div className="border-t border-border/40 p-5 bg-muted/20 flex items-center justify-center">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
+                  Powered By{" "}
+                  <a
+                    href="https://www.syntiaro.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "font-bold transition-colors",
+                      isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-700 hover:text-teal-800"
+                    )}
+                  >
+                    SYNTIARO
+                  </a>
+                </p>
               </div>
             </motion.div>
           </>

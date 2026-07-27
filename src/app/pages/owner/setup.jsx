@@ -226,7 +226,7 @@ export function OwnerSetupPage() {
             <p className="text-muted-foreground text-sm">Welcome to SportXClub! Your account has been verified by the admin.</p>
           </div>
           <div className="pt-4">
-            <Button onClick={() => navigate("/owner-dashboard")} className="w-full h-11 rounded-full bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60]">
+            <Button onClick={() => navigate("/owner-dashboard")} className="w-full h-11 rounded-full bg-emerald-600 text-[#050505] hover:bg-emerald-700">
               Login to Dashboard
             </Button>
           </div>

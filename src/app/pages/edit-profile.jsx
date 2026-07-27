@@ -284,7 +284,7 @@ export function EditProfilePage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting || !fullName.trim()}
-                    className="flex-1 h-11 rounded-full bg-[#6DFF3B] text-black hover:bg-[#86ff60] font-bold hover:shadow-lg hover:shadow-[#6DFF3B]/20 cursor-pointer"
+                    className="flex-1 h-11 rounded-full bg-emerald-600 text-black hover:bg-emerald-700 font-bold hover:shadow-lg hover:shadow-emerald-600/20 cursor-pointer"
                   >
                     {isSubmitting ? (
                       <span className="flex items-center justify-center gap-2">
