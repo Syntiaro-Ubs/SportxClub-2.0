@@ -116,14 +116,14 @@ export function OwnerLayout() {
   );
 
   return (
-    <div className="flex min-h-dvh bg-background text-foreground">
+    <div className="flex min-h-dvh bg-background text-foreground overflow-x-hidden w-full max-w-full">
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 flex-col border-r border-border/40 bg-card/30 md:flex fixed inset-y-0 z-50">
         <SidebarContent />
       </aside>
 
       {/* Mobile Header */}
-      <div className="flex flex-col flex-1 md:pl-64">
+      <div className="flex flex-col flex-1 md:pl-64 w-full max-w-full overflow-x-hidden">
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             type="button"
@@ -210,8 +210,8 @@ export function OwnerLayout() {
           )}
         </AnimatePresence>
 
-        <main className="flex-1">
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-8 lg:px-8">
+        <main className="flex-1 w-full max-w-full overflow-x-hidden">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-8 lg:px-8 w-full max-w-full overflow-x-hidden">
             <Outlet context={{ activeProfile, setDemoProfile }} />
           </div>
         </main>

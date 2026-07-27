@@ -183,17 +183,17 @@ export function BookingsList() {
             <p className="mt-1">No bookings match the selected filters.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+          <div className="overflow-x-auto w-full scrollbar-visible pb-3">
+            <table className="w-full text-sm text-left min-w-[850px]">
               <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border/50">
                 <tr>
-                  <th className="px-6 py-4">Booking ID</th>
-                  <th className="px-6 py-4">Customer</th>
-                  <th className="px-6 py-4">Turf & Sport</th>
-                  <th className="px-6 py-4">Date & Time</th>
-                  <th className="px-6 py-4">Amount</th>
-                  <th className="px-6 py-4">Status</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Booking ID</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Customer</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Turf & Sport</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Date & Time</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Amount</th>
+                  <th className="px-6 py-4 whitespace-nowrap">Status</th>
+                  <th className="px-6 py-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
@@ -202,8 +202,8 @@ export function BookingsList() {
                     key={booking.id}
                     className="hover:bg-muted/30 transition-colors"
                   >
-                    <td className="px-6 py-4">{booking.id}</td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">{booking.id}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="">{booking.customerName}</div>
                         <div className="text-xs text-muted-foreground">
@@ -211,7 +211,7 @@ export function BookingsList() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="">{booking.turfName}</div>
                         <div className="text-xs text-muted-foreground">
@@ -219,7 +219,7 @@ export function BookingsList() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
@@ -231,13 +231,13 @@ export function BookingsList() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="">₹{booking.amount}</div>
                       <div className="text-xs text-muted-foreground">
                         {booking.paymentStatus}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
                         variant="outline"
                         className={`border-0 ${getStatusColor(booking.status)}`}
@@ -245,7 +245,7 @@ export function BookingsList() {
                         {booking.status}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button

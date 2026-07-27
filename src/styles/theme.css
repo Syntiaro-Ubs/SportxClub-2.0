@@ -239,3 +239,38 @@ body {
   border-width: 0px !important;
   outline: none !important;
 }
+
+/* Enable visible custom scrollbar for designated scroll containers */
+.scrollbar-visible::-webkit-scrollbar {
+  display: block !important;
+  height: 6px !important;
+  width: 6px !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-radius: 9999px !important;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #10b981 !important; /* emerald green in light mode */
+  border-radius: 9999px !important;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #6DFF3B !important; /* neon green in dark mode */
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #059669 !important;
+}
+
+/* Fallback scrollbar style for Firefox */
+.scrollbar-visible {
+  scrollbar-width: thin !important;
+  scrollbar-color: #10b981 rgba(0, 0, 0, 0.03) !important;
+}
