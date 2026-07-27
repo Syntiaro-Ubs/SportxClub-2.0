@@ -23,8 +23,23 @@ import {
   Database,
   CheckCircle2,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Building2,
+  ShieldCheck,
+  User,
+  ChevronRight,
+  Info,
+  CreditCard,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../components/ui/dialog";
 import { paymentService } from "../../services/payment.service";
 import { toast } from "sonner";
 import {
@@ -216,6 +231,46 @@ export function Revenue() {
     return activePayments.filter(t => t.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
   }, [activePayments]);
 
+  const [isSettlementsModalOpen, setIsSettlementsModalOpen] = useState(false);
+
+  const mockSettlementData = useMemo(() => ({
+    totalGross: pendingRevenue || 1600,
+    expectedDate: "Tomorrow, 10:00 AM",
+    settlementCycle: "Razorpay T+1 Nodal Transfer",
+    settlementRef: "SETTLE-984201",
+    nodalBank: "HDFC Bank (****4821)",
+    breakdown: [
+      {
+        id: "B-8932",
+        userName: "Rahul Sharma",
+        userPhone: "+91 98765 43210",
+        turfName: "Main Arena A (Football)",
+        slotDate: "Today",
+        slotTime: "6:00 PM - 7:00 PM",
+        grossAmount: 800,
+        paymentMode: "Razorpay UPI",
+        status: "Processing Bank Transfer",
+      },
+      {
+        id: "B-8934",
+        userName: "Amit Patel",
+        userPhone: "+91 91234 56789",
+        turfName: "Indoor Turf B (Cricket)",
+        slotDate: "Today",
+        slotTime: "8:00 PM - 9:00 PM",
+        grossAmount: 800,
+        paymentMode: "Razorpay Credit Card",
+        status: "In Escrow Clearance",
+      },
+    ],
+    calculations: {
+      gross: pendingRevenue || 1600,
+      gatewayFee: (pendingRevenue || 1600) * 0.02,
+      gstOnFee: (pendingRevenue || 1600) * 0.02 * 0.18,
+      netPayout: (pendingRevenue || 1600) - ((pendingRevenue || 1600) * 0.02 * 1.18),
+    },
+  }), [pendingRevenue]);
+
   const totalTransactionsCount = useMemo(() => {
     return activePayments.length;
   }, [activePayments]);
@@ -296,37 +351,6 @@ export function Revenue() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto">
-          {/* Mode Selector Toggle */}
-          <div className="flex items-center gap-2 bg-card border border-border/50 p-1 rounded-xl shadow-xs">
-            <button
-              onClick={() => {
-                setIsDemoMode(false);
-                toast.info("Switched to Live API Feed");
-                fetchData();
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${!isDemoMode && isLoading ? 'animate-spin' : ''}`} />
-              Live API
-            </button>
-            <button
-              onClick={() => {
-                setIsDemoMode(true);
-                toast.success("Previewing high-fidelity Sandbox data");
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              <Database className="w-3.5 h-3.5" />
-              Demo Sandbox
-            </button>
-          </div>
-
           <Button
             onClick={handleExport}
             variant="outline"
@@ -338,15 +362,15 @@ export function Revenue() {
       </div>
 
       {/* -------------------------------------------------------------
-          KPI Widgets cards grid
+          KPI Widgets cards grid (2 Cards)
           ------------------------------------------------------------- */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
 
-        {/* Widget 1: Total Completed Revenue */}
+        {/* Widget 1: Total Received Revenue */}
         <Card className="border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-emerald-500/30 transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px]">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Total Completed Revenue</p>
+              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Total Received Revenue</p>
               <h3 className="text-3xl font-black tracking-tight text-emerald-700 dark:text-emerald-400 mt-1">
                 ₹{totalRevenue.toLocaleString('en-IN')}
               </h3>
@@ -360,41 +384,167 @@ export function Revenue() {
           </div>
         </Card>
 
-        {/* Widget 2: Pending Payments */}
-        <Card className="border-amber-500/10 bg-gradient-to-br from-amber-500/10 to-amber-500/5 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-amber-500/30 transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px]">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest">Pending Payments</p>
-              <h3 className="text-3xl font-black tracking-tight text-amber-700 dark:text-amber-400 mt-1">
-                ₹{pendingRevenue.toLocaleString('en-IN')}
-              </h3>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-amber-500/15 flex items-center justify-center border border-amber-500/20 shadow-inner">
-              <Clock className="h-4.5 w-4.5 text-amber-600 dark:text-amber-400" />
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-amber-600/80 dark:text-amber-400/80 flex items-center gap-1 font-semibold">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Requires action (Walk-ins)
-          </div>
-        </Card>
+        {/* Widget 2: Upcoming Settlements (Clickable Button Trigger) */}
+        <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
+          <DialogTrigger asChild>
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-primary/40 transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer group hover:-translate-y-0.5">
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
+                    Upcoming Settlements
+                    <Info className="h-3 w-3 opacity-60" />
+                  </p>
+                  <h3 className="text-3xl font-black tracking-tight text-foreground mt-1">
+                    ₹{pendingRevenue.toLocaleString('en-IN')}
+                  </h3>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/20 shadow-inner group-hover:scale-110 transition-transform">
+                  <Clock className="h-4.5 w-4.5 text-primary" />
+                </div>
+              </div>
+              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground font-semibold pt-2 border-t border-border/40">
+                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  Auto-settled via Escrow
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-0.5 group-hover:underline">
+                  View History <ChevronRight className="h-3 w-3" />
+                </span>
+              </div>
+            </Card>
+          </DialogTrigger>
 
-        {/* Widget 3: Total Transactions count */}
-        <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-primary/20 transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px]">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Transaction count</p>
-              <h3 className="text-3xl font-black tracking-tight text-foreground mt-1">
-                {totalTransactionsCount} Txns
-              </h3>
+          <DialogContent className="rounded-3xl border border-border/40 bg-popover max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs px-2.5 py-0.5 font-mono">
+                  Batch #{mockSettlementData.settlementRef}
+                </Badge>
+                <Badge variant="outline" className="text-xs font-semibold border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
+                  T+1 Settlement Cycle
+                </Badge>
+              </div>
+              <DialogTitle className="text-2xl font-extrabold tracking-tight flex items-center gap-2 text-foreground">
+                <Clock className="h-6 w-6 text-primary" />
+                Upcoming Settlements Breakdown
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Detailed user-wise breakdown of funds queued for bank credit.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Summary Credit Banner */}
+              <div className="rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                    Expected Bank Credit ETA
+                  </span>
+                  <h4 className="text-lg font-black text-foreground flex items-center gap-2">
+                    <Building2 className="h-4.5 w-4.5 text-primary" />
+                    {mockSettlementData.expectedDate}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Destination: <strong className="text-foreground">{mockSettlementData.nodalBank}</strong>
+                  </p>
+                </div>
+                <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-primary/20 pt-2 sm:pt-0 sm:pl-4">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Gross Pending</span>
+                  <p className="text-2xl font-black text-primary font-mono">
+                    ₹{mockSettlementData.totalGross.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </div>
+
+              {/* User-Wise History List */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+                  <span>User Transactions ({mockSettlementData.breakdown.length})</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Razorpay Verified Escrow
+                  </span>
+                </h4>
+
+                <div className="divide-y divide-border/30 border border-border/40 rounded-2xl overflow-hidden bg-card/40">
+                  {mockSettlementData.breakdown.map((item) => (
+                    <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/20 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-sm text-foreground">{item.userName}</p>
+                            <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              {item.id}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                            {item.turfName} · <span className="text-foreground">{item.slotTime}</span> ({item.slotDate})
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 border-border/20 pt-2 sm:pt-0">
+                        <div className="text-left sm:text-right">
+                          <p className="font-mono font-bold text-sm text-foreground">₹{item.grossAmount}</p>
+                          <span className="text-[10px] text-muted-foreground uppercase font-semibold">{item.paymentMode}</span>
+                        </div>
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5 whitespace-nowrap">
+                          {item.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Settlement Deductions Breakdown Table */}
+              <div className="rounded-2xl border border-border/40 bg-muted/20 p-4 space-y-2">
+                <h5 className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
+                  <CreditCard className="h-4 w-4 text-primary" /> Net Payout Calculation Summary
+                </h5>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Gross Upcoming Revenue</span>
+                  <span className="font-mono font-semibold text-foreground">₹{mockSettlementData.calculations.gross.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Payment Gateway Fee (2%)</span>
+                  <span className="font-mono font-semibold text-rose-500">-₹{mockSettlementData.calculations.gatewayFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>GST on Gateway Fee (18%)</span>
+                  <span className="font-mono font-semibold text-rose-500">-₹{mockSettlementData.calculations.gstOnFee.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-border/40 pt-2 flex justify-between text-sm font-bold text-foreground">
+                  <span>Net Credited to Bank Account</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base">
+                    ₹{mockSettlementData.calculations.netPayout.toFixed(2)}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center border border-border/20 shadow-inner">
-              <ArrowUpRight className="h-4.5 w-4.5 text-primary" />
-            </div>
-          </div>
-          <div className="mt-3 text-xs text-muted-foreground flex items-center gap-1 font-semibold">
-            <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> Across all turf facilities
-          </div>
-        </Card>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  toast.success("Settlement advice PDF generated!");
+                }}
+                className="rounded-xl h-10 text-xs font-bold gap-2 cursor-pointer"
+              >
+                <Download className="h-4 w-4" /> Download Settlement Advice (PDF)
+              </Button>
+              <Button
+                onClick={() => setIsSettlementsModalOpen(false)}
+                className="rounded-xl h-10 text-xs bg-primary text-primary-foreground font-bold cursor-pointer hover:opacity-95"
+              >
+                Close Breakdown
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
       </div>
 
       {/* -------------------------------------------------------------
@@ -422,8 +572,8 @@ export function Revenue() {
                     toast.info(`Switched view to ${tf.toUpperCase()}`);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${timeframe === tf
-                      ? "bg-white dark:bg-slate-900 !text-foreground shadow-sm border border-border/10 hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
-                      : "text-muted-foreground hover:text-foreground"
+                    ? "bg-white dark:bg-slate-900 !text-foreground shadow-sm border border-border/10 hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
+                    : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
                   {tf === "today" ? "Today" : tf === "weekly" ? "Week" : tf === "monthly" ? "Month" : "Year"}

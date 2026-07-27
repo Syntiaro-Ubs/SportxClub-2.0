@@ -222,112 +222,112 @@ export function Payment() {
       <div className="mx-auto max-w-6xl px-0 md:px-6 py-6 pb-6 md:py-8 md:pb-8">
         <div className="px-4 md:px-0">
           <Button
-          variant="ghost"
-          className={cn(
-            "mb-6 -ml-2 inline-flex gap-2 rounded-full border px-4 py-2 cursor-pointer transition-all",
-            isDark
-              ? "border-white/[0.08] bg-white/[0.03] text-white/80 hover:bg-white/[0.06] hover:text-white"
-              : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
-          )}
-          onClick={() => navigate(-1)}
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span>Back to venue</span>
-        </Button>
+            variant="ghost"
+            className={cn(
+              "mb-6 -ml-2 inline-flex gap-2 rounded-full border px-4 py-2 cursor-pointer transition-all",
+              isDark
+                ? "border-white/[0.08] bg-white/[0.03] text-white/80 hover:bg-white/[0.06] hover:text-white"
+                : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
+            )}
+            onClick={() => navigate(-1)}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Back to venue</span>
+          </Button>
 
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className={cn(
-              "text-[10px] uppercase tracking-widest font-black",
-              isDark ? "text-emerald-600" : "text-emerald-600"
-            )}>
-              Checkout
-            </p>
-            <h1 className={cn(
-              "mt-2 text-3xl tracking-tight font-black md:text-4xl lg:text-5xl",
-              isDark ? "text-white" : "text-slate-900"
-            )}>
-              Secure booking and payment
-            </h1>
-            <p className={cn(
-              "mt-3 max-w-2xl text-sm leading-relaxed",
-              isDark ? "text-white/60" : "text-slate-500"
-            )}>
-              Review the venue, apply an offer, choose a payment method, and confirm with confidence.
-            </p>
-          </div>
+          <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className={cn(
+                "text-[10px] uppercase tracking-widest font-black",
+                isDark ? "text-emerald-600" : "text-emerald-600"
+              )}>
+                Checkout
+              </p>
+              <h1 className={cn(
+                "mt-2 text-3xl tracking-tight font-black md:text-4xl lg:text-5xl",
+                isDark ? "text-white" : "text-slate-900"
+              )}>
+                Secure booking and payment
+              </h1>
+              <p className={cn(
+                "mt-3 max-w-2xl text-sm leading-relaxed",
+                isDark ? "text-white/60" : "text-slate-500"
+              )}>
+                Review the venue, apply an offer, choose a payment method, and confirm with confidence.
+              </p>
+            </div>
 
-          <div className={cn(
-            "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wider",
-            isDark
-              ? "border-emerald-600/20 bg-emerald-600/10 text-emerald-600"
-              : "border-emerald-300 bg-emerald-50 text-emerald-700"
-          )}>
-            <ShieldCheck className="h-4.5 w-4.5" />
-            <span>Secure payment</span>
-          </div>
-        </div>
-
-        {/* Sleek Stepper Timeline */}
-        <div className="mb-12 relative max-w-3xl mx-auto select-none">
-          {/* Progress Connector Line Container */}
-          <div className="absolute left-[12.5%] right-[12.5%] top-5 h-0.5 -translate-y-1/2 pointer-events-none z-0">
-            {/* Background Line */}
             <div className={cn(
-              "w-full h-full rounded-full",
-              isDark ? "bg-white/[0.08]" : "bg-slate-200"
-            )} />
-            {/* Progress Active Line */}
-            <div
-              className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-emerald-600 dark:to-emerald-700 transition-all duration-500 z-0"
-              style={{ width: "100%" }}
-            />
+              "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wider",
+              isDark
+                ? "border-emerald-600/20 bg-emerald-600/10 text-emerald-600"
+                : "border-emerald-300 bg-emerald-50 text-emerald-700"
+            )}>
+              <ShieldCheck className="h-4.5 w-4.5" />
+              <span>Secure payment</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-4 text-center relative z-10">
-            {checkoutFlow.map((step, index) => {
-              const isActive = index === 3;
-              const isCompleted = index < 3;
-              return (
-                <div key={step} className="flex flex-col items-center">
-                  {/* Step Circle */}
-                  <div
-                    className={cn(
-                      "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 font-extrabold text-sm shadow-md",
-                      isCompleted
-                        ? "bg-emerald-600 border-emerald-600 text-white dark:bg-emerald-600 dark:border-emerald-600 dark:text-black shadow-[0_0_15px_rgba(109,255,59,0.2)]"
-                        : isActive
-                          ? isDark
-                            ? "bg-[#0d0f15] border-emerald-600 text-emerald-600 shadow-[0_0_20px_rgba(109,255,59,0.3)] scale-110"
-                            : "bg-white border-emerald-600 text-emerald-600 shadow-md scale-110"
-                          : isDark
-                            ? "bg-[#101216] border-white/10 text-white/40"
-                            : "bg-slate-100 border-slate-200 text-slate-400"
-                    )}
-                  >
-                    {isCompleted ? (
-                      <Check className="h-4.5 w-4.5 stroke-[3px]" />
-                    ) : (
-                      <span>{index + 1}</span>
-                    )}
+          {/* Sleek Stepper Timeline */}
+          <div className="mb-12 relative max-w-3xl mx-auto select-none">
+            {/* Progress Connector Line Container */}
+            <div className="absolute left-[12.5%] right-[12.5%] top-5 h-0.5 -translate-y-1/2 pointer-events-none z-0">
+              {/* Background Line */}
+              <div className={cn(
+                "w-full h-full rounded-full",
+                isDark ? "bg-white/[0.08]" : "bg-slate-200"
+              )} />
+              {/* Progress Active Line */}
+              <div
+                className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 dark:from-emerald-600 dark:to-emerald-700 transition-all duration-500 z-0"
+                style={{ width: "100%" }}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 text-center relative z-10">
+              {checkoutFlow.map((step, index) => {
+                const isActive = index === 3;
+                const isCompleted = index < 3;
+                return (
+                  <div key={step} className="flex flex-col items-center">
+                    {/* Step Circle */}
+                    <div
+                      className={cn(
+                        "h-10 w-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 font-extrabold text-sm shadow-md",
+                        isCompleted
+                          ? "bg-emerald-600 border-emerald-600 text-white dark:bg-emerald-600 dark:border-emerald-600 dark:text-black shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                          : isActive
+                            ? isDark
+                              ? "bg-[#0d0f15] border-emerald-600 text-emerald-600 shadow-[0_0_20px_rgba(109,255,59,0.3)] scale-110"
+                              : "bg-white border-emerald-600 text-emerald-600 shadow-md scale-110"
+                            : isDark
+                              ? "bg-[#101216] border-white/10 text-white/40"
+                              : "bg-slate-100 border-slate-200 text-slate-400"
+                      )}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-4.5 w-4.5 stroke-[3px]" />
+                      ) : (
+                        <span>{index + 1}</span>
+                      )}
+                    </div>
+                    {/* Step Label */}
+                    <span
+                      className={cn(
+                        "mt-3 text-[10px] font-bold uppercase tracking-wider text-center block max-w-[90px] mx-auto leading-normal hidden sm:block",
+                        isActive
+                          ? isDark ? "text-emerald-600" : "text-emerald-700"
+                          : isDark ? "text-white/40" : "text-slate-400"
+                      )}
+                    >
+                      {step}
+                    </span>
                   </div>
-                  {/* Step Label */}
-                  <span
-                    className={cn(
-                      "mt-3 text-[10px] font-bold uppercase tracking-wider text-center block max-w-[90px] mx-auto leading-normal hidden sm:block",
-                      isActive
-                        ? isDark ? "text-emerald-600" : "text-emerald-700"
-                        : isDark ? "text-white/40" : "text-slate-400"
-                    )}
-                  >
-                    {step}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
 
         <div className="mt-8 grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_390px]">
           <div className="space-y-6 order-2 lg:order-1">

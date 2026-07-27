@@ -14,10 +14,12 @@ import {
   LogOut,
   User,
   Trophy,
+  FlaskConical,
 } from "lucide-react";
 import { Logo } from "../brand/Logo";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Switch } from "../ui/switch";
 import { useAuth } from "../../providers/auth-provider";
 import {
   DropdownMenu,
@@ -29,6 +31,11 @@ import {
 } from "../ui/dropdown-menu";
 import {
   Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -36,12 +43,12 @@ import { toast } from "sonner";
 
 const ownerNavigation = [
   { name: "Dashboard", href: "/owner-dashboard", icon: LayoutDashboard },
-  { name: "My Turfs", href: "/owner-dashboard/turfs", icon: MapPin },
-  { name: "Bookings", href: "/owner-dashboard/bookings", icon: CalendarDays },
-  { name: "Tournaments & Events", href: "/owner-dashboard/tournaments", icon: Trophy },
-  { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
-  { name: "Time Slots", href: "/owner-dashboard/time-slots", icon: CalendarDays },
   { name: "Revenue", href: "/owner-dashboard/revenue", icon: IndianRupee },
+  { name: "Bookings", href: "/owner-dashboard/bookings", icon: CalendarDays },
+  { name: "My Turfs", href: "/owner-dashboard/turfs", icon: MapPin },
+  { name: "Roles & Permission", href: "/owner-dashboard/staff", icon: User },
+  { name: "Events", href: "/owner-dashboard/tournaments", icon: Trophy },
+  { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
   { name: "Reviews", href: "/owner-dashboard/reviews", icon: Star },
   { name: "Promotions", href: "/owner-dashboard/promotions", icon: Tag },
 ];
@@ -51,7 +58,19 @@ export function OwnerLayout() {
   const navigate = useNavigate();
   const { currentUser, updateUser, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+  const [isTestMode, setIsTestMode] = useState(() => {
+    return localStorage.getItem("ownerTestMode") === "true";
+  });
+  const [isTestAlertOpen, setIsTestAlertOpen] = useState(false);
+
+  const handleTestModeToggle = (checked) => {
+    setIsTestMode(checked);
+    localStorage.setItem("ownerTestMode", checked ? "true" : "false");
+    if (checked) {
+      setIsTestAlertOpen(true);
+    }
+  };
+
   // Create a local override state for demo purposes (when not logged in)
   const [demoProfile, setDemoProfile] = useState(() => {
     return JSON.parse(localStorage.getItem("mockOwnerProfile")) || null;
@@ -91,11 +110,10 @@ export function OwnerLayout() {
               key={item.name}
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                isActive
-                  ? "bg-primary/10 text-primary"
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${isActive
+                  ? "bg-primary/10 text-primary font-semibold"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-              }`}
+                }`}
             >
               <Icon className="h-5 w-5" />
               {item.name}
@@ -104,18 +122,6 @@ export function OwnerLayout() {
         })}
       </div>
       <div className="p-4 mt-auto border-t border-border/40 flex flex-col gap-1">
-        <Link
-          to="/owner-dashboard/staff"
-          onClick={() => setIsMobileMenuOpen(false)}
-          className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-            location.pathname.startsWith("/owner-dashboard/staff")
-              ? "bg-primary/10 text-primary"
-              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-          }`}
-        >
-          <User className="h-5 w-5" />
-          Staff & Roles
-        </Link>
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground px-3 py-2.5 h-auto rounded-xl"
@@ -149,7 +155,7 @@ export function OwnerLayout() {
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1 items-center">
-              <h1 className="text-lg capitalize">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
                 {ownerNavigation.find(
                   (n) =>
                     location.pathname === n.href ||
@@ -158,8 +164,19 @@ export function OwnerLayout() {
                 )?.name || "Admin Panel"}
               </h1>
             </div>
-            
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
+
+            <div className="flex items-center gap-x-3 lg:gap-x-5">
+              {/* Razorpay-style Test Mode Toggle Switch */}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-md shadow-2xs hover:bg-primary/10 transition-colors">
+                <FlaskConical className={`h-4 w-4 transition-colors ${isTestMode ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
+                <span className="text-xs font-bold text-foreground select-none">Test Mode</span>
+                <Switch
+                  checked={isTestMode}
+                  onCheckedChange={handleTestModeToggle}
+                  className="data-[state=checked]:bg-[#0FA83F] data-[state=checked]:border-[#0FA83F] cursor-pointer"
+                />
+              </div>
+
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2 rounded-full hover:bg-accent/50 p-1 pr-4 pl-1 transition-colors cursor-pointer border-0 bg-transparent">
                   <Avatar className="h-10 w-10 border-2 border-primary/10 transition-colors">
@@ -225,11 +242,39 @@ export function OwnerLayout() {
 
         <main className="flex-1 w-full max-w-full overflow-x-hidden">
           <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-8 lg:px-8 w-full max-w-full overflow-x-hidden">
-            <Outlet context={{ activeProfile, setDemoProfile }} />
+            <Outlet context={{ activeProfile, setDemoProfile, isTestMode, setIsTestMode }} />
           </div>
         </main>
       </div>
 
-      </div>
+      {/* Test Mode Alert Popup Modal */}
+      <Dialog open={isTestAlertOpen} onOpenChange={setIsTestAlertOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl border border-destructive/20 bg-card p-6 shadow-2xl backdrop-blur-xl">
+          <DialogHeader className="flex flex-col items-center text-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+              <FlaskConical className="h-6 w-6 text-destructive animate-bounce" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-bold text-foreground">
+                Test Mode Active — Clean Sandbox
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                Dashboard metrics & bookings are cleared for test transactions. Toggle Test Mode OFF in top header anytime to return to live data.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+          <DialogFooter className="mt-4 sm:justify-center">
+            <Button
+              variant="destructive"
+              onClick={() => setIsTestAlertOpen(false)}
+              className="w-full sm:w-auto px-6 font-bold rounded-xl h-10 text-xs shadow-md shadow-destructive/20 cursor-pointer"
+            >
+              Got it, continue testing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    </div>
   );
 }

@@ -30,7 +30,7 @@ export function CalendarView() {
         setIsLoading(true);
         const ownerId = currentUser?.id || "guest";
         const result = await bookingService.getAll(ownerId);
-        
+
         // Map mock dates around today so they actually display
         const modifiedResult = result.map((b, i) => {
           const newDate = new Date();
@@ -152,7 +152,7 @@ export function CalendarView() {
                 }}
                 className="w-full bg-transparent border-none p-0 shadow-none flex justify-center mb-6"
               />
-              
+
               <div className="w-full pt-5 border-t border-border/30">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Availability Status</span>
@@ -166,12 +166,12 @@ export function CalendarView() {
                     </Badge>
                   )}
                 </div>
-                <Button 
-                  variant={isDateDisabled ? "outline" : "default"} 
+                <Button
+                  variant={isDateDisabled ? "outline" : "default"}
                   className={cn(
                     "w-full gap-2 h-11 font-extrabold rounded-xl text-xs transition-all duration-300 cursor-pointer shadow-xs",
-                    isDateDisabled 
-                      ? "bg-white dark:bg-slate-900 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-300 dark:hover:border-red-800 hover:scale-[1.02]" 
+                    isDateDisabled
+                      ? "bg-white dark:bg-slate-900 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-300 dark:hover:border-red-800 hover:scale-[1.02]"
                       : "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-600 border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-600 dark:hover:border-emerald-600 hover:scale-[1.02]"
                   )}
                   onClick={toggleDateStatus}
@@ -217,7 +217,7 @@ export function CalendarView() {
               </div>
             </CardHeader>
             <CardContent className="p-6 flex-1 flex flex-col">
-              
+
               {/* Daily Statistics Cards Grid */}
               {!isDateDisabled && selectedBookings.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -259,7 +259,7 @@ export function CalendarView() {
 
               {/* Dynamic list rendering */}
               {isDateDisabled ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-20 flex flex-col items-center justify-center text-muted-foreground flex-1"
@@ -271,7 +271,7 @@ export function CalendarView() {
                   <p className="text-xs max-w-sm leading-relaxed">You have disabled this date. Customers will not be able to book any turf facilities on this day.</p>
                 </motion.div>
               ) : selectedBookings.length === 0 ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="text-center py-20 flex flex-col items-center justify-center text-muted-foreground flex-1"
@@ -296,11 +296,11 @@ export function CalendarView() {
                         {/* Decorative vertical status bar */}
                         <div className={cn(
                           "absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300",
-                          booking.status === 'Confirmed' || booking.status === 'Completed' 
-                            ? 'bg-emerald-500 group-hover:h-full' 
+                          booking.status === 'Confirmed' || booking.status === 'Completed'
+                            ? 'bg-emerald-500 group-hover:h-full'
                             : 'bg-amber-500 group-hover:h-full'
                         )} />
-                        
+
                         <div className="space-y-2.5 flex-1 pl-3">
                           <div className="flex flex-wrap items-center gap-2.5">
                             <h4 className="font-extrabold text-base text-foreground tracking-tight">{booking.turfName}</h4>
@@ -314,7 +314,7 @@ export function CalendarView() {
                             </Badge>
                             <span className="text-[10px] font-mono text-muted-foreground/60">ID: {booking.id}</span>
                           </div>
-                          
+
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <User className="w-3.5 h-3.5 text-primary" />

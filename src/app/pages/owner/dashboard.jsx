@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useOutletContext } from "react-router";
 import {
   Card,
   CardContent,
@@ -34,6 +34,7 @@ import {
   ShieldCheck,
   Ban,
   DollarSign,
+  FlaskConical,
 } from "lucide-react";
 import {
   AreaChart,
@@ -247,6 +248,11 @@ const fallbackData = {
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const outletContext = useOutletContext() || {};
+  const isTestMode = outletContext.isTestMode !== undefined
+    ? outletContext.isTestMode
+    : (localStorage.getItem("ownerTestMode") === "true");
+
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDemoMode, setIsDemoMode] = useState(false);
@@ -374,6 +380,7 @@ export function Dashboard() {
 
   // Filtered Bookings computed state
   const filteredBookings = useMemo(() => {
+    if (isTestMode) return [];
     return bookings.filter(b => {
       const matchesSearch =
         b.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -385,15 +392,24 @@ export function Dashboard() {
 
       return matchesSearch && matchesSport && matchesStatus;
     });
-  }, [bookings, searchQuery, sportFilter, statusFilter]);
+  }, [bookings, searchQuery, sportFilter, statusFilter, isTestMode]);
 
   // Bookings Radial Circle progress calculations
   const totalSlotsCount = 24;
-  const bookedSlotsCount = 18;
-  const progressPercentage = (bookedSlotsCount / totalSlotsCount) * 100;
+  const bookedSlotsCount = isTestMode ? 0 : 18;
+  const progressPercentage = isTestMode ? 0 : Math.round((bookedSlotsCount / totalSlotsCount) * 100);
   const ringRadius = 22;
   const ringCircumference = 2 * Math.PI * ringRadius;
   const ringDashoffset = ringCircumference - (progressPercentage / 100) * ringCircumference;
+
+  const activePieData = useMemo(() => {
+    if (isTestMode) {
+      return [
+        { name: "No Test Data", value: 100, color: "#64748b" }
+      ];
+    }
+    return mockSportsPie;
+  }, [isTestMode]);
 
   if (isLoading) {
     return (
@@ -423,122 +439,21 @@ export function Dashboard() {
       {/* -------------------------------------------------------------
           Header Bar with mode toggles and date selector
           ------------------------------------------------------------- */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-6">
-        <div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
-              Owner Dashboard
-            </h1>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="w-fit text-xs font-mono px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 shadow-sm">
-                ID: {OWNER_ID}
-              </Badge>
-              {isDemoMode ? (
-                <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs gap-1.5 flex items-center shadow-inner">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  Demo Mode
-                </Badge>
-              ) : (
-                <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs gap-1.5 flex items-center shadow-inner">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Sync
-                </Badge>
-              )}
-            </div>
-          </div>
-          <p className="text-muted-foreground mt-1">
-            Analyze occupancy, manage bookings, and increase your club revenue.
-          </p>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Mode Selector Toggle */}
-          <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-full border border-border/50 backdrop-blur-md">
-            <button
-              onClick={() => toggleManualMode("live")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${!isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              Live API
-            </button>
-            <button
-              onClick={() => toggleManualMode("demo")}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
-            >
-              Demo Mode
-            </button>
-          </div>
 
-          <Button variant="outline" className="gap-2 backdrop-blur-md bg-card/40 border border-border/50 hover:bg-muted/50 transition-all rounded-xl h-10 text-xs">
-            <Calendar className="h-4 w-4 text-primary" />
-            Last 30 Days
-          </Button>
-        </div>
-      </div>
 
-      {/* -------------------------------------------------------------
-          Demo Mode Offline Warning Banner
-          ------------------------------------------------------------- */}
-      {isDemoMode && (
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border border-amber-500/20 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
-              <Sparkles className="h-5 w-5 text-amber-500 animate-pulse" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                Simulating Offline Dashboard Preview
-              </h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                The database API endpoint is offline. Showing premium layout with local sandbox mock data.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRetryFetch}
-              disabled={isRetrying}
-              className="h-9 text-xs gap-2 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/15 rounded-xl transition-all"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isRetrying ? 'animate-spin' : ''}`} />
-              Retry Live Connect
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* -------------------------------------------------------------
           New Diverse KPI Cards Grid (Content-Specific Layouts)
           ------------------------------------------------------------- */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
         {/* Card 1: Gross Revenue (Full-Bleed Sparkline) */}
         <Card
           onClick={() => navigate("/owner-dashboard/revenue")}
           className="relative overflow-hidden border border-emerald-500/10 bg-card/45 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-emerald-500/35 transition-all duration-300 hover:-translate-y-1 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
         >
-          {/* Robinhood-Style Full Bleed Sparkline in Background */}
-          <div className="absolute inset-x-0 bottom-0 top-12 z-0 opacity-30 select-none pointer-events-none">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockRevenueSparkline} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="var(--primary)"
-                  strokeWidth={2}
-                  fill="url(#revenueSparklineGrad)"
-                  dot={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+
 
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
@@ -546,24 +461,24 @@ export function Dashboard() {
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Revenue</p>
                 <div className="flex items-baseline gap-2 mt-0.5">
                   <h3 className="text-2xl font-black tracking-tight text-foreground">
-                    ₹{(data?.stats?.monthlyRevenue || 184200).toLocaleString()}
+                    ₹{isTestMode ? "0" : (data?.stats?.monthlyRevenue || 184200).toLocaleString()}
                   </h3>
                   <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-0.5">
                     <TrendingUp className="h-3 w-3" />
-                    +12.5%
+                    {isTestMode ? "0%" : "+12.5%"}
                   </span>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-inner">
-                <IndianRupee className="h-4.5 w-4.5 text-emerald-500" />
+              <div className="flex items-center justify-center">
+                <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
 
             <div className="mt-6 flex items-end justify-between border-t border-border/20 pt-3 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-3">
-                <span>Online: <strong className="text-foreground">₹139K</strong></span>
+                <span>Online: <strong className="text-foreground">{isTestMode ? "₹0" : "₹139K"}</strong></span>
                 <span className="opacity-40">|</span>
-                <span>Cash: <strong className="text-foreground">₹45K</strong></span>
+                <span>Cash: <strong className="text-foreground">{isTestMode ? "₹0" : "₹45K"}</strong></span>
               </div>
               <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
                 Revenue
@@ -583,11 +498,11 @@ export function Dashboard() {
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Today's Bookings</p>
                 <h3 className="text-2xl font-black tracking-tight text-foreground mt-0.5">
-                  {data?.stats?.todaysBookings || 18} Bookings
+                  {isTestMode ? 0 : (data?.stats?.todaysBookings || 18)} Bookings
                 </h3>
                 <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5">
                   <TrendingUp className="h-3 w-3" />
-                  +8.2% vs yesterday
+                  {isTestMode ? "0%" : "+8.2% vs yesterday"}
                 </p>
               </div>
 
@@ -624,9 +539,9 @@ export function Dashboard() {
 
             <div className="mt-4 flex items-end justify-between border-t border-border/20 pt-3 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-2">
-                <span>Confirmed: <strong className="text-foreground">14</strong></span>
+                <span>Confirmed: <strong className="text-foreground">{isTestMode ? 0 : 14}</strong></span>
                 <span className="opacity-40">·</span>
-                <span>Pending: <strong className="text-amber-500">4</strong></span>
+                <span>Pending: <strong className="text-amber-500">{isTestMode ? 0 : 4}</strong></span>
               </div>
               <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
                 Details
@@ -636,49 +551,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Card 3: Active Occupancy (Histogram Chart) */}
-        <Card
-          onClick={() => navigate("/owner-dashboard/time-slots")}
-          className="relative overflow-hidden border border-emerald-500/10 bg-card/45 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-emerald-500/35 transition-all duration-300 hover:-translate-y-1 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
-        >
-          <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Active Occupancy</p>
-                <h3 className="text-2xl font-black tracking-tight text-foreground mt-0.5">
-                  {data?.stats?.occupancyRate || 78}%
-                </h3>
-                <p className="text-[10px] text-muted-foreground font-semibold">Peak slots: <strong className="text-emerald-600 dark:text-emerald-600 font-bold">6-9 PM</strong></p>
-              </div>
 
-              {/* Compact Histogram Column Chart */}
-              <div className="w-16 h-12 shrink-0 translate-y-[4px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={mockHistogramOccupancy} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                    <Bar
-                      dataKey="value"
-                      fill="#10b981"
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={8}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-end justify-between border-t border-border/20 pt-3 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-3">
-                <span>Morning: <strong className="text-foreground">35%</strong></span>
-                <span className="opacity-40">·</span>
-                <span>Evening: <strong className="text-foreground">95%</strong></span>
-              </div>
-              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
-                Slots
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
-              </span>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Card 4: Quality Feedback (Stacked Segment Bar) */}
         <Card
@@ -690,13 +563,24 @@ export function Dashboard() {
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Turf Quality Rating</p>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <h3 className="text-2xl font-black tracking-tight text-foreground">{data?.stats?.averageRating || 4.8}</h3>
+                  <h3 className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
                   <div className="flex items-center text-amber-500 translate-y-[-2px]">
-                    <Star className="h-4 w-4 fill-amber-500" />
-                    <Star className="h-4 w-4 fill-amber-500" />
-                    <Star className="h-4 w-4 fill-amber-500" />
-                    <Star className="h-4 w-4 fill-amber-500" />
-                    <Star className="h-4 w-4 fill-amber-500/20 text-amber-500/50" />
+                    {[1, 2, 3, 4, 5].map((starIndex) => {
+                      const ratingVal = isTestMode ? 0 : (data?.stats?.averageRating || 4.8);
+                      const isFilled = ratingVal >= starIndex;
+                      const isHalf = ratingVal >= starIndex - 0.5 && ratingVal < starIndex;
+                      return (
+                        <Star
+                          key={starIndex}
+                          className={`h-4 w-4 ${isFilled
+                            ? "fill-amber-500 text-amber-500"
+                            : isHalf
+                              ? "fill-amber-500/50 text-amber-500"
+                              : "fill-transparent text-amber-500/40"
+                            }`}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -708,16 +592,16 @@ export function Dashboard() {
             {/* Segmented stacked horizontal review bar */}
             <div className="mt-3 space-y-1.5">
               <div className="flex justify-between text-[9px] text-muted-foreground font-bold items-center">
-                <span>Reviews: {data?.stats?.reviewsCount || 128}</span>
+                <span>Reviews: {isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</span>
                 <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
                   Reviews
                   <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
                 </span>
               </div>
               <div className="h-2 w-full bg-muted rounded-full flex overflow-hidden border border-border/20">
-                <div className="h-full bg-emerald-500 transition-all" style={{ width: "85%" }} title="5 Stars: 85%" />
-                <div className="h-full bg-amber-500 transition-all" style={{ width: "10%" }} title="4 Stars: 10%" />
-                <div className="h-full bg-rose-500 transition-all" style={{ width: "5%" }} title="3 Stars or below: 5%" />
+                <div className="h-full bg-emerald-500 transition-all" style={{ width: isTestMode ? "0%" : "85%" }} title="5 Stars: 85%" />
+                <div className="h-full bg-amber-500 transition-all" style={{ width: isTestMode ? "0%" : "10%" }} title="4 Stars: 10%" />
+                <div className="h-full bg-rose-500 transition-all" style={{ width: isTestMode ? "0%" : "5%" }} title="3 Stars or below: 5%" />
               </div>
             </div>
           </CardContent>
@@ -836,16 +720,16 @@ export function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={mockSportsPie}
+                    data={activePieData}
                     cx="50%"
                     cy="50%"
                     innerRadius={65}
                     outerRadius={85}
-                    paddingAngle={3}
+                    paddingAngle={0}
                     dataKey="value"
                     stroke="none"
                   >
-                    {mockSportsPie.map((entry, index) => (
+                    {activePieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} className="outline-none focus:outline-none" />
                     ))}
                   </Pie>
@@ -857,14 +741,14 @@ export function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-2xl font-black tracking-tight text-foreground">120</span>
+                <span className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? 0 : 120}</span>
                 <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
               </div>
             </div>
 
             {/* Premium Custom Legend */}
             <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
-              {mockSportsPie.map((item) => (
+              {activePieData.map((item) => (
                 <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
                   <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                   <div className="flex-1 min-w-0">
@@ -1128,14 +1012,14 @@ export function Dashboard() {
             {/* Action 4: Register New Turf */}
             <Button
               onClick={() => navigate("/owner-dashboard/turfs/add")}
-              className="w-full justify-start gap-3 h-12 rounded-xl bg-primary text-primary-foreground shadow-md hover:opacity-95 group transition-all font-semibold"
+              className="w-full justify-start gap-3 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md group transition-all font-semibold"
             >
-              <span className="h-7 w-7 rounded-lg bg-primary-foreground/15 text-primary-foreground flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Plus className="h-4.5 w-4.5" />
+              <span className="h-7 w-7 rounded-lg bg-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Plus className="h-4.5 w-4.5 text-white" />
               </span>
               <div className="text-left">
-                <p className="text-xs font-bold text-primary-foreground">Register New Facility</p>
-                <p className="text-[10px] text-primary-foreground/70">Expand club and upload turfs</p>
+                <p className="text-xs font-bold text-white">Register New Facility</p>
+                <p className="text-[10px] text-white/85">Expand club and upload turfs</p>
               </div>
             </Button>
 

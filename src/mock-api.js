@@ -15,7 +15,7 @@ window.fetch = async (input, init) => {
   if (url.includes("/api/owner/disabled-dates")) {
     const urlObj = new URL(url.startsWith("http") ? url : `http://localhost${url}`);
     const ownerId = urlObj.searchParams.get("ownerId");
-    
+
     let dates = JSON.parse(localStorage.getItem("mock_disabled_dates") || "[]");
 
     if (init?.method === "POST") {
@@ -37,7 +37,7 @@ window.fetch = async (input, init) => {
     if (ownerId) {
       dates = dates.filter((d) => d.ownerId === ownerId);
     }
-    
+
     return new Response(JSON.stringify(dates), { status: 200 });
   }
 
@@ -101,9 +101,9 @@ window.fetch = async (input, init) => {
   if (url.includes("/api/owner/turf")) {
     const urlObj = new URL(url.startsWith("http") ? url : `http://localhost${url}`);
     const ownerId = urlObj.searchParams.get("ownerId");
-    
+
     let turfs = JSON.parse(localStorage.getItem("mock_turfs") || "null");
-    
+
     if (!turfs) {
       turfs = [
         {
@@ -191,7 +191,7 @@ window.fetch = async (input, init) => {
       localStorage.setItem("mock_turfs", JSON.stringify(turfs));
       return new Response(JSON.stringify(updateData), { status: 200 });
     }
-    
+
     if (init?.method === "DELETE") {
       const turfId = url.split('/').pop().split('?')[0];
       turfs = turfs.filter(t => t.id !== turfId);
@@ -202,7 +202,7 @@ window.fetch = async (input, init) => {
     if (ownerId) {
       turfs = turfs.filter((t) => t.ownerId === ownerId);
     }
-    
+
     return new Response(JSON.stringify(turfs), { status: 200 });
   }
 
