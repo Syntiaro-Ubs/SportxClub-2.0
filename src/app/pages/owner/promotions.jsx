@@ -48,7 +48,7 @@ export function Promotions() {
         setIsLoading(true);
         const ownerId = currentUser?.id || "guest";
         const result = await promotionsService.getAll(ownerId);
-        
+
         // Update mock dates to look realistic (e.g. ending in the future)
         const modifiedResult = result.map((p, i) => {
           const d = new Date();
@@ -58,7 +58,7 @@ export function Promotions() {
             validUntil: format(d, "MMM dd, yyyy"),
           };
         });
-        
+
         setData(modifiedResult);
       } catch (err) {
         setError(err.message || "Failed to load promotions");
@@ -110,15 +110,15 @@ export function Promotions() {
         status: "active",
         used: 0,
       };
-      
+
       const newPromo = await promotionsService.create(ownerId, payload);
-      
+
       try {
         newPromo.validUntil = format(new Date(newPromo.validUntil), "MMM dd, yyyy");
       } catch (e) {
         // fallback
       }
-      
+
       setData((prev) => [newPromo, ...prev]);
       setIsCreateOpen(false);
       setFormData({ code: "", discount: "", type: "percentage", validUntil: "", usageLimit: "" });
@@ -130,7 +130,7 @@ export function Promotions() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-full overflow-hidden relative">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl tracking-tight font-bold">Promotions & Offers</h1>
@@ -154,22 +154,22 @@ export function Promotions() {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="code" className="text-right">Code</Label>
-                  <Input 
-                    id="code" 
+                  <Input
+                    id="code"
                     value={formData.code}
-                    onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
-                    placeholder="e.g. SUMMER25" 
-                    className="col-span-3 uppercase" 
-                    required 
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    placeholder="e.g. SUMMER25"
+                    className="col-span-3 uppercase"
+                    required
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="type" className="text-right">Type</Label>
-                  <select 
+                  <select
                     id="type"
                     className="col-span-3 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   >
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed">Fixed Amount (₹)</option>
@@ -177,39 +177,39 @@ export function Promotions() {
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="discount" className="text-right">Discount</Label>
-                  <Input 
-                    id="discount" 
+                  <Input
+                    id="discount"
                     type="number"
                     min="1"
                     value={formData.discount}
-                    onChange={(e) => setFormData({...formData, discount: e.target.value})}
-                    placeholder={formData.type === "percentage" ? "e.g. 20" : "e.g. 500"} 
-                    className="col-span-3" 
-                    required 
+                    onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
+                    placeholder={formData.type === "percentage" ? "e.g. 20" : "e.g. 500"}
+                    className="col-span-3"
+                    required
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="validUntil" className="text-right">Valid Until</Label>
-                  <Input 
-                    id="validUntil" 
+                  <Input
+                    id="validUntil"
                     type="date"
                     value={formData.validUntil}
-                    onChange={(e) => setFormData({...formData, validUntil: e.target.value})}
-                    className="col-span-3" 
-                    required 
+                    onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
+                    className="col-span-3"
+                    required
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="usageLimit" className="text-right">Usage Limit</Label>
-                  <Input 
-                    id="usageLimit" 
+                  <Input
+                    id="usageLimit"
                     type="number"
                     min="1"
                     value={formData.usageLimit}
-                    onChange={(e) => setFormData({...formData, usageLimit: e.target.value})}
-                    placeholder="e.g. 100" 
-                    className="col-span-3" 
-                    required 
+                    onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
+                    placeholder="e.g. 100"
+                    className="col-span-3"
+                    required
                   />
                 </div>
               </div>
@@ -244,7 +244,7 @@ export function Promotions() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20 shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-4 -mt-4 opacity-10 pointer-events-none">
             <Users className="w-32 h-32 text-emerald-500" />
@@ -280,7 +280,7 @@ export function Promotions() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <AnimatePresence>
           {data.map((promo, index) => {
             const isPercentage = promo.type === "percentage";
@@ -296,7 +296,7 @@ export function Promotions() {
                 <Card className="h-full border-border/50 bg-card/50 backdrop-blur-xl shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
                   {/* Status Indicator Bar */}
                   <div className={`absolute top-0 left-0 right-0 h-1.5 ${promo.status === 'active' ? 'bg-emerald-500' : 'bg-muted'}`} />
-                  
+
                   <CardHeader className="pb-3 pt-6">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
@@ -342,8 +342,8 @@ export function Promotions() {
                           <span className="font-medium text-foreground">{promo.used} / {promo.usageLimit}</span>
                         </div>
                         <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary transition-all duration-1000 ease-out" 
+                          <div
+                            className="h-full bg-primary transition-all duration-1000 ease-out"
                             style={{ width: `${usagePercent}%` }}
                           />
                         </div>

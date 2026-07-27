@@ -1,5 +1,15 @@
-import { useState, useEffect } from "react";
-import { format, addDays } from "date-fns";
+import { useState, useEffect, useMemo } from "react";
+import {
+  format,
+  addDays,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  isSameDay,
+  addMonths
+} from "date-fns";
 import {
   Card,
   CardContent,
@@ -9,13 +19,41 @@ import {
 } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../../components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 import { Switch } from "../../components/ui/switch";
-import { Loader2, Calendar as CalendarIcon, Mail, Printer, CheckCircle2, Power } from "lucide-react";
-import { turfService } from "../../services/turf.service";
+import {
+  Loader2,
+  Calendar as CalendarIcon,
+  Mail,
+  Printer,
+  CheckCircle2,
+  Power,
+  Search,
+  Lock,
+  AlertTriangle,
+  ShieldCheck,
+  Ticket,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
 
 // TODO: Replace with actual auth context ownerId
 const OWNER_ID = "owner-123";
@@ -25,12 +63,12 @@ const generateMockSlots = () => {
   const slots = [];
   for (let i = 6; i <= 22; i++) {
     const timeStr = `${i.toString().padStart(2, '0')}:00`;
-    // Deterministic mock based on hour
+    // Deterministic mock status based on hour
     let status = 'Available';
     if (i === 18 || i === 19 || i === 20) status = 'Booked';
     else if (i === 8 || i === 9) status = 'Booked';
     else if (i === 14) status = 'Maintenance';
-    
+
     slots.push({
       time: timeStr,
       status: status,
@@ -40,10 +78,114 @@ const generateMockSlots = () => {
   return slots;
 };
 
+// Mock bookings helper details for booked slots
+const getBookingDetailsMock = (time) => {
+  switch (time) {
+    case "08:00":
+    case "09:00":
+      return { name: "Amit Patel", phone: "+91 91234 56789", method: "UPI" };
+    case "18:00":
+      return { name: "Rahul Sharma", phone: "+91 98765 43210", method: "Online Card" };
+    case "19:00":
+      return { name: "Vikram Rathore", phone: "+91 98123 45670", method: "Online UPI" };
+    case "20:00":
+      return { name: "Amit Patel", phone: "+91 91234 56789", method: "Cash" };
+    default:
+      return { name: "Registered Customer", phone: "N/A", method: "Online" };
+  }
+};
+
+// Custom styled Premium Calendar dropdown
+function CustomCalendar({ selectedDate, onSelect }) {
+  const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date());
+
+  const gridStart = startOfWeek(startOfMonth(currentMonth));
+  const gridEnd = endOfWeek(endOfMonth(currentMonth));
+
+  const days = [];
+  let day = gridStart;
+  while (day <= gridEnd) {
+    days.push(day);
+    day = addDays(day, 1);
+  }
+
+  const weekDays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  return (
+    <div className="p-4 w-[280px] bg-card border border-border/40 rounded-2xl shadow-xl backdrop-blur-md">
+      {/* Calendar Header */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          type="button"
+          onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
+          className="h-8 w-8 rounded-xl flex items-center justify-center border border-border/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-xs"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <span className="text-xs font-black tracking-tight text-foreground uppercase tracking-widest">
+          {format(currentMonth, "MMMM yyyy")}
+        </span>
+        <button
+          type="button"
+          onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+          className="h-8 w-8 rounded-xl flex items-center justify-center border border-border/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-xs"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Weekdays Labels */}
+      <div className="grid grid-cols-7 gap-1 mb-2 text-center">
+        {weekDays.map((wd) => (
+          <span key={wd} className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest">
+            {wd}
+          </span>
+        ))}
+      </div>
+
+      {/* Days Grid */}
+      <div className="grid grid-cols-7 gap-1.5">
+        {days.map((date, idx) => {
+          const isSelected = selectedDate && isSameDay(date, selectedDate);
+          const isToday = isSameDay(date, new Date());
+          const isCurrentMonth = isSameMonth(date, currentMonth);
+
+          let btnClasses = "h-8 w-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer ";
+
+          if (isSelected) {
+            btnClasses += "bg-[#6DFF3B] text-black shadow-md shadow-[#6DFF3B]/30 hover:opacity-95";
+          } else if (isToday) {
+            btnClasses += "border border-[#6DFF3B]/45 text-[#6DFF3B] hover:bg-[#6DFF3B]/10";
+          } else if (!isCurrentMonth) {
+            btnClasses += "text-muted-foreground/25 hover:bg-muted/30 font-normal";
+          } else {
+            btnClasses += "text-foreground/80 hover:bg-muted border border-transparent hover:border-border/50 hover:shadow-xs";
+          }
+
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => onSelect(date)}
+              className={btnClasses}
+            >
+              {format(date, "d")}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function TimeSlots() {
   const [turfs, setTurfs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Filters State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLegendFilter, setSelectedLegendFilter] = useState("all"); // 'all', 'Available', 'Booked', 'Maintenance'
 
   // Manual Booking State
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -62,21 +204,20 @@ export function TimeSlots() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Try to load from our simulated DB
+        // Try to load from our simulated DB onboarding details
         const approvedStr = localStorage.getItem("approved_turfs");
         let formattedTurfs = [];
-        
+
         if (approvedStr) {
           const approved = JSON.parse(approvedStr);
           if (approved.length > 0) {
-            // Map the onboarding data format to what time-slots expects
             formattedTurfs = approved.map(item => ({
               id: item.id,
               name: item.turf.name,
               location: `${item.location.address ? item.location.address + ', ' : ''}${item.location.city}`,
               sportType: item.turf.sports && item.turf.sports.length > 0 ? item.turf.sports.join(" & ") : "General",
               status: 'Active',
-              slots: generateMockSlots(), // Continue using mock slots for demo
+              slots: generateMockSlots(),
             }));
           }
         }
@@ -84,7 +225,7 @@ export function TimeSlots() {
         if (formattedTurfs.length > 0) {
           setTurfs(formattedTurfs);
         } else {
-          // Fallback to beautiful mock data if no approved turfs exist yet
+          // Fallback mock database
           setTurfs([
             {
               id: '1',
@@ -122,13 +263,32 @@ export function TimeSlots() {
     fetchData();
   }, [selectedDate]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+  // Compute availability totals for legend count labels
+  const legendCounts = useMemo(() => {
+    let available = 0;
+    let booked = 0;
+    let maintenance = 0;
+
+    turfs.forEach(t => {
+      if (t.status === 'Active') {
+        t.slots.forEach(s => {
+          if (s.status === 'Available') available++;
+          else if (s.status === 'Booked') booked++;
+          else if (s.status === 'Maintenance') maintenance++;
+        });
+      }
+    });
+
+    return { available, booked, maintenance };
+  }, [turfs]);
+
+  // Filtered turfs computed state (name or sport type search)
+  const filteredTurfs = useMemo(() => {
+    return turfs.filter(t =>
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.sportType.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }
+  }, [turfs, searchQuery]);
 
   const handleSlotClick = (turf, slot, slotIdx) => {
     if (turf.status === 'Closed' || slot.status !== 'Available') return;
@@ -143,7 +303,7 @@ export function TimeSlots() {
 
     const { turf, slot, slotIdx } = selectedSlotForBooking;
 
-    // Simulate backend update: locally update the turfs state
+    // Simulate database update locally in state
     const updatedTurfs = turfs.map(t => {
       if (t.id === turf.id) {
         const updatedSlots = [...t.slots];
@@ -155,7 +315,7 @@ export function TimeSlots() {
 
     setTurfs(updatedTurfs);
 
-    // Generate Pass Details
+    // Generate boarding ticket details
     const pass = {
       id: "BKG" + Math.random().toString(36).substr(2, 6).toUpperCase(),
       date: format(selectedDate, 'MMM dd, yyyy'),
@@ -171,6 +331,7 @@ export function TimeSlots() {
     setGeneratedPass(pass);
     setIsBookingModalOpen(false);
     setIsPassModalOpen(true);
+    toast.success(`Booking created successfully for ${pass.customerName}!`);
   };
 
   const handlePrintPass = () => {
@@ -180,250 +341,554 @@ export function TimeSlots() {
   const toggleTurfStatus = (turfId) => {
     setTurfs(turfs.map(t => {
       if (t.id === turfId) {
-        return { ...t, status: t.status === 'Active' ? 'Closed' : 'Active' };
+        const nextStatus = t.status === 'Active' ? 'Closed' : 'Active';
+        toast.info(`${t.name} is now ${nextStatus === 'Active' ? 'Open' : 'Closed'}`);
+        return { ...t, status: nextStatus };
       }
       return t;
     }));
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Available': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20';
-      case 'Booked': return 'bg-rose-500/10 text-rose-500 border-rose-500/20 opacity-70';
-      case 'Maintenance': return 'bg-amber-500/10 text-amber-500 border-amber-500/20 opacity-70';
-      default: return 'bg-muted text-muted-foreground';
-    }
+  const handleLegendClick = (status) => {
+    setSelectedLegendFilter(prev => prev === status ? "all" : status);
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto theme-adaptive pb-16">
+
+      {/* -------------------------------------------------------------
+          Header Title & Details Row
+          ------------------------------------------------------------- */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">Turf Slot Management</h1>
-          <p className="text-muted-foreground mt-2">View and manage booking slots for your turfs</p>
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
+            Turf Slot Management
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Real-time slot scheduling matrix, overrides, and walk-in ticket counter.
+          </p>
         </div>
-        <div className="flex items-center gap-2 bg-card border border-border/50 p-1.5 rounded-lg shadow-sm">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedDate(addDays(selectedDate, -1))}>
+      </div>
+
+      {/* -------------------------------------------------------------
+          Toolbar: Search, Legends & Interactive Filters
+          ------------------------------------------------------------- */}
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between bg-card/20 p-4 rounded-2xl border border-border/40 backdrop-blur-md shadow-sm">
+
+        {/* Search Field */}
+        <div className="relative w-full lg:w-80">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search turfs by name or sport..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10 rounded-xl bg-background/50 border-border/40 focus:border-primary/50 text-xs w-full"
+          />
+        </div>
+
+        {/* Dynamic Legend Filters */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 w-full lg:w-auto">
+          {/* Available Pill */}
+          <button
+            onClick={() => handleLegendClick("Available")}
+            className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${selectedLegendFilter === "Available"
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-inner'
+              : 'border-border/30 text-muted-foreground hover:bg-muted/40'
+              }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full bg-emerald-500 ${selectedLegendFilter === "Available" ? 'animate-pulse' : ''}`}></span>
+            Available
+            <Badge variant="secondary" className="h-4 px-1 bg-emerald-500/10 border-0 text-[8.5px] text-emerald-500 font-bold shrink-0">{legendCounts.available}</Badge>
+          </button>
+
+          {/* Booked Pill */}
+          <button
+            onClick={() => handleLegendClick("Booked")}
+            className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${selectedLegendFilter === "Booked"
+              ? 'bg-rose-500/10 border-rose-500/30 text-rose-500 shadow-inner'
+              : 'border-border/30 text-muted-foreground hover:bg-muted/40'
+              }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full bg-rose-500 ${selectedLegendFilter === "Booked" ? 'animate-pulse' : ''}`}></span>
+            Booked
+            <Badge variant="secondary" className="h-4 px-1 bg-rose-500/10 border-0 text-[8.5px] text-rose-500 font-bold shrink-0">{legendCounts.booked}</Badge>
+          </button>
+
+          {/* Maintenance Pill */}
+          <button
+            onClick={() => handleLegendClick("Maintenance")}
+            className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${selectedLegendFilter === "Maintenance"
+              ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 shadow-inner'
+              : 'border-border/30 text-muted-foreground hover:bg-muted/40'
+              }`}
+          >
+            <span className={`w-1.5 h-1.5 rounded-full bg-amber-500 ${selectedLegendFilter === "Maintenance" ? 'animate-pulse' : ''}`}></span>
+            Maintenance
+            <Badge variant="secondary" className="h-4 px-1 bg-amber-500/10 border-0 text-[8.5px] text-amber-500 font-bold shrink-0">{legendCounts.maintenance}</Badge>
+          </button>
+
+          {selectedLegendFilter !== "all" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedLegendFilter("all")}
+              className="text-[9px] text-muted-foreground hover:text-foreground h-7 shrink-0 px-2"
+            >
+              Reset Filters
+            </Button>
+          )}
+        </div>
+
+        {/* Date Selector Navigation */}
+        <div className="flex items-center justify-between w-fit mx-auto lg:w-auto lg:mx-0 bg-card/60 border border-border/50 p-0.5 rounded-lg shadow-xs relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="!h-7 !w-7 !size-7 rounded-md text-muted-foreground hover:text-foreground shrink-0 p-0"
+            onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+          >
             &larr;
           </Button>
-          <div className="flex items-center gap-2 px-3 text-sm font-medium">
-            <CalendarIcon className="w-4 h-4 text-primary" />
-            {format(selectedDate, 'MMM dd, yyyy')}
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => setSelectedDate(addDays(selectedDate, 1))}>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center justify-center gap-1.5 px-3 py-1 text-[11px] font-bold text-foreground hover:bg-muted/40 rounded-md transition-colors cursor-pointer min-w-[110px]"
+                title="Select specific date"
+              >
+                <CalendarIcon className="w-3.5 h-3.5 text-primary shrink-0 scale-90" />
+                <span>{format(selectedDate, 'MMM dd, yyyy')}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
+              <CustomCalendar
+                selectedDate={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                  }
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="!h-7 !w-7 !size-7 rounded-md text-muted-foreground hover:text-foreground shrink-0 p-0"
+            onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+          >
             &rarr;
           </Button>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-4 items-center bg-card/30 p-3 rounded-xl border border-border/50 w-fit backdrop-blur-sm">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground"><div className="w-3 h-3 rounded-full bg-emerald-500"></div> Available</div>
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground"><div className="w-3 h-3 rounded-full bg-rose-500"></div> Booked</div>
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground"><div className="w-3 h-3 rounded-full bg-amber-500"></div> Maintenance</div>
-      </div>
-
+      {/* -------------------------------------------------------------
+          Turfs Grid & Matrix Slots
+          ------------------------------------------------------------- */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {turfs.map(turf => (
-          <Card key={turf.id} className="border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20">
-            <CardHeader className="border-b border-border/50 bg-muted/20 pb-4">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <CardTitle className="text-xl tracking-tight">{turf.name}</CardTitle>
-                    <Badge variant={turf.status === 'Active' ? 'default' : 'destructive'} className="text-[10px] uppercase tracking-widest px-2 py-0.5 shadow-sm">
-                      {turf.status}
-                    </Badge>
+        {filteredTurfs.length > 0 ? (
+          filteredTurfs.map(turf => {
+            const availableSlots = turf.status === 'Active' ? turf.slots.filter(s => s.status === 'Available').length : 0;
+            return (
+              <Card
+                key={turf.id}
+                className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 rounded-2xl flex flex-col justify-between"
+              >
+                {/* Card Header Section */}
+                <CardHeader className="border-b border-border/40 bg-muted/20 pb-4 p-5">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <CardTitle className="text-lg font-bold tracking-tight text-foreground">{turf.name}</CardTitle>
+                        {turf.status === 'Active' ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2 py-0.5">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2 py-0.5">
+                            Closed
+                          </Badge>
+                        )}
+                      </div>
+                      <CardDescription className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                        <span className="text-primary font-bold">{turf.sportType}</span>
+                        <span className="opacity-40">&bull;</span>
+                        <span>{turf.location}</span>
+                      </CardDescription>
+                    </div>
+
+                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                      {/* Active open toggle switch */}
+                      <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-xl border border-border/50 shadow-xs">
+                        <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
+                        <Switch
+                          id={`turf-status-${turf.id}`}
+                          checked={turf.status === 'Active'}
+                          onCheckedChange={() => toggleTurfStatus(turf.id)}
+                        />
+                      </div>
+
+                      {/* Slots remaining badge */}
+                      <Badge variant="outline" className={`px-2.5 py-1.5 text-[10px] font-bold rounded-xl shadow-xs ${availableSlots > 5
+                        ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20'
+                        : availableSlots > 0
+                          ? 'bg-amber-500/5 text-amber-500 border-amber-500/20'
+                          : 'bg-rose-500/5 text-rose-500 border-rose-500/20'
+                        }`}>
+                        {availableSlots} Slots Left
+                      </Badge>
+                    </div>
                   </div>
-                  <CardDescription className="mt-1 flex items-center gap-2">
-                    <span className="font-medium">{turf.sportType}</span>
-                    <span className="text-muted-foreground/50">&bull;</span>
-                    <span>{turf.location}</span>
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-lg border border-border/50 shadow-sm">
-                    <Label htmlFor={`turf-status-${turf.id}`} className="text-xs font-semibold cursor-pointer text-muted-foreground">Turf Open</Label>
-                    <Switch 
-                      id={`turf-status-${turf.id}`}
-                      checked={turf.status === 'Active'}
-                      onCheckedChange={() => toggleTurfStatus(turf.id)}
-                    />
+                </CardHeader>
+
+                {/* Card Content Section */}
+                <CardContent className="p-5 relative flex-1">
+
+                  {/* Closed Overlay */}
+                  {turf.status === 'Closed' && (
+                    <div className="absolute inset-0 z-10 bg-background/70 backdrop-blur-[3px] flex flex-col items-center justify-center rounded-b-2xl transition-all">
+                      <div className="bg-card p-3 rounded-2xl shadow-md border border-border/60 mb-2 text-rose-500 animate-in zoom-in duration-300">
+                        <Power className="w-6 h-6" />
+                      </div>
+                      <h4 className="text-base font-bold text-foreground">Facility is Closed</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5 font-medium">Re-enable Turf Open toggle to accept bookings.</p>
+                    </div>
+                  )}
+
+                  {/* Grid Slots */}
+                  <div className={`grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
+                    }`}>
+                    {turf.slots.map((slot, idx) => {
+                      const isFilteredOut = selectedLegendFilter !== "all" && slot.status !== selectedLegendFilter;
+
+                      // Render Available Slot
+                      if (slot.status === 'Available') {
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => handleSlotClick(turf, slot, idx)}
+                            className={`p-3 rounded-xl border border-border/80 bg-white dark:bg-slate-900 text-foreground flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:text-black hover:scale-[1.05] hover:shadow-lg hover:shadow-primary/15 shadow-sm min-h-[72px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                              }`}
+                          >
+                            <span className="font-semibold text-xs">{slot.time}</span>
+                            <span className="text-[9px] uppercase tracking-wider font-bold opacity-70">Available</span>
+                            <span className="text-[9px] font-extrabold mt-1 bg-muted/65 group-hover:bg-black/15 px-2 py-0.5 rounded-full">₹{slot.price}</span>
+                          </div>
+                        );
+                      }
+
+                      // Render Booked Slot
+                      if (slot.status === 'Booked') {
+                        const bDetails = getBookingDetailsMock(slot.time);
+                        return (
+                          <div
+                            key={idx}
+                            className={`relative group/slot p-3 rounded-xl border border-dashed border-border bg-muted/30 text-muted-foreground flex flex-col items-center justify-center gap-1 opacity-70 cursor-not-allowed select-none min-h-[72px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96]' : ''
+                              }`}
+                          >
+                            <Lock className="w-3.5 h-3.5 text-muted-foreground/60" />
+                            <span className="font-semibold text-xs text-foreground/80 mt-1">{slot.time}</span>
+                            <span className="text-[9px] uppercase tracking-wider font-bold opacity-50">Booked</span>
+
+                            {/* Styled Hover Card Tooltip (radix mockup tooltip) */}
+                            <div className="absolute bottom-full mb-2.5 hidden group-hover/slot:flex flex-col bg-popover text-popover-foreground border border-border text-[10px] p-2.5 rounded-xl shadow-xl z-20 w-44 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
+                              <div className="flex items-center gap-1.5 border-b border-border/50 pb-1.5 mb-1.5">
+                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                                <span className="font-bold text-foreground">Verified Booking</span>
+                              </div>
+                              <p className="font-semibold text-foreground truncate">{bDetails.name}</p>
+                              <p className="text-muted-foreground text-[9px] mt-0.5">{bDetails.phone}</p>
+                              <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-border/20 text-[9px]">
+                                <span className="text-muted-foreground">Channel:</span>
+                                <span className="font-bold text-emerald-500 uppercase">{bDetails.method}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Render Maintenance Slot
+                      if (slot.status === 'Maintenance') {
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-3 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-500 flex flex-col items-center justify-center gap-1 cursor-not-allowed opacity-75 select-none min-h-[72px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96]' : ''
+                              }`}
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                            <span className="font-semibold text-xs mt-1">{slot.time}</span>
+                            <span className="text-[9px] uppercase tracking-wider font-bold opacity-80">Maintenance</span>
+                          </div>
+                        );
+                      }
+
+                      return null;
+                    })}
                   </div>
-                  <Badge variant="outline" className={`px-3 py-1.5 shadow-sm ${turf.status === 'Active' ? 'bg-primary/5 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border/50'}`}>
-                    {turf.status === 'Active' ? turf.slots.filter(s => s.status === 'Available').length : 0} Slots Left
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6 relative">
-              {turf.status === 'Closed' && (
-                <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[2px] flex flex-col items-center justify-center rounded-b-xl">
-                  <div className="bg-card p-4 rounded-full shadow-lg border border-border/50 mb-3 text-destructive animate-in zoom-in duration-300">
-                    <Power className="w-8 h-8" />
-                  </div>
-                  <h3 className="text-2xl font-bold tracking-tight text-foreground">Turf is Closed</h3>
-                  <p className="text-muted-foreground mt-1 font-medium">Bookings are currently disabled.</p>
-                </div>
-              )}
-              <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 transition-opacity duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''}`}>
-                {turf.slots.map((slot, idx) => (
-                  <div 
-                    key={idx}
-                    onClick={() => handleSlotClick(turf, slot, idx)}
-                    className={`p-3 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all ${getStatusColor(slot.status)} ${slot.status === 'Available' ? 'cursor-pointer hover:shadow-md hover:-translate-y-1' : 'cursor-not-allowed'}`}
-                  >
-                    <span className="font-semibold text-sm">{slot.time}</span>
-                    <span className="text-[10px] uppercase tracking-wider font-bold opacity-80">{slot.status}</span>
-                    {slot.status === 'Available' && <span className="text-xs font-bold mt-1 bg-background/50 px-2 py-0.5 rounded-full">₹{slot.price}</span>}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                </CardContent>
+              </Card>
+            );
+          })
+        ) : (
+          <div className="col-span-2 py-16 text-center text-muted-foreground bg-card/20 rounded-2xl border border-border/40">
+            <Search className="h-10 w-10 mx-auto opacity-20 mb-2 animate-bounce" />
+            <h4 className="text-base font-bold text-foreground">No Facilities Found</h4>
+            <p className="text-xs text-muted-foreground mt-0.5">Try adjusting your search criteria.</p>
+          </div>
+        )}
       </div>
 
-      {/* Manual Booking Modal */}
+      {/* -------------------------------------------------------------
+          Manual Booking Dialog Modal
+          ------------------------------------------------------------- */}
       <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] rounded-2xl border border-border/40 bg-popover shadow-xl">
           <DialogHeader>
-            <DialogTitle>Manual Booking</DialogTitle>
-            <DialogDescription>
-              Book {selectedSlotForBooking?.turf.name} for {selectedSlotForBooking?.slot.time} on {format(selectedDate, 'MMM dd, yyyy')}.
+            <DialogTitle className="font-bold flex items-center gap-2">
+              <Ticket className="h-5 w-5 text-primary" />
+              Manual Booking
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Configure slots for walk-in players. This updates database records immediately.
             </DialogDescription>
           </DialogHeader>
-          
-          <form onSubmit={handleBookingSubmit} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Customer Name</Label>
-              <Input 
-                id="name" 
-                placeholder="e.g. John Doe" 
+
+          <form onSubmit={handleBookingSubmit} className="space-y-4 py-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="cust-name" className="text-xs font-semibold">Customer Full Name</Label>
+              <Input
+                id="cust-name"
+                placeholder="e.g. John Doe"
                 value={bookingDetails.customerName}
-                onChange={(e) => setBookingDetails({...bookingDetails, customerName: e.target.value})}
+                onChange={(e) => setBookingDetails({ ...bookingDetails, customerName: e.target.value })}
+                className="h-10 rounded-lg text-sm"
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number (Optional)</Label>
-              <Input 
-                id="phone" 
-                placeholder="e.g. +91 9876543210" 
+            <div className="space-y-1.5">
+              <Label htmlFor="cust-phone" className="text-xs font-semibold">Phone Number</Label>
+              <Input
+                id="cust-phone"
+                placeholder="e.g. +91 9876543210"
                 value={bookingDetails.customerPhone}
-                onChange={(e) => setBookingDetails({...bookingDetails, customerPhone: e.target.value})}
+                onChange={(e) => setBookingDetails({ ...bookingDetails, customerPhone: e.target.value })}
+                className="h-10 rounded-lg text-sm"
+                required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="payment">Payment Method</Label>
-              <Select 
-                value={bookingDetails.paymentMethod} 
-                onValueChange={(val) => setBookingDetails({...bookingDetails, paymentMethod: val})}
+            <div className="space-y-1.5">
+              <Label htmlFor="cust-payment" className="text-xs font-semibold">Payment Channel</Label>
+              <Select
+                value={bookingDetails.paymentMethod}
+                onValueChange={(val) => setBookingDetails({ ...bookingDetails, paymentMethod: val })}
               >
-                <SelectTrigger id="payment">
-                  <SelectValue placeholder="Select payment method" />
+                <SelectTrigger id="cust-payment" className="h-10 rounded-lg text-sm">
+                  <SelectValue placeholder="Select payment channel" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="upi">UPI / QR Code</SelectItem>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="cash">Cash Payment</SelectItem>
+                  <SelectItem value="upi">UPI / QR Scan</SelectItem>
                   <SelectItem value="card">Credit/Debit Card</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="flex justify-between items-center bg-muted/30 p-3 rounded-lg border border-border/50 mt-6">
-              <span className="text-sm font-medium">Total Amount Due:</span>
-              <span className="text-lg font-bold">₹{selectedSlotForBooking?.slot.price}</span>
+
+            <div className="flex justify-between items-center bg-muted/40 p-4 rounded-xl border border-border/50 mt-4 shadow-inner">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Total Amount Due</span>
+              <span className="text-lg font-black text-primary">₹{selectedSlotForBooking?.slot.price}</span>
             </div>
 
-            <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={() => setIsBookingModalOpen(false)}>Cancel</Button>
-              <Button type="submit">Confirm & Generate Pass</Button>
+            <DialogFooter className="mt-6 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsBookingModalOpen(false)}
+                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-muted/40 hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 cursor-pointer shadow-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B] hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 cursor-pointer shadow-xs"
+              >
+                Confirm & Generate Pass
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Turf Pass Modal */}
+      {/* -------------------------------------------------------------
+          Turf Pass Printable Boarding Voucher Modal
+          ------------------------------------------------------------- */}
       <Dialog open={isPassModalOpen} onOpenChange={setIsPassModalOpen}>
-        <DialogContent className="sm:max-w-md print:max-w-none print:shadow-none print:border-none print:p-0">
+        <DialogContent className="sm:max-w-md bg-popover rounded-2xl border border-border/40 shadow-2xl print:shadow-none print:border-none print:p-0">
           <DialogHeader className="print:hidden">
-            <DialogTitle className="flex items-center gap-2 text-emerald-600">
-              <CheckCircle2 className="w-5 h-5" />
+            <DialogTitle className="flex items-center gap-2 text-emerald-500 font-bold">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
               Booking Successful
             </DialogTitle>
-            <DialogDescription>
-              Your manual booking has been confirmed. You can print or share this pass.
+            <DialogDescription className="text-xs">
+              Manual booking successfully recorded. Share or print the coupon pass below.
             </DialogDescription>
           </DialogHeader>
 
-          {/* Printable Pass Area */}
-          <div id="turf-pass-print-area" className="mt-4 border-2 border-dashed border-border p-6 rounded-2xl bg-card relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-bl-full -z-10"></div>
-            <div className="absolute bottom-0 left-0 w-16 h-16 bg-primary/10 rounded-tr-full -z-10"></div>
-            
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-black tracking-tight uppercase text-primary">Turf Pass</h2>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mt-1">SportXClub Entry Ticket</p>
+          {/* Printable Ticket Receipt Voucher */}
+          <div id="turf-pass-print-area" className="mt-2.5 border border-border p-4 rounded-2xl bg-card relative overflow-hidden shadow-sm">
+            {/* Background design accents */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-primary/10 rounded-bl-full -z-10"></div>
+            <div className="absolute bottom-0 left-0 w-14 h-14 bg-primary/10 rounded-tr-full -z-10"></div>
+
+            <div className="text-center mb-4">
+              <h2 className="text-xl font-black tracking-tight uppercase text-primary">Turf Pass</h2>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-bold mt-0.5">SportXClub Entry Ticket</p>
             </div>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-end border-b border-border/50 pb-4">
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-end border-b border-border/50 pb-3">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Booking ID</p>
-                  <p className="font-mono font-bold text-lg">{generatedPass?.id}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Booking ID</p>
+                  <p className="font-mono font-bold text-sm text-foreground">{generatedPass?.id}</p>
                 </div>
                 <div className="text-right">
-                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[9px] font-bold">
                     PAID ({generatedPass?.paymentMethod.toUpperCase()})
                   </Badge>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 border-b border-border/50 pb-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Date</p>
-                  <p className="font-semibold">{generatedPass?.date}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Date</p>
+                  <p className="font-bold text-xs text-foreground">{generatedPass?.date}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Time</p>
-                  <p className="font-semibold text-primary">{generatedPass?.time}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Time</p>
+                  <p className="font-bold text-xs text-primary">{generatedPass?.time}</p>
                 </div>
               </div>
 
-              <div className="border-b border-border/50 pb-4">
-                <p className="text-sm text-muted-foreground mb-1">Turf Details</p>
-                <p className="font-bold text-lg">{generatedPass?.turfName}</p>
-                <p className="text-sm text-muted-foreground">{generatedPass?.location}</p>
+              {/* Dotted Divider line with side notches */}
+              <div className="relative my-3">
+                <div className="w-4 h-4 rounded-full bg-popover absolute left-[-26px] top-1/2 -translate-y-1/2 z-10 border-r border-border" />
+                <div className="w-4 h-4 rounded-full bg-popover absolute right-[-26px] top-1/2 -translate-y-1/2 z-10 border-l border-border" />
+                <div className="border-t border-dashed border-border/80 w-full" />
               </div>
 
-              <div className="flex justify-between items-center pt-2">
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Turf Details</p>
+                <p className="font-bold text-sm text-foreground">{generatedPass?.turfName}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{generatedPass?.location}</p>
+              </div>
+
+              <div className="flex justify-between items-center pt-2.5 border-t border-border/20 mt-3">
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Customer</p>
-                  <p className="font-semibold">{generatedPass?.customerName}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Customer</p>
+                  <p className="font-bold text-xs text-foreground">{generatedPass?.customerName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground mb-1">Total</p>
-                  <p className="font-bold text-xl">₹{generatedPass?.price}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Total Amount</p>
+                  <p className="font-black text-lg text-primary">₹{generatedPass?.price}</p>
                 </div>
               </div>
+
+              {/* QR Code Mockup */}
+              <div className="flex flex-col items-center justify-center pt-3 border-t border-border/40 mt-3">
+                <div className="p-2 bg-white dark:bg-white rounded-xl border border-border/50 shadow-inner">
+                  <svg className="w-14 h-14 text-slate-900" viewBox="0 0 100 100" fill="currentColor">
+                    {/* Top-Left Finder Pattern */}
+                    <rect x="0" y="0" width="30" height="30" rx="3" />
+                    <rect x="5" y="5" width="20" height="20" rx="2" fill="white" />
+                    <rect x="10" y="10" width="10" height="10" rx="1" />
+
+                    {/* Top-Right Finder Pattern */}
+                    <rect x="70" y="0" width="30" height="30" rx="3" />
+                    <rect x="75" y="5" width="20" height="20" rx="2" fill="white" />
+                    <rect x="80" y="10" width="10" height="10" rx="1" />
+
+                    {/* Bottom-Left Finder Pattern */}
+                    <rect x="0" y="70" width="30" height="30" rx="3" />
+                    <rect x="5" y="75" width="20" height="20" rx="2" fill="white" />
+                    <rect x="10" y="80" width="10" height="10" rx="1" />
+
+                    {/* Small Alignment Pattern near bottom-right */}
+                    <rect x="75" y="75" width="10" height="10" rx="1" />
+
+                    {/* Simulated QR Code Data Pixels */}
+                    <rect x="35" y="0" width="10" height="5" />
+                    <rect x="55" y="0" width="5" height="10" />
+                    <rect x="65" y="5" width="5" height="5" />
+
+                    <rect x="35" y="10" width="5" height="15" />
+                    <rect x="45" y="15" width="15" height="5" />
+                    <rect x="65" y="15" width="5" height="10" />
+
+                    <rect x="35" y="20" width="15" height="5" />
+                    <rect x="55" y="25" width="10" height="5" />
+
+                    <rect x="0" y="35" width="5" height="10" />
+                    <rect x="10" y="35" width="15" height="5" />
+                    <rect x="30" y="35" width="10" height="10" />
+                    <rect x="45" y="35" width="5" height="5" />
+                    <rect x="55" y="35" width="25" height="5" />
+                    <rect x="85" y="35" width="15" height="5" />
+
+                    <rect x="5" y="45" width="10" height="5" />
+                    <rect x="20" y="45" width="15" height="10" />
+                    <rect x="40" y="45" width="5" height="5" />
+                    <rect x="50" y="45" width="15" height="5" />
+                    <rect x="70" y="45" width="10" height="10" />
+                    <rect x="85" y="45" width="5" height="15" />
+
+                    <rect x="0" y="55" width="15" height="5" />
+                    <rect x="40" y="55" width="10" height="5" />
+                    <rect x="55" y="55" width="5" height="10" />
+                    <rect x="65" y="55" width="15" height="5" />
+
+                    <rect x="35" y="65" width="5" height="15" />
+                    <rect x="45" y="70" width="10" height="5" />
+                    <rect x="60" y="65" width="5" height="10" />
+                    <rect x="70" y="70" width="5" height="15" />
+                    <rect x="90" y="65" width="10" height="5" />
+
+                    <rect x="35" y="85" width="15" height="5" />
+                    <rect x="55" y="80" width="10" height="5" />
+                    <rect x="60" y="90" width="25" height="5" />
+                    <rect x="90" y="80" width="5" height="15" />
+                  </svg>
+                </div>
+                <p className="text-[10px] font-mono tracking-widest text-muted-foreground mt-2 font-bold uppercase">{generatedPass?.id}</p>
+              </div>
+
             </div>
           </div>
 
-          <DialogFooter className="sm:justify-between mt-6 print:hidden">
-            <Button variant="outline" onClick={() => setIsPassModalOpen(false)}>
-              Close
+          <DialogFooter className="sm:justify-between mt-6 print:hidden gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsPassModalOpen(false)}
+              className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-muted/40 hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 cursor-pointer shadow-xs"
+            >
+              Close Voucher
             </Button>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => {
-                const subject = encodeURIComponent(`Turf Booking Pass - ${generatedPass?.turfName}`);
-                const body = encodeURIComponent(`Hi ${generatedPass?.customerName},\n\nYour booking at ${generatedPass?.turfName} is confirmed.\n\nDate: ${generatedPass?.date}\nTime: ${generatedPass?.time}\nBooking ID: ${generatedPass?.id}\nAmount: ₹${generatedPass?.price}\n\nThank you!`);
-                window.location.href = `mailto:${generatedPass?.customerPhone}?subject=${subject}&body=${body}`;
-              }}>
-                <Mail className="w-4 h-4 mr-2" />
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  const subject = encodeURIComponent(`Turf Booking Pass - ${generatedPass?.turfName}`);
+                  const body = encodeURIComponent(`Hi ${generatedPass?.customerName},\n\nYour booking at ${generatedPass?.turfName} is confirmed.\n\nDate: ${generatedPass?.date}\nTime: ${generatedPass?.time}\nBooking ID: ${generatedPass?.id}\nAmount: ₹${generatedPass?.price}\n\nThank you!`);
+                  window.location.href = `mailto:${generatedPass?.customerPhone}?subject=${subject}&body=${body}`;
+                }}
+                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B] hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Mail className="w-4 h-4" />
                 Email Pass
               </Button>
-              <Button onClick={handlePrintPass}>
-                <Printer className="w-4 h-4 mr-2" />
+              <Button
+                onClick={handlePrintPass}
+                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B] hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              >
+                <Printer className="w-4 h-4" />
                 Print Pass
               </Button>
             </div>
