@@ -121,7 +121,7 @@ export function Footer() {
                       className={cn(
                         "inline-flex h-11 w-11 items-center justify-center rounded-full border transition",
                         isDark
-                          ? "border-white/[0.08] bg-white/[0.04] hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10"
+                          ? "border-white/[0.08] bg-white/[0.04] hover:border-emerald-600/30 hover:bg-emerald-600/10"
                           : "border-slate-200 bg-slate-50 hover:border-emerald-500/30 hover:bg-emerald-50"
                       )}
                       aria-label={link.label}

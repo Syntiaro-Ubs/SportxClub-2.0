@@ -95,9 +95,9 @@ const getMappedSports = (selectedSports) => {
 };
 
 const achievements = [
-  { title: "100 Matches", icon: Trophy, color: "text-[#6DFF3B]" },
-  { title: "Top Scorer", icon: Medal, color: "text-[#6DFF3B]" },
-  { title: "Team Captain", icon: Bookmark, color: "text-[#6DFF3B]" },
+  { title: "100 Matches", icon: Trophy, color: "text-emerald-600" },
+  { title: "Top Scorer", icon: Medal, color: "text-emerald-600" },
+  { title: "Team Captain", icon: Bookmark, color: "text-emerald-600" },
 ];
 
 const matchHistory = [
@@ -186,7 +186,7 @@ function ConfettiCelebration({ active }) {
         const left = Math.random() * 100;
         const delay = Math.random() * 1.5;
         const duration = 1.5 + Math.random() * 2;
-        const color = ["#6DFF3B", "#FFD700", "#FF4500", "#00BFFF", "#FF69B4", "#8A2BE2"][Math.floor(Math.random() * 6)];
+        const color = ["#059669", "#FFD700", "#FF4500", "#00BFFF", "#FF69B4", "#8A2BE2"][Math.floor(Math.random() * 6)];
         const size = 6 + Math.random() * 8;
         return (
           <motion.div
@@ -345,7 +345,7 @@ export function UserProfile() {
         <DialogContent className="bg-background border-border text-foreground sm:max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
-              <Wallet className="h-5 w-5 text-[#6DFF3B]" /> Wallet Transactions
+              <Wallet className="h-5 w-5 text-emerald-600" /> Wallet Transactions
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-4">
@@ -418,7 +418,7 @@ export function UserProfile() {
             type="number"
           />
           <Button 
-            className="w-full bg-[#6DFF3B] text-black hover:bg-[#5ce630] font-bold rounded-xl mt-4 h-11 cursor-pointer"
+            className="w-full bg-emerald-600 text-black hover:bg-[#5ce630] font-bold rounded-xl mt-4 h-11 cursor-pointer"
             onClick={() => {
               const customVal = parseInt(document.getElementById("customTopupVal")?.value);
               if (!customVal || customVal <= 0) {
@@ -540,7 +540,7 @@ export function UserProfile() {
       <Container className="py-6 space-y-8 max-w-4xl">
         {/* 1. Profile Header with Avatar, Sports & XP Progress */}
         <Card className="border-border/50 bg-gradient-to-br from-primary/5 via-card to-card overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-[#6DFF3B]/5 blur-[80px] pointer-events-none" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-600/5 blur-[80px] pointer-events-none" />
           <CardContent className="p-6">
             <div className="flex flex-col gap-6 md:flex-row md:items-start justify-between">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
@@ -572,13 +572,13 @@ export function UserProfile() {
               <div className="bg-background/50 border border-border/60 rounded-2xl p-4 w-full md:w-80 space-y-3 relative z-10 text-left">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-foreground font-semibold flex items-center gap-1.5">
-                    <Flame className="h-4 w-4 text-[#6DFF3B]" /> LEVEL 14 STRIKER
+                    <Flame className="h-4 w-4 text-emerald-600" /> LEVEL 14 STRIKER
                   </span>
-                  <span className="text-[#6DFF3B] font-mono font-bold">
+                  <span className="text-emerald-600 font-mono font-bold">
                     {playerXp} / 10000 XP
                   </span>
                 </div>
-                <Progress value={(playerXp / 10000) * 100} className="h-2 bg-muted" indicatorColor="bg-[#6DFF3B]" />
+                <Progress value={(playerXp / 10000) * 100} className="h-2 bg-muted" indicatorColor="bg-emerald-600" />
                 <div className="flex justify-between text-[10px] text-muted-foreground">
                   <span>LVL 14</span>
                   <span>LVL 15 (Earn +1550 XP to Level Up)</span>
@@ -602,9 +602,9 @@ export function UserProfile() {
 
         {/* 2. Interactive Wallet Banner */}
         <div className="bg-gradient-to-br from-card to-card/95 border border-border shadow-sm rounded-[24px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden text-left">
-          <div className="absolute right-0 top-0 w-44 h-44 bg-[#6DFF3B]/5 blur-[60px] pointer-events-none" />
+          <div className="absolute right-0 top-0 w-44 h-44 bg-emerald-600/5 blur-[60px] pointer-events-none" />
           <div className="flex items-center gap-4 z-10">
-            <div className="bg-[#6DFF3B]/10 p-3.5 rounded-2xl border border-[#6DFF3B]/20 text-[#6DFF3B]">
+            <div className="bg-emerald-600/10 p-3.5 rounded-2xl border border-emerald-600/20 text-emerald-600">
               <Wallet className="h-7 w-7" />
             </div>
             <div>
@@ -612,15 +612,15 @@ export function UserProfile() {
               <h2 className="text-3xl font-extrabold tracking-tight text-foreground mt-0.5">₹{walletBalance}</h2>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#6DFF3B] font-semibold md:max-w-xs z-10">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#6DFF3B] shrink-0" />
+          <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold md:max-w-xs z-10">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
             UPI & Card top-ups enabled. 100% refund-safe.
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 z-10">
             <Button variant="outline" className="w-full sm:w-auto rounded-2xl border-border px-6 h-12 text-sm font-semibold bg-muted/20 hover:bg-muted text-foreground cursor-pointer" onClick={() => setTxHistoryOpen(true)}>
               <History className="h-4 w-4 mr-2" /> Transaction History
             </Button>
-            <Button className="w-full sm:w-auto rounded-2xl bg-[#6DFF3B] text-black hover:bg-[#86ff60] px-6 h-12 text-sm font-bold cursor-pointer" onClick={() => setTopUpOpen(true)}>
+            <Button className="w-full sm:w-auto rounded-2xl bg-emerald-600 text-black hover:bg-emerald-700 px-6 h-12 text-sm font-bold cursor-pointer" onClick={() => setTopUpOpen(true)}>
               + Top Up Wallet
             </Button>
           </div>
@@ -656,9 +656,9 @@ export function UserProfile() {
                   <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?q=80&w=1080" alt="Venue" className="w-full h-full object-cover opacity-75 mix-blend-luminosity absolute inset-0" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 z-10 space-y-1">
-                    <Badge className="bg-[#6DFF3B] text-black font-bold text-[9px] py-0.5 px-2.5 rounded-full border-0">5-a-side Football</Badge>
+                    <Badge className="bg-emerald-600 text-black font-bold text-[9px] py-0.5 px-2.5 rounded-full border-0">5-a-side Football</Badge>
                     <h3 className="text-base font-black text-white leading-tight">Elite Turf Arena</h3>
-                    <p className="text-[#6DFF3B] font-mono font-bold text-xs flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Today, 6:00 PM</p>
+                    <p className="text-emerald-600 font-mono font-bold text-xs flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Today, 6:00 PM</p>
                   </div>
                 </div>
               </div>
@@ -666,23 +666,23 @@ export function UserProfile() {
               <div className="w-full md:w-2/3 p-6 flex flex-col justify-between space-y-6">
                 <div className="flex items-center justify-between border-b border-border/40 pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="bg-[#6DFF3B]/10 p-2.5 rounded-full border border-[#6DFF3B]/20 text-[#6DFF3B]"><Trophy className="h-5 w-5" /></div>
+                    <div className="bg-emerald-600/10 p-2.5 rounded-full border border-emerald-600/20 text-emerald-600"><Trophy className="h-5 w-5" /></div>
                     <div>
                       <h4 className="font-bold text-foreground text-sm leading-tight">7-a-side Football Friendly</h4>
                       <p className="text-xs text-muted-foreground mt-0.5">Booking ID: SX-92841</p>
                     </div>
                   </div>
-                  <span className="text-[#6DFF3B] font-black tracking-wider text-xs uppercase">CONFIRMED</span>
+                  <span className="text-emerald-600 font-black tracking-wider text-xs uppercase">CONFIRMED</span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {/* Entry Pass Trigger */}
                   <Dialog>
                     <DialogTrigger asChild>
-                      <div className="relative overflow-hidden rounded-2xl border border-border bg-card hover:border-[#6DFF3B]/50 transition-all cursor-pointer group h-32 flex flex-col justify-between select-none shadow-sm shadow-[#6DFF3B]/5">
+                      <div className="relative overflow-hidden rounded-2xl border border-border bg-card hover:border-emerald-600/50 transition-all cursor-pointer group h-32 flex flex-col justify-between select-none shadow-sm shadow-emerald-600/5">
                         <div className="w-full h-18 relative overflow-hidden bg-muted">
                           <img src="https://images.unsplash.com/photo-1569025690938-a00729c9e1f9?q=80&w=300" alt="Pass" className="w-full h-full object-cover opacity-100 group-hover:scale-105 transition-transform duration-300" />
-                          <div className="absolute top-2 right-2 z-20 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border text-[#6DFF3B] group-hover:bg-[#6DFF3B] group-hover:text-black transition-colors"><QrCode className="h-4 w-4" /></div>
+                          <div className="absolute top-2 right-2 z-20 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border text-emerald-600 group-hover:bg-emerald-600 group-hover:text-black transition-colors"><QrCode className="h-4 w-4" /></div>
                         </div>
                         <div className="p-2.5 bg-card border-t border-border/40 text-left">
                           <span className="block text-xs font-bold text-foreground">Entry Pass</span>
@@ -775,15 +775,15 @@ export function UserProfile() {
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 text-left">
             {shopItems.map((item) => (
-              <div key={item.id} className="border border-border/80 bg-card rounded-2xl p-4 flex flex-col justify-between space-y-4 hover:border-[#6DFF3B]/30 transition-all">
+              <div key={item.id} className="border border-border/80 bg-card rounded-2xl p-4 flex flex-col justify-between space-y-4 hover:border-emerald-600/30 transition-all">
                 <div className="h-32 w-full bg-muted rounded-xl overflow-hidden shadow-inner">
                   <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                 </div>
                 <div>
                   <h5 className="font-bold text-sm text-foreground line-clamp-1">{item.name}</h5>
-                  <p className="text-base font-extrabold text-[#6DFF3B] mt-1">₹{item.price}</p>
+                  <p className="text-base font-extrabold text-emerald-600 mt-1">₹{item.price}</p>
                 </div>
-                <Button size="sm" className="w-full bg-white border border-slate-200 text-slate-900 hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:text-black rounded-xl font-bold h-10 cursor-pointer transition-all duration-200" onClick={() => {
+                <Button size="sm" className="w-full bg-white border border-slate-200 text-slate-900 hover:bg-emerald-600 hover:border-emerald-600 hover:text-black rounded-xl font-bold h-10 cursor-pointer transition-all duration-200" onClick={() => {
                   setPurchasedItemId(item.id);
                   setWalletBalance(prev => {
                     if (prev >= item.price) {
@@ -822,7 +822,7 @@ export function UserProfile() {
                 <div
                   key={match.id}
                   className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md hover:border-border text-left gap-4 relative overflow-hidden ${
-                    isWon ? "border-l-4 border-l-[#6DFF3B]" : "border-l-4 border-l-rose-500"
+                    isWon ? "border-l-4 border-l-emerald-600" : "border-l-4 border-l-rose-500"
                   }`}
                 >
                   {/* Left Column: Sport Icon + Details */}
@@ -859,7 +859,7 @@ export function UserProfile() {
                       <Badge
                         className={`text-xs font-black px-3.5 py-1.5 rounded-xl border-0 ${
                           isWon
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] hover:bg-emerald-500/15"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 hover:bg-emerald-500/15"
                             : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15"
                         }`}
                       >

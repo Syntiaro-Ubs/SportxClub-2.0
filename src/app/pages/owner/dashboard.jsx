@@ -457,7 +457,7 @@ export function Dashboard() {
             <button
               onClick={() => toggleManualMode("live")}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${!isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B]"
+                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
                 : "text-muted-foreground hover:text-foreground"
                 }`}
             >
@@ -466,7 +466,7 @@ export function Dashboard() {
             <button
               onClick={() => toggleManualMode("demo")}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B]"
+                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
                 : "text-muted-foreground hover:text-foreground"
                 }`}
             >
@@ -565,7 +565,7 @@ export function Dashboard() {
                 <span className="opacity-40">|</span>
                 <span>Cash: <strong className="text-foreground">₹45K</strong></span>
               </div>
-              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:text-black shadow-xs hover:shadow-md cursor-pointer">
+              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
                 Revenue
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
               </span>
@@ -628,7 +628,7 @@ export function Dashboard() {
                 <span className="opacity-40">·</span>
                 <span>Pending: <strong className="text-amber-500">4</strong></span>
               </div>
-              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:text-black shadow-xs hover:shadow-md cursor-pointer">
+              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
                 Details
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
               </span>
@@ -648,7 +648,7 @@ export function Dashboard() {
                 <h3 className="text-2xl font-black tracking-tight text-foreground mt-0.5">
                   {data?.stats?.occupancyRate || 78}%
                 </h3>
-                <p className="text-[10px] text-muted-foreground font-semibold">Peak slots: <strong className="text-emerald-600 dark:text-[#6DFF3B] font-bold">6-9 PM</strong></p>
+                <p className="text-[10px] text-muted-foreground font-semibold">Peak slots: <strong className="text-emerald-600 dark:text-emerald-600 font-bold">6-9 PM</strong></p>
               </div>
 
               {/* Compact Histogram Column Chart */}
@@ -672,7 +672,7 @@ export function Dashboard() {
                 <span className="opacity-40">·</span>
                 <span>Evening: <strong className="text-foreground">95%</strong></span>
               </div>
-              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:text-black shadow-xs hover:shadow-md cursor-pointer">
+              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
                 Slots
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
               </span>
@@ -709,7 +709,7 @@ export function Dashboard() {
             <div className="mt-3 space-y-1.5">
               <div className="flex justify-between text-[9px] text-muted-foreground font-bold items-center">
                 <span>Reviews: {data?.stats?.reviewsCount || 128}</span>
-                <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-[#6DFF3B] hover:border-[#6DFF3B] hover:text-black shadow-xs hover:shadow-md cursor-pointer">
+                <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
                   Reviews
                   <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
                 </span>

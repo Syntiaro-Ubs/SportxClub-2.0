@@ -276,8 +276,8 @@ export function Revenue() {
       <svg className="absolute w-0 h-0 invisible">
         <defs>
           <linearGradient id="revenueTrendGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#6DFF3B" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="#6DFF3B" stopOpacity={0.0} />
+            <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
+            <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
           </linearGradient>
         </defs>
       </svg>
@@ -305,7 +305,7 @@ export function Revenue() {
                 fetchData();
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B]"
+                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
                 : "text-muted-foreground hover:text-foreground"
                 }`}
             >
@@ -318,7 +318,7 @@ export function Revenue() {
                 toast.success("Previewing high-fidelity Sandbox data");
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isDemoMode
-                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B]"
+                ? "bg-white dark:bg-slate-900 text-foreground border border-border/10 shadow-xs hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
                 : "text-muted-foreground hover:text-foreground"
                 }`}
             >
@@ -330,7 +330,7 @@ export function Revenue() {
           <Button
             onClick={handleExport}
             variant="outline"
-            className="gap-2 h-10 rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B] hover:scale-[1.03] transition-all duration-300 font-bold text-xs cursor-pointer shadow-xs"
+            className="gap-2 h-10 rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.03] transition-all duration-300 font-bold text-xs cursor-pointer shadow-xs"
           >
             <Download className="h-4 w-4" /> Export Report
           </Button>
@@ -422,7 +422,7 @@ export function Revenue() {
                     toast.info(`Switched view to ${tf.toUpperCase()}`);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${timeframe === tf
-                      ? "bg-white dark:bg-slate-900 !text-foreground shadow-sm border border-border/10 hover:bg-[#6DFF3B] hover:text-black hover:border-[#6DFF3B]"
+                      ? "bg-white dark:bg-slate-900 !text-foreground shadow-sm border border-border/10 hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
                       : "text-muted-foreground hover:text-foreground"
                     }`}
                 >
@@ -437,8 +437,8 @@ export function Revenue() {
               <AreaChart data={chartData} margin={{ top: 10, right: 5, left: -10, bottom: 20 }}>
                 <defs>
                   <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6DFF3B" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#6DFF3B" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
@@ -462,7 +462,7 @@ export function Revenue() {
                 <Area
                   type="monotone"
                   dataKey="amount"
-                  stroke="#6DFF3B"
+                  stroke="#059669"
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#chartGrad)"
@@ -499,7 +499,7 @@ export function Revenue() {
                           ? "bg-amber-500/10 !text-amber-600 dark:!text-amber-400 font-bold"
                           : status === "failed"
                             ? "bg-rose-500/10 !text-rose-600 dark:!text-rose-400 font-bold"
-                            : "bg-[#6DFF3B] !text-black font-bold"
+                            : "bg-emerald-600 !text-black font-bold"
                       : "text-muted-foreground hover:text-foreground"
                       }`}
                   >

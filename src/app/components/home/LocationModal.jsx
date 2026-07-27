@@ -245,6 +245,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
       <DialogContent
         className={cn(
           "max-w-4xl w-[95vw] p-6 sm:p-8 rounded-3xl overflow-hidden transition-colors duration-300 max-h-[90vh] flex flex-col gap-6",
+          "!top-[10%] !translate-y-0",
           isDark
             ? "bg-[#0d0f15] border-white/10 text-white shadow-2xl"
             : "bg-white border-slate-200 text-slate-900 shadow-2xl"
@@ -270,7 +271,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
             className={cn(
               "w-full h-12 pl-12 pr-10 rounded-xl border-[1.5px] text-[15px] font-medium transition-all outline-none bg-transparent",
               isDark
-                ? "border-[#6DFF3B] text-white placeholder:text-white/40 focus:ring-1 focus:ring-[#6DFF3B]"
+                ? "border-emerald-600 text-white placeholder:text-white/40 focus:ring-1 focus:ring-emerald-600"
                 : "border-[#059669] text-slate-900 placeholder:text-slate-400 focus:ring-1 focus:ring-[#059669]"
             )}
           />
@@ -290,7 +291,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
             type="button"
             onClick={handleDetectLocation}
             disabled={isDetecting}
-            className="flex items-center gap-2 text-[15px] font-medium text-[#059669] dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer px-1"
+            className="flex items-center gap-2 text-[15px] font-medium text-[#059669] dark:text-emerald-600 hover:opacity-80 transition cursor-pointer px-1"
           >
             <LocateFixed className={cn("h-4 w-4", isDetecting && "animate-spin")} />
             <span>{isDetecting ? "Detecting location..." : "Allow my location"}</span>
@@ -323,7 +324,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                         "flex flex-col items-center justify-start transition-all duration-200 group cursor-pointer text-center rounded-xl outline-none min-w-0 w-full",
                         isSelected
                           ? isDark
-                            ? "text-[#6DFF3B]"
+                            ? "text-emerald-600"
                             : "text-slate-800"
                           : isDark
                             ? "text-white/60 hover:text-white"
@@ -336,7 +337,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                       <span
                         className={cn(
                           "text-[8px] sm:text-[11px] tracking-tighter sm:tracking-tight text-center leading-tight block w-full whitespace-nowrap",
-                          isSelected ? "font-semibold text-slate-800 dark:text-[#6DFF3B]" : "font-medium text-slate-500 dark:text-white/60"
+                          isSelected ? "font-semibold text-slate-800 dark:text-emerald-600" : "font-medium text-slate-500 dark:text-white/60"
                         )}
                       >
                         {city.name}
@@ -352,7 +353,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                     <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-white/90">
                       Popular Areas in {selectedMainCity}
                     </h5>
-                    <button onClick={() => setSelectedMainCity(null)} className="text-[11px] font-bold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 uppercase tracking-wide">
+                    <button onClick={() => setSelectedMainCity(null)} className="text-[11px] font-bold text-emerald-600 dark:text-emerald-600 hover:opacity-80 uppercase tracking-wide">
                       Close
                     </button>
                   </div>
@@ -368,7 +369,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                             "px-4 py-2 text-xs sm:text-sm rounded-full transition-all font-semibold border shadow-sm",
                             isAreaSelected
                               ? isDark
-                                ? "bg-[#6DFF3B]/20 border-[#6DFF3B]/50 text-[#6DFF3B]"
+                                ? "bg-emerald-600/20 border-emerald-600/50 text-emerald-600"
                                 : "bg-emerald-100 border-emerald-300 text-emerald-800"
                               : isDark
                                 ? "border-white/10 hover:bg-white/10 hover:text-white text-white/70"
@@ -410,7 +411,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                             "text-left text-xs py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer truncate font-medium",
                             isSelected
                               ? isDark
-                                ? "bg-[#6DFF3B]/20 text-[#6DFF3B] font-bold"
+                                ? "bg-emerald-600/20 text-emerald-600 font-bold"
                                 : "bg-emerald-100 text-emerald-800 font-bold"
                               : isDark
                                 ? "text-white/70 hover:text-white hover:bg-white/5"
@@ -427,7 +428,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                       <button
                         type="button"
                         onClick={() => setShowAllCities(false)}
-                        className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 dark:text-emerald-600 hover:opacity-80 transition cursor-pointer"
                       >
                         <span>Hide all cities</span>
                         <ChevronUp className="h-3.5 w-3.5" />
@@ -440,7 +441,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                   <button
                     type="button"
                     onClick={() => setShowAllCities(true)}
-                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#059669] dark:text-[#6DFF3B] hover:opacity-80 transition cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#059669] dark:text-emerald-600 hover:opacity-80 transition cursor-pointer"
                   >
                     <span>View all cities</span>
                     <ChevronDown className="h-4 w-4" />

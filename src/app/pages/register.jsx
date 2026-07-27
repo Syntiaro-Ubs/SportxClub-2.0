@@ -518,7 +518,7 @@ export function RegisterPage() {
                             type="button"
                             disabled={formData.otp.length !== 6}
                             onClick={verifyEmailOtp}
-                            className="h-10.5 px-4 rounded-xl bg-[#6DFF3B] text-black hover:bg-[#5ce630] text-xs font-bold shrink-0"
+                            className="h-10.5 px-4 rounded-xl bg-emerald-600 text-black hover:bg-[#5ce630] text-xs font-bold shrink-0"
                           >
                             Verify Code
                           </Button>
@@ -593,7 +593,7 @@ export function RegisterPage() {
                             type="button"
                             disabled={phoneOtp.length !== 6}
                             onClick={verifyPhoneOtp}
-                            className="h-10.5 px-4 rounded-xl bg-[#6DFF3B] text-black hover:bg-[#5ce630] text-xs font-bold shrink-0"
+                            className="h-10.5 px-4 rounded-xl bg-emerald-600 text-black hover:bg-[#5ce630] text-xs font-bold shrink-0"
                           >
                             Verify Code
                           </Button>
@@ -816,7 +816,7 @@ export function RegisterPage() {
                       <Button
                         type="submit"
                         disabled={!isStep2Valid() || isSubmitting}
-                        className="h-11 px-6 rounded-full bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60] hover:shadow-lg hover:shadow-[#6DFF3B]/20 transition-all flex items-center justify-center gap-1.5"
+                        className="h-11 px-6 rounded-full bg-emerald-600 text-[#050505] hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
                       >
                         {isSubmitting ? (
                           <span className="flex items-center gap-2">

@@ -114,7 +114,7 @@ export function GlobalFooter() {
                 <li key={link.label}>
                   <Link
                     to={link.to}
-                    className={`text-xs transition-colors ${isDark ? "text-white/70 hover:text-[#6DFF3B]" : "text-slate-600 hover:text-emerald-600"
+                    className={`text-xs transition-colors ${isDark ? "text-white/70 hover:text-emerald-600" : "text-slate-600 hover:text-emerald-600"
                       }`}
                   >
                     {link.label}
@@ -139,7 +139,7 @@ export function GlobalFooter() {
                   key={social.label}
                   href={`#${social.label.toLowerCase()}`}
                   className={`h-11 w-11 rounded-full flex items-center justify-center border transition-all hover:scale-105 active:scale-95 relative overflow-hidden ${isDark
-                    ? "bg-white/[0.04] border-white/[0.08] text-white hover:border-[#6DFF3B]/30 hover:bg-[#6DFF3B]/10 hover:text-[#6DFF3B]"
+                    ? "bg-white/[0.04] border-white/[0.08] text-white hover:border-emerald-600/30 hover:bg-emerald-600/10 hover:text-emerald-600"
                     : "bg-white border-slate-200 text-emerald-650 hover:border-emerald-500/30 hover:bg-emerald-50 hover:text-emerald-600"
                     }`}
                   aria-label={social.label}

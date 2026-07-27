@@ -255,7 +255,7 @@ export function SquadBookingPage() {
                   Select Date
                 </label>
                 <label className="flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] px-4 h-14">
-                  <Calendar className="h-4 w-4 text-[#6DFF3B]" />
+                  <Calendar className="h-4 w-4 text-emerald-600" />
                   <input
                     type="date"
                     value={selectedDate}
@@ -267,7 +267,7 @@ export function SquadBookingPage() {
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-[#6DFF3B]" />
+                  <Clock className="h-5 w-5 text-emerald-600" />
                   Available Slots
                 </h3>
                 <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
@@ -275,7 +275,7 @@ export function SquadBookingPage() {
                     <button
                       key={h}
                       onClick={() => setPlayHours(h)}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${playHours === h ? 'bg-white dark:bg-[#101216] text-[#6DFF3B] shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/80'}`}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${playHours === h ? 'bg-white dark:bg-[#101216] text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-white/40 hover:text-slate-700 dark:hover:text-white/80'}`}
                     >
                       {h} Hr
                     </button>
@@ -300,7 +300,7 @@ export function SquadBookingPage() {
                       }}
                       className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all text-center relative ${isBooked
                         ? "bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-slate-400/40 cursor-not-allowed"
-                        : "border-[#6DFF3B]/30 hover:border-[#6DFF3B] hover:bg-[#6DFF3B]/5 text-slate-800 dark:text-white bg-white dark:bg-white/[0.02] cursor-pointer"
+                        : "border-emerald-600/30 hover:border-emerald-600 hover:bg-emerald-600/5 text-slate-800 dark:text-white bg-white dark:bg-white/[0.02] cursor-pointer"
                         }`}
                     >
                       <span className={`text-sm font-bold ${isBooked ? 'text-slate-500/40 opacity-50' : ''}`}>
@@ -311,7 +311,7 @@ export function SquadBookingPage() {
                           Unavailable
                         </span>
                       ) : (
-                        <span className="text-[10px] font-extrabold text-emerald-500 dark:text-[#6DFF3B] mt-1 tracking-wider">
+                        <span className="text-[10px] font-extrabold text-emerald-500 dark:text-emerald-600 mt-1 tracking-wider">
                           Available • ₹{price}
                         </span>
                       )}
@@ -339,7 +339,7 @@ export function SquadBookingPage() {
               <DialogHeader>
                 <div className="flex items-center justify-between mb-1">
                   <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                    <Lock className="h-5 w-5 text-emerald-600 dark:text-[#6DFF3B]" />
+                    <Lock className="h-5 w-5 text-emerald-600 dark:text-emerald-600" />
                     Secure Checkout
                   </DialogTitle>
                   <Button
@@ -351,7 +351,7 @@ export function SquadBookingPage() {
                   </Button>
                 </div>
                 <DialogDescription className="text-slate-500 dark:text-white/60 text-xs text-left">
-                  Choose a payment method to pay <strong className="text-emerald-600 dark:text-[#6DFF3B]">₹{displayPrice}</strong>
+                  Choose a payment method to pay <strong className="text-emerald-600 dark:text-emerald-600">₹{displayPrice}</strong>
                 </DialogDescription>
               </DialogHeader>
 
@@ -361,18 +361,18 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-upi"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "upi"
-                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      ? "border-emerald-600 bg-emerald-600/5 dark:bg-emerald-600/10"
                       : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="upi" id="pay-upi" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />
+                      <RadioGroupItem value="upi" id="pay-upi" className="border-slate-300 dark:border-white/20 text-emerald-600 focus:ring-emerald-600 accent-emerald-600" />
                       <div>
                         <p className="font-semibold text-sm text-slate-900 dark:text-white">UPI Payments</p>
                         <p className="text-[10px] text-slate-500 dark:text-white/50">Google Pay, PhonePe, Paytm</p>
                       </div>
                     </div>
-                    <Smartphone className={`h-5 w-5 ${paymentMethod === "upi" ? "text-emerald-600 dark:text-[#6DFF3B]" : "text-slate-400 dark:text-white/40"}`} />
+                    <Smartphone className={`h-5 w-5 ${paymentMethod === "upi" ? "text-emerald-600 dark:text-emerald-600" : "text-slate-400 dark:text-white/40"}`} />
                   </Label>
 
                   {/* UPI ID Input fields */}
@@ -384,7 +384,7 @@ export function SquadBookingPage() {
                         placeholder="username@upi"
                         value={upiId}
                         onChange={(e) => setUpiId(e.target.value)}
-                        className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-[#6DFF3B] focus-visible:border-[#6DFF3B] placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
+                        className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
                         required
                       />
                     </div>
@@ -394,18 +394,18 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-card"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "card"
-                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      ? "border-emerald-600 bg-emerald-600/5 dark:bg-emerald-600/10"
                       : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="card" id="pay-card" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />
+                      <RadioGroupItem value="card" id="pay-card" className="border-slate-300 dark:border-white/20 text-emerald-600 focus:ring-emerald-600 accent-emerald-600" />
                       <div>
                         <p className="font-semibold text-sm text-slate-900 dark:text-white">Credit / Debit Card</p>
                         <p className="text-[10px] text-slate-500 dark:text-white/50">Visa, MasterCard, RuPay</p>
                       </div>
                     </div>
-                    <CreditCard className={`h-5 w-5 ${paymentMethod === "card" ? "text-emerald-600 dark:text-[#6DFF3B]" : "text-slate-400 dark:text-white/40"}`} />
+                    <CreditCard className={`h-5 w-5 ${paymentMethod === "card" ? "text-emerald-600 dark:text-emerald-600" : "text-slate-400 dark:text-white/40"}`} />
                   </Label>
 
                   {/* Card Inputs */}
@@ -432,7 +432,7 @@ export function SquadBookingPage() {
                               setCardNo(val);
                             }
                           }}
-                          className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-[#6DFF3B] focus-visible:border-[#6DFF3B] placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
+                          className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
                           required
                         />
                       </div>
@@ -451,7 +451,7 @@ export function SquadBookingPage() {
                               }
                               setCardExpiry(val);
                             }}
-                            className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-[#6DFF3B] focus-visible:border-[#6DFF3B] placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
+                            className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
                             required
                           />
                         </div>
@@ -464,7 +464,7 @@ export function SquadBookingPage() {
                             maxLength={3}
                             value={cardCvv}
                             onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
-                            className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-[#6DFF3B] focus-visible:border-[#6DFF3B] placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
+                            className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
                             required
                           />
                         </div>
@@ -476,7 +476,7 @@ export function SquadBookingPage() {
                           placeholder="Name on card"
                           value={cardName}
                           onChange={(e) => setCardName(e.target.value)}
-                          className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-[#6DFF3B] focus-visible:border-[#6DFF3B] placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
+                          className="h-10 bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/[0.08] text-slate-900 dark:text-white focus-visible:ring-1 focus-visible:ring-emerald-600 focus-visible:border-emerald-600 placeholder-slate-400 dark:placeholder-white/20 text-xs rounded-xl"
                           required
                         />
                       </div>
@@ -487,18 +487,18 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-netbanking"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "netbanking"
-                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      ? "border-emerald-600 bg-emerald-600/5 dark:bg-emerald-600/10"
                       : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="netbanking" id="pay-netbanking" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />
+                      <RadioGroupItem value="netbanking" id="pay-netbanking" className="border-slate-300 dark:border-white/20 text-emerald-600 focus:ring-emerald-600 accent-emerald-600" />
                       <div>
                         <p className="font-semibold text-sm text-slate-900 dark:text-white">Net Banking</p>
                         <p className="text-[10px] text-slate-500 dark:text-white/50">All Indian Banks supported</p>
                       </div>
                     </div>
-                    <Building2 className={`h-5 w-5 ${paymentMethod === "netbanking" ? "text-emerald-600 dark:text-[#6DFF3B]" : "text-slate-400 dark:text-white/40"}`} />
+                    <Building2 className={`h-5 w-5 ${paymentMethod === "netbanking" ? "text-emerald-600 dark:text-emerald-600" : "text-slate-400 dark:text-white/40"}`} />
                   </Label>
 
                   {paymentMethod === "netbanking" && (
@@ -508,7 +508,7 @@ export function SquadBookingPage() {
                         id="bankSelect"
                         value={selectedBank}
                         onChange={(e) => setSelectedBank(e.target.value)}
-                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] text-xs text-slate-900 dark:text-white focus:outline-none focus:border-[#6DFF3B] cursor-pointer"
+                        className="w-full h-10 px-3 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] text-xs text-slate-900 dark:text-white focus:outline-none focus:border-emerald-600 cursor-pointer"
                       >
                         <option value="hdfc">HDFC Bank</option>
                         <option value="sbi">State Bank of India</option>
@@ -523,25 +523,25 @@ export function SquadBookingPage() {
                   <Label
                     htmlFor="pay-wallet"
                     className={`flex items-center justify-between p-3.5 rounded-xl border transition cursor-pointer select-none ${paymentMethod === "wallet"
-                      ? "border-[#6DFF3B] bg-[#6DFF3B]/5 dark:bg-[#6DFF3B]/10"
+                      ? "border-emerald-600 bg-emerald-600/5 dark:bg-emerald-600/10"
                       : "border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04]"
                       }`}
                   >
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="wallet" id="pay-wallet" className="border-slate-300 dark:border-white/20 text-[#6DFF3B] focus:ring-[#6DFF3B] accent-[#6DFF3B]" />
+                      <RadioGroupItem value="wallet" id="pay-wallet" className="border-slate-300 dark:border-white/20 text-emerald-600 focus:ring-emerald-600 accent-emerald-600" />
                       <div>
                         <p className="font-semibold text-sm text-slate-900 dark:text-white">SportX Wallet</p>
-                        <p className="text-[10px] text-emerald-600 dark:text-[#6DFF3B] font-medium">Available Balance: ₹{walletBalance}</p>
+                        <p className="text-[10px] text-emerald-600 dark:text-emerald-600 font-medium">Available Balance: ₹{walletBalance}</p>
                       </div>
                     </div>
-                    <Wallet className={`h-5 w-5 ${paymentMethod === "wallet" ? "text-emerald-600 dark:text-[#6DFF3B]" : "text-slate-400 dark:text-white/40"}`} />
+                    <Wallet className={`h-5 w-5 ${paymentMethod === "wallet" ? "text-emerald-600 dark:text-emerald-600" : "text-slate-400 dark:text-white/40"}`} />
                   </Label>
                 </RadioGroup>
 
                 <DialogFooter className="pt-2">
                   <Button
                     type="submit"
-                    className="w-full h-11 bg-[#6DFF3B] text-black hover:bg-[#86ff60] rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full h-11 bg-emerald-600 text-black hover:bg-emerald-700 rounded-xl font-bold transition-all cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Lock className="h-4 w-4" />
                     Pay ₹{displayPrice} Securely
@@ -553,7 +553,7 @@ export function SquadBookingPage() {
 
           {paymentStep === "processing" && (
             <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-              <Loader2 className="h-10 w-10 text-emerald-600 dark:text-[#6DFF3B] animate-spin" />
+              <Loader2 className="h-10 w-10 text-emerald-600 dark:text-emerald-600 animate-spin" />
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Processing Payment</h3>
                 <p className="text-xs text-slate-500 dark:text-white/50 max-w-[250px] mx-auto animate-pulse">{processingMessage}</p>
@@ -566,14 +566,14 @@ export function SquadBookingPage() {
 
           {paymentStep === "success" && (
             <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center animate-scaleIn">
-              <div className="h-14 w-14 rounded-full bg-emerald-500/10 dark:bg-[#6DFF3B]/10 border border-emerald-500/30 dark:border-[#6DFF3B]/30 flex items-center justify-center text-emerald-600 dark:text-[#6DFF3B]">
+              <div className="h-14 w-14 rounded-full bg-emerald-500/10 dark:bg-emerald-600/10 border border-emerald-500/30 dark:border-emerald-600/30 flex items-center justify-center text-emerald-600 dark:text-emerald-600">
                 <Check className="h-8 w-8 stroke-[3]" />
               </div>
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">Payment Successful!</h3>
                 <p className="text-xs text-slate-500 dark:text-white/50">Your transaction has settled successfully.</p>
               </div>
-              <p className="text-[10px] text-emerald-600 dark:text-[#6DFF3B] font-bold uppercase tracking-wider bg-emerald-500/10 dark:bg-[#6DFF3B]/10 px-2.5 py-0.5 rounded-full mt-2">
+              <p className="text-[10px] text-emerald-600 dark:text-emerald-600 font-bold uppercase tracking-wider bg-emerald-500/10 dark:bg-emerald-600/10 px-2.5 py-0.5 rounded-full mt-2">
                 Booking Slot...
               </p>
             </div>

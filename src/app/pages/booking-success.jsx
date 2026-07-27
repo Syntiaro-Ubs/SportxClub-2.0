@@ -120,7 +120,7 @@ export function BookingSuccess() {
       doc.setFillColor(16, 18, 22); // Dark slate bg
       doc.rect(0, 0, 210, 40, "F");
       
-      doc.setTextColor(109, 255, 59); // Green text #6DFF3B
+      doc.setTextColor(5, 150, 105); // Green text #059669
       doc.setFontSize(22);
       doc.setFont("Helvetica", "bold");
       doc.text("SPORTXCLUB RECEIPT", 20, 25);
@@ -240,7 +240,7 @@ export function BookingSuccess() {
       >
         <div className="flex justify-center relative">
           {/* Ambient success glow background */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/10 dark:bg-[#6DFF3B]/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-500/10 dark:bg-emerald-600/5 rounded-full blur-3xl pointer-events-none" />
           
           {/* Animated premium glass badge */}
           <motion.div
@@ -250,14 +250,14 @@ export function BookingSuccess() {
             className="relative h-24 w-24 flex items-center justify-center"
           >
             {/* Outer pulsing ring */}
-            <div className="absolute inset-0 rounded-full bg-emerald-500/10 dark:bg-[#6DFF3B]/10 animate-ping opacity-75" />
+            <div className="absolute inset-0 rounded-full bg-emerald-500/10 dark:bg-emerald-600/10 animate-ping opacity-75" />
             
             {/* Layered border glow */}
-            <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 dark:from-[#6DFF3B] dark:to-emerald-400 opacity-20 blur-sm" />
+            <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 dark:from-emerald-600 dark:to-emerald-400 opacity-20 blur-sm" />
             
             {/* Main glass coin */}
-            <div className="relative h-20 w-20 rounded-full bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/10 flex items-center justify-center shadow-xl shadow-emerald-500/10 dark:shadow-[#6DFF3B]/10">
-              <div className="h-14 w-14 rounded-full bg-emerald-500/10 dark:bg-[#6DFF3B]/10 flex items-center justify-center text-emerald-600 dark:text-[#6DFF3B]">
+            <div className="relative h-20 w-20 rounded-full bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-white/10 flex items-center justify-center shadow-xl shadow-emerald-500/10 dark:shadow-emerald-600/10">
+              <div className="h-14 w-14 rounded-full bg-emerald-500/10 dark:bg-emerald-600/10 flex items-center justify-center text-emerald-600 dark:text-emerald-600">
                 <CheckCircle2 className="h-9 w-9 stroke-[2.5px]" />
               </div>
             </div>
@@ -270,7 +270,7 @@ export function BookingSuccess() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:bg-[#6DFF3B]/10 dark:text-[#6DFF3B] mb-2.5 border border-emerald-500/20 dark:border-[#6DFF3B]/20">
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:bg-emerald-600/10 dark:text-emerald-600 mb-2.5 border border-emerald-500/20 dark:border-emerald-600/20">
               ⚡ Reservation Settled
             </span>
             <h1 className="text-3xl sm:text-4xl tracking-tight text-slate-900 dark:text-white font-black leading-tight">
@@ -285,7 +285,7 @@ export function BookingSuccess() {
             className="text-slate-500 dark:text-white/60 text-sm sm:text-base max-w-md mx-auto leading-relaxed font-semibold"
           >
             Your slot at{" "}
-            <span className="text-emerald-700 dark:text-[#6DFF3B] font-extrabold underline decoration-emerald-500/30 dark:decoration-[#6DFF3B]/30 decoration-2 underline-offset-4">
+            <span className="text-emerald-700 dark:text-emerald-600 font-extrabold underline decoration-emerald-500/30 dark:decoration-emerald-600/30 decoration-2 underline-offset-4">
               {venueName}
             </span>{" "}
             has been successfully reserved.
@@ -302,10 +302,10 @@ export function BookingSuccess() {
               {/* Header */}
               <div className="flex items-center justify-between border-b border-border/20 pb-3">
                 <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-[#6DFF3B] animate-pulse" />
-                  <span className="text-xs font-black tracking-widest text-[#6DFF3B] uppercase">SportX Entry Pass</span>
+                  <div className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse" />
+                  <span className="text-xs font-black tracking-widest text-emerald-600 uppercase">SportX Entry Pass</span>
                 </div>
-                <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] font-bold uppercase px-2 py-0.5 rounded-full">
+                <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 font-bold uppercase px-2 py-0.5 rounded-full">
                   Active / Paid
                 </span>
               </div>
@@ -324,14 +324,14 @@ export function BookingSuccess() {
                 <div className="space-y-0.5">
                   <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Date</p>
                   <div className="flex items-center gap-1.5 text-slate-800 dark:text-white font-semibold text-xs sm:text-sm">
-                    <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-[#6DFF3B]" />
+                    <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600" />
                     <span>{dateStr}</span>
                   </div>
                 </div>
                 <div className="space-y-0.5">
                   <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Time Slot</p>
                   <div className="flex items-center gap-1.5 text-slate-800 dark:text-white font-semibold text-xs sm:text-sm">
-                    <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-[#6DFF3B]" />
+                    <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600" />
                     <span>{timeStr}</span>
                   </div>
                 </div>
@@ -343,7 +343,7 @@ export function BookingSuccess() {
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[9px] font-bold text-emerald-600 dark:text-[#6DFF3B] hover:underline flex items-center gap-0.5 transition-colors cursor-pointer"
+                      className="text-[9px] font-bold text-emerald-600 dark:text-emerald-600 hover:underline flex items-center gap-0.5 transition-colors cursor-pointer"
                     >
                       Get Directions ↗
                     </a>
@@ -352,9 +352,9 @@ export function BookingSuccess() {
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-start gap-1.5 text-slate-800 dark:text-white font-semibold hover:text-emerald-600 dark:hover:text-[#6DFF3B] transition-colors cursor-pointer text-xs sm:text-sm"
+                    className="flex items-start gap-1.5 text-slate-800 dark:text-white font-semibold hover:text-emerald-600 dark:hover:text-emerald-600 transition-colors cursor-pointer text-xs sm:text-sm"
                   >
-                    <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-[#6DFF3B] mt-0.5 shrink-0" />
+                    <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600 mt-0.5 shrink-0" />
                     <span>{venueAddress}</span>
                   </a>
                 </div>
@@ -382,14 +382,14 @@ export function BookingSuccess() {
                 <div className="border-t border-border/20 pt-3.5 space-y-2 text-left">
                   <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider font-extrabold flex justify-between items-center">
                     <span>Paid Teammates</span>
-                    <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] font-bold px-2 py-0.5 rounded-full">
+                    <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 font-bold px-2 py-0.5 rounded-full">
                       {paidMembers.length} Joined
                     </span>
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {paidMembers.map((member) => (
                       <div key={member.id} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] transition-all duration-300">
-                        <div className="h-5 w-5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-[#6DFF3B] flex items-center justify-center text-[10px] font-black">
+                        <div className="h-5 w-5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 flex items-center justify-center text-[10px] font-black">
                           ✓
                         </div>
                         <span className="text-xs font-semibold text-slate-700 dark:text-white/80 truncate max-w-[120px]">
@@ -405,7 +405,7 @@ export function BookingSuccess() {
               <div className="pt-3 border-t border-border/20 flex justify-center">
                 <Button 
                   onClick={handleDownloadReceipt}
-                  className="w-1/2 bg-[#6DFF3B] text-black hover:bg-[#86ff60] font-bold rounded-xl gap-2 h-10 border-none cursor-pointer text-xs"
+                  className="w-1/2 bg-emerald-600 text-black hover:bg-emerald-700 font-bold rounded-xl gap-2 h-10 border-none cursor-pointer text-xs"
                 >
                   <Download className="h-3.5 w-3.5" />
                   Receipt
@@ -418,12 +418,12 @@ export function BookingSuccess() {
         <div className="pt-4 space-y-4">
           <div className="flex flex-row gap-3 w-full">
             <Link to="/profile" className="flex-1">
-              <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-[#6DFF3B] dark:text-[#6DFF3B] dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-[#6DFF3B]/5 transition-all duration-300">
+              <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-emerald-600 dark:text-emerald-600 dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-emerald-600/5 transition-all duration-300">
                 Go to Profile
               </Button>
             </Link>
             <Link to="/venues" className="flex-1">
-              <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-[#6DFF3B] dark:text-[#6DFF3B] dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-[#6DFF3B]/5 transition-all duration-300">
+              <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-emerald-600 dark:text-emerald-600 dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-emerald-600/5 transition-all duration-300">
                 Book Another Turf
               </Button>
             </Link>

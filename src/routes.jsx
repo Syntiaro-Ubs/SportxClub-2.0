@@ -232,6 +232,13 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "staff",
+        lazy: async () => {
+          const { StaffManagement } = await import("./app/pages/owner/staff");
+          return { Component: StaffManagement };
+        },
+      },
+      {
         path: "revenue",
         lazy: async () => {
           const { Revenue } = await import("./app/pages/owner/revenue");

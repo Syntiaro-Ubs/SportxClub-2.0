@@ -219,7 +219,7 @@ function HeroParticles() {
           className={cn(
             "absolute rounded-full blur-[1px]",
             isDark
-              ? "h-1 w-1 bg-[#6DFF3B]/60"
+              ? "h-1 w-1 bg-emerald-600/60"
               : "h-0.5 w-0.5 bg-emerald-400/20",
           )}
           style={{
@@ -296,14 +296,14 @@ function SectionHeading({ eyebrow, title, description, centered = false }) {
           "text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5",
           centered && "justify-center"
         )}>
-          <span className="h-5 sm:h-6 w-1 rounded-full bg-emerald-500 dark:bg-[#6DFF3B] shrink-0" />
+          <span className="h-5 sm:h-6 w-1 rounded-full bg-emerald-500 dark:bg-emerald-600 shrink-0" />
           <span>{eyebrow}</span>
         </h2>
       )}
 
       {eyebrow && title && (
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/20 dark:border-emerald-400/20 text-emerald-700 dark:text-[#6DFF3B] text-xs font-bold tracking-wider uppercase mb-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-[#6DFF3B] animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/20 dark:border-emerald-400/20 text-emerald-700 dark:text-emerald-600 text-xs font-bold tracking-wider uppercase mb-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-600 animate-pulse" />
           {eyebrow}
         </div>
       )}
@@ -425,7 +425,7 @@ export function Navbar() {
         className={cn(
           "sticky top-0 z-50 border-b backdrop-blur-2xl transition-colors duration-200 shadow-sm dark:shadow-[0_4px_30px_rgba(0,0,0,0.6)]",
           isDark
-            ? "border-white/[0.08] bg-[#050505]/95 text-white"
+            ? "border-white/[0.08] bg-[#333333]/95 text-white"
             : "border-slate-200/80 bg-white/95 text-slate-900",
         )}
       >
@@ -443,14 +443,14 @@ export function Navbar() {
               className={cn(
                 "flex items-center w-full rounded-full border px-4 py-2.5 shadow-sm transition-all duration-200 focus-within:ring-2",
                 isDark
-                  ? "border-white/[0.08] bg-white/[0.03] focus-within:border-[#6DFF3B]/30 focus-within:ring-[#6DFF3B]/10"
+                  ? "border-white/[0.08] bg-white/[0.03] focus-within:border-emerald-600/30 focus-within:ring-emerald-600/10"
                   : "border-slate-200 bg-[#F1F3F6]/60 hover:bg-[#F1F3F6]/80 focus-within:bg-white focus-within:border-emerald-500/30 focus-within:ring-emerald-500/10",
               )}
             >
               <Search
                 className={cn(
                   "h-4 w-4 shrink-0 mr-2.5",
-                  isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                  isDark ? "text-emerald-600" : "text-emerald-600",
                 )}
               />
               <input
@@ -481,12 +481,12 @@ export function Navbar() {
                     className={cn(
                       "group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] lg:text-[14px] font-medium transition-all cursor-pointer",
                       isDark
-                        ? "bg-transparent text-[#6DFF3B]"
+                        ? "bg-transparent text-emerald-600"
                         : "bg-transparent text-emerald-600"
                     )}
                   >
                     <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
-                    <span className="truncate max-w-[120px] leading-none">
+                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5">
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
                     <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80 text-black dark:text-white" />
@@ -499,10 +499,10 @@ export function Navbar() {
             <div className="hidden md:block">
               <ThemeToggleButton
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-full border transition",
+                  "flex h-10 w-10 items-center justify-center transition hover:bg-transparent",
                   isDark
-                    ? "border-white/[0.08] bg-white/[0.03] text-white/80 hover:bg-white/[0.06] hover:text-white"
-                    : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    ? "text-white/80 hover:text-white"
+                    : "text-slate-700 hover:text-slate-900"
                 )}
                 variant="ghost"
               />
@@ -515,7 +515,7 @@ export function Navbar() {
                   className={cn(
                     "group relative flex h-10 items-center justify-center gap-2 transition px-2 lg:px-4 cursor-pointer rounded-md",
                     isDark
-                      ? "bg-transparent text-[#6DFF3B]"
+                      ? "bg-transparent text-emerald-600"
                       : "bg-transparent text-emerald-600",
                   )}
                 >
@@ -580,10 +580,10 @@ export function Navbar() {
               <Link to="/login">
                 <button
                   className={cn(
-                    "flex h-10 items-center justify-center rounded-full border px-5 text-sm tracking-wide transition-all cursor-pointer group",
+                    "flex h-10 items-center justify-center rounded-md border px-5 text-sm tracking-wide transition-all cursor-pointer group",
                     isDark
-                      ? "border-[#6DFF3B] bg-transparent text-white hover:bg-[#6DFF3B] hover:text-[#050505]"
-                      : "border-[#6DFF3B] bg-transparent text-slate-800 hover:bg-[#6DFF3B] hover:text-[#050505]",
+                      ? "border-emerald-600 bg-transparent text-white hover:bg-emerald-600 hover:text-[#050505]"
+                      : "border-emerald-600 bg-transparent text-slate-800 hover:bg-emerald-600 hover:text-[#050505]",
                   )}
                 >
                   Login
@@ -620,14 +620,14 @@ export function Navbar() {
             className={cn(
               "flex items-center w-full rounded-full border px-4 py-2 shadow-sm transition-all duration-200",
               isDark
-                ? "border-white/[0.08] bg-white/[0.03] focus-within:border-[#6DFF3B]/30 focus-within:ring-2 focus-within:ring-[#6DFF3B]/10"
+                ? "border-white/[0.08] bg-white/[0.03] focus-within:border-emerald-600/30 focus-within:ring-2 focus-within:ring-emerald-600/10"
                 : "border-slate-200 bg-[#F1F3F6]/60 focus-within:bg-white focus-within:border-emerald-500/30 focus-within:ring-2 focus-within:ring-emerald-500/10",
             )}
           >
             <Search
               className={cn(
                 "h-4 w-4 shrink-0 mr-2.5",
-                isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                isDark ? "text-emerald-600" : "text-emerald-600",
               )}
             />
             <input
@@ -658,10 +658,10 @@ export function Navbar() {
                   <MapPin
                     className={cn(
                       "h-3.5 w-3.5 shrink-0",
-                      isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                      isDark ? "text-emerald-600" : "text-emerald-600",
                     )}
                   />
-                  <span>{activeCity === "All" ? "Cities" : activeCity}</span>
+                  <span className="truncate max-w-[120px] sm:max-w-[150px]">{activeCity === "All" ? "Cities" : activeCity}</span>
                 </button>
               }
             />
@@ -722,7 +722,7 @@ export function Navbar() {
                         <ShoppingCart
                           className={cn(
                             "h-5 w-5",
-                            isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                            isDark ? "text-emerald-600" : "text-emerald-600",
                           )}
                         />
                       )}
@@ -731,10 +731,10 @@ export function Navbar() {
                           "text-sm tracking-wide transition-colors duration-150",
                           item.isGreen
                             ? isDark
-                              ? "text-[#6DFF3B]"
+                              ? "text-emerald-600"
                               : "text-emerald-600"
                             : isDark
-                              ? "text-white/90 group-hover:text-[#6DFF3B]"
+                              ? "text-white/90 group-hover:text-emerald-600"
                               : "text-slate-800 group-hover:text-emerald-600",
                         )}
                       >
@@ -748,7 +748,7 @@ export function Navbar() {
                           className={cn(
                             "flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-white",
                             isDark
-                              ? "bg-[#6DFF3B] text-black"
+                              ? "bg-emerald-600 text-black"
                               : "bg-emerald-600",
                           )}
                         >
@@ -760,7 +760,7 @@ export function Navbar() {
                           className={cn(
                             "h-4 w-4 transition-colors duration-150",
                             isDark
-                              ? "text-white/20 group-hover:text-[#6DFF3B]"
+                              ? "text-white/20 group-hover:text-emerald-600"
                               : "text-slate-300 group-hover:text-emerald-600",
                           )}
                         />
@@ -834,7 +834,7 @@ function StatsRow() {
                 className={cn(
                   "flex h-12 w-12 items-center justify-center rounded-full",
                   isDark
-                    ? "border border-[#6DFF3B]/18 bg-[#6DFF3B]/10"
+                    ? "border border-emerald-600/18 bg-emerald-600/10"
                     : "border border-emerald-500/20 bg-emerald-500/10",
                 )}
               >
@@ -1035,7 +1035,7 @@ export function HeroSection() {
         <div className={cn(
           "absolute -top-32 left-1/2 -translate-x-1/2 h-[400px] w-[850px] rounded-full blur-[120px]",
           isDark
-            ? "bg-gradient-to-b from-[#6DFF3B]/15 via-emerald-600/10 to-transparent"
+            ? "bg-gradient-to-b from-emerald-600/15 via-emerald-600/10 to-transparent"
             : "bg-gradient-to-b from-emerald-500/20 via-teal-400/10 to-transparent"
         )} />
       </div>
@@ -1119,7 +1119,7 @@ export function HeroSection() {
                   "h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer",
                   currentSlide === idx
                     ? (isDark
-                      ? "w-4 sm:w-5 bg-[#6DFF3B] shadow-[0_0_12px_rgba(109,255,59,0.8)]"
+                      ? "w-4 sm:w-5 bg-emerald-600 shadow-[0_0_12px_rgba(109,255,59,0.8)]"
                       : "w-4 sm:w-5 bg-[#10B981] shadow-[0_0_10px_rgba(16,185,129,0.4)]")
                     : "w-2 sm:w-2.5 bg-white/40 hover:bg-white/70"
                 )}
@@ -1164,11 +1164,11 @@ export function RecommendedVenuesSection({ asSlider = false }) {
               <div className="flex items-center gap-2">
                 <span className={cn(
                   "h-2 w-2 rounded-full animate-pulse",
-                  isDark ? "bg-[#6DFF3B]" : "bg-emerald-500"
+                  isDark ? "bg-emerald-600" : "bg-emerald-500"
                 )} />
                 <span className={cn(
                   "text-xs font-bold uppercase tracking-widest",
-                  isDark ? "text-[#6DFF3B]" : "text-emerald-600"
+                  isDark ? "text-emerald-600" : "text-emerald-600"
                 )}>
                   Handpicked for you
                 </span>
@@ -1184,7 +1184,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
               to="/venues"
               className={cn(
                 "flex items-center gap-1 text-xs sm:text-sm font-semibold transition-colors group cursor-pointer",
-                isDark ? "text-[#6DFF3B] hover:text-emerald-400" : "text-emerald-600 hover:text-emerald-700"
+                isDark ? "text-emerald-600 hover:text-emerald-400" : "text-emerald-600 hover:text-emerald-700"
               )}
             >
               <span>See All</span>
@@ -1220,7 +1220,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                     "group relative flex flex-col overflow-hidden rounded-2xl border transition-all duration-300",
                     asSlider ? "w-[160px] sm:w-[200px] md:w-[220px] lg:w-[240px] flex-shrink-0 snap-start" : "",
                     isDark
-                      ? "border-white/10 bg-[#101216] shadow-xl hover:border-[#6DFF3B]/30"
+                      ? "border-white/10 bg-[#101216] shadow-xl hover:border-emerald-600/30"
                       : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30"
                   )}
                 >
@@ -1245,7 +1245,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                     {/* Bottom Overlay & Text */}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-1.5 px-2.5 z-10 flex items-end justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-extrabold text-[#6DFF3B] capitalize tracking-wider drop-shadow-sm mb-0.5">
+                        <p className="text-[11px] font-extrabold text-emerald-600 capitalize tracking-wider drop-shadow-sm mb-0.5">
                           {venue.sport.toLowerCase()}
                         </p>
                         <div className="flex flex-col gap-0.5 w-full">
@@ -1302,7 +1302,7 @@ function SportCard({ name, count, image, index }) {
       <Link to="/venues" state={{ sport: name }} className="block">
         <div
           className={cn(
-            "relative aspect-[2/3] overflow-hidden rounded-3xl border transition-all duration-300 ease-out",
+            "relative aspect-[2/3] overflow-hidden rounded-lg border transition-all duration-300 ease-out",
             isDark
               ? "border-white/[0.08] bg-[#101216]"
               : "border-slate-300 bg-white shadow-sm hover:shadow-2xl hover:border-emerald-500/20",
@@ -1334,7 +1334,7 @@ function SportCard({ name, count, image, index }) {
                 {count}
               </p>
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.08] text-[#6DFF3B] group-hover:bg-[#6DFF3B] group-hover:text-[#050505] transition-all duration-300 ease-out"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.08] text-emerald-600 group-hover:bg-emerald-600 group-hover:text-[#050505] transition-all duration-300 ease-out"
               >
                 <ArrowRight className="h-4 w-4" />
               </div>
@@ -1364,7 +1364,7 @@ function MoreSportsCard() {
       <Link to="/venues" className="block h-full">
         <div
           className={cn(
-            "relative flex h-full min-h-[280px] overflow-hidden rounded-3xl border transition-all duration-300 ease-out",
+            "relative flex h-full min-h-[280px] overflow-hidden rounded-lg border transition-all duration-300 ease-out",
             isDark
               ? "border-white/[0.08] bg-[#101216]"
               : "border-slate-300 bg-white shadow-sm hover:shadow-2xl hover:border-emerald-500/20",
@@ -1396,7 +1396,7 @@ function MoreSportsCard() {
                 More
               </Badge>
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#050505]/70 text-[#6DFF3B] transition-all duration-300 ease-out"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#050505]/70 text-emerald-600 transition-all duration-300 ease-out"
               >
                 <ArrowRight className="h-4 w-4" />
               </div>
@@ -1721,15 +1721,15 @@ export function DiscoveryRails() {
             <CardContent className="space-y-5 p-6 md:p-8">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-[#6DFF3B]/85">
+                  <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-emerald-600/85">
                     Offers
                   </p>
                   <h2 className="mt-3 text-2xl  tracking-tight text-white md:text-3xl">
                     Offers that feel clear, useful, and safe.
                   </h2>
                 </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#6DFF3B]/18 bg-[#6DFF3B]/10">
-                  <Zap className="h-6 w-6 text-[#6DFF3B]" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-600/18 bg-emerald-600/10">
+                  <Zap className="h-6 w-6 text-emerald-600" />
                 </div>
               </div>
 
@@ -1743,7 +1743,7 @@ export function DiscoveryRails() {
                       {offer.tag}
                     </Badge>
                     <p className="mt-4 text-lg  text-white">{offer.title}</p>
-                    <p className="mt-2 text-sm  text-[#6DFF3B]">
+                    <p className="mt-2 text-sm  text-emerald-600">
                       {offer.value}
                     </p>
                     <p className="mt-2 text-sm leading-7 text-white/60">
@@ -1764,7 +1764,7 @@ export function DiscoveryRails() {
               />
 
               <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.06),rgba(5,5,5,0.88))]" />
-              <div className="absolute left-5 top-5 rounded-full border border-[#6DFF3B]/20 bg-[#6DFF3B]/10 px-3 py-1 text-xs  uppercase tracking-[0.22em] text-[#6DFF3B]">
+              <div className="absolute left-5 top-5 rounded-full border border-emerald-600/20 bg-emerald-600/10 px-3 py-1 text-xs  uppercase tracking-[0.22em] text-emerald-600">
                 Tournaments & events
               </div>
             </div>
@@ -1783,7 +1783,7 @@ export function DiscoveryRails() {
                     }
                   }}
                 >
-                  <div className="flex gap-4 rounded-[22px] border border-white/[0.08] bg-white/[0.03] p-3 transition hover:border-[#6DFF3B]/20 hover:bg-white/[0.05]">
+                  <div className="flex gap-4 rounded-[22px] border border-white/[0.08] bg-white/[0.03] p-3 transition hover:border-emerald-600/20 hover:bg-white/[0.05]">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[18px]">
                       <ImageWithFallback
                         src={event.image}
@@ -1839,8 +1839,8 @@ export function WhySportXClub() {
             >
               <Card className="h-full rounded-[22px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
                 <CardContent className="flex h-full flex-col gap-5 p-6">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-[#6DFF3B]/25 bg-[#6DFF3B]/10 shadow-[0_0_15px_rgba(109,255,59,0.15)]">
-                    <card.icon className="h-6 w-6 text-[#6DFF3B] filter drop-shadow-[0_2px_8px_rgba(109,255,59,0.3)]" />
+                  <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-emerald-600/25 bg-emerald-600/10 shadow-[0_0_15px_rgba(109,255,59,0.15)]">
+                    <card.icon className="h-6 w-6 text-emerald-600 filter drop-shadow-[0_2px_8px_rgba(109,255,59,0.3)]" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg  text-white">{card.title}</h3>
@@ -1902,8 +1902,8 @@ export function TournamentCTA() {
                 className={cn(
                   "rounded-full border px-4 py-2 text-xs  uppercase tracking-[0.26em]",
                   isDark
-                    ? "border-[#6DFF3B]/20 bg-[#6DFF3B]/10 text-[#6DFF3B]"
-                    : "border-[#6DFF3B]/30 bg-[#6DFF3B]/15 text-[#3eb315]",
+                    ? "border-emerald-600/20 bg-emerald-600/10 text-emerald-600"
+                    : "border-emerald-600/30 bg-emerald-600/15 text-[#3eb315]",
                 )}
               >
                 Tournament launchpad
@@ -1941,8 +1941,8 @@ export function TournamentCTA() {
                   className={cn(
                     "h-12 rounded-full px-6 cursor-pointer",
                     isDark
-                      ? "bg-[#6DFF3B] text-[#050505] hover:bg-[#86ff60]"
-                      : "bg-[#6DFF3B] text-[#050505] hover:bg-[#5fe032] shadow-sm",
+                      ? "bg-emerald-600 text-[#050505] hover:bg-emerald-700"
+                      : "bg-emerald-600 text-[#050505] hover:bg-[#5fe032] shadow-sm",
                   )}
                 >
                   Host Your Tournament
@@ -1954,7 +1954,7 @@ export function TournamentCTA() {
               <div
                 className={cn(
                   "absolute -left-6 top-8 h-48 w-48 rounded-full blur-3xl",
-                  isDark ? "bg-[#6DFF3B]/14" : "bg-[#6DFF3B]/10",
+                  isDark ? "bg-emerald-600/14" : "bg-emerald-600/10",
                 )}
               />
               <div
@@ -1990,7 +1990,7 @@ export function TournamentCTA() {
                     <p
                       className={cn(
                         "text-xs  uppercase tracking-[0.24em]",
-                        isDark ? "text-[#6DFF3B]/80" : "text-[#5fe032]",
+                        isDark ? "text-emerald-600/80" : "text-[#5fe032]",
                       )}
                     >
                       Featured event
@@ -2071,8 +2071,8 @@ export function TournamentCTA() {
                   className={cn(
                     "mt-5 flex items-center gap-4 rounded-[20px] border p-4",
                     isDark
-                      ? "border-[#6DFF3B]/16 bg-[#6DFF3B]/10"
-                      : "border-[#6DFF3B]/20 bg-[#6DFF3B]/10",
+                      ? "border-emerald-600/16 bg-emerald-600/10"
+                      : "border-emerald-600/20 bg-emerald-600/10",
                   )}
                 >
                   <img
@@ -2315,7 +2315,7 @@ export function StoreSection() {
                 className={cn(
                   "relative flex flex-col h-full overflow-hidden rounded-3xl border transition-all duration-300",
                   isDark
-                    ? "border-white/[0.08] bg-[#101216] hover:border-[#6DFF3B]/30 hover:shadow-[0_0_20px_rgba(109,255,59,0.05)]"
+                    ? "border-white/[0.08] bg-[#101216] hover:border-emerald-600/30 hover:shadow-[0_0_20px_rgba(109,255,59,0.05)]"
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
                 )}
               >
@@ -2331,7 +2331,7 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-2 py-1 flex items-center gap-1",
                         isDark
-                          ? "bg-[#050505]/80 text-[#6DFF3B] border border-[#6DFF3B]/30"
+                          ? "bg-[#050505]/80 text-emerald-600 border border-emerald-600/30"
                           : "bg-white/90 text-emerald-700 border border-emerald-200",
                       )}
                     >
@@ -2363,7 +2363,7 @@ export function StoreSection() {
                     <span
                       className={cn(
                         "text-lg font-bold",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                        isDark ? "text-emerald-600" : "text-emerald-600",
                       )}
                     >
                       {product.price}
@@ -2373,8 +2373,8 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-4 text-xs tracking-wide transition-all group",
                         isDark
-                          ? "border border-[#6DFF3B] bg-transparent text-white hover:bg-[#6DFF3B] hover:text-[#050505]"
-                          : "border border-[#6DFF3B] bg-transparent text-slate-800 hover:bg-[#6DFF3B] hover:text-[#050505]",
+                          ? "border border-emerald-600 bg-transparent text-white hover:bg-emerald-600 hover:text-[#050505]"
+                          : "border border-emerald-600 bg-transparent text-slate-800 hover:bg-emerald-600 hover:text-[#050505]",
                       )}
                     >
                       <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
@@ -2396,7 +2396,7 @@ export function StoreSection() {
                 className={cn(
                   "relative flex flex-col h-full overflow-hidden rounded-3xl border transition-all duration-300",
                   isDark
-                    ? "border-white/[0.08] bg-[#101216] hover:border-[#6DFF3B]/30 hover:shadow-[0_0_20px_rgba(109,255,59,0.05)]"
+                    ? "border-white/[0.08] bg-[#101216] hover:border-emerald-600/30 hover:shadow-[0_0_20px_rgba(109,255,59,0.05)]"
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
                 )}
               >
@@ -2412,7 +2412,7 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-2 py-1 flex items-center gap-1",
                         isDark
-                          ? "bg-[#050505]/80 text-[#6DFF3B] border border-[#6DFF3B]/30"
+                          ? "bg-[#050505]/80 text-emerald-600 border border-emerald-600/30"
                           : "bg-white/90 text-emerald-700 border border-emerald-200",
                       )}
                     >
@@ -2444,7 +2444,7 @@ export function StoreSection() {
                     <span
                       className={cn(
                         "text-lg font-bold",
-                        isDark ? "text-[#6DFF3B]" : "text-emerald-600",
+                        isDark ? "text-emerald-600" : "text-emerald-600",
                       )}
                     >
                       {product.price}
@@ -2454,8 +2454,8 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-4 text-xs tracking-wide transition-all group",
                         isDark
-                          ? "border border-[#6DFF3B] bg-transparent text-white hover:bg-[#6DFF3B] hover:text-[#050505]"
-                          : "border border-[#6DFF3B] bg-transparent text-slate-800 hover:bg-[#6DFF3B] hover:text-[#050505]",
+                          ? "border border-emerald-600 bg-transparent text-white hover:bg-emerald-600 hover:text-[#050505]"
+                          : "border border-emerald-600 bg-transparent text-slate-800 hover:bg-emerald-600 hover:text-[#050505]",
                       )}
                     >
                       <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
@@ -2476,7 +2476,7 @@ export function StoreSection() {
             className={cn(
               "rounded-full border-dashed px-8 h-12 transition-all",
               isDark
-                ? "border-white/20 text-white hover:border-[#6DFF3B]/50 hover:bg-[#6DFF3B]/10 hover:text-[#6DFF3B]"
+                ? "border-white/20 text-white hover:border-emerald-600/50 hover:bg-emerald-600/10 hover:text-emerald-600"
                 : "border-slate-300 text-slate-700 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700",
             )}
           >
@@ -2566,7 +2566,7 @@ export function TurfGallery() {
               <div className="absolute top-4 right-4 z-10">
                 <div className="flex flex-col items-end">
                   <Badge
-                    className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-[#6DFF3B] border-[#6DFF3B]/30"
+                    className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-600 border-emerald-600/30"
                   >
                     <Star className="h-3.5 w-3.5 fill-current" />
                     <span className="text-sm">{turf.rating}</span>
@@ -2579,7 +2579,7 @@ export function TurfGallery() {
 
               <div className="absolute bottom-0 left-0 w-full p-6 z-10 translate-y-2 transition-transform duration-300 group-hover:translate-y-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-[#6DFF3B]" />
+                  <MapPin className="h-4 w-4 text-emerald-600" />
                   <span className="text-sm text-[#ffffff]/90 drop-shadow-md">
                     {turf.location}
                   </span>
@@ -2599,7 +2599,7 @@ export function TurfGallery() {
                       }
                     }}
                     variant="outline"
-                    className="rounded-full bg-white/10 text-[#ffffff] border-white/20 hover:bg-[#6DFF3B] hover:text-black hover:border-transparent backdrop-blur-sm transition-all cursor-pointer"
+                    className="rounded-full bg-white/10 text-[#ffffff] border-white/20 hover:bg-emerald-600 hover:text-black hover:border-transparent backdrop-blur-sm transition-all cursor-pointer"
                   >
                     View Details
                   </Button>

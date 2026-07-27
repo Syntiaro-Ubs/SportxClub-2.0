@@ -25,7 +25,7 @@ const getArrowClass = (items, side) => {
   return responsiveClass;
 };
 
-const demoVenues = [
+export const demoVenues = [
   { id: 1, badge: "TOP RATED", rating: 4.7, sports: "FOOTBALL", name: "Andheri Football Arena", location: "Andheri, Mumbai", image: "/assets/venues/turf-1.webp" },
   { id: 2, badge: "FEATURED", rating: 4.7, sports: "CRICKET", name: "Andheri Cricket Box", location: "Andheri, Mumbai", image: "/assets/venues/new_cricket_turf.png" },
   { id: 3, badge: "FAST FILLING", rating: 4.4, sports: "BADMINTON", name: "Andheri Badminton Arena", location: "Andheri, Mumbai", image: "/assets/venues/new_badminton_turf.png" },
@@ -641,7 +641,7 @@ export function VenueBooking() {
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-2.5 px-2.5 z-10 flex items-end justify-between gap-1">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2.5 mb-1.5 w-full whitespace-nowrap text-[9px] sm:text-[10px] leading-none">
-                <span className="text-[#39FF14] font-extrabold tracking-wider uppercase drop-shadow-sm shrink-0">
+                <span className="text-emerald-600 font-extrabold tracking-wider uppercase drop-shadow-sm shrink-0">
                   {venue.sports}
                 </span>
                 <div className="flex items-center gap-0.5 text-white font-semibold shrink-0">
@@ -678,7 +678,7 @@ export function VenueBooking() {
     <div className="w-full bg-[#f8faf9] dark:bg-[#020617] min-h-screen pb-10 pt-2 px-4 md:px-8">
       <div className="max-w-[1440px] mx-auto flex flex-col gap-4">
         {/* Toggle Button & Absolute Dropdown */}
-        <div className="relative z-40">
+        <div className="relative z-40 flex justify-end md:justify-start">
           <Button
             onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
             className="w-fit bg-white/80 dark:bg-[#0f172a]/70 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-800/60 rounded-xl h-11 font-bold shadow-xs flex items-center justify-between px-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors backdrop-blur-md"
@@ -697,7 +697,7 @@ export function VenueBooking() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="absolute left-0 top-full mt-3 w-[280px] z-50 origin-top-left"
+                className="absolute right-0 md:left-0 md:right-auto top-full mt-3 w-[280px] z-50 origin-top-right md:origin-top-left"
               >
                 <div className="w-full bg-white/95 dark:bg-[#0f172a]/95 rounded-[24px] border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-[0_20px_60px_rgb(0,0,0,0.15)] backdrop-blur-2xl">
                   <div className="flex flex-col gap-5 w-full">

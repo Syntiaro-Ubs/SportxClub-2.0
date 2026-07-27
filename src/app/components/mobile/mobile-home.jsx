@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "motion/react";
@@ -28,6 +28,7 @@ import { MobileAppBar, MobileBottomNav } from "./mobile-chrome";
 import { useAuth } from "../../providers/auth-provider";
 import { AppDownloadCTA } from "../home/AppDownloadCTA";
 import { GlobalFooter } from "../layout/GlobalFooter";
+import { demoVenues } from "../../pages/venue-booking";
 
 const asset = (path) => `/assets${path}`;
 
@@ -140,32 +141,7 @@ const whyCards = [
   },
 ];
 
-const nearbyTurfs = [
-  {
-    id: 4,
-    name: "Victory Greens",
-    sport: "Football",
-    distance: "1.9 km",
-    price: "₹1,050/hr",
-    image: asset("/venues/turf-4.webp"),
-  },
-  {
-    id: 5,
-    name: "Pro Match Grounds",
-    sport: "Cricket",
-    distance: "2.8 km",
-    price: "₹800/hr",
-    image: asset("/venues/turf-5.webp"),
-  },
-  {
-    id: 6,
-    name: "Apex Turf Club",
-    sport: "Basketball",
-    distance: "4.1 km",
-    price: "₹1,300/hr",
-    image: asset("/venues/turf-6.webp"),
-  },
-];
+// Dynamic nearby turfs will be generated inside the component
 
 const tournaments = [
   {
@@ -314,8 +290,8 @@ function SearchBar() {
   return (
     <div className="relative">
       <div className={cn(
-        "rounded-[24px] border border-border/60 bg-transparent p-3 shadow-[0_14px_30px_-24px_rgba(15,23,42,0.35)] backdrop-blur-xl transition",
-        isListening ? "border-primary/50 ring-4 ring-primary/10" : "focus-within:border-primary/30 focus-within:ring-4 focus-within:ring-primary/10"
+        "transition",
+        isListening ? "ring-4 ring-primary/10 rounded-[24px]" : "focus-within:ring-4 focus-within:ring-primary/10 rounded-[24px]"
       )}>
         <div className="flex items-center gap-2">
           <div className="flex h-11 flex-1 items-center gap-3 rounded-[18px] border border-border/60 bg-transparent px-4">
@@ -424,7 +400,33 @@ export function MobileHomePage() {
   const [currentBg, setCurrentBg] = useState(0);
   const { currentUser } = useAuth();
   const firstName = currentUser?.fullName ? currentUser.fullName.split(" ")[0] : "Rohan";
-  const displayCity = currentUser?.city || "Mumbai Central";
+  const [city, setCity] = useState(
+    () => localStorage.getItem("preferred-city") || "Mumbai",
+  );
+
+  useEffect(() => {
+    const handleCityChange = (e) => {
+      setCity(e.detail);
+    };
+    window.addEventListener("preferredCityChanged", handleCityChange);
+    return () => window.removeEventListener("preferredCityChanged", handleCityChange);
+  }, []);
+
+  const nearbyTurfs = useMemo(() => {
+    const searchCity = city === "All" ? "Mumbai" : city;
+    let filtered = demoVenues.filter(v => v.location.toLowerCase().includes(searchCity.toLowerCase()));
+    if (filtered.length === 0) {
+      filtered = demoVenues.filter(v => v.location.toLowerCase().includes("mumbai"));
+    }
+    return filtered.slice(0, 3).map((v, i) => ({
+      id: v.id,
+      name: v.name,
+      sport: v.sports || "Football",
+      distance: `${(1.2 + i * 0.7).toFixed(1)} km`,
+      price: `₹${800 + i * 200}/hr`,
+      image: v.image,
+    }));
+  }, [city]);
 
   const scrollRef = useRef(null);
   const isDown = useRef(false);

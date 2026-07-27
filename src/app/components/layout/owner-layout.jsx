@@ -40,6 +40,7 @@ const ownerNavigation = [
   { name: "Bookings", href: "/owner-dashboard/bookings", icon: CalendarDays },
   { name: "Tournaments & Events", href: "/owner-dashboard/tournaments", icon: Trophy },
   { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
+  { name: "Time Slots", href: "/owner-dashboard/time-slots", icon: CalendarDays },
   { name: "Revenue", href: "/owner-dashboard/revenue", icon: IndianRupee },
   { name: "Reviews", href: "/owner-dashboard/reviews", icon: Star },
   { name: "Promotions", href: "/owner-dashboard/promotions", icon: Tag },
@@ -102,10 +103,22 @@ export function OwnerLayout() {
           );
         })}
       </div>
-      <div className="p-4 mt-auto border-t border-border/40">
+      <div className="p-4 mt-auto border-t border-border/40 flex flex-col gap-1">
+        <Link
+          to="/owner-dashboard/staff"
+          onClick={() => setIsMobileMenuOpen(false)}
+          className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
+            location.pathname.startsWith("/owner-dashboard/staff")
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          }`}
+        >
+          <User className="h-5 w-5" />
+          Staff & Roles
+        </Link>
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground px-3 py-2.5 h-auto rounded-xl"
           onClick={handleLogout}
         >
           <LogOut className="h-5 w-5" />

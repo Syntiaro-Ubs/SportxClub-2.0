@@ -253,7 +253,7 @@ export function OpenLobbiesPage() {
         {/* Back Link */}
         <Link
           to="/venues"
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] px-4 py-2 text-sm text-slate-600 dark:text-white/72 transition hover:border-[#6DFF3B]/25 hover:bg-[#6DFF3B]/10 hover:text-slate-900 dark:hover:text-[#6DFF3B]"
+          className="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.03] px-4 py-2 text-sm text-slate-600 dark:text-white/72 transition hover:border-emerald-600/25 hover:bg-emerald-600/10 hover:text-slate-900 dark:hover:text-emerald-600"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Venues
@@ -262,24 +262,24 @@ export function OpenLobbiesPage() {
         {/* Hero Section & Visual Counter */}
         <div className="mt-8 mb-10 relative overflow-hidden rounded-[32px] border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216] p-6 md:p-8 shadow-sm">
           {/* Ambient glowing background blur */}
-          <div className="absolute top-0 right-1/4 w-[300px] h-[300px] bg-[#6DFF3B]/10 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute top-0 right-1/4 w-[300px] h-[300px] bg-emerald-600/10 blur-[100px] rounded-full pointer-events-none" />
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
             <div>
-              <span className="text-[10px] font-black tracking-widest text-[#6DFF3B] bg-[#6DFF3B]/10 px-2.5 py-1 rounded-md mb-3 inline-block animate-pulse">
+              <span className="text-[10px] font-black tracking-widest text-emerald-600 bg-emerald-600/10 px-2.5 py-1 rounded-md mb-3 inline-block animate-pulse">
                 Public Matchmaking
               </span>
               <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                 Open Lobbies
               </h1>
               <p className="text-slate-500 dark:text-white/60 mt-2 text-sm max-w-xl">
-                Join an existing squad as a single player at <span className="text-slate-900 dark:text-[#6DFF3B] font-semibold">{venue.name}</span>. Pay only your individual split share.
+                Join an existing squad as a single player at <span className="text-slate-900 dark:text-emerald-600 font-semibold">{venue.name}</span>. Pay only your individual split share.
               </p>
             </div>
 
             <div className="flex gap-4 items-center shrink-0">
               <div className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-[#050505]/40 px-5 py-4 text-center min-w-[100px]">
-                <p className="text-3xl font-black text-slate-900 dark:text-[#6DFF3B]">{filteredLobbies.length}</p>
+                <p className="text-3xl font-black text-slate-900 dark:text-emerald-600">{filteredLobbies.length}</p>
                 <p className="text-[10px] text-slate-500 dark:text-white/40 uppercase font-bold tracking-wide mt-0.5">Active Matches</p>
               </div>
               <div className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-[#050505]/40 px-5 py-4 text-center min-w-[100px]">
@@ -306,7 +306,7 @@ export function OpenLobbiesPage() {
                   className={cn(
                     "flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition-all cursor-pointer border",
                     isActive
-                      ? "bg-[#6DFF3B] border-[#6DFF3B] text-black shadow-lg shadow-[#6DFF3B]/20 scale-105"
+                      ? "bg-emerald-600 border-emerald-600 text-black shadow-lg shadow-emerald-600/20 scale-105"
                       : "bg-white dark:bg-[#101216] border-slate-200 dark:border-white/[0.08] text-slate-600 dark:text-white/70 hover:bg-slate-50 dark:hover:bg-white/[0.03] hover:text-slate-900 dark:hover:text-white"
                   )}
                 >
@@ -326,7 +326,7 @@ export function OpenLobbiesPage() {
           </div>
 
           <Link to="/squad-booking" state={{ venue }}>
-            <Button className="h-10 rounded-full border border-[#6DFF3B] bg-[#6DFF3B] text-black hover:bg-[#86ff60] font-bold text-xs gap-1.5 px-5 shadow-[0_0_15px_rgba(109,255,59,0.2)] hover:scale-105 transition-all duration-300 cursor-pointer">
+            <Button className="h-10 rounded-full border border-emerald-600 bg-emerald-600 text-black hover:bg-emerald-700 font-bold text-xs gap-1.5 px-5 shadow-[0_0_15px_rgba(109,255,59,0.2)] hover:scale-105 transition-all duration-300 cursor-pointer">
               <Plus className="h-4 w-4 text-black" /> Host New Lobby
             </Button>
           </Link>
@@ -343,7 +343,7 @@ export function OpenLobbiesPage() {
                   There are currently no open lobbies for {selectedSport}. Why not host a new match and invite players to join?
                 </p>
                 <Link to="/squad-booking" state={{ venue }}>
-                  <Button className="rounded-xl bg-[#6DFF3B] text-black hover:bg-[#86ff60] font-bold mt-2 hover:scale-105 transition-all">
+                  <Button className="rounded-xl bg-emerald-600 text-black hover:bg-emerald-700 font-bold mt-2 hover:scale-105 transition-all">
                     Create a Lobby
                   </Button>
                 </Link>
@@ -356,14 +356,14 @@ export function OpenLobbiesPage() {
                 const slotsRemaining = lobby.maxPlayers - lobby.currentPlayers;
 
                 return (
-                  <Card key={lobby.id} className="rounded-[28px] border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216]/60 backdrop-blur-md shadow-sm hover:border-[#6DFF3B]/50 hover:shadow-[0_15px_40px_rgba(109,255,59,0.05)] hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between overflow-hidden">
+                  <Card key={lobby.id} className="rounded-[28px] border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#101216]/60 backdrop-blur-md shadow-sm hover:border-emerald-600/50 hover:shadow-[0_15px_40px_rgba(109,255,59,0.05)] hover:-translate-y-1 transition-all duration-300 group flex flex-col justify-between overflow-hidden">
                     <CardContent className="p-6 md:p-8 flex flex-col justify-between h-full space-y-6">
 
                       {/* Top Header Row */}
                       <div className="flex justify-between items-start gap-4">
                         <div>
                           <div className="flex gap-2 items-center mb-2">
-                            <span className="text-[9px] font-black uppercase tracking-wider text-[#6DFF3B] bg-[#6DFF3B]/10 px-2.5 py-0.5 rounded-full border border-[#6DFF3B]/20">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-600/10 px-2.5 py-0.5 rounded-full border border-emerald-600/20">
                               {lobby.sport}
                             </span>
                             <span className={cn(
@@ -376,7 +376,7 @@ export function OpenLobbiesPage() {
                               {lobby.skillLevel || "Intermediate"}
                             </span>
                           </div>
-                          <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-[#6DFF3B] transition-colors leading-tight">
+                          <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors leading-tight">
                             {lobby.teamName}
                           </h3>
                           <p className="text-xs text-slate-500 dark:text-white/50 mt-1 line-clamp-1">
@@ -395,7 +395,7 @@ export function OpenLobbiesPage() {
                         <div className="space-y-0.5">
                           <p className="text-[9px] uppercase text-slate-400 dark:text-white/40 font-bold tracking-wide">Schedule</p>
                           <div className="flex items-center gap-1.5 text-xs text-slate-800 dark:text-white font-semibold">
-                            <Calendar className="h-3.5 w-3.5 text-[#6DFF3B] shrink-0" />
+                            <Calendar className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                             <span>{lobby.date} • {lobby.time}</span>
                           </div>
                         </div>
@@ -426,7 +426,7 @@ export function OpenLobbiesPage() {
                               Only {slotsRemaining} slots left!
                             </span>
                           ) : (
-                            <span className="text-[10px] text-[#6DFF3B] font-bold uppercase tracking-wide">
+                            <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wide">
                               {slotsRemaining} Slots available
                             </span>
                           )}
@@ -446,9 +446,9 @@ export function OpenLobbiesPage() {
                                   "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-extrabold transition-all select-none border",
                                   isJoined
                                     ? isHost
-                                      ? "bg-[#6DFF3B] border-[#6DFF3B] text-black shadow-sm"
+                                      ? "bg-emerald-600 border-emerald-600 text-black shadow-sm"
                                       : "bg-slate-200 dark:bg-white/10 border-slate-300 dark:border-white/10 text-slate-800 dark:text-white"
-                                    : "border-dashed border-slate-300 dark:border-white/20 text-slate-400 dark:text-white/30 bg-transparent hover:border-[#6DFF3B] hover:text-[#6DFF3B] cursor-pointer hover:scale-110 active:scale-95"
+                                    : "border-dashed border-slate-300 dark:border-white/20 text-slate-400 dark:text-white/30 bg-transparent hover:border-emerald-600 hover:text-emerald-600 cursor-pointer hover:scale-110 active:scale-95"
                                 )}
                                 title={isJoined ? (isHost ? "Lobby Host" : "Player Joined") : "Empty Slot - Tap to join!"}
                               >
@@ -463,7 +463,7 @@ export function OpenLobbiesPage() {
                       <div className="pt-2">
                         {joinedLobbies.includes(lobby.id) ? (
                           <div 
-                            className="w-full h-12 bg-[#6DFF3B] text-black rounded-xl font-black flex items-center justify-center gap-1.5 cursor-not-allowed uppercase tracking-wider text-xs"
+                            className="w-full h-12 bg-emerald-600 text-black rounded-xl font-black flex items-center justify-center gap-1.5 cursor-not-allowed uppercase tracking-wider text-xs"
                           >
                             <Check className="h-4.5 w-4.5 text-black stroke-[3]" />
                             Joined - Ready to Play ✓
@@ -471,7 +471,7 @@ export function OpenLobbiesPage() {
                         ) : (
                           <Button
                             onClick={() => handleJoinClick(lobby)}
-                            className="w-full h-12 bg-white text-black hover:bg-[#6DFF3B] rounded-xl font-bold transition-all shadow-md hover:shadow-lg hover:shadow-[#6DFF3B]/20 uppercase tracking-wider text-xs hover:scale-[1.02] active:scale-[0.98]"
+                            className="w-full h-12 bg-white text-black hover:bg-emerald-600 rounded-xl font-bold transition-all shadow-md hover:shadow-lg hover:shadow-emerald-600/20 uppercase tracking-wider text-xs hover:scale-[1.02] active:scale-[0.98]"
                           >
                             Join & Pay ₹{splitPrice}
                           </Button>
@@ -500,7 +500,7 @@ export function OpenLobbiesPage() {
             <form onSubmit={processPayment}>
               <DialogHeader className="mb-4">
                 <DialogTitle className="text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
-                  <Lock className="h-5 w-5 text-[#6DFF3B]" />
+                  <Lock className="h-5 w-5 text-emerald-600" />
                   Secure Checkout
                 </DialogTitle>
                 <DialogDescription className="text-slate-500 dark:text-white/60">
@@ -512,7 +512,7 @@ export function OpenLobbiesPage() {
               <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.05] rounded-2xl p-4.5 mb-4 text-left space-y-3 relative overflow-hidden">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-[#6DFF3B] bg-[#6DFF3B]/10 border border-[#6DFF3B]/20 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-600 bg-emerald-600/10 border border-emerald-600/20 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
                       {selectedLobby?.sport} • {selectedLobby?.skillLevel || "All Levels"}
                     </span>
                     <h4 className="text-base font-black text-slate-800 dark:text-white leading-tight">
@@ -542,7 +542,7 @@ export function OpenLobbiesPage() {
                     <span className="font-bold text-slate-700 dark:text-white/90">{selectedLobby?.currentPlayers} / {selectedLobby?.maxPlayers} Joined</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-[#6DFF3B] font-bold">
+                    <span className="text-[10px] text-emerald-600 font-bold">
                       {selectedLobby ? (selectedLobby.maxPlayers - selectedLobby.currentPlayers) : 0} Slots Left
                     </span>
                   </div>
@@ -556,7 +556,7 @@ export function OpenLobbiesPage() {
                         key={idx}
                         className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.05] px-2.5 py-1 rounded-lg text-[11px] font-medium text-slate-800 dark:text-white/90"
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? "bg-[#6DFF3B]" : "bg-sky-400"}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? "bg-emerald-600" : "bg-sky-400"}`} />
                         {player} {idx === 0 && <span className="text-[9px] text-muted-foreground font-bold">(Host)</span>}
                       </span>
                     ))}
@@ -575,21 +575,21 @@ export function OpenLobbiesPage() {
                   <Label
                     className={cn(
                       "flex flex-col items-center justify-between rounded-xl border-2 p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all",
-                      paymentMethod === "upi" ? "border-[#6DFF3B] bg-[#6DFF3B]/10" : "border-slate-200 dark:border-white/[0.08]"
+                      paymentMethod === "upi" ? "border-emerald-600 bg-emerald-600/10" : "border-slate-200 dark:border-white/[0.08]"
                     )}
                   >
                     <RadioGroupItem value="upi" className="sr-only" />
-                    <Smartphone className={cn("h-6 w-6 mb-2", paymentMethod === "upi" ? "text-[#6DFF3B]" : "text-slate-400 dark:text-white/40")} />
+                    <Smartphone className={cn("h-6 w-6 mb-2", paymentMethod === "upi" ? "text-emerald-600" : "text-slate-400 dark:text-white/40")} />
                     <span className="text-xs font-semibold">UPI Payment</span>
                   </Label>
                   <Label
                     className={cn(
                       "flex flex-col items-center justify-between rounded-xl border-2 p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-all",
-                      paymentMethod === "card" ? "border-[#6DFF3B] bg-[#6DFF3B]/10" : "border-slate-200 dark:border-white/[0.08]"
+                      paymentMethod === "card" ? "border-emerald-600 bg-emerald-600/10" : "border-slate-200 dark:border-white/[0.08]"
                     )}
                   >
                     <RadioGroupItem value="card" className="sr-only" />
-                    <Wallet className={cn("h-6 w-6 mb-2", paymentMethod === "card" ? "text-[#6DFF3B]" : "text-slate-400 dark:text-white/40")} />
+                    <Wallet className={cn("h-6 w-6 mb-2", paymentMethod === "card" ? "text-emerald-600" : "text-slate-400 dark:text-white/40")} />
                     <span className="text-xs font-semibold">Credit/Debit Card</span>
                   </Label>
                 </RadioGroup>
@@ -606,7 +606,7 @@ export function OpenLobbiesPage() {
                       placeholder="e.g. rohan@okaxis"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
-                      className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-[#6DFF3B]"
+                      className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-emerald-600"
                     />
                   </div>
                 ) : (
@@ -619,7 +619,7 @@ export function OpenLobbiesPage() {
                         placeholder="e.g. Rohan Das"
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
-                        className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-[#6DFF3B]"
+                        className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-emerald-600"
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -634,7 +634,7 @@ export function OpenLobbiesPage() {
                           const val = e.target.value.replace(/\s?/g, '').replace(/(\d{4})/g, '$1 ').trim();
                           setCardNo(val);
                         }}
-                        className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-[#6DFF3B] font-mono"
+                        className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-emerald-600 font-mono"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3.5">
@@ -653,7 +653,7 @@ export function OpenLobbiesPage() {
                             }
                             setCardExpiry(val);
                           }}
-                          className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-[#6DFF3B] font-mono text-center"
+                          className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-emerald-600 font-mono text-center"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -665,7 +665,7 @@ export function OpenLobbiesPage() {
                           maxLength="3"
                           value={cardCvv}
                           onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ""))}
-                          className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-[#6DFF3B] font-mono text-center"
+                          className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-emerald-600 font-mono text-center"
                         />
                       </div>
                     </div>
@@ -684,7 +684,7 @@ export function OpenLobbiesPage() {
 
           {paymentStep === "processing" && (
             <div className="py-12 flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="h-12 w-12 text-[#6DFF3B] animate-spin" />
+              <Loader2 className="h-12 w-12 text-emerald-600 animate-spin" />
               <h3 className="text-lg font-bold text-slate-900 dark:text-white">Processing Payment</h3>
               <p className="text-sm text-slate-500 dark:text-white/60 animate-pulse">{processingMessage}</p>
             </div>
@@ -692,8 +692,8 @@ export function OpenLobbiesPage() {
 
           {paymentStep === "success" && (
             <div className="py-12 flex flex-col items-center justify-center space-y-4">
-              <div className="h-16 w-16 rounded-full bg-[#6DFF3B]/20 flex items-center justify-center mb-2 animate-bounce">
-                <Check className="h-8 w-8 text-[#6DFF3B]" />
+              <div className="h-16 w-16 rounded-full bg-emerald-600/20 flex items-center justify-center mb-2 animate-bounce">
+                <Check className="h-8 w-8 text-emerald-600" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Payment Successful!</h3>
               <p className="text-sm text-slate-500 dark:text-white/60 text-center max-w-xs leading-relaxed">

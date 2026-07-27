@@ -130,7 +130,7 @@ export function AppDownloadCTA() {
           {/* Left: Content Area */}
           <div className="flex-1 max-w-xl flex flex-col items-start text-left">
             {/* Tag */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-50 text-emerald-700 dark:border-[#6DFF3B]/30 dark:bg-[#6DFF3B]/10 dark:text-[#6DFF3B] text-xs font-semibold uppercase tracking-wider transition-colors duration-300">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-50 text-emerald-700 dark:border-emerald-600/30 dark:bg-emerald-600/10 dark:text-emerald-600 text-xs font-semibold uppercase tracking-wider transition-colors duration-300">
               <Smartphone className="w-3.5 h-3.5" />
               <span>Get The App</span>
             </div>
@@ -138,7 +138,7 @@ export function AppDownloadCTA() {
             {/* Title */}
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white mb-6 mt-6 leading-[1.1] transition-colors duration-300">
               Book turfs on the go <br />
-              with the <span className="text-emerald-600 dark:text-[#6DFF3B] transition-colors duration-300">SportXClub App</span>
+              with the <span className="text-emerald-600 dark:text-emerald-600 transition-colors duration-300">SportXClub App</span>
             </h2>
             
             {/* Subtext */}
@@ -205,7 +205,7 @@ export function AppDownloadCTA() {
                     <motion.svg 
                       animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
                       transition={{ repeat: Infinity, duration: 1.8 }}
-                      className="w-3.5 h-3.5 fill-current text-emerald-500 dark:text-[#6DFF3B]" 
+                      className="w-3.5 h-3.5 fill-current text-emerald-500 dark:text-emerald-600" 
                       viewBox="0 0 24 24"
                     >
                       <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
@@ -255,7 +255,7 @@ export function AppDownloadCTA() {
                                   {isActive && (
                                     <motion.div
                                       layoutId="activeSportTabPill"
-                                      className="absolute inset-0 rounded-full bg-emerald-500 dark:bg-[#6DFF3B]"
+                                      className="absolute inset-0 rounded-full bg-emerald-500 dark:bg-emerald-600"
                                       transition={{ type: "spring", stiffness: 350, damping: 28 }}
                                     />
                                   )}
@@ -278,7 +278,7 @@ export function AppDownloadCTA() {
                         <div>
                           <div className="flex justify-between items-center mb-2">
                             <h4 className="text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase">Discover Games Near You</h4>
-                            <span className="text-[8px] text-emerald-600 dark:text-[#6DFF3B] font-bold">See All</span>
+                            <span className="text-[8px] text-emerald-600 dark:text-emerald-600 font-bold">See All</span>
                           </div>
 
                           <AnimatePresence mode="wait">
@@ -311,13 +311,13 @@ export function AppDownloadCTA() {
                                 </div>
                                 <div className="p-1.5 rounded-lg bg-white border border-slate-200 dark:bg-[#070a10] dark:border-slate-900">
                                   <p className="text-[6px] text-slate-400 dark:text-slate-500 leading-none">Time Slot</p>
-                                  <p className="text-[8px] font-bold mt-1 text-emerald-600 dark:text-[#6DFF3B]">{details.time}</p>
+                                  <p className="text-[8px] font-bold mt-1 text-emerald-600 dark:text-emerald-600">{details.time}</p>
                                 </div>
                               </div>
 
                               <div className="flex justify-between items-center mt-1">
                                 <span className="text-[8px] text-slate-600 dark:text-slate-300">Slots: <strong className="text-slate-900 dark:text-white font-bold">{details.slots}</strong></span>
-                                <span className="text-[9px] font-bold text-emerald-600 dark:text-[#6DFF3B]">{details.price}</span>
+                                <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-600">{details.price}</span>
                               </div>
 
                               <motion.button 
@@ -328,7 +328,7 @@ export function AppDownloadCTA() {
                                   scale: [1, 1.012, 1] 
                                 }}
                                 transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-                                className="w-full py-1.5 rounded-lg bg-emerald-500 text-white dark:bg-[#6DFF3B] dark:text-slate-950 font-black text-[9px] hover:bg-emerald-600 dark:hover:bg-[#8aff62]"
+                                className="w-full py-1.5 rounded-lg bg-emerald-500 text-white dark:bg-emerald-600 dark:text-slate-950 font-black text-[9px] hover:bg-emerald-600 dark:hover:bg-emerald-700"
                               >
                                 Join Match
                               </motion.button>
@@ -349,7 +349,7 @@ export function AppDownloadCTA() {
                                 <img src={turf.img} alt={turf.name} className="h-[65px] w-full object-cover" />
                                 <div className="p-2">
                                   <h6 className="text-[8px] font-bold text-slate-900 dark:text-white truncate">{turf.name}</h6>
-                                  <p className="text-[7.5px] text-emerald-600 dark:text-[#6DFF3B] font-bold mt-0.5">{turf.price}</p>
+                                  <p className="text-[7.5px] text-emerald-600 dark:text-emerald-600 font-bold mt-0.5">{turf.price}</p>
                                 </div>
                               </motion.div>
                             ))}
@@ -405,7 +405,7 @@ export function AppDownloadCTA() {
                             {/* Inner progress bar track */}
                             <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden relative">
                               <motion.div 
-                                className="h-full rounded-full bg-emerald-500 dark:bg-[#6DFF3B]"
+                                className="h-full rounded-full bg-emerald-500 dark:bg-emerald-600"
                                 style={{ width: `${progressPercent}%` }}
                                 transition={{ type: "tween", ease: "linear" }}
                               />
@@ -413,7 +413,7 @@ export function AppDownloadCTA() {
                           </div>
 
                           {/* Download Trigger / Action Status */}
-                          <div className="flex items-center gap-1.5 text-[8px] text-emerald-600 dark:text-[#6DFF3B] font-bold self-center">
+                          <div className="flex items-center gap-1.5 text-[8px] text-emerald-600 dark:text-emerald-600 font-bold self-center">
                             <DownloadCloud className="w-3.5 h-3.5 animate-bounce" />
                             <span>{progressPercent < 100 ? "Syncing Package Files..." : "Ready to Play! ✅"}</span>
                           </div>
@@ -473,7 +473,7 @@ export function AppDownloadCTA() {
                                 transition={{ delay: idx * 0.15 }}
                                 className="flex gap-2 items-start"
                               >
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-[#6DFF3B] shrink-0 mt-0.5" />
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-600 shrink-0 mt-0.5" />
                                 <div>
                                   <h6 className="text-[8px] font-bold text-slate-800 dark:text-slate-200 leading-none">{perk.title}</h6>
                                   <p className="text-[7px] text-slate-500 dark:text-slate-400 mt-0.5">{perk.desc}</p>
@@ -490,15 +490,15 @@ export function AppDownloadCTA() {
 
                 {/* Page Indicator Carousel Dots */}
                 <div className="absolute bottom-11 inset-x-0 flex justify-center gap-1.5 z-25 pointer-events-none">
-                  <div className={cn("w-1.5 h-1.5 rounded-full transition-all duration-300", mockScreen === "dashboard" ? "bg-emerald-500 dark:bg-[#6DFF3B] scale-125" : "bg-slate-300 dark:bg-slate-700")} />
-                  <div className={cn("w-1.5 h-1.5 rounded-full transition-all duration-300", mockScreen === "download" ? "bg-emerald-500 dark:bg-[#6DFF3B] scale-125" : "bg-slate-300 dark:bg-slate-700")} />
+                  <div className={cn("w-1.5 h-1.5 rounded-full transition-all duration-300", mockScreen === "dashboard" ? "bg-emerald-500 dark:bg-emerald-600 scale-125" : "bg-slate-300 dark:bg-slate-700")} />
+                  <div className={cn("w-1.5 h-1.5 rounded-full transition-all duration-300", mockScreen === "download" ? "bg-emerald-500 dark:bg-emerald-600 scale-125" : "bg-slate-300 dark:bg-slate-700")} />
                 </div>
 
               </div>
 
               {/* Bottom Nav Bar */}
               <div className="absolute bottom-0 inset-x-0 bg-slate-50/95 dark:bg-[#0a0e17] border-t border-slate-200/60 dark:border-slate-800/60 py-1.5 flex justify-around items-center z-25 text-slate-400 dark:text-slate-500 transition-colors duration-300">
-                <div className="flex flex-col items-center gap-0.5 text-emerald-600 dark:text-[#6DFF3B]">
+                <div className="flex flex-col items-center gap-0.5 text-emerald-600 dark:text-emerald-600">
                   <Home className="w-3.5 h-3.5" />
                   <span className="text-[6px] font-bold">Home</span>
                 </div>
