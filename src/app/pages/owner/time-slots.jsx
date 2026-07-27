@@ -51,6 +51,7 @@ import {
   Ticket,
   ChevronLeft,
   ChevronRight,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
@@ -100,7 +101,7 @@ const formatTimeRange = (time) => {
   const startHour = parseInt(time.split(':')[0], 10);
   const startPeriod = startHour >= 12 ? 'pm' : 'am';
   const start12 = startHour > 12 ? startHour - 12 : (startHour === 0 ? 12 : startHour);
-  
+
   const endHour = startHour + 1;
   const endPeriod = endHour >= 12 && endHour < 24 ? 'pm' : 'am';
   const end12 = endHour > 12 ? endHour - 12 : (endHour === 0 ? 12 : endHour);
@@ -167,7 +168,7 @@ function CustomCalendar({ selectedDate, onSelect }) {
           let btnClasses = "h-8 w-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer ";
 
           if (isSelected) {
-            btnClasses += "bg-emerald-600 text-black shadow-md shadow-emerald-600/30 hover:opacity-95";
+            btnClasses += "border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold shadow-xs";
           } else if (isToday) {
             btnClasses += "border border-emerald-600/45 text-emerald-600 hover:bg-emerald-600/10";
           } else if (!isCurrentMonth) {
@@ -215,6 +216,20 @@ export function TimeSlots() {
   // Turf Pass State
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [generatedPass, setGeneratedPass] = useState(null);
+
+  // Custom Time Block & Release States
+  const [bookingActionType, setBookingActionType] = useState("booking"); // 'booking' or 'block'
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const [selectedTurfForCustomBlock, setSelectedTurfForCustomBlock] = useState(null);
+  const [customBlockForm, setCustomBlockForm] = useState({
+    startTime: "10:15",
+    startPeriod: "AM",
+    endTime: "12:10",
+    endPeriod: "PM",
+    reason: "Maintenance"
+  });
+  const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
+  const [selectedSlotForRelease, setSelectedSlotForRelease] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -307,7 +322,13 @@ export function TimeSlots() {
   }, [turfs, searchQuery]);
 
   const handleSlotClick = (turf, slot, slotIdx) => {
-    if (turf.status === 'Closed' || slot.status !== 'Available') return;
+    if (turf.status === 'Closed') return;
+
+    if (slot.status === 'Booked' || slot.status === 'Maintenance') {
+      setSelectedSlotForRelease({ turf, slot, slotIdx });
+      setIsReleaseModalOpen(true);
+      return;
+    }
 
     let canBook = true;
     for (let i = 0; i < playHours; i++) {
@@ -318,12 +339,13 @@ export function TimeSlots() {
     }
 
     if (!canBook) {
-      toast.error(`Cannot book ${playHours} consecutive hour(s) from this slot. Please select another slot or reduce duration.`);
+      toast.error(`Cannot book/block ${playHours} consecutive hour(s) from this slot. Please select another slot or reduce duration.`);
       return;
     }
 
     setSelectedSlotForBooking({ turf, slot, slotIdx });
     setBookingDetails({ customerName: "", customerPhone: "", paymentMethod: "cash" });
+    setBookingActionType("booking"); // Default to walk-in booking
     setIsBookingModalOpen(true);
     setHoveredSlotInfo(null);
   };
@@ -348,8 +370,9 @@ export function TimeSlots() {
     if (!selectedSlotForBooking) return;
 
     const { turf, slot, slotIdx } = selectedSlotForBooking;
-    
+
     let totalPrice = 0;
+    const isBlocking = bookingActionType === "block";
 
     // Simulate database update locally in state
     const updatedTurfs = turfs.map(t => {
@@ -357,7 +380,11 @@ export function TimeSlots() {
         const updatedSlots = [...t.slots];
         for (let i = 0; i < playHours; i++) {
           totalPrice += updatedSlots[slotIdx + i].price;
-          updatedSlots[slotIdx + i] = { ...updatedSlots[slotIdx + i], status: 'Booked' };
+          updatedSlots[slotIdx + i] = { 
+            ...updatedSlots[slotIdx + i], 
+            status: isBlocking ? 'Maintenance' : 'Booked',
+            blockedTimeRange: null 
+          };
         }
         return { ...t, slots: updatedSlots };
       }
@@ -366,16 +393,22 @@ export function TimeSlots() {
 
     setTurfs(updatedTurfs);
 
+    if (isBlocking) {
+      setIsBookingModalOpen(false);
+      toast.success(`Slot(s) successfully blocked!`);
+      return;
+    }
+
     const endTime = turf.slots[slotIdx + playHours - 1].time;
     const endHour = parseInt(endTime.split(':')[0]) + 1;
-    
+
     const formatTime12 = (hour) => {
       const h = hour % 24;
       const period = h >= 12 ? 'pm' : 'am';
       const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
       return `${h12.toString().padStart(2, '0')}:00 ${period}`;
     };
-    
+
     const startHour = parseInt(slot.time.split(':')[0]);
     const passTimeStr = `${formatTime12(startHour)} - ${formatTime12(endHour)}`;
 
@@ -396,6 +429,92 @@ export function TimeSlots() {
     setIsBookingModalOpen(false);
     setIsPassModalOpen(true);
     toast.success(`Booking created successfully for ${pass.customerName}!`);
+  };
+
+  // Release Slot Handler
+  const handleReleaseSlot = () => {
+    if (!selectedSlotForRelease) return;
+    const { turf, slot, slotIdx } = selectedSlotForRelease;
+
+    const updatedTurfs = turfs.map(t => {
+      if (t.id === turf.id) {
+        const updatedSlots = [...t.slots];
+        updatedSlots[slotIdx] = { 
+          ...updatedSlots[slotIdx], 
+          status: 'Available',
+          blockedTimeRange: null,
+          blockedReason: null
+        };
+        return { ...t, slots: updatedSlots };
+      }
+      return t;
+    });
+
+    setTurfs(updatedTurfs);
+    setIsReleaseModalOpen(false);
+    setSelectedSlotForRelease(null);
+    toast.success("Slot successfully released back to Available!");
+  };
+
+  // Helper: Convert time string and period into decimal hours (e.g. "10:15", "AM" -> 10.25)
+  const timeToDecimal = (timeStr, period) => {
+    const [hourStr, minStr] = timeStr.split(':');
+    let hour = parseInt(hourStr, 10);
+    const min = parseInt(minStr, 10) || 0;
+    
+    if (period === 'PM' && hour !== 12) hour += 12;
+    if (period === 'AM' && hour === 12) hour = 0;
+    
+    return hour + min / 60;
+  };
+
+  // Custom Time Block Submission Handler
+  const handleCustomBlockSubmit = (e) => {
+    e.preventDefault();
+    if (!selectedTurfForCustomBlock) return;
+
+    const startDec = timeToDecimal(customBlockForm.startTime, customBlockForm.startPeriod);
+    const endDec = timeToDecimal(customBlockForm.endTime, customBlockForm.endPeriod);
+
+    if (endDec <= startDec) {
+      toast.error("End time must be after start time!");
+      return;
+    }
+
+    const format12 = (timeStr, period) => {
+      return `${timeStr} ${period}`;
+    };
+
+    const blockLabel = `${format12(customBlockForm.startTime, customBlockForm.startPeriod)} - ${format12(customBlockForm.endTime, customBlockForm.endPeriod)}`;
+
+    const updatedTurfs = turfs.map(t => {
+      if (t.id === selectedTurfForCustomBlock.id) {
+        const updatedSlots = t.slots.map(slot => {
+          const slotStartHour = parseInt(slot.time.split(':')[0], 10);
+          const slotEndHour = slotStartHour + 1;
+
+          // Check if slot interval overlaps with user's custom block range
+          const overlaps = Math.max(slotStartHour, startDec) < Math.min(slotEndHour, endDec);
+
+          if (overlaps) {
+            return {
+              ...slot,
+              status: 'Maintenance',
+              blockedTimeRange: blockLabel,
+              blockedReason: customBlockForm.reason
+            };
+          }
+          return slot;
+        });
+        return { ...t, slots: updatedSlots };
+      }
+      return t;
+    });
+
+    setTurfs(updatedTurfs);
+    setIsBlockModalOpen(false);
+    setSelectedTurfForCustomBlock(null);
+    toast.success(`Turf blocked for custom interval: ${blockLabel}`);
   };
 
   const handlePrintPass = () => {
@@ -459,11 +578,10 @@ export function TimeSlots() {
               <button
                 key={hrs}
                 onClick={() => setPlayHours(hrs)}
-                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                  playHours === hrs
-                    ? 'bg-emerald-600 text-black shadow-sm'
-                    : 'text-muted-foreground hover:bg-muted/40'
-                }`}
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${playHours === hrs
+                  ? 'border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black shadow-xs'
+                  : 'border border-transparent text-muted-foreground hover:bg-muted/40'
+                  }`}
               >
                 {hrs} Hr
               </button>
@@ -598,7 +716,25 @@ export function TimeSlots() {
                       </CardDescription>
                     </div>
 
-                    <div className="flex items-center gap-3 self-end sm:self-auto">
+                    <div className="flex flex-wrap items-center gap-2.5 self-end sm:self-auto">
+                      {/* Duration Selector inside Card Header */}
+                      <div className="flex items-center gap-1 bg-background/80 p-1 rounded-2xl border border-border/40 shadow-xs">
+                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2 hidden sm:inline-block">DURATION:</span>
+                        {[1, 2, 3, 4].map(hrs => (
+                          <button
+                            key={hrs}
+                            type="button"
+                            onClick={() => setPlayHours(hrs)}
+                            className={`px-2.5 py-1 text-[10px] font-extrabold rounded-xl transition-all cursor-pointer ${playHours === hrs
+                              ? 'border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs'
+                              : 'border border-transparent text-muted-foreground hover:bg-muted/40'
+                              }`}
+                          >
+                            {hrs} Hr
+                          </button>
+                        ))}
+                      </div>
+
                       {/* Active open toggle switch */}
                       <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-xl border border-border/50 shadow-xs">
                         <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
@@ -618,6 +754,18 @@ export function TimeSlots() {
                         }`}>
                         {availableSlots} Slots Left
                       </Badge>
+
+                      {/* Block Custom Time Button */}
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTurfForCustomBlock(turf);
+                          setIsBlockModalOpen(true);
+                        }}
+                        className="h-8 rounded-xl bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/20 text-[10px] font-black uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
+                      >
+                        <Power className="w-3 h-3" /> Block Custom Time
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -644,16 +792,16 @@ export function TimeSlots() {
 
                       // Render Available Slot
                       if (slot.status === 'Available') {
-                        const isHoveredGroup = hoveredSlotInfo && 
-                          hoveredSlotInfo.turfId === turf.id && 
-                          idx >= hoveredSlotInfo.startIdx && 
+                        const isHoveredGroup = hoveredSlotInfo &&
+                          hoveredSlotInfo.turfId === turf.id &&
+                          idx >= hoveredSlotInfo.startIdx &&
                           idx < hoveredSlotInfo.startIdx + playHours;
-                          
+
                         const hoverValidClass = isHoveredGroup && hoveredSlotInfo.isValid
-                          ? 'bg-emerald-600 border-emerald-600 text-black scale-[1.05] shadow-lg shadow-primary/15'
+                          ? 'bg-emerald-500/15 border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 scale-[1.03] shadow-md shadow-emerald-500/10 font-bold'
                           : isHoveredGroup && !hoveredSlotInfo.isValid
-                          ? 'bg-rose-500/20 border-rose-500/50 text-rose-500'
-                          : 'bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600/10';
+                            ? 'bg-rose-500/10 border-2 border-rose-500 text-rose-600'
+                            : 'bg-emerald-500/5 dark:bg-emerald-950/20 border-2 border-emerald-500/40 hover:border-emerald-500 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400';
 
                         return (
                           <div
@@ -661,12 +809,12 @@ export function TimeSlots() {
                             onClick={() => handleSlotClick(turf, slot, idx)}
                             onMouseEnter={() => handleSlotMouseEnter(turf, idx)}
                             onMouseLeave={handleSlotMouseLeave}
-                            className={`p-3 rounded-xl border border-border/80 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 shadow-sm min-h-[72px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`p-3 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 shadow-xs min-h-[74px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <span className="font-semibold text-xs whitespace-nowrap">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[9px] uppercase tracking-wider font-bold opacity-70">Available</span>
-                            <span className={`text-[9px] font-extrabold mt-1 px-2 py-0.5 rounded-full ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-black/15' : 'bg-muted/65'}`}>₹{slot.price}</span>
+                            <span className="font-extrabold text-xs whitespace-nowrap text-foreground">{formatTimeRange(slot.time)}</span>
+                            <span className="text-[9.5px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">Available</span>
+                            <span className={`text-[9.5px] font-mono font-black mt-1 px-2.5 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-background/80 text-foreground'}`}>₹{slot.price}</span>
                           </div>
                         );
                       }
@@ -677,24 +825,27 @@ export function TimeSlots() {
                         return (
                           <div
                             key={idx}
-                            className={`relative group/slot p-3 rounded-xl border border-dashed border-border bg-muted/30 text-muted-foreground flex flex-col items-center justify-center gap-1 opacity-70 cursor-not-allowed select-none min-h-[72px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96]' : ''
+                            onClick={() => handleSlotClick(turf, slot, idx)}
+                            className={`relative group/slot p-3 rounded-2xl border-2 border-rose-500/40 bg-rose-500/5 dark:bg-rose-950/20 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <Lock className="w-3.5 h-3.5 text-muted-foreground/60" />
-                            <span className="font-semibold text-xs text-foreground/80 mt-1 whitespace-nowrap">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[9px] uppercase tracking-wider font-bold opacity-50">Booked</span>
+                            <span className="font-extrabold text-xs whitespace-nowrap text-foreground">{formatTimeRange(slot.time)}</span>
+                            <span className="text-[9.5px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
+                            <span className="text-[9.5px] font-mono font-black mt-1 px-2.5 py-0.5 rounded-full border border-rose-500/30 bg-background/80 text-rose-500 flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5 text-rose-500" /> RELEASE SLOT
+                            </span>
 
                             {/* Styled Hover Card Tooltip (radix mockup tooltip) */}
                             <div className="absolute bottom-full mb-2.5 hidden group-hover/slot:flex flex-col bg-popover text-popover-foreground border border-border text-[10px] p-2.5 rounded-xl shadow-xl z-20 w-44 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
                               <div className="flex items-center gap-1.5 border-b border-border/50 pb-1.5 mb-1.5">
-                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                                <span className="font-bold text-foreground">Verified Booking</span>
+                                <ShieldCheck className="h-3.5 w-3.5 text-rose-500" />
+                                <span className="font-bold text-foreground">Click to Release</span>
                               </div>
                               <p className="font-semibold text-foreground truncate">{bDetails.name}</p>
                               <p className="text-muted-foreground text-[9px] mt-0.5">{bDetails.phone}</p>
                               <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-border/20 text-[9px]">
                                 <span className="text-muted-foreground">Channel:</span>
-                                <span className="font-bold text-emerald-500 uppercase">{bDetails.method}</span>
+                                <span className="font-bold text-rose-500 uppercase">{bDetails.method}</span>
                               </div>
                             </div>
                           </div>
@@ -703,15 +854,22 @@ export function TimeSlots() {
 
                       // Render Maintenance Slot
                       if (slot.status === 'Maintenance') {
+                        const hasCustomRange = !!slot.blockedTimeRange;
                         return (
                           <div
                             key={idx}
-                            className={`p-3 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-500 flex flex-col items-center justify-center gap-1 cursor-not-allowed opacity-75 select-none min-h-[72px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96]' : ''
+                            onClick={() => handleSlotClick(turf, slot, idx)}
+                            className={`relative group/slot p-3 rounded-2xl border-2 border-amber-500/30 bg-amber-500/5 dark:bg-amber-950/20 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-                            <span className="font-semibold text-xs mt-1 whitespace-nowrap">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[9px] uppercase tracking-wider font-bold opacity-80">Maintenance</span>
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                            <span className="font-extrabold text-[10px] whitespace-nowrap text-foreground text-center">
+                              {hasCustomRange ? slot.blockedTimeRange : formatTimeRange(slot.time)}
+                            </span>
+                            <span className="text-[8px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-400">
+                              {slot.blockedReason || "Maintenance"}
+                            </span>
+                            <span className="text-[7.5px] font-bold text-muted-foreground opacity-80">(Click to Unblock)</span>
                           </div>
                         );
                       }
@@ -748,44 +906,79 @@ export function TimeSlots() {
           </DialogHeader>
 
           <form onSubmit={handleBookingSubmit} className="space-y-4 py-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="cust-name" className="text-xs font-semibold">Customer Full Name</Label>
-              <Input
-                id="cust-name"
-                placeholder="e.g. John Doe"
-                value={bookingDetails.customerName}
-                onChange={(e) => setBookingDetails({ ...bookingDetails, customerName: e.target.value })}
-                className="h-10 rounded-lg text-sm"
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cust-phone" className="text-xs font-semibold">Phone Number</Label>
-              <Input
-                id="cust-phone"
-                placeholder="e.g. +91 9876543210"
-                value={bookingDetails.customerPhone}
-                onChange={(e) => setBookingDetails({ ...bookingDetails, customerPhone: e.target.value })}
-                className="h-10 rounded-lg text-sm"
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="cust-payment" className="text-xs font-semibold">Payment Channel</Label>
-              <Select
-                value={bookingDetails.paymentMethod}
-                onValueChange={(val) => setBookingDetails({ ...bookingDetails, paymentMethod: val })}
+            {/* Toggle Action Type */}
+            <div className="grid grid-cols-2 gap-2 bg-muted/40 p-1 rounded-xl border border-border/40 mb-2">
+              <button
+                type="button"
+                onClick={() => setBookingActionType("booking")}
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  bookingActionType === "booking"
+                    ? "bg-emerald-500 text-black shadow-sm font-black"
+                    : "text-muted-foreground hover:bg-muted/40"
+                }`}
               >
-                <SelectTrigger id="cust-payment" className="h-10 rounded-lg text-sm">
-                  <SelectValue placeholder="Select payment channel" />
-                </SelectTrigger>
-                <SelectContent className="rounded-lg">
-                  <SelectItem value="cash">Cash Payment</SelectItem>
-                  <SelectItem value="upi">UPI / QR Scan</SelectItem>
-                  <SelectItem value="card">Credit/Debit Card</SelectItem>
-                </SelectContent>
-              </Select>
+                Walk-in Booking
+              </button>
+              <button
+                type="button"
+                onClick={() => setBookingActionType("block")}
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  bookingActionType === "block"
+                    ? "bg-amber-500 text-black shadow-sm font-black"
+                    : "text-muted-foreground hover:bg-muted/40"
+                }`}
+              >
+                Block Slot
+              </button>
             </div>
+
+            {bookingActionType === "block" ? (
+              <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500 text-xs font-medium space-y-1.5">
+                <p className="font-bold flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Block Facility Hold</p>
+                <p>This will temporarily mark the selected slot(s) for the next {playHours} hour(s) as Maintenance/Blocked. Regular players won't be able to book it.</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cust-name" className="text-xs font-semibold">Customer Full Name</Label>
+                  <Input
+                    id="cust-name"
+                    placeholder="e.g. John Doe"
+                    value={bookingDetails.customerName}
+                    onChange={(e) => setBookingDetails({ ...bookingDetails, customerName: e.target.value })}
+                    className="h-10 rounded-lg text-sm"
+                    required={bookingActionType === "booking"}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cust-phone" className="text-xs font-semibold">Phone Number</Label>
+                  <Input
+                    id="cust-phone"
+                    placeholder="e.g. +91 9876543210"
+                    value={bookingDetails.customerPhone}
+                    onChange={(e) => setBookingDetails({ ...bookingDetails, customerPhone: e.target.value })}
+                    className="h-10 rounded-lg text-sm"
+                    required={bookingActionType === "booking"}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="cust-payment" className="text-xs font-semibold">Payment Channel</Label>
+                  <Select
+                    value={bookingDetails.paymentMethod}
+                    onValueChange={(val) => setBookingDetails({ ...bookingDetails, paymentMethod: val })}
+                  >
+                    <SelectTrigger id="cust-payment" className="h-10 rounded-lg text-sm">
+                      <SelectValue placeholder="Select payment channel" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-lg">
+                      <SelectItem value="cash">Cash Payment</SelectItem>
+                      <SelectItem value="upi">UPI / QR Scan</SelectItem>
+                      <SelectItem value="card">Credit/Debit Card</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
 
             <div className="flex justify-between items-center bg-muted/40 p-4 rounded-xl border border-border/50 mt-4 shadow-inner">
               <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Total Amount Due</span>
@@ -994,6 +1187,176 @@ export function TimeSlots() {
                 Print Pass
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* -------------------------------------------------------------
+          Block Custom Time Dialog Modal
+          ------------------------------------------------------------- */}
+      <Dialog open={isBlockModalOpen} onOpenChange={setIsBlockModalOpen}>
+        <DialogContent className="sm:max-w-[425px] rounded-2xl border border-border/40 bg-popover shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="font-bold flex items-center gap-2">
+              <Power className="h-5 w-5 text-amber-500" />
+              Block Custom Time Range
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Block this turf for a specific time range (e.g. 10:15 AM to 12:10 PM) for maintenance, rain hold, or private coaching.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleCustomBlockSubmit} className="space-y-4 py-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Start Time</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={customBlockForm.startTime}
+                    onChange={(e) => setCustomBlockForm({ ...customBlockForm, startTime: e.target.value })}
+                    placeholder="e.g. 10:15"
+                    className="h-10 rounded-lg text-sm flex-1"
+                    required
+                  />
+                  <Select
+                    value={customBlockForm.startPeriod}
+                    onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, startPeriod: val })}
+                  >
+                    <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AM">AM</SelectItem>
+                      <SelectItem value="PM">PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">End Time</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={customBlockForm.endTime}
+                    onChange={(e) => setCustomBlockForm({ ...customBlockForm, endTime: e.target.value })}
+                    placeholder="e.g. 12:10"
+                    className="h-10 rounded-lg text-sm flex-1"
+                    required
+                  />
+                  <Select
+                    value={customBlockForm.endPeriod}
+                    onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, endPeriod: val })}
+                  >
+                    <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AM">AM</SelectItem>
+                      <SelectItem value="PM">PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Reason for Blocking</Label>
+              <Select
+                value={customBlockForm.reason}
+                onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, reason: val })}
+              >
+                <SelectTrigger className="h-10 rounded-lg text-sm">
+                  <SelectValue placeholder="Select reason" />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="Maintenance">Maintenance Hold</SelectItem>
+                  <SelectItem value="Coaching">Coaching Session</SelectItem>
+                  <SelectItem value="Private Event">Private / Owner Event</SelectItem>
+                  <SelectItem value="Rain Hold">Rain / Bad Weather Hold</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="p-3 bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-500 rounded-xl text-xs flex gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>All regular hourly slots overlapping this custom range will be blocked from regular online booking.</p>
+            </div>
+
+            <DialogFooter className="mt-6 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsBlockModalOpen(false)}
+                className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-muted/40 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-amber-500 hover:text-black hover:border-amber-500 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
+              >
+                Block Turf Now
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* -------------------------------------------------------------
+          Release Slot Dialog Modal
+          ------------------------------------------------------------- */}
+      <Dialog open={isReleaseModalOpen} onOpenChange={setIsReleaseModalOpen}>
+        <DialogContent className="sm:max-w-[400px] rounded-2xl border border-border/40 bg-popover shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="font-bold flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              Release / Unblock Slot
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              This action will release the blocked slot and mark it as Available for bookings again.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4 space-y-3">
+            <div className="p-4 rounded-xl border border-border bg-card/60 space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground font-semibold">Turf:</span>
+                <span className="font-bold text-foreground">{selectedSlotForRelease?.turf.name}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground font-semibold">Slot Time:</span>
+                <span className="font-mono font-bold text-primary">
+                  {selectedSlotForRelease && selectedSlotForRelease.slot.blockedTimeRange 
+                    ? selectedSlotForRelease.slot.blockedTimeRange 
+                    : selectedSlotForRelease && formatTimeRange(selectedSlotForRelease.slot.time)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-muted-foreground font-semibold">Current Status:</span>
+                <Badge variant="outline" className={selectedSlotForRelease?.slot.status === 'Booked' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}>
+                  {selectedSlotForRelease?.slot.status}
+                </Badge>
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground text-center">Are you sure you want to proceed?</p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsReleaseModalOpen(false)}
+              className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-muted/40 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleReleaseSlot}
+              className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
+            >
+              Release Slot Now
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -247,7 +247,7 @@ export function UserProfile() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [addonsOpen, setAddonsOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  
+
   const [playerPayments, setPlayerPayments] = useState({
     0: true, // You (Host)
     1: false, // Player 2
@@ -279,7 +279,7 @@ export function UserProfile() {
       setWalletBalance((prev) => prev + 150);
       setMatchStatus("CANCELLED");
       setCancelOpen(false);
-      
+
       const newTx = {
         id: "tx-" + Date.now(),
         type: "Refund",
@@ -302,7 +302,7 @@ export function UserProfile() {
     if (walletBalance >= total) {
       setWalletBalance((prev) => prev - total);
       setAddonsPaid(true);
-      
+
       const newTx = {
         id: "tx-" + Date.now(),
         type: "Rent",
@@ -314,7 +314,7 @@ export function UserProfile() {
       };
       setTransactions(prev => [newTx, ...prev]);
       toast.success("Add-ons reserved and paid successfully!");
-      
+
       setTimeout(() => {
         setAddonsOpen(false);
       }, 1500);
@@ -339,7 +339,7 @@ export function UserProfile() {
   return (
     <>
       <ConfettiCelebration active={showConfetti} />
-      
+
       {/* Dialog Modals */}
       <Dialog open={txHistoryOpen} onOpenChange={setTxHistoryOpen}>
         <DialogContent className="bg-background border-border text-foreground sm:max-w-lg max-h-[80vh] overflow-y-auto">
@@ -353,9 +353,8 @@ export function UserProfile() {
               transactions.map((tx) => (
                 <div key={tx.id} className="flex justify-between items-center bg-card p-3.5 border border-border/60 rounded-2xl">
                   <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold ${
-                      tx.isCredit ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                    }`}>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold ${tx.isCredit ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                      }`}>
                       {tx.isCredit ? "+" : "-"}
                     </div>
                     <div className="text-left">
@@ -417,7 +416,7 @@ export function UserProfile() {
             className="bg-card border-border text-foreground rounded-xl"
             type="number"
           />
-          <Button 
+          <Button
             className="w-full bg-emerald-600 text-black hover:bg-[#5ce630] font-bold rounded-xl mt-4 h-11 cursor-pointer"
             onClick={() => {
               const customVal = parseInt(document.getElementById("customTopupVal")?.value);
@@ -460,9 +459,8 @@ export function UserProfile() {
             {amenitiesList.map((item) => {
               const isSelected = selectedAmenities.includes(item.id);
               return (
-                <div key={item.id} className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
-                  isSelected ? "border-amber-500/40 bg-amber-500/5" : "border-border bg-card"
-                }`}>
+                <div key={item.id} className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${isSelected ? "border-amber-500/40 bg-amber-500/5" : "border-border bg-card"
+                  }`}>
                   <div className="flex items-center gap-3">
                     <div className="h-14 w-14 bg-muted rounded-xl overflow-hidden shrink-0">
                       <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
@@ -480,9 +478,8 @@ export function UserProfile() {
                       onClick={() => setSelectedAmenities(prev =>
                         prev.includes(item.id) ? prev.filter(x => x !== item.id) : [...prev, item.id]
                       )}
-                      className={`h-7 px-3 text-[10px] rounded-lg font-bold border ${
-                        isSelected ? "bg-amber-500 text-black border-none" : "border-border bg-transparent text-foreground"
-                      }`}
+                      className={`h-7 px-3 text-[10px] rounded-lg font-bold border ${isSelected ? "bg-amber-500 text-black border-none" : "border-border bg-transparent text-foreground"
+                        }`}
                     >
                       {isSelected ? "Selected" : "Add"}
                     </Button>
@@ -821,9 +818,8 @@ export function UserProfile() {
               return (
                 <div
                   key={match.id}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md hover:border-border text-left gap-4 relative overflow-hidden ${
-                    isWon ? "border-l-4 border-l-emerald-600" : "border-l-4 border-l-rose-500"
-                  }`}
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md hover:border-border text-left gap-4 relative overflow-hidden ${isWon ? "border-l-4 border-l-emerald-600" : "border-l-4 border-l-rose-500"
+                    }`}
                 >
                   {/* Left Column: Sport Icon + Details */}
                   <div className="flex items-center gap-4">
@@ -854,14 +850,13 @@ export function UserProfile() {
                         {match.score}
                       </p>
                     </div>
-                    
+
                     <div className="shrink-0">
                       <Badge
-                        className={`text-xs font-black px-3.5 py-1.5 rounded-xl border-0 ${
-                          isWon
+                        className={`text-xs font-black px-3.5 py-1.5 rounded-xl border-0 ${isWon
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 hover:bg-emerald-500/15"
                             : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15"
-                        }`}
+                          }`}
                       >
                         {isWon ? "✓ WON" : "✗ LOST"}
                       </Badge>
