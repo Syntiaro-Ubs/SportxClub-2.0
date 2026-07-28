@@ -52,6 +52,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  CalendarDays,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
@@ -194,9 +196,9 @@ function CustomCalendar({ selectedDate, onSelect }) {
 }
 
 export function TimeSlots() {
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [turfs, setTurfs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,17 +219,24 @@ export function TimeSlots() {
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [generatedPass, setGeneratedPass] = useState(null);
 
-  // Custom Time Block & Release States
+  // Custom Time Block & Multi-Day Date Range States
   const [bookingActionType, setBookingActionType] = useState("booking"); // 'booking' or 'block'
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
   const [selectedTurfForCustomBlock, setSelectedTurfForCustomBlock] = useState(null);
   const [customBlockForm, setCustomBlockForm] = useState({
+    blockType: "single", // "single" or "multiday"
+    daysPreset: "15", // "7", "15", "30", "custom"
+    startDate: format(new Date(), "yyyy-MM-dd"),
+    endDate: format(addDays(new Date(), 14), "yyyy-MM-dd"),
+    timeScope: "custom", // "full" or "custom"
     startTime: "10:15",
     startPeriod: "AM",
     endTime: "12:10",
     endPeriod: "PM",
     reason: "Maintenance"
   });
+  const [blockedSchedules, setBlockedSchedules] = useState([]);
+  const [isSchedulesModalOpen, setIsSchedulesModalOpen] = useState(false);
   const [isReleaseModalOpen, setIsReleaseModalOpen] = useState(false);
   const [selectedSlotForRelease, setSelectedSlotForRelease] = useState(null);
 
@@ -468,53 +477,124 @@ export function TimeSlots() {
     return hour + min / 60;
   };
 
-  // Custom Time Block Submission Handler
+  // Custom Time & Multi-Day Block Submission Handler
   const handleCustomBlockSubmit = (e) => {
     e.preventDefault();
     if (!selectedTurfForCustomBlock) return;
 
-    const startDec = timeToDecimal(customBlockForm.startTime, customBlockForm.startPeriod);
-    const endDec = timeToDecimal(customBlockForm.endTime, customBlockForm.endPeriod);
+    const isMultiDay = customBlockForm.blockType === "multiday";
+    const isFullDay = customBlockForm.timeScope === "full";
 
-    if (endDec <= startDec) {
-      toast.error("End time must be after start time!");
-      return;
+    const format12 = (timeStr, period) => `${timeStr} ${period}`;
+    const timeLabel = isFullDay
+      ? "Full Day Block (24 Hrs)"
+      : `${format12(customBlockForm.startTime, customBlockForm.startPeriod)} - ${format12(customBlockForm.endTime, customBlockForm.endPeriod)}`;
+
+    if (!isFullDay) {
+      const startDec = timeToDecimal(customBlockForm.startTime, customBlockForm.startPeriod);
+      const endDec = timeToDecimal(customBlockForm.endTime, customBlockForm.endPeriod);
+      if (endDec <= startDec) {
+        toast.error("End time must be after start time!");
+        return;
+      }
     }
 
-    const format12 = (timeStr, period) => {
-      return `${timeStr} ${period}`;
-    };
+    if (isMultiDay) {
+      const startDateStr = customBlockForm.startDate;
+      const endDateStr = customBlockForm.endDate;
 
-    const blockLabel = `${format12(customBlockForm.startTime, customBlockForm.startPeriod)} - ${format12(customBlockForm.endTime, customBlockForm.endPeriod)}`;
-
-    const updatedTurfs = turfs.map(t => {
-      if (t.id === selectedTurfForCustomBlock.id) {
-        const updatedSlots = t.slots.map(slot => {
-          const slotStartHour = parseInt(slot.time.split(':')[0], 10);
-          const slotEndHour = slotStartHour + 1;
-
-          // Check if slot interval overlaps with user's custom block range
-          const overlaps = Math.max(slotStartHour, startDec) < Math.min(slotEndHour, endDec);
-
-          if (overlaps) {
-            return {
-              ...slot,
-              status: 'Maintenance',
-              blockedTimeRange: blockLabel,
-              blockedReason: customBlockForm.reason
-            };
-          }
-          return slot;
-        });
-        return { ...t, slots: updatedSlots };
+      if (!startDateStr || !endDateStr || endDateStr < startDateStr) {
+        toast.error("Invalid start or end date range!");
+        return;
       }
-      return t;
-    });
 
-    setTurfs(updatedTurfs);
+      const newRule = {
+        id: `rule-${Date.now()}`,
+        turfId: selectedTurfForCustomBlock.id,
+        turfName: selectedTurfForCustomBlock.name,
+        blockType: "multiday",
+        startDate: startDateStr,
+        endDate: endDateStr,
+        timeScope: customBlockForm.timeScope,
+        startTime: customBlockForm.startTime,
+        startPeriod: customBlockForm.startPeriod,
+        endTime: customBlockForm.endTime,
+        endPeriod: customBlockForm.endPeriod,
+        reason: customBlockForm.reason,
+        blockLabel: timeLabel
+      };
+
+      setBlockedSchedules(prev => [...prev, newRule]);
+      toast.success(`Blocked ${selectedTurfForCustomBlock.name} from ${startDateStr} to ${endDateStr} (${timeLabel})`);
+    } else {
+      // Single day custom block for currently loaded slots
+      const startDec = timeToDecimal(customBlockForm.startTime, customBlockForm.startPeriod);
+      const endDec = timeToDecimal(customBlockForm.endTime, customBlockForm.endPeriod);
+
+      const updatedTurfs = turfs.map(t => {
+        if (t.id === selectedTurfForCustomBlock.id) {
+          const updatedSlots = t.slots.map(slot => {
+            const slotStartHour = parseInt(slot.time.split(':')[0], 10);
+            const slotEndHour = slotStartHour + 1;
+            const overlaps = isFullDay || (Math.max(slotStartHour, startDec) < Math.min(slotEndHour, endDec));
+
+            if (overlaps) {
+              return {
+                ...slot,
+                status: 'Maintenance',
+                blockedTimeRange: timeLabel,
+                blockedReason: customBlockForm.reason
+              };
+            }
+            return slot;
+          });
+          return { ...t, slots: updatedSlots };
+        }
+        return t;
+      });
+
+      setTurfs(updatedTurfs);
+      toast.success(`Turf blocked for custom interval: ${timeLabel}`);
+    }
+
     setIsBlockModalOpen(false);
     setSelectedTurfForCustomBlock(null);
-    toast.success(`Turf blocked for custom interval: ${blockLabel}`);
+  };
+
+  const handleDeleteSchedule = (scheduleId) => {
+    setBlockedSchedules(prev => prev.filter(s => s.id !== scheduleId));
+    toast.success("Blocked schedule lifted successfully!");
+  };
+
+  // Helper: Evaluates dynamic slot status taking into account active multi-day schedules
+  const getEffectiveSlot = (turfId, slot) => {
+    const activeRule = blockedSchedules.find(rule => {
+      if (rule.turfId !== turfId) return false;
+      const sDateStr = rule.startDate;
+      const eDateStr = rule.endDate;
+      const selDateStr = format(selectedDate, "yyyy-MM-dd");
+
+      if (selDateStr < sDateStr || selDateStr > eDateStr) return false;
+
+      if (rule.timeScope === "full") return true;
+
+      const startDec = timeToDecimal(rule.startTime, rule.startPeriod);
+      const endDec = timeToDecimal(rule.endTime, rule.endPeriod);
+      const slotStartHour = parseInt(slot.time.split(':')[0], 10);
+      const slotEndHour = slotStartHour + 1;
+
+      return Math.max(slotStartHour, startDec) < Math.min(slotEndHour, endDec);
+    });
+
+    if (activeRule) {
+      return {
+        ...slot,
+        status: 'Maintenance',
+        blockedTimeRange: activeRule.blockLabel,
+        blockedReason: activeRule.reason
+      };
+    }
+    return slot;
   };
 
   const handlePrintPass = () => {
@@ -548,6 +628,16 @@ export function TimeSlots() {
             Turf Slot Management
           </h1>
         </div>
+
+        {blockedSchedules.length > 0 && (
+          <Button
+            onClick={() => setIsSchedulesModalOpen(true)}
+            className="h-9 px-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
+          >
+            <CalendarDays className="w-4 h-4 text-emerald-500" />
+            Active Multi-Day Holds ({blockedSchedules.length})
+          </Button>
+        )}
       </div>
 
       {/* -------------------------------------------------------------
@@ -568,22 +658,7 @@ export function TimeSlots() {
 
         {/* Dynamic Legend Filters */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 w-full lg:w-auto">
-          {/* Duration Selector */}
-          <div className="flex items-center gap-1 bg-background/50 p-1 rounded-xl border border-border/40 mr-2">
-            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest px-1 hidden sm:inline-block">Duration:</span>
-            {[1, 2, 3, 4].map(hrs => (
-              <button
-                key={hrs}
-                onClick={() => setPlayHours(hrs)}
-                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${playHours === hrs
-                  ? 'border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-black shadow-xs'
-                  : 'border border-transparent text-muted-foreground hover:bg-muted/40'
-                  }`}
-              >
-                {hrs} Hr
-              </button>
-            ))}
-          </div>
+
           {/* Available Pill */}
           <button
             onClick={() => handleLegendClick("Available")}
@@ -691,12 +766,22 @@ export function TimeSlots() {
                 className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 rounded-2xl flex flex-col justify-between"
               >
                 {/* Card Header Section */}
-                <CardHeader className="border-b border-border/40 bg-muted/20 pb-4 px-5 pt-4 relative">
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                    <div className="flex flex-col gap-3">
+                <CardHeader className="border-b border-border/40 bg-muted/20 pt-3.5 px-5 pb-2.5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
+                    {/* Left Side: Turf Title + Badges & Action Buttons */}
+                    <div className="flex flex-col sm:flex-row sm:items-center flex-wrap gap-3.5">
                       <div>
                         <div className="flex items-center gap-3">
-                          <CardTitle className="text-lg font-bold tracking-tight text-foreground">{turf.name}</CardTitle>
+                          <CardTitle className="text-xl font-black tracking-tight text-foreground">{turf.name}</CardTitle>
+                          {turf.status === 'Active' ? (
+                            <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2.5 py-0.5">
+                              Active
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2.5 py-0.5">
+                              Closed
+                            </Badge>
+                          )}
                         </div>
                         <CardDescription className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                           <span className="text-primary font-bold">{turf.sportType}</span>
@@ -705,93 +790,45 @@ export function TimeSlots() {
                         </CardDescription>
                       </div>
 
-                      {/* Duration Selector moved to the left */}
-                      <div className="flex items-center gap-1 bg-background/80 p-1 rounded-2xl border border-border/40 shadow-xs w-max">
-                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2 hidden sm:inline-block">DURATION:</span>
-                        {[1, 2, 3, 4].map(hrs => (
-                          <button
-                            key={hrs}
-                            type="button"
-                            onClick={() => setPlayHours(hrs)}
-                            className={`px-2.5 py-1 text-[10px] font-extrabold rounded-xl transition-all cursor-pointer ${playHours === hrs
-                              ? 'border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs'
-                              : 'border border-transparent text-muted-foreground hover:bg-muted/40'
-                              }`}
-                          >
-                            {hrs} Hr
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Active/Closed Badge Centered */}
-                    <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 top-4 items-center justify-center">
-                      {turf.status === 'Active' ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
-                          Closed
-                        </Badge>
-                      )}
-                    </div>
-                    {/* Mobile fallback for badge */}
-                    <div className="sm:hidden flex items-center justify-center w-full mt-2">
-                      {turf.status === 'Active' ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
-                          Closed
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col items-start sm:items-end gap-2.5 self-end sm:self-auto h-full justify-between sm:justify-end mt-2 sm:mt-0 relative z-10">
-                      {/* Row 1: Status and Slots Badge */}
                       <div className="flex flex-wrap items-center gap-2.5">
-                        {/* Active open toggle switch */}
-                        <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-xl border border-border/50 shadow-xs">
-                          <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
-                          <Switch
-                            id={`turf-status-${turf.id}`}
-                            checked={turf.status === 'Active'}
-                            onCheckedChange={() => toggleTurfStatus(turf.id)}
-                          />
-                        </div>
-
                         {/* Slots remaining badge */}
-                        <Badge variant="outline" className={`px-2.5 py-1.5 text-[10px] font-bold rounded-xl shadow-xs ${availableSlots > 5
-                          ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20'
+                        <Badge variant="outline" className={`px-3 py-1.5 text-[10px] font-extrabold rounded-xl shadow-2xs ${availableSlots > 5
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                           : availableSlots > 0
-                            ? 'bg-amber-500/5 text-amber-500 border-amber-500/20'
-                            : 'bg-rose-500/5 text-rose-500 border-rose-500/20'
+                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
                           }`}>
                           {availableSlots} Slots Left
                         </Badge>
-                      </div>
 
-                      {/* Row 2: Block Time Button at the end */}
-                      <div className="flex flex-wrap items-center gap-2.5 mt-auto">
+                        {/* Block Time Button */}
                         <Button
                           type="button"
                           onClick={() => {
                             setSelectedTurfForCustomBlock(turf);
                             setIsBlockModalOpen(true);
                           }}
-                          className="h-8 rounded-md bg-card text-emerald-600 hover:bg-emerald-500/10 border border-emerald-500 hover:border-emerald-600 hover:shadow-sm hover:shadow-emerald-500/20 text-[10px] font-black uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
+                          className="h-8 rounded-xl bg-background text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs"
                         >
-                          <Power className="w-3 h-3" /> Block Custom Time
+                          <Power className="w-3.5 h-3.5 text-emerald-500" /> Block Custom Time
                         </Button>
                       </div>
+                    </div>
+
+                    {/* Far Right Side: ONLY Turf Open Toggle Switch */}
+                    <div className="flex items-center gap-2 bg-background/60 px-3.5 py-1.5 rounded-xl border border-border/40 shadow-2xs sm:ml-auto shrink-0">
+                      <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
+                      <Switch
+                        id={`turf-status-${turf.id}`}
+                        checked={turf.status === 'Active'}
+                        onCheckedChange={() => toggleTurfStatus(turf.id)}
+                      />
                     </div>
                   </div>
                 </CardHeader>
 
                 {/* Card Content Section */}
-                <CardContent className="p-5 relative flex-1">
+                <CardContent className="px-5 pt-3 pb-5 relative flex-1">
 
                   {/* Closed Overlay */}
                   {turf.status === 'Closed' && (
@@ -805,9 +842,10 @@ export function TimeSlots() {
                   )}
 
                   {/* Grid Slots */}
-                  <div className={`grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-3 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
                     }`}>
-                    {turf.slots.map((slot, idx) => {
+                    {turf.slots.map((rawSlot, idx) => {
+                      const slot = getEffectiveSlot(turf.id, rawSlot);
                       const isFilteredOut = selectedLegendFilter !== "all" && slot.status !== selectedLegendFilter;
 
                       // Render Available Slot
@@ -818,10 +856,10 @@ export function TimeSlots() {
                           idx < hoveredSlotInfo.startIdx + playHours;
 
                         const hoverValidClass = isHoveredGroup && hoveredSlotInfo.isValid
-                          ? 'bg-card border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 scale-[1.03] shadow-md shadow-emerald-500/10 font-bold'
+                          ? 'bg-card border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 scale-[1.02] shadow-md shadow-emerald-500/10 font-bold'
                           : isHoveredGroup && !hoveredSlotInfo.isValid
                             ? 'bg-card border-2 border-rose-500 text-rose-600'
-                            : 'bg-card border-2 border-emerald-500/40 hover:border-emerald-500 text-emerald-700 dark:text-emerald-400';
+                            : 'bg-card border-2 border-emerald-500/40 hover:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:shadow-md hover:-translate-y-0.5';
 
                         return (
                           <div
@@ -829,12 +867,12 @@ export function TimeSlots() {
                             onClick={() => handleSlotClick(turf, slot, idx)}
                             onMouseEnter={() => handleSlotMouseEnter(turf, idx)}
                             onMouseLeave={handleSlotMouseLeave}
-                            className={`p-3 rounded-2xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 shadow-xs min-h-[74px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`p-3.5 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 min-h-[82px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <span className="font-extrabold text-xs whitespace-nowrap text-foreground">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[9.5px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">Available</span>
-                            <span className={`text-[9.5px] font-mono font-black mt-1 px-2.5 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-background/80 text-foreground'}`}>₹{slot.price}</span>
+                            <span className="font-bold text-xs whitespace-nowrap text-foreground tracking-tight">{formatTimeRange(slot.time)}</span>
+                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">Available</span>
+                            <span className={`text-[10px] font-mono font-black mt-0.5 px-3 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>₹{slot.price}</span>
                           </div>
                         );
                       }
@@ -846,16 +884,16 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-3 rounded-2xl border-2 border-rose-500/40 bg-card flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-3.5 rounded-2xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 min-h-[82px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <span className="font-extrabold text-xs whitespace-nowrap text-foreground">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[9.5px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
-                            <span className="text-[9.5px] font-mono font-black mt-1 px-2.5 py-0.5 rounded-full border border-rose-500/30 bg-background/80 text-rose-500 flex items-center gap-1">
-                              <Lock className="w-2.5 h-2.5 text-rose-500" /> RELEASE SLOT
+                            <span className="font-bold text-xs whitespace-nowrap text-foreground tracking-tight">{formatTimeRange(slot.time)}</span>
+                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
+                            <span className="text-[9.5px] font-bold mt-0.5 px-2.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                              <Lock className="w-2.5 h-2.5 text-rose-500" /> Release Slot
                             </span>
 
-                            {/* Styled Hover Card Tooltip (radix mockup tooltip) */}
+                            {/* Styled Hover Card Tooltip */}
                             <div className="absolute bottom-full mb-2.5 hidden group-hover/slot:flex flex-col bg-popover text-popover-foreground border border-border text-[10px] p-2.5 rounded-xl shadow-xl z-20 w-44 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
                               <div className="flex items-center gap-1.5 border-b border-border/50 pb-1.5 mb-1.5">
                                 <ShieldCheck className="h-3.5 w-3.5 text-rose-500" />
@@ -879,17 +917,17 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-3 rounded-2xl border-2 border-amber-500/30 bg-card flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-3.5 rounded-2xl border-2 border-amber-500/40 bg-card hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[82px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                            <span className="font-extrabold text-[10px] whitespace-nowrap text-foreground text-center">
+                            <span className="font-bold text-xs whitespace-nowrap text-foreground text-center">
                               {hasCustomRange ? slot.blockedTimeRange : formatTimeRange(slot.time)}
                             </span>
-                            <span className="text-[8px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-400">
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-400">
                               {slot.blockedReason || "Maintenance"}
                             </span>
-                            <span className="text-[7.5px] font-bold text-muted-foreground opacity-80">(Click to Unblock)</span>
+                            <span className="text-[8px] font-bold text-amber-600/70 dark:text-amber-400/70">(Click to Unblock)</span>
                           </div>
                         );
                       }
@@ -1210,73 +1248,180 @@ export function TimeSlots() {
       </Dialog>
 
       {/* -------------------------------------------------------------
-          Block Custom Time Dialog Modal
+          Block Custom Time & Multi-Day Date Range Dialog Modal
           ------------------------------------------------------------- */}
       <Dialog open={isBlockModalOpen} onOpenChange={setIsBlockModalOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl border border-border/40 bg-popover shadow-xl">
+        <DialogContent className="sm:max-w-[480px] rounded-2xl border border-border/40 bg-popover shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-bold flex items-center gap-2">
-              <Power className="h-5 w-5 text-amber-500" />
-              Block Custom Time Range
+              <Power className="h-5 w-5 text-emerald-500" />
+              Block Turf Time & Date Range
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Block this turf for a specific time range (e.g. 10:15 AM to 12:10 PM) for maintenance, rain hold, or private coaching.
+              Block this facility for a single day or a multi-day date range (e.g. 15 Days maintenance, rain hold).
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCustomBlockSubmit} className="space-y-4 py-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Start Time</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={customBlockForm.startTime}
-                    onChange={(e) => setCustomBlockForm({ ...customBlockForm, startTime: e.target.value })}
-                    placeholder="e.g. 10:15"
-                    className="h-10 rounded-lg text-sm flex-1"
-                    required
-                  />
-                  <Select
-                    value={customBlockForm.startPeriod}
-                    onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, startPeriod: val })}
-                  >
-                    <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AM">AM</SelectItem>
-                      <SelectItem value="PM">PM</SelectItem>
-                    </SelectContent>
-                  </Select>
+          <form onSubmit={handleCustomBlockSubmit} className="space-y-4 py-2">
+            {/* 1. Mode Selector: Single Day vs Multi-Day */}
+            <div className="grid grid-cols-2 gap-2 bg-muted/40 p-1 rounded-xl border border-border/40">
+              <button
+                type="button"
+                onClick={() => setCustomBlockForm(prev => ({ ...prev, blockType: "single" }))}
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${customBlockForm.blockType === "single"
+                  ? "bg-emerald-500 text-black shadow-sm font-black"
+                  : "text-muted-foreground hover:bg-muted/40"
+                  }`}
+              >
+                Single Day Block
+              </button>
+              <button
+                type="button"
+                onClick={() => setCustomBlockForm(prev => ({ ...prev, blockType: "multiday" }))}
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${customBlockForm.blockType === "multiday"
+                  ? "bg-emerald-500 text-black shadow-sm font-black"
+                  : "text-muted-foreground hover:bg-muted/40"
+                  }`}
+              >
+                Multi-Day Date Range
+              </button>
+            </div>
+
+            {/* Multi-Day Controls */}
+            {customBlockForm.blockType === "multiday" && (
+              <div className="space-y-3 p-3 bg-muted/20 rounded-xl border border-border/30">
+                {/* Presets Bar */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mr-1">Presets:</span>
+                  {[
+                    { label: "7 Days", days: 6 },
+                    { label: "15 Days", days: 14 },
+                    { label: "30 Days", days: 29 },
+                  ].map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => {
+                        const start = format(selectedDate, "yyyy-MM-dd");
+                        const end = format(addDays(selectedDate, p.days), "yyyy-MM-dd");
+                        setCustomBlockForm(prev => ({ ...prev, startDate: start, endDate: end }));
+                      }}
+                      className="px-2.5 py-1 text-[10px] font-extrabold rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 cursor-pointer transition-all"
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Date Inputs */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-muted-foreground">Start Date</Label>
+                    <Input
+                      type="date"
+                      value={customBlockForm.startDate}
+                      onChange={(e) => setCustomBlockForm(prev => ({ ...prev, startDate: e.target.value }))}
+                      className="h-9 text-xs rounded-lg"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-muted-foreground">End Date</Label>
+                    <Input
+                      type="date"
+                      value={customBlockForm.endDate}
+                      onChange={(e) => setCustomBlockForm(prev => ({ ...prev, endDate: e.target.value }))}
+                      className="h-9 text-xs rounded-lg"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">End Time</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={customBlockForm.endTime}
-                    onChange={(e) => setCustomBlockForm({ ...customBlockForm, endTime: e.target.value })}
-                    placeholder="e.g. 12:10"
-                    className="h-10 rounded-lg text-sm flex-1"
-                    required
-                  />
-                  <Select
-                    value={customBlockForm.endPeriod}
-                    onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, endPeriod: val })}
-                  >
-                    <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AM">AM</SelectItem>
-                      <SelectItem value="PM">PM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* 2. Time Scope: Full Day vs Custom Range */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Time Scope</Label>
+              <div className="grid grid-cols-2 gap-2 bg-muted/30 p-1 rounded-xl border border-border/40">
+                <button
+                  type="button"
+                  onClick={() => setCustomBlockForm(prev => ({ ...prev, timeScope: "custom" }))}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${customBlockForm.timeScope === "custom"
+                    ? "bg-background text-foreground border border-border shadow-xs font-extrabold"
+                    : "text-muted-foreground hover:bg-muted/30"
+                    }`}
+                >
+                  Specific Hours
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomBlockForm(prev => ({ ...prev, timeScope: "full" }))}
+                  className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${customBlockForm.timeScope === "full"
+                    ? "bg-background text-foreground border border-border shadow-xs font-extrabold"
+                    : "text-muted-foreground hover:bg-muted/30"
+                    }`}
+                >
+                  Full Day (24 Hours)
+                </button>
               </div>
             </div>
 
+            {/* Specific Hours Inputs */}
+            {customBlockForm.timeScope === "custom" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Start Time</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={customBlockForm.startTime}
+                      onChange={(e) => setCustomBlockForm({ ...customBlockForm, startTime: e.target.value })}
+                      placeholder="e.g. 10:15"
+                      className="h-10 rounded-lg text-sm flex-1"
+                      required
+                    />
+                    <Select
+                      value={customBlockForm.startPeriod}
+                      onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, startPeriod: val })}
+                    >
+                      <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AM">AM</SelectItem>
+                        <SelectItem value="PM">PM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">End Time</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={customBlockForm.endTime}
+                      onChange={(e) => setCustomBlockForm({ ...customBlockForm, endTime: e.target.value })}
+                      placeholder="e.g. 12:10"
+                      className="h-10 rounded-lg text-sm flex-1"
+                      required
+                    />
+                    <Select
+                      value={customBlockForm.endPeriod}
+                      onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, endPeriod: val })}
+                    >
+                      <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AM">AM</SelectItem>
+                        <SelectItem value="PM">PM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Reason Selector */}
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Reason for Blocking</Label>
               <Select
@@ -1288,19 +1433,23 @@ export function TimeSlots() {
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
                   <SelectItem value="Maintenance">Maintenance Hold</SelectItem>
+                  <SelectItem value="Monsoon Hold">Monsoon / Rain Hold</SelectItem>
                   <SelectItem value="Coaching">Coaching Session</SelectItem>
                   <SelectItem value="Private Event">Private / Owner Event</SelectItem>
-                  <SelectItem value="Rain Hold">Rain / Bad Weather Hold</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="p-3 bg-amber-500/5 border border-amber-500/20 text-amber-600 dark:text-amber-500 rounded-xl text-xs flex gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-              <p>All regular hourly slots overlapping this custom range will be blocked from regular online booking.</p>
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 rounded-xl text-xs flex gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
+              <p>
+                {customBlockForm.blockType === "multiday"
+                  ? `Slots will be automatically blocked from ${customBlockForm.startDate} to ${customBlockForm.endDate}.`
+                  : "All regular hourly slots overlapping this custom range will be blocked."}
+              </p>
             </div>
 
-            <DialogFooter className="mt-6 gap-2">
+            <DialogFooter className="mt-5 gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -1311,12 +1460,65 @@ export function TimeSlots() {
               </Button>
               <Button
                 type="submit"
-                className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-amber-500 hover:text-black hover:border-amber-500 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
+                className="rounded-xl px-5 border-none text-black bg-emerald-500 hover:bg-emerald-600 hover:scale-[1.02] transition-all font-extrabold text-xs h-10 cursor-pointer shadow-md shadow-emerald-500/20"
               >
                 Block Turf Now
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* -------------------------------------------------------------
+          Active Blocked Schedules Dialog Modal
+          ------------------------------------------------------------- */}
+      <Dialog open={isSchedulesModalOpen} onOpenChange={setIsSchedulesModalOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl border border-border/40 bg-popover shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="font-bold flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-emerald-500" />
+              Active Multi-Day Blocked Schedules
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Manage multi-day date range holds across your facilities. Click Lift Hold to unblock immediately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-3 max-h-[350px] overflow-y-auto pr-1">
+            {blockedSchedules.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">No active multi-day block schedules.</p>
+            ) : (
+              blockedSchedules.map((item) => (
+                <div key={item.id} className="p-3 rounded-xl border border-border/50 bg-card flex items-center justify-between gap-3 shadow-xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-foreground">{item.turfName}</span>
+                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[8.5px] font-bold">
+                        {item.reason}
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                      <CalendarIcon className="w-3 h-3 text-muted-foreground" />
+                      {item.startDate} to {item.endDate}
+                    </p>
+                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-emerald-500" />
+                      {item.blockLabel}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteSchedule(item.id)}
+                    className="h-8 px-2.5 rounded-lg border-rose-500/30 text-rose-500 hover:bg-rose-500/10 text-[10px] font-bold cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" />
+                    Lift Hold
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -1381,3 +1583,5 @@ export function TimeSlots() {
     </div>
   );
 }
+
+export default TimeSlots;

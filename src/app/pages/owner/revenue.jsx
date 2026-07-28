@@ -243,7 +243,7 @@ export function Revenue() {
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
     const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
-    
+
     return [
       { name: "Football", value: Math.max(1, Math.round(54 * scale)), color: "#059669" },
       { name: "Cricket", value: Math.max(1, Math.round(36 * scale)), color: "#3b82f6" },
@@ -258,7 +258,7 @@ export function Revenue() {
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
     const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
-    
+
     return [
       { name: "Mon", bookings: Math.round(12 * scale) },
       { name: "Tue", bookings: Math.round(9 * scale) },
@@ -681,24 +681,23 @@ export function Revenue() {
       <div className="flex flex-col gap-8">
 
         {/* Top Part: Dynamic Revenue Trend Chart */}
-        <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden rounded-2xl p-5 flex flex-col min-h-[380px] xl:min-h-[480px]">
-          <div className="flex items-start justify-between">
+        <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden rounded-2xl p-6 flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
-              <CardTitle className="text-base font-bold tracking-tight text-foreground capitalize">{timeframe} Revenue Trend</CardTitle>
+              <CardTitle className="text-lg font-bold tracking-tight text-foreground capitalize">{timeframe} Revenue Trend</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Track your {timeframe} financial performance</p>
             </div>
-            
+
             {/* Timeframe Selector */}
-            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
+            <div className="flex items-center gap-1 bg-card/60 p-1.5 rounded-xl border border-border/50 shadow-inner">
               {["today", "weekly", "monthly", "yearly"].map((tf) => (
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-300 ${
-                    timeframe === tf 
-                      ? "bg-background shadow-sm text-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer ${timeframe === tf
+                    ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                    }`}
                 >
                   {tf}
                 </button>
@@ -706,46 +705,46 @@ export function Revenue() {
             </div>
           </div>
 
-          <div className="flex-1 w-full mt-8 -ml-4">
+          <div className="h-[280px] sm:h-[320px] w-full mt-6 -ml-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 15, right: 15, left: -15, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
+                  <linearGradient id="revenueGradChart" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.35} />
                     <stop offset="95%" stopColor={chartColor} stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'hsl(var(--border))', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
                   itemStyle={{ color: 'var(--foreground)' }}
-                  labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
-                  formatter={(value) => [`₹${value}`, "Revenue"]}
+                  labelStyle={{ color: 'hsl(var(--muted-foreground))', fontWeight: "bold" }}
+                  formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, "Revenue"]}
                   cursor={{ stroke: 'rgba(0,0,0,0.05)' }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke={chartColor} 
-                  strokeWidth={3} 
-                  fillOpacity={1} 
-                  fill="url(#chartGrad)" 
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  stroke={chartColor}
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#revenueGradChart)"
                   activeDot={{ r: 6, fill: chartColor, stroke: "var(--background)", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border/50 pt-4">
+          <div className="mt-6 grid grid-cols-2 gap-4 border-t border-border/40 pt-4">
             <div>
-              <p className="text-xs text-muted-foreground">{trendFooter.label}</p>
-              <p className="text-sm font-bold text-foreground mt-0.5">{trendFooter.peak}</p>
+              <p className="text-xs text-muted-foreground font-medium">{trendFooter.label}</p>
+              <p className="text-base font-extrabold text-foreground mt-0.5">{trendFooter.peak}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-muted-foreground">{trendFooter.avgLabel}</p>
-              <p className="text-sm font-bold text-foreground mt-0.5">{trendFooter.avg}</p>
+              <p className="text-xs text-muted-foreground font-medium">{trendFooter.avgLabel}</p>
+              <p className="text-base font-extrabold text-foreground mt-0.5">{trendFooter.avg}</p>
             </div>
           </div>
         </Card>
