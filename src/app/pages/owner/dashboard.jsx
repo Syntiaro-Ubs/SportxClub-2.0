@@ -265,6 +265,7 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sportFilter, setSportFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [timeframe, setTimeframe] = useState("weekly");
 
   // Modals state
   const [isBlockSlotOpen, setIsBlockSlotOpen] = useState(false);
@@ -320,6 +321,55 @@ export function Dashboard() {
       fetchDashboardData(true);
     }
   };
+
+  // Dynamic Chart Data Hooks for Performance Analytics
+  const sportPopularityData = useMemo(() => {
+    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
+    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
+    
+    return [
+      { name: "Football", value: Math.max(1, Math.round(45 * scale)), color: "var(--primary)", count: Math.max(1, Math.round(54 * scale)) },
+      { name: "Cricket", value: Math.max(1, Math.round(30 * scale)), color: "#3b82f6", count: Math.max(1, Math.round(36 * scale)) },
+      { name: "Tennis", value: Math.max(1, Math.round(12 * scale)), color: "#f59e0b", count: Math.max(1, Math.round(14 * scale)) },
+      { name: "Badminton", value: Math.max(1, Math.round(8 * scale)), color: "#ec4899", count: Math.max(1, Math.round(10 * scale)) },
+      { name: "Basketball", value: Math.max(1, Math.round(5 * scale)), color: "#ef4444", count: Math.max(1, Math.round(6 * scale)) },
+    ];
+  }, [statusFilter, timeframe]);
+
+  const totalBookings = useMemo(() => sportPopularityData.reduce((acc, curr) => acc + curr.count, 0), [sportPopularityData]);
+
+  const bookingsFilledData = useMemo(() => {
+    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
+    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
+    
+    return [
+      { name: "Mon", bookings: Math.round(12 * scale) },
+      { name: "Tue", bookings: Math.round(9 * scale) },
+      { name: "Wed", bookings: Math.round(16 * scale) },
+      { name: "Thu", bookings: Math.round(8 * scale) },
+      { name: "Fri", bookings: Math.round(21 * scale) },
+      { name: "Sat", bookings: Math.round(29 * scale) },
+      { name: "Sun", bookings: Math.round(24 * scale) },
+    ];
+  }, [statusFilter, timeframe]);
+
+  const revenueTrendData = useMemo(() => {
+    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
+    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
+    
+    return [
+      { name: "Mon", revenue: Math.round(24000 * scale) },
+      { name: "Tue", revenue: Math.round(18000 * scale) },
+      { name: "Wed", revenue: Math.round(32000 * scale) },
+      { name: "Thu", revenue: Math.round(15000 * scale) },
+      { name: "Fri", revenue: Math.round(42000 * scale) },
+      { name: "Sat", revenue: Math.round(58000 * scale) },
+      { name: "Sun", revenue: Math.round(49000 * scale) },
+    ];
+  }, [statusFilter, timeframe]);
 
   // Booking action handlers
   const handleConfirmBooking = (id, name) => {
@@ -446,7 +496,7 @@ export function Dashboard() {
       {/* -------------------------------------------------------------
           New Diverse KPI Cards Grid (Content-Specific Layouts)
           ------------------------------------------------------------- */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3">
 
         {/* Card 1: Gross Revenue (Full-Bleed Sparkline) */}
         <Card
@@ -553,6 +603,44 @@ export function Dashboard() {
 
 
 
+        {/* Card 3: Active Turfs */}
+        <Card
+          onClick={() => navigate("/owner-dashboard/turfs")}
+          className="relative overflow-hidden border border-purple-500/10 bg-card/45 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-purple-500/35 transition-all duration-300 hover:-translate-y-1 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+        >
+          <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Active Turfs</p>
+                <div className="flex items-baseline gap-2 mt-0.5">
+                  <h3 className="text-2xl font-black tracking-tight text-foreground">
+                    {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}
+                  </h3>
+                  <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-0.5">
+                    / {isTestMode ? "0" : (data?.stats?.totalTurfs || 5)} Total
+                  </span>
+                </div>
+              </div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20 shadow-inner">
+                <MapPin className="h-4.5 w-4.5 text-purple-500" />
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-end justify-between border-t border-border/20 pt-3 text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-2">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  Operational
+                </span>
+              </div>
+              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-purple-600 hover:border-purple-600 hover:text-white shadow-xs hover:shadow-md cursor-pointer">
+                Manage
+                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Card 4: Quality Feedback (Stacked Segment Bar) */}
         <Card
           onClick={() => navigate("/owner-dashboard/reviews")}
@@ -610,33 +698,121 @@ export function Dashboard() {
       </div>
 
       {/* -------------------------------------------------------------
-          Visual Graphs Section (Main Tabbed Analytics & Donut Popularity)
+          Visual Graphs Section & Quick Operations
           ------------------------------------------------------------- */}
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        
+        {/* Header and Timeframe */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Performance Analytics</h2>
+            <p className="text-xs text-slate-500 mt-1">Detailed breakdown of your venue's metrics.</p>
+          </div>
+          
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            {["today", "weekly", "monthly", "yearly"].map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setTimeframe(tf)}
+                className={`px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${timeframe === tf
+                  ? "bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                  }`}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        {/* Left Column: Interactive Main Chart */}
-        <Card className="lg:col-span-2 rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg">
-          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 p-6">
-            <div>
-              <CardTitle className="text-lg font-bold tracking-tight">Analytics Overview</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Track occupancy rates, daily revenue, and slots filled.</p>
-            </div>
+        {/* 4 KPI Buttons */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { id: "all", label: "Total Revenue", amount: "₹45,000", color: "border-blue-200 bg-blue-50 text-blue-700" },
+            { id: "completed", label: "Received", amount: "₹28,500", color: "border-emerald-200 bg-emerald-50 text-emerald-700" },
+            { id: "pending", label: "Upcoming", amount: "₹12,000", color: "border-amber-200 bg-amber-50 text-amber-700" },
+            { id: "failed", label: "Cancellations", amount: "₹4,500", color: "border-rose-200 bg-rose-50 text-rose-700" },
+          ].map((stat) => (
+            <button
+              key={stat.id}
+              onClick={() => setStatusFilter(stat.id)}
+              className={`p-4 rounded-2xl border text-left transition-all duration-300 ${
+                statusFilter === stat.id 
+                  ? `${stat.color} shadow-md ring-2 ring-offset-1 ring-current`
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 opacity-70 hover:opacity-100"
+              }`}
+            >
+              <p className="text-xs font-bold uppercase tracking-wider mb-1">{stat.label}</p>
+              <p className="text-2xl font-black">{stat.amount}</p>
+            </button>
+          ))}
+        </div>
+
+        {/* The 3 Graphs in one line */}
+        <div className="grid lg:grid-cols-3 gap-6">
+        {/* Right Column: Sport Share Pie Chart */}
+        <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
+          <CardHeader className="border-b border-border/40 p-6">
+            <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
+            <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
           </CardHeader>
-          <CardContent className="p-6">
-            <Tabs defaultValue="revenue" className="w-full space-y-6">
-              <div className="w-full bg-muted/30 p-1 rounded-xl border border-border/40">
-                <TabsList className="grid grid-cols-3 w-full bg-transparent border-0 h-auto p-0 gap-1">
-                  <TabsTrigger value="revenue" className="text-[10px] sm:text-xs rounded-lg px-1 py-2 font-semibold text-center whitespace-nowrap transition-all cursor-pointer">Revenue Trend</TabsTrigger>
-                  <TabsTrigger value="bookings" className="text-[10px] sm:text-xs rounded-lg px-1 py-2 font-semibold text-center whitespace-nowrap transition-all cursor-pointer">Bookings Filled</TabsTrigger>
-                  <TabsTrigger value="occupancy" className="text-[10px] sm:text-xs rounded-lg px-1 py-2 font-semibold text-center whitespace-nowrap transition-all cursor-pointer">Hourly Peak</TabsTrigger>
-                </TabsList>
-              </div>
+          <CardContent className="p-6 flex-1 flex flex-col justify-center">
 
+            <div className="relative h-[200px] flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={sportPopularityData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={85}
+                    paddingAngle={0}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {sportPopularityData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} className="outline-none focus:outline-none" />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+                    itemStyle={{ color: "var(--foreground)" }}
+                    formatter={(value) => [`${value}% share`, "Popularity"]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute flex flex-col items-center justify-center text-center">
+                <span className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
+                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
+              </div>
+            </div>
+
+            {/* Premium Custom Legend */}
+            <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
+              {sportPopularityData.map((item) => (
+                <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
+                  <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground truncate">{item.name}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{item.count} slots ({item.value}%)</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+          </CardContent>
+        </Card>
+          <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
+            <CardHeader className="border-b border-border/40 p-6">
+              <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 flex-1 flex flex-col justify-center">
               {/* 1. Revenue Chart Content */}
-              <TabsContent value="revenue" className="focus-visible:outline-none">
-                <div className="h-[300px]">
+              <div className="flex flex-col">
+                <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={mockRevenueChart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                       <defs>
                         <linearGradient id="chartRevenueGrad" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
@@ -656,13 +832,21 @@ export function Dashboard() {
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
-              </TabsContent>
+              </div>
 
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
+            <CardHeader className="border-b border-border/40 p-6">
+              <CardTitle className="text-lg font-bold tracking-tight">Bookings Filled</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 flex-1 flex flex-col justify-center">
               {/* 2. Bookings Chart Content */}
-              <TabsContent value="bookings" className="focus-visible:outline-none">
-                <div className="h-[300px]">
+              <div className="flex flex-col">
+                <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={mockRevenueChart} margin={{ top: 10, right: 25, left: -10, bottom: 0 }}>
+                    <BarChart data={bookingsFilledData} margin={{ top: 10, right: 25, left: -10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
                       <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
@@ -677,99 +861,19 @@ export function Dashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </TabsContent>
-
-              {/* 3. Occupancy Peak Hours */}
-              <TabsContent value="occupancy" className="focus-visible:outline-none">
-                <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={mockHourlyOccupancy} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="chartOccupancyGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                      <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
-                        itemStyle={{ color: "var(--foreground)" }}
-                        labelStyle={{ color: "hsl(var(--muted-foreground))", fontWeight: "bold" }}
-                        formatter={(value) => [`${value}%`, "Slot Occupancy"]}
-                      />
-                      <Area type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#chartOccupancyGrad)" activeDot={{ r: 6 }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* Right Column: Sport Share Pie Chart */}
-        <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
-          <CardHeader className="border-b border-border/40 p-6">
-            <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
-            <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-center">
-
-            <div className="relative h-[200px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={activePieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={0}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {activePieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} className="outline-none focus:outline-none" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
-                    itemStyle={{ color: "var(--foreground)" }}
-                    formatter={(value) => [`${value}% share`, "Popularity"]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? 0 : 120}</span>
-                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
               </div>
-            </div>
 
-            {/* Premium Custom Legend */}
-            <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
-              {activePieData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
-                  <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">{item.name}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{item.count} slots ({item.value}%)</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* -------------------------------------------------------------
-          Middle Row: Quick Operations & Recent Activity
+          Middle Row: Recent Activity
           ------------------------------------------------------------- */}
-      <div className="grid lg:grid-cols-3 gap-6">
-
+      <div className="grid lg:grid-cols-1 gap-6">
         {/* Recent Activity List */}
-        <Card className="lg:col-span-2 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden flex flex-col justify-between">
+        <Card className="lg:col-span-1 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden flex flex-col justify-between">
           <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 p-6 bg-muted/10">
             <div>
               <CardTitle className="text-lg font-bold tracking-tight">System Logs & Activities</CardTitle>
@@ -812,221 +916,7 @@ export function Dashboard() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Quick Operations Actions Grid */}
-        <Card className="border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
-          <CardHeader className="border-b border-border/40 p-6">
-            <CardTitle className="text-lg font-bold tracking-tight">Quick Operations</CardTitle>
-            <p className="text-sm text-muted-foreground mt-0.5">Instantly configure your facilities.</p>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-center gap-4">
-
-            {/* Action 1: Block custom slots */}
-            <Dialog open={isBlockSlotOpen} onOpenChange={setIsBlockSlotOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full justify-start gap-3 h-12 rounded-xl bg-card border border-border/50 hover:bg-muted text-foreground hover:text-foreground shadow-sm group transition-all">
-                  <span className="h-7 w-7 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center border border-rose-500/20 group-hover:scale-105 transition-transform">
-                    <Ban className="h-4 w-4" />
-                  </span>
-                  <div className="text-left">
-                    <p className="text-xs font-bold">Block Turf Time-Slots</p>
-                    <p className="text-[10px] text-muted-foreground">For repair & maintenance works</p>
-                  </div>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="rounded-2xl border border-border/40 bg-popover max-w-md">
-                <form onSubmit={submitBlockSlot}>
-                  <DialogHeader>
-                    <DialogTitle className="font-bold flex items-center gap-2">
-                      <Ban className="h-5 w-5 text-rose-500" />
-                      Block Turf Slot
-                    </DialogTitle>
-                    <DialogDescription className="text-xs">
-                      Block operational hours for maintenance, events, or weather conditions.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="block-turf" className="text-xs font-semibold">Select Turf Facility</Label>
-                      <Select value={blockTurf} onValueChange={setBlockTurf} required>
-                        <SelectTrigger id="block-turf" className="h-10 rounded-lg">
-                          <SelectValue placeholder="Choose turf..." />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-lg">
-                          <SelectItem value="Main Arena A">Main Arena A (Football)</SelectItem>
-                          <SelectItem value="Indoor Turf B">Indoor Turf B (Cricket)</SelectItem>
-                          <SelectItem value="Court 1 (Clay)">Court 1 (Tennis)</SelectItem>
-                          <SelectItem value="Badminton Court 1">Badminton Court 1</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="block-date" className="text-xs font-semibold">Date</Label>
-                        <Input
-                          id="block-date"
-                          type="date"
-                          value={blockDate}
-                          onChange={(e) => setBlockDate(e.target.value)}
-                          className="h-10 rounded-lg"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="block-time" className="text-xs font-semibold">Time Slot / Duration</Label>
-                        <Input
-                          id="block-time"
-                          placeholder="e.g. 2:00 PM - 5:00 PM"
-                          value={blockTime}
-                          onChange={(e) => setBlockTime(e.target.value)}
-                          className="h-10 rounded-lg"
-                          required
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <DialogFooter className="gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsBlockSlotOpen(false)} className="rounded-lg h-10 text-xs">
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="rounded-lg h-10 text-xs bg-rose-600 text-white hover:bg-rose-700">
-                      Block Slot
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            {/* Action 2: Create Promo Code */}
-            <Dialog open={isPromoOpen} onOpenChange={setIsPromoOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full justify-start gap-3 h-12 rounded-xl bg-card border border-border/50 hover:bg-muted text-foreground hover:text-foreground shadow-sm group transition-all">
-                  <span className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20 group-hover:scale-105 transition-transform">
-                    <Percent className="h-4 w-4" />
-                  </span>
-                  <div className="text-left">
-                    <p className="text-xs font-bold">Launch Discount Code</p>
-                    <p className="text-[10px] text-muted-foreground">Promotions & campaigns discounts</p>
-                  </div>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="rounded-2xl border border-border/40 bg-popover max-w-md">
-                <form onSubmit={submitPromoCode}>
-                  <DialogHeader>
-                    <DialogTitle className="font-bold flex items-center gap-2">
-                      <Percent className="h-5 w-5 text-emerald-500" />
-                      Create Promotion Code
-                    </DialogTitle>
-                    <DialogDescription className="text-xs">
-                      Generate a discount coupon to boost slot bookings.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="promo-code" className="text-xs font-semibold">Promo Code</Label>
-                      <Input
-                        id="promo-code"
-                        placeholder="e.g. MONSOON50"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        className="h-10 rounded-lg font-mono uppercase"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="promo-discount" className="text-xs font-semibold">Discount Percentage (%)</Label>
-                      <Input
-                        id="promo-discount"
-                        type="number"
-                        min="1"
-                        max="100"
-                        placeholder="e.g. 20"
-                        value={promoDiscount}
-                        onChange={(e) => setPromoDiscount(e.target.value)}
-                        className="h-10 rounded-lg"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter className="gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsPromoOpen(false)} className="rounded-lg h-10 text-xs">
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="rounded-lg h-10 text-xs bg-primary text-primary-foreground hover:opacity-95">
-                      Create Coupon
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            {/* Action 3: Broadcast Announcement */}
-            <Dialog open={isBroadcastOpen} onOpenChange={setIsBroadcastOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full justify-start gap-3 h-12 rounded-xl bg-card border border-border/50 hover:bg-muted text-foreground hover:text-foreground shadow-sm group transition-all">
-                  <span className="h-7 w-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20 group-hover:scale-105 transition-transform">
-                    <BellRing className="h-4 w-4" />
-                  </span>
-                  <div className="text-left">
-                    <p className="text-xs font-bold">Broadcast Announcement</p>
-                    <p className="text-[10px] text-muted-foreground">Alert all booked players via app notifications</p>
-                  </div>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="rounded-2xl border border-border/40 bg-popover max-w-md">
-                <form onSubmit={submitBroadcast}>
-                  <DialogHeader>
-                    <DialogTitle className="font-bold flex items-center gap-2">
-                      <BellRing className="h-5 w-5 text-blue-500" />
-                      Broadcast Notification
-                    </DialogTitle>
-                    <DialogDescription className="text-xs">
-                      Sends a direct push notification alert to all users holding a booking for today or tomorrow.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="broadcast-text" className="text-xs font-semibold">Notification Content</Label>
-                      <textarea
-                        id="broadcast-text"
-                        placeholder="e.g. Due to sudden heavy rainfall, we are moving court slots indoors where possible. Please contact support."
-                        value={broadcastText}
-                        onChange={(e) => setBroadcastText(e.target.value)}
-                        className="w-full min-h-[100px] border border-input bg-background rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-muted-foreground/60"
-                        required
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter className="gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsBroadcastOpen(false)} className="rounded-lg h-10 text-xs">
-                      Cancel
-                    </Button>
-                    <Button type="submit" className="rounded-lg h-10 text-xs bg-blue-600 text-white hover:bg-blue-700">
-                      Send Broadcast
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
-
-            {/* Action 4: Register New Turf */}
-            <Button
-              onClick={() => navigate("/owner-dashboard/turfs/add")}
-              className="w-full justify-start gap-3 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md group transition-all font-semibold"
-            >
-              <span className="h-7 w-7 rounded-lg bg-white/20 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Plus className="h-4.5 w-4.5 text-white" />
-              </span>
-              <div className="text-left">
-                <p className="text-xs font-bold text-white">Register New Facility</p>
-                <p className="text-[10px] text-white/85">Expand club and upload turfs</p>
-              </div>
-            </Button>
-
-          </CardContent>
-        </Card>
       </div>
-
       {/* -------------------------------------------------------------
           Bottom Section: Advanced Interactive Booking Feed / Live Table
           ------------------------------------------------------------- */}

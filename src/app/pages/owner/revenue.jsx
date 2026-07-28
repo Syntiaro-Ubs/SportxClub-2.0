@@ -49,7 +49,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar
 } from "recharts";
 
 // TODO: Replace with actual auth context ownerId
@@ -162,9 +167,10 @@ export function Revenue() {
   }, [isDemoMode, mockTransactionsFiltered, data]);
 
   const chartData = useMemo(() => {
+    let baseData = [];
     switch (timeframe) {
       case "today":
-        return [
+        baseData = [
           { name: "08:00", amount: 1200 },
           { name: "10:00", amount: 1600 },
           { name: "12:00", amount: 0 },
@@ -173,15 +179,17 @@ export function Revenue() {
           { name: "18:00", amount: 0 },
           { name: "20:00", amount: 0 },
         ];
+        break;
       case "monthly":
-        return [
+        baseData = [
           { name: "Week 1", amount: 38000 },
           { name: "Week 2", amount: 45000 },
           { name: "Week 3", amount: 52000 },
           { name: "Week 4", amount: 49000 },
         ];
+        break;
       case "yearly":
-        return [
+        baseData = [
           { name: "Jan", amount: 120000 },
           { name: "Feb", amount: 140000 },
           { name: "Mar", amount: 110000 },
@@ -195,9 +203,10 @@ export function Revenue() {
           { name: "Nov", amount: 215000 },
           { name: "Dec", amount: 260000 },
         ];
+        break;
       case "weekly":
       default:
-        return [
+        baseData = [
           { name: "Mon", amount: 15000 },
           { name: "Tue", amount: 22000 },
           { name: "Wed", amount: 18000 },
@@ -206,8 +215,70 @@ export function Revenue() {
           { name: "Sat", amount: 45000 },
           { name: "Sun", amount: 24000 },
         ];
+        break;
     }
-  }, [timeframe]);
+
+    const scaleMap = {
+      all: 1,
+      completed: 0.82,
+      pending: 0.12,
+      failed: 0.06
+    };
+    const baseScale = scaleMap[statusFilter] || 1;
+
+    return baseData.map((d, index) => {
+      let variance = 1;
+      if (statusFilter === "completed") variance = 1 + (index % 3) * 0.1;
+      if (statusFilter === "pending") variance = 1 + (index % 2) * -0.2;
+      if (statusFilter === "failed") variance = 1 + (index % 4) * 0.3;
+
+      return {
+        ...d,
+        amount: Math.round(d.amount * baseScale * variance)
+      };
+    });
+  }, [timeframe, statusFilter]);
+
+  const sportPopularityData = useMemo(() => {
+    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
+    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
+    
+    return [
+      { name: "Football", value: Math.max(1, Math.round(54 * scale)), color: "#059669" },
+      { name: "Cricket", value: Math.max(1, Math.round(36 * scale)), color: "#3b82f6" },
+      { name: "Tennis", value: Math.max(1, Math.round(14 * scale)), color: "#f59e0b" },
+      { name: "Badminton", value: Math.max(1, Math.round(10 * scale)), color: "#ec4899" },
+    ];
+  }, [statusFilter, timeframe]);
+
+  const totalBookings = useMemo(() => sportPopularityData.reduce((acc, curr) => acc + curr.value, 0), [sportPopularityData]);
+
+  const bookingsFilledData = useMemo(() => {
+    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
+    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
+    
+    return [
+      { name: "Mon", bookings: Math.round(12 * scale) },
+      { name: "Tue", bookings: Math.round(9 * scale) },
+      { name: "Wed", bookings: Math.round(16 * scale) },
+      { name: "Thu", bookings: Math.round(8 * scale) },
+      { name: "Fri", bookings: Math.round(21 * scale) },
+      { name: "Sat", bookings: Math.round(29 * scale) },
+      { name: "Sun", bookings: Math.round(24 * scale) },
+    ];
+  }, [statusFilter, timeframe]);
+
+  const chartColor = useMemo(() => {
+    switch (statusFilter) {
+      case "completed": return "#10b981";
+      case "pending": return "#f59e0b";
+      case "failed": return "#e11d48";
+      case "all":
+      default: return "#3b82f6";
+    }
+  }, [statusFilter]);
 
   const trendFooter = useMemo(() => {
     switch (timeframe) {
@@ -223,12 +294,20 @@ export function Revenue() {
     }
   }, [timeframe]);
 
-  const totalRevenue = useMemo(() => {
+  const grossRevenue = useMemo(() => {
+    return activePayments.reduce((acc, curr) => acc + curr.amount, 0);
+  }, [activePayments]);
+
+  const receivedRevenue = useMemo(() => {
     return activePayments.filter(t => t.status === 'completed').reduce((acc, curr) => acc + curr.amount, 0);
   }, [activePayments]);
 
   const pendingRevenue = useMemo(() => {
     return activePayments.filter(t => t.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+  }, [activePayments]);
+
+  const cancelledRevenue = useMemo(() => {
+    return activePayments.filter(t => t.status === 'failed').reduce((acc, curr) => acc + curr.amount, 0);
   }, [activePayments]);
 
   const [isSettlementsModalOpen, setIsSettlementsModalOpen] = useState(false);
@@ -364,55 +443,83 @@ export function Revenue() {
       {/* -------------------------------------------------------------
           KPI Widgets cards grid (2 Cards)
           ------------------------------------------------------------- */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 
         {/* Widget 1: Total Received Revenue */}
-        <Card className="border-emerald-500/10 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-emerald-500/30 transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px]">
+        {/* Widget 1: Total Revenue */}
+        <Card
+          onClick={() => setStatusFilter("all")}
+          className={`bg-[#eff5ff] dark:bg-blue-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer ${statusFilter === "all" ? "ring-2 ring-[#2563eb] ring-offset-2 ring-offset-background" : ""}`}
+        >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">Total Received Revenue</p>
-              <h3 className="text-3xl font-black tracking-tight text-emerald-700 dark:text-emerald-400 mt-1">
-                ₹{totalRevenue.toLocaleString('en-IN')}
+              <p className="text-[10px] font-bold text-[#2563eb] dark:text-blue-400 uppercase tracking-widest">Total Revenue</p>
+              <h3 className="text-3xl font-medium tracking-tight text-[#2563eb] dark:text-blue-400 mt-1">
+                ₹{grossRevenue.toLocaleString('en-IN')}
               </h3>
             </div>
-            <div className="h-9 w-9 rounded-xl bg-emerald-500/15 flex items-center justify-center border border-emerald-500/20 shadow-inner">
-              <IndianRupee className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+            <div className="h-9 w-9 rounded-full bg-[#dbeafe] dark:bg-blue-900/60 flex items-center justify-center border-0 shadow-inner">
+              <Database className="h-4.5 w-4.5 text-[#2563eb] dark:text-blue-400" />
             </div>
           </div>
-          <div className="mt-3 text-xs text-emerald-600/80 dark:text-emerald-400/80 flex items-center gap-1 font-semibold">
-            <TrendingUp className="h-3.5 w-3.5" /> +12.5% vs last month
+          <div className="mt-3 text-xs text-[#2563eb]/80 dark:text-blue-400/80 flex items-center gap-1 font-semibold">
+            <TrendingUp className="h-3.5 w-3.5" /> Gross generated
           </div>
         </Card>
 
-        {/* Widget 2: Upcoming Settlements (Clickable Button Trigger) */}
+        {/* Widget 2: Received Revenue */}
+        <Card
+          onClick={() => setStatusFilter("completed")}
+          className={`bg-[#ecfdf5] dark:bg-emerald-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer ${statusFilter === "completed" ? "ring-2 ring-[#059669] ring-offset-2 ring-offset-background" : ""}`}
+        >
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 uppercase tracking-widest">Received Revenue</p>
+              <h3 className="text-3xl font-medium tracking-tight text-[#059669] dark:text-emerald-400 mt-1">
+                ₹{receivedRevenue.toLocaleString('en-IN')}
+              </h3>
+            </div>
+            <div className="h-9 w-9 rounded-full bg-[#d1fae5] dark:bg-emerald-900/60 flex items-center justify-center border-0 shadow-inner">
+              <IndianRupee className="h-4.5 w-4.5 text-[#059669] dark:text-emerald-400" />
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-[#059669]/80 dark:text-emerald-400/80 flex items-center gap-1 font-semibold">
+            <CheckCircle2 className="h-3.5 w-3.5" /> Settled in bank
+          </div>
+        </Card>
+
+        {/* Widget 3: Upcoming Settlements (Clickable Button Trigger) */}
         <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
-          <DialogTrigger asChild>
-            <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-primary/40 transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer group hover:-translate-y-0.5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest flex items-center gap-1">
-                    Upcoming Settlements
-                    <Info className="h-3 w-3 opacity-60" />
-                  </p>
-                  <h3 className="text-3xl font-black tracking-tight text-foreground mt-1">
-                    ₹{pendingRevenue.toLocaleString('en-IN')}
-                  </h3>
-                </div>
-                <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center border border-primary/20 shadow-inner group-hover:scale-110 transition-transform">
-                  <Clock className="h-4.5 w-4.5 text-primary" />
-                </div>
+          <Card
+            onClick={() => setStatusFilter("pending")}
+            className={`bg-[#f4fbf7] dark:bg-slate-900/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer group hover:-translate-y-0.5 ${statusFilter === "pending" ? "ring-2 ring-[#0f172a] ring-offset-2 ring-offset-background" : ""}`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                  Upcoming Settlements
+                  <Info className="h-3 w-3 opacity-60" />
+                </p>
+                <h3 className="text-3xl font-medium tracking-tight text-[#0f172a] dark:text-slate-100 mt-1">
+                  ₹{pendingRevenue.toLocaleString('en-IN')}
+                </h3>
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground font-semibold pt-2 border-t border-border/40">
-                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Auto-settled via Escrow
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary flex items-center gap-0.5 group-hover:underline">
+              <div className="h-9 w-9 rounded-full bg-[#d1fae5] dark:bg-emerald-900/60 flex items-center justify-center border-0 shadow-inner group-hover:scale-110 transition-transform">
+                <Clock className="h-4.5 w-4.5 text-[#059669]" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-[#059669] font-semibold pt-2 border-t border-black/5 dark:border-white/10">
+              <span className="flex items-center gap-1">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Auto-settled via Escrow
+              </span>
+              <DialogTrigger asChild>
+                <button className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-0.5 hover:underline cursor-pointer" onClick={(e) => e.stopPropagation()}>
                   View History <ChevronRight className="h-3 w-3" />
-                </span>
-              </div>
-            </Card>
-          </DialogTrigger>
+                </button>
+              </DialogTrigger>
+            </div>
+          </Card>
 
           <DialogContent className="rounded-3xl border border-border/40 bg-popover max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="space-y-1">
@@ -545,6 +652,27 @@ export function Revenue() {
           </DialogContent>
         </Dialog>
 
+        {/* Widget 4: Cancellations */}
+        <Card
+          onClick={() => setStatusFilter("failed")}
+          className={`bg-[#fff1f2] dark:bg-rose-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer ${statusFilter === "failed" ? "ring-2 ring-[#e11d48] ring-offset-2 ring-offset-background" : ""}`}
+        >
+          <div className="flex items-start justify-between">
+            <div className="space-y-1">
+              <p className="text-[10px] font-bold text-[#e11d48] dark:text-rose-400 uppercase tracking-widest">Cancellations</p>
+              <h3 className="text-3xl font-medium tracking-tight text-[#e11d48] dark:text-rose-400 mt-1">
+                ₹{cancelledRevenue.toLocaleString('en-IN')}
+              </h3>
+            </div>
+            <div className="h-9 w-9 rounded-full bg-[#ffe4e6] dark:bg-rose-900/60 flex items-center justify-center border-0 shadow-inner">
+              <AlertCircle className="h-4.5 w-4.5 text-[#e11d48] dark:text-rose-400" />
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-[#e11d48]/80 dark:text-rose-400/80 flex items-center gap-1 font-semibold">
+            <AlertTriangle className="h-3.5 w-3.5" /> Failed or cancelled
+          </div>
+        </Card>
+
       </div>
 
       {/* -------------------------------------------------------------
@@ -557,73 +685,68 @@ export function Revenue() {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <CardTitle className="text-base font-bold tracking-tight text-foreground capitalize">{timeframe} Revenue Trend</CardTitle>
-              <CardDescription className="text-[11px] text-muted-foreground">
-                {timeframe === "today" ? "Earnings throughout the day" : timeframe === "weekly" ? "Earnings across calendar week" : timeframe === "monthly" ? "Earnings across last 4 weeks" : "Earnings across months"}
-              </CardDescription>
+              <p className="text-sm text-muted-foreground mt-0.5">Track your {timeframe} financial performance</p>
             </div>
-
-            {/* Timeframe Selector Segmented Switch */}
-            <div className="flex items-center gap-0.5 bg-muted/65 p-1 rounded-xl border border-border/40 shadow-inner flex-none">
+            
+            {/* Timeframe Selector */}
+            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl border border-border/50">
               {["today", "weekly", "monthly", "yearly"].map((tf) => (
                 <button
                   key={tf}
-                  onClick={() => {
-                    setTimeframe(tf);
-                    toast.info(`Switched view to ${tf.toUpperCase()}`);
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${timeframe === tf
-                    ? "bg-white dark:bg-slate-900 !text-foreground shadow-sm border border-border/10 hover:bg-emerald-600 hover:text-black hover:border-emerald-600"
-                    : "text-muted-foreground hover:text-foreground"
-                    }`}
+                  onClick={() => setTimeframe(tf)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-300 ${
+                    timeframe === tf 
+                      ? "bg-background shadow-sm text-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
-                  {tf === "today" ? "Today" : tf === "weekly" ? "Week" : tf === "monthly" ? "Month" : "Year"}
+                  {tf}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="w-full h-[320px] mt-6 relative z-10">
+          <div className="flex-1 w-full mt-8 -ml-4">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 5, left: -10, bottom: 20 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
+                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
+                    <stop offset="95%" stopColor={chartColor} stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.6} />
-                <XAxis
-                  dataKey="name"
-                  stroke="none"
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontWeight: 500 }}
-                  tickLine={false}
-                  axisLine={false}
-                  dy={6}
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'hsl(var(--border))', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  itemStyle={{ color: 'var(--foreground)' }}
+                  labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
+                  formatter={(value) => [`₹${value}`, "Revenue"]}
+                  cursor={{ stroke: 'rgba(0,0,0,0.05)' }}
                 />
-                <YAxis
-                  stroke="none"
-                  tick={{ fill: "var(--muted-foreground)", fontSize: 10, fontWeight: 500 }}
-                  tickLine={false}
-                  axisLine={false}
-                  dx={-6}
-                  tickFormatter={(val) => val >= 1000 ? `₹${val / 1000}K` : `₹${val}`}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 1 }} />
-                <Area
-                  type="monotone"
-                  dataKey="amount"
-                  stroke="#059669"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#chartGrad)"
+                <Area 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke={chartColor} 
+                  strokeWidth={3} 
+                  fillOpacity={1} 
+                  fill="url(#chartGrad)" 
+                  activeDot={{ r: 6, fill: chartColor, stroke: "var(--background)", strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="pt-4 border-t border-border/20 text-[11px] text-muted-foreground flex justify-between items-center font-medium mt-6 flex-none">
-            <span>{trendFooter.label}: <strong className="text-foreground">{trendFooter.peak}</strong></span>
-            <span>{trendFooter.avgLabel}: <strong className="text-foreground">{trendFooter.avg}</strong></span>
+          <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border/50 pt-4">
+            <div>
+              <p className="text-xs text-muted-foreground">{trendFooter.label}</p>
+              <p className="text-sm font-bold text-foreground mt-0.5">{trendFooter.peak}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">{trendFooter.avgLabel}</p>
+              <p className="text-sm font-bold text-foreground mt-0.5">{trendFooter.avg}</p>
+            </div>
           </div>
         </Card>
 
