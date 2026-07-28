@@ -324,10 +324,19 @@ export function Dashboard() {
 
   // Dynamic Chart Data Hooks for Performance Analytics
   const sportPopularityData = useMemo(() => {
+    if (isTestMode) {
+      return [
+        { name: "Football", value: 0, color: "var(--primary)", count: 0 },
+        { name: "Cricket", value: 0, color: "#3b82f6", count: 0 },
+        { name: "Tennis", value: 0, color: "#f59e0b", count: 0 },
+        { name: "Badminton", value: 0, color: "#ec4899", count: 0 },
+        { name: "Basketball", value: 0, color: "#ef4444", count: 0 },
+      ];
+    }
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
     const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
-    
+
     return [
       { name: "Football", value: Math.max(1, Math.round(45 * scale)), color: "var(--primary)", count: Math.max(1, Math.round(54 * scale)) },
       { name: "Cricket", value: Math.max(1, Math.round(30 * scale)), color: "#3b82f6", count: Math.max(1, Math.round(36 * scale)) },
@@ -335,15 +344,26 @@ export function Dashboard() {
       { name: "Badminton", value: Math.max(1, Math.round(8 * scale)), color: "#ec4899", count: Math.max(1, Math.round(10 * scale)) },
       { name: "Basketball", value: Math.max(1, Math.round(5 * scale)), color: "#ef4444", count: Math.max(1, Math.round(6 * scale)) },
     ];
-  }, [statusFilter, timeframe]);
+  }, [statusFilter, timeframe, isTestMode]);
 
   const totalBookings = useMemo(() => sportPopularityData.reduce((acc, curr) => acc + curr.count, 0), [sportPopularityData]);
 
   const bookingsFilledData = useMemo(() => {
+    if (isTestMode) {
+      return [
+        { name: "Mon", bookings: 0 },
+        { name: "Tue", bookings: 0 },
+        { name: "Wed", bookings: 0 },
+        { name: "Thu", bookings: 0 },
+        { name: "Fri", bookings: 0 },
+        { name: "Sat", bookings: 0 },
+        { name: "Sun", bookings: 0 },
+      ];
+    }
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
     const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
-    
+
     return [
       { name: "Mon", bookings: Math.round(12 * scale) },
       { name: "Tue", bookings: Math.round(9 * scale) },
@@ -353,13 +373,24 @@ export function Dashboard() {
       { name: "Sat", bookings: Math.round(29 * scale) },
       { name: "Sun", bookings: Math.round(24 * scale) },
     ];
-  }, [statusFilter, timeframe]);
+  }, [statusFilter, timeframe, isTestMode]);
 
   const revenueTrendData = useMemo(() => {
+    if (isTestMode) {
+      return [
+        { name: "Mon", revenue: 0 },
+        { name: "Tue", revenue: 0 },
+        { name: "Wed", revenue: 0 },
+        { name: "Thu", revenue: 0 },
+        { name: "Fri", revenue: 0 },
+        { name: "Sat", revenue: 0 },
+        { name: "Sun", revenue: 0 },
+      ];
+    }
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
     const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
-    
+
     return [
       { name: "Mon", revenue: Math.round(24000 * scale) },
       { name: "Tue", revenue: Math.round(18000 * scale) },
@@ -369,7 +400,7 @@ export function Dashboard() {
       { name: "Sat", revenue: Math.round(58000 * scale) },
       { name: "Sun", revenue: Math.round(49000 * scale) },
     ];
-  }, [statusFilter, timeframe]);
+  }, [statusFilter, timeframe, isTestMode]);
 
   // Booking action handlers
   const handleConfirmBooking = (id, name) => {
@@ -498,65 +529,63 @@ export function Dashboard() {
           ------------------------------------------------------------- */}
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3">
 
-        {/* Card 1: Gross Revenue (Full-Bleed Sparkline) */}
+        {/* Card 1: Gross Revenue */}
         <Card
           onClick={() => navigate("/owner-dashboard/revenue")}
-          className="relative overflow-hidden border border-emerald-500/10 bg-card/45 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-emerald-500/35 transition-all duration-300 hover:-translate-y-1 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
         >
-
-
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Total Revenue</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Total Revenue</p>
                 <div className="flex items-baseline gap-2 mt-0.5">
                   <h3 className="text-2xl font-black tracking-tight text-foreground">
                     ₹{isTestMode ? "0" : (data?.stats?.monthlyRevenue || 184200).toLocaleString()}
                   </h3>
-                  <span className="text-[10px] font-bold text-emerald-500 flex items-center gap-0.5">
+                  <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-0.5">
                     <TrendingUp className="h-3 w-3" />
                     {isTestMode ? "0%" : "+12.5%"}
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-center">
-                <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-inner">
+                <IndianRupee className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
 
-            <div className="mt-6 flex items-end justify-between border-t border-border/20 pt-3 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-3">
-                <span>Online: <strong className="text-foreground">{isTestMode ? "₹0" : "₹139K"}</strong></span>
-                <span className="opacity-40">|</span>
-                <span>Cash: <strong className="text-foreground">{isTestMode ? "₹0" : "₹45K"}</strong></span>
+            <div className="mt-6 flex items-end justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-3 items-center">
+                <span>Online: <strong className="text-foreground font-bold">{isTestMode ? "₹0" : "₹139K"}</strong></span>
+                <span className="opacity-30">|</span>
+                <span>Cash: <strong className="text-foreground font-bold">{isTestMode ? "₹0" : "₹45K"}</strong></span>
               </div>
-              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
+              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
                 Revenue
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
+                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Card 2: Bookings Count (Radial Progress Gauge) */}
+        {/* Card 2: Bookings Count */}
         <Card
           onClick={() => navigate("/owner-dashboard/bookings")}
-          className="relative overflow-hidden border border-blue-500/10 bg-card/45 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-blue-500/35 transition-all duration-300 hover:-translate-y-1 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
         >
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Today's Bookings</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Today's Bookings</p>
                 <h3 className="text-2xl font-black tracking-tight text-foreground mt-0.5">
                   {isTestMode ? 0 : (data?.stats?.todaysBookings || 18)} Bookings
                 </h3>
-                <p className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5">
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 mt-0.5">
                   <TrendingUp className="h-3 w-3" />
                   {isTestMode ? "0%" : "+8.2% vs yesterday"}
                 </p>
               </div>
 
-              {/* Glowing SVG Progress Ring */}
+              {/* Progress Ring */}
               <div className="relative flex items-center justify-center shrink-0 w-14 h-14 translate-y-[-2px]">
                 <svg className="w-14 h-14 transform -rotate-90">
                   <circle
@@ -572,46 +601,44 @@ export function Dashboard() {
                     cx="28"
                     cy="28"
                     r={ringRadius}
-                    stroke="url(#blueProgressRing)"
+                    stroke="currentColor"
                     strokeWidth="4"
                     fill="transparent"
                     strokeDasharray={ringCircumference}
                     strokeDashoffset={ringDashoffset}
                     strokeLinecap="round"
-                    className="transition-all duration-500"
+                    className="text-emerald-500 transition-all duration-500"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-[10px] font-black text-blue-500">{progressPercentage}%</span>
+                  <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">{progressPercentage}%</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 flex items-end justify-between border-t border-border/20 pt-3 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-2">
-                <span>Confirmed: <strong className="text-foreground">{isTestMode ? 0 : 14}</strong></span>
-                <span className="opacity-40">·</span>
-                <span>Pending: <strong className="text-amber-500">{isTestMode ? 0 : 4}</strong></span>
+            <div className="mt-4 flex items-end justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-2.5 items-center">
+                <span>Confirmed: <strong className="text-foreground font-bold">{isTestMode ? 0 : 14}</strong></span>
+                <span className="opacity-30">·</span>
+                <span>Pending: <strong className="text-amber-500 font-bold">{isTestMode ? 0 : 4}</strong></span>
               </div>
-              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
+              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
                 Details
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
+                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </div>
           </CardContent>
         </Card>
 
-
-
         {/* Card 3: Active Turfs */}
         <Card
           onClick={() => navigate("/owner-dashboard/turfs")}
-          className="relative overflow-hidden border border-purple-500/10 bg-card/45 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-purple-500/35 transition-all duration-300 hover:-translate-y-1 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
         >
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Active Turfs</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Active Turfs</p>
                 <div className="flex items-baseline gap-2 mt-0.5">
                   <h3 className="text-2xl font-black tracking-tight text-foreground">
                     {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}
@@ -621,38 +648,38 @@ export function Dashboard() {
                   </span>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 border border-purple-500/20 shadow-inner">
-                <MapPin className="h-4.5 w-4.5 text-purple-500" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-inner">
+                <MapPin className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
 
-            <div className="mt-6 flex items-end justify-between border-t border-border/20 pt-3 text-[10px] font-semibold text-muted-foreground">
+            <div className="mt-6 flex items-end justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-2">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Operational
                 </span>
               </div>
-              <span className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-purple-600 hover:border-purple-600 hover:text-white shadow-xs hover:shadow-md cursor-pointer">
+              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
                 Manage
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
+                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Card 4: Quality Feedback (Stacked Segment Bar) */}
+        {/* Card 4: Quality Feedback */}
         <Card
           onClick={() => navigate("/owner-dashboard/reviews")}
-          className="relative overflow-hidden border border-amber-500/10 bg-card/45 backdrop-blur-xl shadow-lg hover:shadow-xl hover:border-amber-500/35 transition-all duration-300 hover:-translate-y-1 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-amber-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
         >
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Turf Quality Rating</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Turf Quality Rating</p>
                 <div className="flex items-center gap-2 mt-0.5">
                   <h3 className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
-                  <div className="flex items-center text-amber-500 translate-y-[-2px]">
+                  <div className="flex items-center text-amber-500 translate-y-[-1px]">
                     {[1, 2, 3, 4, 5].map((starIndex) => {
                       const ratingVal = isTestMode ? 0 : (data?.stats?.averageRating || 4.8);
                       const isFilled = ratingVal >= starIndex;
@@ -673,7 +700,7 @@ export function Dashboard() {
                 </div>
               </div>
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-inner">
-                <Star className="h-4.5 w-4.5 text-amber-500" />
+                <Star className="h-4.5 w-4.5 text-amber-500 fill-amber-500/20" />
               </div>
             </div>
 
@@ -681,12 +708,12 @@ export function Dashboard() {
             <div className="mt-3 space-y-1.5">
               <div className="flex justify-between text-[9px] text-muted-foreground font-bold items-center">
                 <span>Reviews: {isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</span>
-                <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-lg transition-all duration-300 flex items-center gap-1 group/btn border border-border bg-white dark:bg-slate-900 text-foreground hover:bg-emerald-600 hover:border-emerald-600 hover:text-black shadow-xs hover:shadow-md cursor-pointer">
+                <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
                   Reviews
-                  <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-0.5 transition-transform" />
+                  <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
                 </span>
               </div>
-              <div className="h-2 w-full bg-muted rounded-full flex overflow-hidden border border-border/20">
+              <div className="h-2 w-full bg-muted/60 rounded-full flex overflow-hidden border border-border/30">
                 <div className="h-full bg-emerald-500 transition-all" style={{ width: isTestMode ? "0%" : "85%" }} title="5 Stars: 85%" />
                 <div className="h-full bg-amber-500 transition-all" style={{ width: isTestMode ? "0%" : "10%" }} title="4 Stars: 10%" />
                 <div className="h-full bg-rose-500 transition-all" style={{ width: isTestMode ? "0%" : "5%" }} title="3 Stars or below: 5%" />
@@ -700,24 +727,25 @@ export function Dashboard() {
       {/* -------------------------------------------------------------
           Visual Graphs Section & Quick Operations
           ------------------------------------------------------------- */}
-      <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        
+      <div className="bg-card/70 dark:bg-card/50 backdrop-blur-2xl p-6 sm:p-7 rounded-3xl border border-border/60 shadow-lg shadow-black/5 space-y-6">
+
         {/* Header and Timeframe */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Performance Analytics</h2>
-            <p className="text-xs text-slate-500 mt-1">Detailed breakdown of your venue's metrics.</p>
+            <h2 className="text-xl font-black tracking-tight text-foreground">Performance Analytics</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Detailed breakdown of your venue's metrics.</p>
           </div>
-          
-          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+
+          <div className="flex items-center gap-1 bg-background/80 p-1.5 rounded-2xl border border-border/60 shadow-2xs">
             {["today", "weekly", "monthly", "yearly"].map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
-                className={`px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${timeframe === tf
-                  ? "bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                  }`}
+                className={`px-4 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                  timeframe === tf
+                    ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                }`}
               >
                 {tf}
               </button>
@@ -728,81 +756,81 @@ export function Dashboard() {
         {/* 4 KPI Buttons */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { id: "all", label: "Total Revenue", amount: "₹45,000", color: "border-blue-200 bg-blue-50 text-blue-700" },
-            { id: "completed", label: "Received", amount: "₹28,500", color: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-            { id: "pending", label: "Upcoming", amount: "₹12,000", color: "border-amber-200 bg-amber-50 text-amber-700" },
-            { id: "failed", label: "Cancellations", amount: "₹4,500", color: "border-rose-200 bg-rose-50 text-rose-700" },
+            { id: "all", label: "Total Revenue", amount: isTestMode ? "₹0" : "₹45,000", activeStyle: "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-500/10" },
+            { id: "completed", label: "Received", amount: isTestMode ? "₹0" : "₹28,500", activeStyle: "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-500/10" },
+            { id: "pending", label: "Upcoming", amount: isTestMode ? "₹0" : "₹12,000", activeStyle: "border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-2 ring-amber-500/30 shadow-lg shadow-amber-500/10" },
+            { id: "failed", label: "Cancellations", amount: isTestMode ? "₹0" : "₹4,500", activeStyle: "border-rose-500 bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-2 ring-rose-500/30 shadow-lg shadow-rose-500/10" },
           ].map((stat) => (
             <button
               key={stat.id}
               onClick={() => setStatusFilter(stat.id)}
-              className={`p-4 rounded-2xl border text-left transition-all duration-300 ${
-                statusFilter === stat.id 
-                  ? `${stat.color} shadow-md ring-2 ring-offset-1 ring-current`
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 opacity-70 hover:opacity-100"
+              className={`p-4 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${
+                statusFilter === stat.id
+                  ? stat.activeStyle
+                  : "border-border/60 bg-background/60 text-muted-foreground hover:text-foreground hover:bg-card/80 hover:border-border"
               }`}
             >
-              <p className="text-xs font-bold uppercase tracking-wider mb-1">{stat.label}</p>
-              <p className="text-2xl font-black">{stat.amount}</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider mb-1 opacity-80">{stat.label}</p>
+              <p className="text-2xl font-black tracking-tight">{stat.amount}</p>
             </button>
           ))}
         </div>
 
         {/* The 3 Graphs in one line */}
         <div className="grid lg:grid-cols-3 gap-6">
-        {/* Right Column: Sport Share Pie Chart */}
-        <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
-          <CardHeader className="border-b border-border/40 p-6">
-            <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
-            <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
-          </CardHeader>
-          <CardContent className="p-6 flex-1 flex flex-col justify-center">
+          {/* Right Column: Sport Share Pie Chart */}
+          <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
+            <CardHeader className="border-b border-border/40 p-6">
+              <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
+            </CardHeader>
+            <CardContent className="p-6 flex-1 flex flex-col justify-center">
 
-            <div className="relative h-[200px] flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={sportPopularityData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={0}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {sportPopularityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} className="outline-none focus:outline-none" />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
-                    itemStyle={{ color: "var(--foreground)" }}
-                    formatter={(value) => [`${value}% share`, "Popularity"]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute flex flex-col items-center justify-center text-center">
-                <span className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
-                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
-              </div>
-            </div>
-
-            {/* Premium Custom Legend */}
-            <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
-              {sportPopularityData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
-                  <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-foreground truncate">{item.name}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{item.count} slots ({item.value}%)</p>
-                  </div>
+              <div className="relative h-[200px] flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sportPopularityData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={65}
+                      outerRadius={85}
+                      paddingAngle={0}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {sportPopularityData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} className="outline-none focus:outline-none" />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      formatter={(value) => [`${value}% share`, "Popularity"]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
-              ))}
-            </div>
+              </div>
 
-          </CardContent>
-        </Card>
+              {/* Premium Custom Legend */}
+              <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
+                {sportPopularityData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">{item.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{item.count} slots ({item.value}%)</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </CardContent>
+          </Card>
           <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
             <CardHeader className="border-b border-border/40 p-6">
               <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
