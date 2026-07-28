@@ -64,34 +64,7 @@ export function BookingsList() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-7xl mx-auto theme-adaptive pb-20 font-sans">
 
-      {/* -------------------------------------------------------------
-          Header Section
-          ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-border/40">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-black tracking-tight text-foreground">Booking & Slot Management</h1>
-            <Badge className="bg-primary/10 text-primary border-primary/20 text-xs px-2.5 py-0.5 font-bold">
-              Real-Time Grid
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1 font-medium">
-            Real-time court availability matrix, slot pricing overrides, and walk-in ticket counter.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-3">
-          <Button
-            onClick={() => {
-              toast.success("Bookings CSV export generated!");
-            }}
-            variant="outline"
-            className="gap-2 h-10 rounded-xl px-4 border border-border text-foreground bg-card hover:bg-emerald-600 hover:text-black hover:scale-[1.02] transition-all font-bold text-xs cursor-pointer shadow-xs"
-          >
-            <Download className="h-4 w-4" /> Export Bookings CSV
-          </Button>
-        </div>
-      </div>
 
 
 

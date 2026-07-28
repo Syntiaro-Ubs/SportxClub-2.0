@@ -380,10 +380,10 @@ export function TimeSlots() {
         const updatedSlots = [...t.slots];
         for (let i = 0; i < playHours; i++) {
           totalPrice += updatedSlots[slotIdx + i].price;
-          updatedSlots[slotIdx + i] = { 
-            ...updatedSlots[slotIdx + i], 
+          updatedSlots[slotIdx + i] = {
+            ...updatedSlots[slotIdx + i],
             status: isBlocking ? 'Maintenance' : 'Booked',
-            blockedTimeRange: null 
+            blockedTimeRange: null
           };
         }
         return { ...t, slots: updatedSlots };
@@ -439,8 +439,8 @@ export function TimeSlots() {
     const updatedTurfs = turfs.map(t => {
       if (t.id === turf.id) {
         const updatedSlots = [...t.slots];
-        updatedSlots[slotIdx] = { 
-          ...updatedSlots[slotIdx], 
+        updatedSlots[slotIdx] = {
+          ...updatedSlots[slotIdx],
           status: 'Available',
           blockedTimeRange: null,
           blockedReason: null
@@ -461,10 +461,10 @@ export function TimeSlots() {
     const [hourStr, minStr] = timeStr.split(':');
     let hour = parseInt(hourStr, 10);
     const min = parseInt(minStr, 10) || 0;
-    
+
     if (period === 'PM' && hour !== 12) hour += 12;
     if (period === 'AM' && hour === 12) hour = 0;
-    
+
     return hour + min / 60;
   };
 
@@ -547,9 +547,6 @@ export function TimeSlots() {
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
             Turf Slot Management
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Real-time slot scheduling matrix, overrides, and walk-in ticket counter.
-          </p>
         </div>
       </div>
 
@@ -694,31 +691,22 @@ export function TimeSlots() {
                 className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 rounded-2xl flex flex-col justify-between"
               >
                 {/* Card Header Section */}
-                <CardHeader className="border-b border-border/40 bg-muted/20 pb-4 p-5">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <CardTitle className="text-lg font-bold tracking-tight text-foreground">{turf.name}</CardTitle>
-                        {turf.status === 'Active' ? (
-                          <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2 py-0.5">
-                            Active
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2 py-0.5">
-                            Closed
-                          </Badge>
-                        )}
+                <CardHeader className="border-b border-border/40 bg-muted/20 pb-4 px-5 pt-4 relative">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <CardTitle className="text-lg font-bold tracking-tight text-foreground">{turf.name}</CardTitle>
+                        </div>
+                        <CardDescription className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                          <span className="text-primary font-bold">{turf.sportType}</span>
+                          <span className="opacity-40">&bull;</span>
+                          <span>{turf.location}</span>
+                        </CardDescription>
                       </div>
-                      <CardDescription className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-                        <span className="text-primary font-bold">{turf.sportType}</span>
-                        <span className="opacity-40">&bull;</span>
-                        <span>{turf.location}</span>
-                      </CardDescription>
-                    </div>
 
-                    <div className="flex flex-wrap items-center gap-2.5 self-end sm:self-auto">
-                      {/* Duration Selector inside Card Header */}
-                      <div className="flex items-center gap-1 bg-background/80 p-1 rounded-2xl border border-border/40 shadow-xs">
+                      {/* Duration Selector moved to the left */}
+                      <div className="flex items-center gap-1 bg-background/80 p-1 rounded-2xl border border-border/40 shadow-xs w-max">
                         <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest px-2 hidden sm:inline-block">DURATION:</span>
                         {[1, 2, 3, 4].map(hrs => (
                           <button
@@ -734,38 +722,70 @@ export function TimeSlots() {
                           </button>
                         ))}
                       </div>
+                    </div>
 
-                      {/* Active open toggle switch */}
-                      <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-xl border border-border/50 shadow-xs">
-                        <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
-                        <Switch
-                          id={`turf-status-${turf.id}`}
-                          checked={turf.status === 'Active'}
-                          onCheckedChange={() => toggleTurfStatus(turf.id)}
-                        />
+                    {/* Active/Closed Badge Centered */}
+                    <div className="hidden sm:flex absolute left-1/2 -translate-x-1/2 top-4 items-center justify-center">
+                      {turf.status === 'Active' ? (
+                        <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
+                          Closed
+                        </Badge>
+                      )}
+                    </div>
+                    {/* Mobile fallback for badge */}
+                    <div className="sm:hidden flex items-center justify-center w-full mt-2">
+                      {turf.status === 'Active' ? (
+                        <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-3 py-1 text-xs">
+                          Closed
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-start sm:items-end gap-2.5 self-end sm:self-auto h-full justify-between sm:justify-end mt-2 sm:mt-0 relative z-10">
+                      {/* Row 1: Status and Slots Badge */}
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        {/* Active open toggle switch */}
+                        <div className="flex items-center gap-2 bg-background/50 px-3 py-1.5 rounded-xl border border-border/50 shadow-xs">
+                          <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
+                          <Switch
+                            id={`turf-status-${turf.id}`}
+                            checked={turf.status === 'Active'}
+                            onCheckedChange={() => toggleTurfStatus(turf.id)}
+                          />
+                        </div>
+
+                        {/* Slots remaining badge */}
+                        <Badge variant="outline" className={`px-2.5 py-1.5 text-[10px] font-bold rounded-xl shadow-xs ${availableSlots > 5
+                          ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20'
+                          : availableSlots > 0
+                            ? 'bg-amber-500/5 text-amber-500 border-amber-500/20'
+                            : 'bg-rose-500/5 text-rose-500 border-rose-500/20'
+                          }`}>
+                          {availableSlots} Slots Left
+                        </Badge>
                       </div>
 
-                      {/* Slots remaining badge */}
-                      <Badge variant="outline" className={`px-2.5 py-1.5 text-[10px] font-bold rounded-xl shadow-xs ${availableSlots > 5
-                        ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/20'
-                        : availableSlots > 0
-                          ? 'bg-amber-500/5 text-amber-500 border-amber-500/20'
-                          : 'bg-rose-500/5 text-rose-500 border-rose-500/20'
-                        }`}>
-                        {availableSlots} Slots Left
-                      </Badge>
-
-                      {/* Block Custom Time Button */}
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          setSelectedTurfForCustomBlock(turf);
-                          setIsBlockModalOpen(true);
-                        }}
-                        className="h-8 rounded-xl bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-black border border-amber-500/20 text-[10px] font-black uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
-                      >
-                        <Power className="w-3 h-3" /> Block Custom Time
-                      </Button>
+                      {/* Row 2: Block Time Button at the end */}
+                      <div className="flex flex-wrap items-center gap-2.5 mt-auto">
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTurfForCustomBlock(turf);
+                            setIsBlockModalOpen(true);
+                          }}
+                          className="h-8 rounded-md bg-card text-emerald-600 hover:bg-emerald-500/10 border border-emerald-500 hover:border-emerald-600 hover:shadow-sm hover:shadow-emerald-500/20 text-[10px] font-black uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5"
+                        >
+                          <Power className="w-3 h-3" /> Block Custom Time
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -798,10 +818,10 @@ export function TimeSlots() {
                           idx < hoveredSlotInfo.startIdx + playHours;
 
                         const hoverValidClass = isHoveredGroup && hoveredSlotInfo.isValid
-                          ? 'bg-emerald-500/15 border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 scale-[1.03] shadow-md shadow-emerald-500/10 font-bold'
+                          ? 'bg-card border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 scale-[1.03] shadow-md shadow-emerald-500/10 font-bold'
                           : isHoveredGroup && !hoveredSlotInfo.isValid
-                            ? 'bg-rose-500/10 border-2 border-rose-500 text-rose-600'
-                            : 'bg-emerald-500/5 dark:bg-emerald-950/20 border-2 border-emerald-500/40 hover:border-emerald-500 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400';
+                            ? 'bg-card border-2 border-rose-500 text-rose-600'
+                            : 'bg-card border-2 border-emerald-500/40 hover:border-emerald-500 text-emerald-700 dark:text-emerald-400';
 
                         return (
                           <div
@@ -826,7 +846,7 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-3 rounded-2xl border-2 border-rose-500/40 bg-rose-500/5 dark:bg-rose-950/20 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-3 rounded-2xl border-2 border-rose-500/40 bg-card flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
                             <span className="font-extrabold text-xs whitespace-nowrap text-foreground">{formatTimeRange(slot.time)}</span>
@@ -859,7 +879,7 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-3 rounded-2xl border-2 border-amber-500/30 bg-amber-500/5 dark:bg-amber-950/20 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-3 rounded-2xl border-2 border-amber-500/30 bg-card flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[74px] shadow-xs ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
@@ -911,22 +931,20 @@ export function TimeSlots() {
               <button
                 type="button"
                 onClick={() => setBookingActionType("booking")}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  bookingActionType === "booking"
-                    ? "bg-emerald-500 text-black shadow-sm font-black"
-                    : "text-muted-foreground hover:bg-muted/40"
-                }`}
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${bookingActionType === "booking"
+                  ? "bg-emerald-500 text-black shadow-sm font-black"
+                  : "text-muted-foreground hover:bg-muted/40"
+                  }`}
               >
                 Walk-in Booking
               </button>
               <button
                 type="button"
                 onClick={() => setBookingActionType("block")}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  bookingActionType === "block"
-                    ? "bg-amber-500 text-black shadow-sm font-black"
-                    : "text-muted-foreground hover:bg-muted/40"
-                }`}
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${bookingActionType === "block"
+                  ? "bg-amber-500 text-black shadow-sm font-black"
+                  : "text-muted-foreground hover:bg-muted/40"
+                  }`}
               >
                 Block Slot
               </button>
@@ -1326,8 +1344,8 @@ export function TimeSlots() {
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground font-semibold">Slot Time:</span>
                 <span className="font-mono font-bold text-primary">
-                  {selectedSlotForRelease && selectedSlotForRelease.slot.blockedTimeRange 
-                    ? selectedSlotForRelease.slot.blockedTimeRange 
+                  {selectedSlotForRelease && selectedSlotForRelease.slot.blockedTimeRange
+                    ? selectedSlotForRelease.slot.blockedTimeRange
                     : selectedSlotForRelease && formatTimeRange(selectedSlotForRelease.slot.time)}
                 </span>
               </div>

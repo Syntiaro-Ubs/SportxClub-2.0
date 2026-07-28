@@ -86,11 +86,6 @@ export function OwnerLayout() {
     navigate("/login");
   };
 
-  const getInitials = (name) => {
-    if (!name) return "TO";
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
-
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex h-[76px] shrink-0 items-center px-6">
@@ -166,25 +161,24 @@ export function OwnerLayout() {
             </div>
 
             <div className="flex items-center gap-x-3 lg:gap-x-5">
-              {/* Razorpay-style Test Mode Toggle Switch */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/20 bg-primary/5 backdrop-blur-md shadow-2xs hover:bg-primary/10 transition-colors">
-                <FlaskConical className={`h-4 w-4 transition-colors ${isTestMode ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`} />
-                <span className="text-xs font-bold text-foreground select-none">Test Mode</span>
+              {/* Test Mode Toggle Switch */}
+              <div className="flex items-center gap-2 px-2 transition-colors">
+                <span className="text-xs font-bold select-none text-foreground">Test Mode</span>
                 <Switch
                   checked={isTestMode}
                   onCheckedChange={handleTestModeToggle}
-                  className="data-[state=checked]:bg-[#0FA83F] data-[state=checked]:border-[#0FA83F] cursor-pointer"
+                  className="data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500 cursor-pointer"
                 />
               </div>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2 rounded-full hover:bg-accent/50 p-1 pr-4 pl-1 transition-colors cursor-pointer border-0 bg-transparent">
-                  <Avatar className="h-10 w-10 border-2 border-primary/10 transition-colors">
+                <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2 rounded-full p-1 pr-4 pl-1 transition-colors cursor-pointer border-0 bg-transparent">
+                  <Avatar className="h-10 w-10 transition-colors">
                     {activeProfile.profilePicture ? (
                       <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                     ) : (
-                      <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center font-semibold">
-                        {getInitials(ownerName)}
+                      <AvatarFallback className="bg-transparent text-primary flex items-center justify-center font-semibold">
+                        <User className="h-5 w-5" />
                       </AvatarFallback>
                     )}
                   </Avatar>

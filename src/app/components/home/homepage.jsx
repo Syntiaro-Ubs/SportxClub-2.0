@@ -582,8 +582,8 @@ export function Navbar() {
                   className={cn(
                     "flex h-10 items-center justify-center rounded-md border px-5 text-sm tracking-wide transition-all cursor-pointer group",
                     isDark
-                      ? "border-emerald-600 bg-transparent text-white hover:bg-emerald-600 hover:text-[#050505]"
-                      : "border-emerald-600 bg-transparent text-slate-800 hover:bg-emerald-600 hover:text-[#050505]",
+                      ? "border-slate-700 bg-transparent text-white hover:border-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)]"
+                      : "border-slate-300 bg-transparent text-slate-800 hover:border-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)]",
                   )}
                 >
                   Login
