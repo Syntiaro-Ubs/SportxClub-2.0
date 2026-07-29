@@ -16,6 +16,7 @@ import {
   MapPin,
   ShieldCheck,
   Headphones,
+  X,
 } from "lucide-react";
 
 import { Button } from "../components/ui/button";
@@ -33,7 +34,7 @@ export function LoginPage() {
   const searchParams = new URLSearchParams(location.search);
   const initialType = searchParams.get("type") || "player";
 
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginType, setLoginType] = useState(initialType);
   const [formData, setFormData] = useState({
@@ -44,6 +45,28 @@ export function LoginPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleGoogleLogin = async () => {
+    setIsSubmitting(true);
+    const targetRole = loginType === "owner" ? "owner" : "player";
+    const result = loginWithGoogle
+      ? loginWithGoogle(targetRole)
+      : { success: true, user: { role: targetRole } };
+
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    setIsSubmitting(false);
+    setIsSuccess(true);
+
+    setTimeout(() => {
+      if (result.user.role === "owner" || loginType === "owner") {
+        navigate("/owner-dashboard");
+      } else if (result.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
+    }, 1200);
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -90,6 +113,17 @@ export function LoginPage() {
     <div className="bg-slate-50 min-h-screen flex items-center justify-center lg:justify-end p-4 sm:p-8 lg:pr-24 font-sans relative overflow-hidden">
       {/* Right Aligned Login Form Card */}
       <div className="w-full max-w-[440px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200/80 px-6 pb-6 pt-1 relative z-10">
+
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="absolute right-4 top-4 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer z-20"
+          title="Close Login"
+          aria-label="Close Login"
+        >
+          <X className="h-5 w-5" />
+        </button>
 
         {/* HEADER LOGO */}
         <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10 -mb-4">
@@ -163,27 +197,31 @@ export function LoginPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-[12px] font-medium text-slate-900">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-[12px] font-medium text-slate-900">Password</Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-[12px] font-medium text-slate-900 hover:text-emerald-600 hover:underline transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-2.5 h-5 w-5 text-slate-500" strokeWidth={1.5} />
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="* * * * * * *"
-                    className="pl-11 pr-11 h-10 rounded-lg border-slate-300 text-sm tracking-widest focus-visible:ring-1 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 placeholder:text-slate-500 placeholder:tracking-widest placeholder:text-[13px] bg-white pt-1"
+                    placeholder="••••••••"
+                    className="pl-11 pr-10 h-10 rounded-lg border-slate-300 text-[12px] focus-visible:ring-1 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 placeholder:text-slate-500 bg-white"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-2.5 text-slate-500 hover:text-slate-700 transition"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
+                    className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" strokeWidth={1.5} />
@@ -192,110 +230,95 @@ export function LoginPage() {
                     )}
                   </button>
                 </div>
-                <div className="flex justify-end">
-                  <a href="#" className="text-[11px] font-semibold text-slate-900 hover:underline">
-                    Forgot password?
-                  </a>
-                </div>
               </div>
 
-              <div className="flex items-center space-x-2 py-0.5">
+              <div className="flex items-center space-x-2 pt-0.5">
                 <Checkbox
-                  id="rememberMe"
+                  id="remember"
                   checked={formData.rememberMe}
                   onCheckedChange={handleCheckboxChange}
-                  className="h-4.5 w-4.5 rounded data-[state=checked]:bg-[#0FA83F] data-[state=checked]:border-[#0FA83F] border-slate-300"
+                  className="rounded border-slate-300 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 cursor-pointer"
                 />
                 <label
-                  htmlFor="rememberMe"
-                  className="text-[12px] text-slate-600 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  htmlFor="remember"
+                  className="text-[12px] font-medium text-slate-600 cursor-pointer select-none"
                 >
                   Remember me for 30 days
                 </label>
               </div>
 
-              <div className="pt-1 flex justify-center">
-                <Button
-                  type="submit"
-                  disabled={!isFormValid() || isSubmitting}
-                  className="w-1/2 min-w-[180px] h-10 rounded-lg bg-[#0FA83F] hover:bg-[#0E9739] text-white text-[13px] font-medium transition-all flex items-center justify-center gap-2 group"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Logging in...
-                    </span>
-                  ) : (
-                    <>
-                      Login
-                      <ChevronRight className="h-4 w-4 stroke-[2.5] transition-transform group-hover:translate-x-0.5" />
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !isFormValid()}
+                className={cn(
+                  "w-full h-10 rounded-lg bg-[#0FA83F] hover:bg-[#0c8a34] text-white font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer mt-3",
+                  (!isFormValid() || isSubmitting) && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    <span>Signing in...</span>
+                  </div>
+                ) : (
+                  <>
+                    <span>Login</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
             </form>
 
-            {/* Social Login Divider */}
-            <div className="relative my-4 flex items-center">
-              <div className="flex-grow border-t border-slate-200"></div>
-              <span className="flex-shrink mx-4 text-[10px] font-semibold text-slate-500 uppercase tracking-wide bg-white px-2">
-                OR CONTINUE WITH
-              </span>
-              <div className="flex-grow border-t border-slate-200"></div>
+            <div className="relative my-3">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase">
+                <span className="bg-white px-3 text-slate-600 font-medium tracking-wider">
+                  OR CONTINUE WITH
+                </span>
+              </div>
             </div>
 
-            {/* Google Sign In */}
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => {
-                  setIsSubmitting(true);
-                  setTimeout(() => {
-                    setIsSubmitting(false);
-                    setIsSuccess(true);
-                    setTimeout(() => {
-                      localStorage.setItem("isLoggedIn", "true");
-                      localStorage.setItem("userName", "Guest");
-                      if (loginType === "owner") navigate("/owner-dashboard");
-                      else navigate("/");
-                    }, 1500);
-                  }, 1200);
-                }}
-                className="w-1/2 min-w-[180px] h-10 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-900 text-[13px] font-medium transition-all flex items-center justify-center gap-3 shadow-sm"
-              >
-                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-                  <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                    <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 52.749 L -8.284 52.749 C -8.574 54.229 -9.424 55.479 -10.684 56.329 L -10.684 58.569 L -6.824 58.569 C -4.564 56.489 -3.264 53.309 -3.264 51.509 Z" />
-                    <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 58.569 L -10.684 56.329 C -11.764 57.059 -13.134 57.519 -14.754 57.519 C -17.904 57.519 -20.574 55.399 -21.524 52.539 L -25.534 52.539 L -25.534 55.659 C -23.534 59.639 -19.464 63.239 -14.754 63.239 Z" />
-                    <path fill="#FBBC05" d="M -21.524 52.539 C -21.774 51.779 -21.924 50.969 -21.924 50.139 C -21.924 49.309 -21.774 48.499 -21.524 47.739 L -21.524 44.619 L -25.534 44.619 C -26.354 46.259 -26.834 48.139 -26.834 50.139 C -26.834 52.139 -26.354 54.019 -25.534 55.659 L -21.524 52.539 Z" />
-                    <path fill="#EA4335" d="M -14.754 42.749 C -12.984 42.749 -11.404 43.359 -10.154 44.559 L -6.744 41.149 C -8.804 39.229 -11.514 38.009 -14.754 38.009 C -19.464 38.009 -23.534 41.609 -25.534 44.619 L -21.524 47.739 C -20.574 44.879 -17.904 42.749 -14.754 42.749 Z" />
-                  </g>
-                </svg>
-                Login with Google
-              </Button>
-            </div>
-          </div>
-        )}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={handleGoogleLogin}
+              className="w-full h-10 rounded-lg border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>Login with Google</span>
+            </Button>
 
-        {/* Form Footer */}
-        {!isSuccess && (
-          <div className="text-center text-[12px] text-slate-600 mt-4 mb-2">
-            {loginType === "owner" ? (
-              <>
-                Want to add your turf to our platform?{" "}
-                <Link to={`/register${loginType === "owner" ? "?type=owner" : ""}`} className="font-semibold text-[#0FA83F] hover:underline">
-                  Register your turf
-                </Link>
-              </>
-            ) : (
-              <>
+            <div className="text-center pt-2">
+              <p className="text-xs text-slate-600">
                 Don't have an account yet?{" "}
-                <Link to={`/register${loginType === "owner" ? "?type=owner" : ""}`} className="font-semibold text-[#0FA83F] hover:underline">
+                <Link
+                  to={`/register?type=${loginType}`}
+                  className="font-medium text-[#0FA83F] hover:underline"
+                >
                   Sign up
                 </Link>
-              </>
-            )}
+              </p>
+            </div>
           </div>
         )}
       </div>

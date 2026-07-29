@@ -34,9 +34,34 @@ export function AuthProvider({ children }) {
     if (user) {
       setCurrentUser(user);
       localStorage.setItem("currentUser", JSON.stringify(user));
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userName", user.fullName ? user.fullName.split(" ")[0] : "User");
       return { success: true, user };
     }
     return { success: false, error: "Invalid email or password" };
+  };
+
+  const loginWithGoogle = (role = "player") => {
+    const isOwner = role === "owner";
+    const googleUser = {
+      id: isOwner ? "google-owner-1" : "google-player-1",
+      fullName: isOwner ? "Turf Owner" : "Google User",
+      email: isOwner ? "owner.google@sportxclub.com" : "user.google@gmail.com",
+      role: isOwner ? "owner" : "player",
+      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200",
+    };
+    setCurrentUser(googleUser);
+    localStorage.setItem("currentUser", JSON.stringify(googleUser));
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userName", googleUser.fullName.split(" ")[0]);
+
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    if (!users.some((u) => u.id === googleUser.id)) {
+      users.push(googleUser);
+      localStorage.setItem("users", JSON.stringify(users));
+    }
+
+    return { success: true, user: googleUser };
   };
 
   const register = (userData) => {
@@ -58,6 +83,8 @@ export function AuthProvider({ children }) {
     // Auto login after registration
     setCurrentUser(newUser);
     localStorage.setItem("currentUser", JSON.stringify(newUser));
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userName", newUser.fullName ? newUser.fullName.split(" ")[0] : "User");
     
     return { success: true, user: newUser };
   };
@@ -91,7 +118,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ currentUser, login, loginWithGoogle, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

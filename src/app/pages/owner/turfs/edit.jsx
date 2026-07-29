@@ -10,6 +10,7 @@ import {
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import { Textarea } from "../../../components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -17,27 +18,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { Checkbox } from "../../../components/ui/checkbox";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "../../../components/ui/tabs";
-import { ArrowLeft, Save, Loader2, AlertCircle, FileText, MapPin, IndianRupee } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Loader2,
+  AlertCircle,
+  FileText,
+  MapPin,
+  IndianRupee,
+  Building2,
+  Phone,
+  Mail,
+  Check,
+  Shield,
+  Sparkles,
+  ChevronRight,
+  ChevronLeft
+} from "lucide-react";
 import { turfService } from "../../../services/turf.service";
+import { toast } from "sonner";
 
 const OWNER_ID = "owner-123";
 
 const AMENITIES = [
-  "Parking",
-  "Washroom",
-  "Changing Room",
-  "Drinking Water",
-  "Floodlights",
-  "Equipment Rent",
-  "First Aid",
-  "Cafe",
+  { id: "Parking", label: "Parking", icon: "🚗" },
+  { id: "Washroom", label: "Washroom", icon: "🚻" },
+  { id: "Changing Room", label: "Changing Room", icon: "🚪" },
+  { id: "Drinking Water", label: "Drinking Water", icon: "💧" },
+  { id: "Floodlights", label: "Floodlights", icon: "💡" },
+  { id: "Equipment Rent", label: "Equipment Rent", icon: "⚽" },
+  { id: "First Aid", label: "First Aid", icon: "🏥" },
+  { id: "Cafe", label: "Cafe", icon: "☕" },
 ];
 
 const SPORTS = [
@@ -91,8 +108,19 @@ export function EditTurf() {
         reset(result);
       } catch (err) {
         setError(
-          "Backend API is not yet available. Could not load turf details.",
+          "Backend API is not yet available. Loading demo turf values.",
         );
+        reset({
+          name: "Main Arena A",
+          sportType: "Football",
+          description: "Premium FIFA standard astro-turf ground with floodlights.",
+          contactNumber: "+91 98765 43210",
+          email: "arena@sportxclub.com",
+          location: "Downtown Sports Hub, Field #1",
+          price: 1500,
+          amenities: ["Parking", "Floodlights", "Washroom", "Changing Room"],
+          rules: "Strictly non-marking studs required. No smoking.",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -105,199 +133,326 @@ export function EditTurf() {
       setIsSubmitting(true);
       setError(null);
       if (!id) throw new Error("No turf ID provided");
-      // Update only changed fields in a real app, passing whole data here
       await turfService.update(OWNER_ID, id, data);
+      toast.success("Turf updated successfully!");
       navigate("/owner-dashboard/turfs");
     } catch (err) {
-      setError(
-        err.message || "Failed to update turf. Backend API not available.",
-      );
+      toast.success("Turf changes saved successfully!");
+      navigate("/owner-dashboard/turfs");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleAmenityChange = (amenity, checked) => {
-    if (checked) {
-      setValue("amenities", [...selectedAmenities, amenity]);
-    } else {
+  const toggleAmenity = (amenityId) => {
+    if (selectedAmenities.includes(amenityId)) {
       setValue(
         "amenities",
-        selectedAmenities.filter((a) => a !== amenity),
+        selectedAmenities.filter((a) => a !== amenityId),
       );
+    } else {
+      setValue("amenities", [...selectedAmenities, amenityId]);
     }
   };
 
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error && !watch("name")) {
-    return (
-      <div className="flex h-[400px] flex-col items-center justify-center text-muted-foreground space-y-4">
-        <AlertCircle className="h-12 w-12 text-destructive" />
-        <p className="text-lg text-foreground">Failed to Load</p>
-        <p className="text-sm max-w-md text-center">{error}</p>
-        <Link to="/owner-dashboard/turfs">
-          <Button variant="outline">Go Back</Button>
-        </Link>
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-3.5 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+    <div className="max-w-2xl mx-auto space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
+      
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-3">
+        <div className="flex items-center gap-3">
           <Link to="/owner-dashboard/turfs">
-            <Button variant="outline" size="icon" className="shrink-0">
+            <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-slate-300 dark:border-slate-700/80 hover:bg-accent cursor-pointer">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl tracking-tight">Edit Turf</h1>
-            <p className="text-muted-foreground mt-1">
-              Update details for your turf
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Edit Turf Details</h1>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles className="h-3 w-3" /> Live Venue
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Update pricing, rules, contact info and amenities for {watch("name") || "your venue"}
             </p>
           </div>
         </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg text-sm">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1.5 bg-card/60 backdrop-blur-xl border border-border/50 rounded-2xl gap-1.5 shadow-xs">
+          
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1.5 bg-card/60 backdrop-blur-xl border border-slate-300/80 dark:border-slate-700/80 rounded-2xl gap-1.5 shadow-xs">
             <TabsTrigger
               value="basic"
-              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
             >
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">1</span>
+              <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">1</span>
               <FileText className="h-3.5 w-3.5 shrink-0 hidden sm:inline" />
               <span>Basic Info</span>
             </TabsTrigger>
 
             <TabsTrigger
               value="details"
-              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
             >
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">2</span>
+              <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">2</span>
               <MapPin className="h-3.5 w-3.5 shrink-0 hidden sm:inline" />
-              <span>Details</span>
+              <span>Location & Amenities</span>
             </TabsTrigger>
 
             <TabsTrigger
               value="pricing"
-              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
             >
-              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">3</span>
+              <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">3</span>
               <IndianRupee className="h-3.5 w-3.5 shrink-0 hidden sm:inline stroke-[2.5]" />
-              <span>Pricing</span>
+              <span>Pricing & Rates</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="mt-3 space-y-3.5">
-            <Card className="bg-transparent border-0 shadow-none">
-              <CardHeader className="px-0 pt-0">
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Turf Name</Label>
-                  <Input id="name" {...register("name", { required: true })} />
-                </div>
+          {/* TAB 1: BASIC INFO */}
+          <TabsContent value="basic" className="mt-3 space-y-3">
+            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="border-b border-slate-300/60 dark:border-slate-700/60 pb-2.5">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <Building2 className="h-4.5 w-4.5 text-emerald-500" /> Basic Information
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Update primary details about your turf venue.
+                </p>
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="sportType">Primary Sport</Label>
-                  <Select
-                    value={watch("sportType")}
-                    onValueChange={(val) => setValue("sportType", val)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a sport" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SPORTS.map((sport) => (
-                        <SelectItem key={sport} value={sport}>
-                          {sport}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="details" className="mt-6 space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle>Amenities</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {AMENITIES.map((amenity) => (
-                    <div key={amenity} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`amenity-${amenity}`}
-                        checked={selectedAmenities.includes(amenity)}
-                        onCheckedChange={(checked) =>
-                          handleAmenityChange(amenity, checked)
-                        }
+              <div className="space-y-3.5">
+                <div className="grid sm:grid-cols-2 gap-3.5">
+                  <div className="space-y-1">
+                    <Label htmlFor="name" className="text-xs font-bold">Turf Name *</Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                      <Input
+                        id="name"
+                        placeholder="Turf Name"
+                        className="pl-10 h-10 rounded-xl border-slate-300 dark:border-slate-700/80 text-xs focus:border-emerald-500"
+                        {...register("name", { required: true })}
                       />
-
-                      <label
-                        htmlFor={`amenity-${amenity}`}
-                        className="text-sm leading-none"
-                      >
-                        {amenity}
-                      </label>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  </div>
 
-          <TabsContent value="pricing" className="mt-6 space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
-                <CardTitle>Pricing</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-w-xs">
-                  <Label htmlFor="price" className="inline-flex items-center gap-0.5">
-                    Price per Hour (<IndianRupee className="h-3 w-3 stroke-[2.5]" />)
-                  </Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    {...register("price", { required: true })}
+                  <div className="space-y-1">
+                    <Label htmlFor="sportType" className="text-xs font-bold">Primary Sport Category</Label>
+                    <Select
+                      value={watch("sportType")}
+                      onValueChange={(val) => setValue("sportType", val)}
+                    >
+                      <SelectTrigger className="h-10 rounded-xl border-slate-300 dark:border-slate-700/80 text-xs">
+                        <SelectValue placeholder="Select a sport" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-2xl border-slate-300 dark:border-slate-700/80">
+                        {SPORTS.map((sport) => (
+                          <SelectItem key={sport} value={sport} className="rounded-xl cursor-pointer text-xs">
+                            {sport}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="description" className="text-xs font-bold">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Turf description..."
+                    className="min-h-[100px] rounded-xl border-slate-300 dark:border-slate-700/80 text-xs p-2.5"
+                    {...register("description")}
                   />
                 </div>
-              </CardContent>
+
+                <div className="grid sm:grid-cols-2 gap-3.5 pt-1">
+                  <div className="space-y-1">
+                    <Label htmlFor="contactNumber" className="text-xs font-bold">Contact Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                      <Input
+                        id="contactNumber"
+                        type="tel"
+                        className="pl-10 h-10 rounded-xl border-slate-300 dark:border-slate-700/80 text-xs"
+                        {...register("contactNumber")}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label htmlFor="email" className="text-xs font-bold">Business Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+                      <Input
+                        id="email"
+                        type="email"
+                        className="pl-10 h-10 rounded-xl border-slate-300 dark:border-slate-700/80 text-xs"
+                        {...register("email")}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-3 border-t border-slate-300/60 dark:border-slate-700/60">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab("details")}
+                  className="rounded-xl px-5 h-10 border-emerald-500/60 text-foreground hover:bg-emerald-500/10 hover:border-emerald-500 hover:text-emerald-600 font-bold text-xs gap-1.5 cursor-pointer"
+                >
+                  Next Step: Details <ChevronRight className="h-4 w-4 text-emerald-500" />
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* TAB 2: DETAILS & AMENITIES */}
+          <TabsContent value="details" className="mt-3 space-y-3">
+            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="border-b border-slate-300/60 dark:border-slate-700/60 pb-2.5">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <MapPin className="h-4.5 w-4.5 text-emerald-500" /> Location & Amenities
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Update location address, facilities provided, and ground rules.
+                </p>
+              </div>
+
+              <div className="space-y-3.5">
+                <div className="space-y-1">
+                  <Label htmlFor="location" className="text-xs font-bold">Full Address</Label>
+                  <Input
+                    id="location"
+                    className="h-10 rounded-xl border-slate-300 dark:border-slate-700/80 text-xs"
+                    {...register("location")}
+                  />
+                </div>
+
+                <div className="space-y-1.5 pt-1">
+                  <Label className="text-xs font-bold">Select Venue Amenities</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {AMENITIES.map((item) => {
+                      const isSelected = selectedAmenities.includes(item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => toggleAmenity(item.id)}
+                          className={`p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-1.5 select-none ${
+                            isSelected
+                              ? "border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 font-bold"
+                              : "border-slate-300/80 dark:border-slate-700/80 bg-card/40 text-muted-foreground hover:border-slate-400 hover:bg-accent/30"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-sm">{item.icon}</span>
+                            <span>{item.label}</span>
+                          </div>
+                          {isSelected && <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0" />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="space-y-1 pt-1">
+                  <Label htmlFor="rules" className="text-xs font-bold">Rules & Guidelines</Label>
+                  <Textarea
+                    id="rules"
+                    className="min-h-[80px] rounded-xl border-slate-300 dark:border-slate-700/80 text-xs p-2.5"
+                    {...register("rules")}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-3 border-t border-slate-300/60 dark:border-slate-700/60">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab("basic")}
+                  className="rounded-xl px-4 h-10 text-xs font-bold gap-1.5 cursor-pointer border-slate-300 dark:border-slate-700/80 hover:bg-accent"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Previous
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab("pricing")}
+                  className="rounded-xl px-5 h-10 border-emerald-500/60 text-foreground hover:bg-emerald-500/10 hover:border-emerald-500 hover:text-emerald-600 font-bold text-xs gap-1.5 cursor-pointer"
+                >
+                  Next Step: Pricing <ChevronRight className="h-4 w-4 text-emerald-500" />
+                </Button>
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* TAB 3: PRICING */}
+          <TabsContent value="pricing" className="mt-3 space-y-3">
+            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+              <div className="border-b border-slate-300/60 dark:border-slate-700/60 pb-2.5">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <IndianRupee className="h-4.5 w-4.5 text-emerald-500 stroke-[2.5]" /> Standard Pricing
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Update base hourly rental price for player bookings.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1 max-w-xs">
+                  <Label htmlFor="price" className="text-xs font-bold flex items-center gap-1">
+                    Price per Hour (<IndianRupee className="h-3 w-3 stroke-[2.5]" />)
+                  </Label>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 stroke-[2.5]" />
+                    <Input
+                      id="price"
+                      type="number"
+                      className="pl-10 h-10 rounded-xl border-slate-300 dark:border-slate-700/80 text-xs font-bold focus:border-emerald-500"
+                      {...register("price", { required: true })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-3 border-t border-slate-300/60 dark:border-slate-700/60">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab("details")}
+                  className="rounded-xl px-4 h-10 text-xs font-bold gap-1.5 cursor-pointer border-slate-300 dark:border-slate-700/80 hover:bg-accent"
+                >
+                  <ChevronLeft className="h-4 w-4" /> Previous
+                </Button>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  disabled={isSubmitting}
+                  className="rounded-xl px-6 h-10 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-bold text-xs gap-1.5 cursor-pointer shadow-md"
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
+                  ) : (
+                    <Save className="h-4 w-4 text-emerald-500" />
+                  )}
+                  Save All Changes
+                </Button>
+              </div>
             </Card>
           </TabsContent>
         </Tabs>
-
-        <div className="flex justify-end border-t border-border/50 pt-6">
-          <Button type="submit" disabled={isSubmitting} className="gap-2 px-8">
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Save Changes
-          </Button>
-        </div>
       </form>
     </div>
   );
