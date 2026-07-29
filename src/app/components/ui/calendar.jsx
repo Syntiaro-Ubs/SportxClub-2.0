@@ -108,7 +108,7 @@ function Calendar({
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
         range_end: cn("bg-accent rounded-r-md", defaultClassNames.range_end),
         today: cn(
-          "border border-emerald-600/60 text-primary font-bold rounded-full",
+          "text-emerald-600 dark:text-emerald-400 font-bold",
           defaultClassNames.today
         ),
         outside: cn(
@@ -210,7 +210,7 @@ function CalendarDayButton({
       data-range-middle={modifiers.range_middle}
       className={cn(
         textColorClass,
-        "data-[selected-single=true]:!bg-emerald-600 data-[selected-single=true]:!text-black data-[selected-single=true]:font-black data-[selected-single=true]:shadow-md data-[selected-single=true]:shadow-emerald-600/30 data-[selected-single=true]:rounded-full data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:!bg-emerald-600 data-[range-start=true]:!text-black data-[range-start=true]:rounded-full data-[range-end=true]:!bg-emerald-600 data-[range-end=true]:!text-black data-[range-end=true]:rounded-full flex items-center justify-center text-xs leading-none aspect-square h-8 w-8 min-w-8 rounded-full transition-all hover:bg-muted duration-200",
+        "data-[selected-single=true]:!bg-background data-[selected-single=true]:border-2 data-[selected-single=true]:border-emerald-500 data-[selected-single=true]:text-foreground data-[selected-single=true]:font-extrabold data-[selected-single=true]:shadow-xs data-[selected-single=true]:rounded-full data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:!bg-background data-[range-start=true]:border-2 data-[range-start=true]:border-emerald-500 data-[range-start=true]:!text-foreground data-[range-start=true]:rounded-full data-[range-end=true]:!bg-background data-[range-end=true]:border-2 data-[range-end=true]:border-emerald-500 data-[range-end=true]:!text-foreground data-[range-end=true]:rounded-full flex items-center justify-center text-xs leading-none aspect-square h-8 w-8 min-w-8 rounded-full transition-all hover:bg-muted duration-200",
         className
       )}
       {...props}

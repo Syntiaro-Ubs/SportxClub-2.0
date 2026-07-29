@@ -83,8 +83,13 @@ export function AdminTurfs() {
                       </TableCell>
                       <TableCell>{turf.business.ownerName || turf.personal.fullName}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600" onClick={() => handleApprove(turf.id)}>
-                          <CheckCircle className="w-4 h-4 mr-1.5" /> Approve
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-2 border-emerald-500 text-black dark:text-white bg-transparent hover:bg-emerald-500/10 font-bold rounded-xl gap-1.5 transition-all cursor-pointer"
+                          onClick={() => handleApprove(turf.id)}
+                        >
+                          <CheckCircle className="w-4 h-4 text-emerald-500" /> Approve
                         </Button>
                       </TableCell>
                     </TableRow>

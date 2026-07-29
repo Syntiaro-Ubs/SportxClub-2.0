@@ -768,7 +768,7 @@ export function TimeSlots() {
                 className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 rounded-2xl flex flex-col justify-between"
               >
                 {/* Card Header Section */}
-                <CardHeader className="border-b border-border/40 bg-muted/20 py-2.5 px-4">
+                <CardHeader className="border-b border-border/40 bg-muted/20 py-2.5 [.border-b]:pb-2.5 px-4">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                     {/* Left Side: Turf Title + Badges & Action Buttons */}
                     <div className="flex flex-col sm:flex-row sm:items-center flex-wrap gap-3.5">
@@ -830,7 +830,7 @@ export function TimeSlots() {
                 </CardHeader>
 
                 {/* Card Content Section */}
-                <CardContent className="px-4 py-3 relative flex-1">
+                <CardContent className="px-4 pt-2.5 pb-3 relative flex-1">
 
                   {/* Closed Overlay */}
                   {turf.status === 'Closed' && (
@@ -844,7 +844,7 @@ export function TimeSlots() {
                   )}
 
                   {/* Grid Slots */}
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
+                  <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
                     }`}>
                     {turf.slots.map((rawSlot, idx) => {
                       const slot = getEffectiveSlot(turf.id, rawSlot);
@@ -1270,9 +1270,9 @@ export function TimeSlots() {
               <button
                 type="button"
                 onClick={() => setCustomBlockForm(prev => ({ ...prev, blockType: "single" }))}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${customBlockForm.blockType === "single"
-                  ? "bg-emerald-500 text-black shadow-sm font-black"
-                  : "text-muted-foreground hover:bg-muted/40"
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${customBlockForm.blockType === "single"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-extrabold"
+                  : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
               >
                 Single Day Block
@@ -1280,9 +1280,9 @@ export function TimeSlots() {
               <button
                 type="button"
                 onClick={() => setCustomBlockForm(prev => ({ ...prev, blockType: "multiday" }))}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${customBlockForm.blockType === "multiday"
-                  ? "bg-emerald-500 text-black shadow-sm font-black"
-                  : "text-muted-foreground hover:bg-muted/40"
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${customBlockForm.blockType === "multiday"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-extrabold"
+                  : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
               >
                 Multi-Day Date Range
@@ -1373,19 +1373,20 @@ export function TimeSlots() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Start Time</Label>
-                  <div className="flex gap-2">
+                  <div className="flex items-center w-[140px] rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all">
                     <Input
                       value={customBlockForm.startTime}
                       onChange={(e) => setCustomBlockForm({ ...customBlockForm, startTime: e.target.value })}
-                      placeholder="e.g. 10:15"
-                      className="h-10 rounded-lg text-sm flex-1"
+                      placeholder="10:15"
+                      className="h-10 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm flex-1 bg-transparent shadow-none px-3"
                       required
                     />
+                    <div className="h-5 w-px bg-border/60 shrink-0" />
                     <Select
                       value={customBlockForm.startPeriod}
                       onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, startPeriod: val })}
                     >
-                      <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
+                      <SelectTrigger className="w-[62px] h-10 border-0 rounded-none focus:ring-0 focus:ring-offset-0 text-sm bg-transparent shadow-none px-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1398,19 +1399,20 @@ export function TimeSlots() {
 
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">End Time</Label>
-                  <div className="flex gap-2">
+                  <div className="flex items-center w-[140px] rounded-xl border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary transition-all">
                     <Input
                       value={customBlockForm.endTime}
                       onChange={(e) => setCustomBlockForm({ ...customBlockForm, endTime: e.target.value })}
-                      placeholder="e.g. 12:10"
-                      className="h-10 rounded-lg text-sm flex-1"
+                      placeholder="12:10"
+                      className="h-10 border-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 text-sm flex-1 bg-transparent shadow-none px-3"
                       required
                     />
+                    <div className="h-5 w-px bg-border/60 shrink-0" />
                     <Select
                       value={customBlockForm.endPeriod}
                       onValueChange={(val) => setCustomBlockForm({ ...customBlockForm, endPeriod: val })}
                     >
-                      <SelectTrigger className="w-[75px] h-10 rounded-lg text-sm">
+                      <SelectTrigger className="w-[62px] h-10 border-0 rounded-none focus:ring-0 focus:ring-offset-0 text-sm bg-transparent shadow-none px-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

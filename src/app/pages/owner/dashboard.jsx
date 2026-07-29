@@ -118,6 +118,21 @@ const mockSportsPie = [
   { name: 'Basketball', value: 5, color: '#ef4444', count: 6 },
 ];
 
+const renderCustomYAxisTick = ({ x, y, payload }) => {
+  const value = payload.value;
+  const formattedVal = value >= 1000 ? `${value / 1000}k` : value;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <svg x="-36" y="-7" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black dark:text-white">
+        <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4.5 4.5 0 0 0 0-9" />
+      </svg>
+      <text x="-24" y="2" textAnchor="start" fontSize="10" fill="currentColor" className="text-black dark:text-white" fontWeight="600">
+        {formattedVal}
+      </text>
+    </g>
+  );
+};
+
 const mockHourlyOccupancy = [
   { hour: '06:00 AM', rate: 25 },
   { hour: '08:00 AM', rate: 45 },
@@ -535,31 +550,31 @@ export function Dashboard() {
         {/* Card 1: Gross Revenue */}
         <Card
           onClick={() => navigate("/owner-dashboard/revenue")}
-          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
+          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Total Revenue</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-2xl font-black tracking-tight text-foreground flex items-center">
-                    <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5" />
+                  <h3 className="text-xl font-black tracking-tight text-foreground flex items-center">
+                    <IndianRupee className="h-4 w-4 stroke-[2.5] shrink-0 mr-0.5" />
                     {isTestMode ? "0" : (data?.stats?.monthlyRevenue || 184200).toLocaleString()}
                   </h3>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center">
+              <div className="flex items-center justify-center">
                 <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
               </div>
             </div>
 
-            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-3 items-center">
-                <span>Online: <strong className="text-foreground font-bold">{isTestMode ? "₹0" : "₹139K"}</strong></span>
+            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-2.5 items-center">
+                <span className="flex items-center gap-0.5">Online: <strong className="text-foreground font-bold inline-flex items-center gap-0.5 ml-0.5"><IndianRupee className="h-2.5 w-2.5 shrink-0 stroke-[2.5]" />{isTestMode ? "0" : "139K"}</strong></span>
                 <span className="opacity-30">|</span>
-                <span>Cash: <strong className="text-foreground font-bold">{isTestMode ? "₹0" : "₹45K"}</strong></span>
+                <span className="flex items-center gap-0.5">Cash: <strong className="text-foreground font-bold inline-flex items-center gap-0.5 ml-0.5"><IndianRupee className="h-2.5 w-2.5 shrink-0 stroke-[2.5]" />{isTestMode ? "0" : "45K"}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Revenue
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -570,57 +585,57 @@ export function Dashboard() {
         {/* Card 2: Bookings Count */}
         <Card
           onClick={() => navigate("/owner-dashboard/bookings")}
-          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
+          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Today's Bookings</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-2xl font-black tracking-tight text-foreground">
+                  <h3 className="text-xl font-black tracking-tight text-foreground">
                     {isTestMode ? 0 : (data?.stats?.todaysBookings || 18)} Bookings
                   </h3>
                 </div>
               </div>
 
               {/* Progress Ring */}
-              <div className="relative flex items-center justify-center shrink-0 w-11 h-11">
-                <svg className="w-11 h-11 transform -rotate-90">
+              <div className="relative flex items-center justify-center shrink-0 w-9 h-9">
+                <svg className="w-9 h-9 transform -rotate-90">
                   <circle
-                    cx="22"
-                    cy="22"
-                    r={18}
+                    cx="18"
+                    cy="18"
+                    r={14}
                     stroke="currentColor"
                     className="text-muted/20"
-                    strokeWidth="3.5"
+                    strokeWidth="3"
                     fill="transparent"
                   />
                   <circle
-                    cx="22"
-                    cy="22"
-                    r={18}
+                    cx="18"
+                    cy="18"
+                    r={14}
                     stroke="currentColor"
-                    strokeWidth="4"
+                    strokeWidth="3.5"
                     fill="transparent"
-                    strokeDasharray={113}
-                    strokeDashoffset={113 - (113 * progressPercentage) / 100}
+                    strokeDasharray={88}
+                    strokeDashoffset={88 - (88 * progressPercentage) / 100}
                     strokeLinecap="round"
                     className="text-emerald-500 transition-all duration-500"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">{progressPercentage}%</span>
+                  <span className="text-[8px] font-black text-emerald-600 dark:text-emerald-400">{progressPercentage}%</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-2.5 items-center">
-                <span>Confirmed: <strong className="text-foreground font-bold">{isTestMode ? 0 : 14}</strong></span>
+                <span>Confirmed: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : 14}</strong></span>
                 <span className="opacity-30">·</span>
-                <span>Pending: <strong className="text-amber-500 font-bold">{isTestMode ? 0 : 4}</strong></span>
+                <span>Pending: <strong className="text-amber-500 font-bold ml-0.5">{isTestMode ? 0 : 4}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Details
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -631,14 +646,14 @@ export function Dashboard() {
         {/* Card 3: Active Turfs */}
         <Card
           onClick={() => navigate("/owner-dashboard/turfs")}
-          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
+          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Active Turfs</p>
                 <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-2xl font-black tracking-tight text-foreground">
+                  <h3 className="text-xl font-black tracking-tight text-foreground">
                     {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}
                   </h3>
                   <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-0.5">
@@ -646,19 +661,19 @@ export function Dashboard() {
                   </span>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center">
+              <div className="flex items-center justify-center">
                 <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
 
-            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-2 items-center">
-                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold">
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9px]">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Operational
                 </span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Manage
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -669,14 +684,14 @@ export function Dashboard() {
         {/* Card 4: Quality Feedback */}
         <Card
           onClick={() => navigate("/owner-dashboard/reviews")}
-          className="relative overflow-hidden border border-amber-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
+          className="relative overflow-hidden border border-amber-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
+          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Turf Quality Rating</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
+                  <h3 className="text-xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
                   <div className="flex items-center text-amber-500">
                     {[1, 2, 3, 4, 5].map((starIndex) => {
                       const ratingVal = isTestMode ? 0 : (data?.stats?.averageRating || 4.8);
@@ -685,7 +700,7 @@ export function Dashboard() {
                       return (
                         <Star
                           key={starIndex}
-                          className={`h-4 w-4 ${isFilled
+                          className={`h-3.5 w-3.5 ${isFilled
                             ? "fill-amber-500 text-amber-500"
                             : isHalf
                               ? "fill-amber-500/50 text-amber-500"
@@ -697,16 +712,16 @@ export function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center">
+              <div className="flex items-center justify-center">
                 <Star className="h-5 w-5 text-amber-500 fill-amber-500/20" />
               </div>
             </div>
 
-            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-2 items-center">
-                <span>Reviews: <strong className="text-foreground font-bold">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
+                <span>Reviews: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Reviews
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -726,22 +741,21 @@ export function Dashboard() {
         {/* Timeframe Filter Pills */}
         <div className="flex items-center gap-2 flex-wrap">
           {[
-            { key: "today",    label: "Today" },
+            { key: "today", label: "Today" },
             { key: "tomorrow", label: "Tomorrow" },
-            { key: "week",     label: "Week" },
-            { key: "month",    label: "Month" },
-            { key: "6month",   label: "6 Months" },
-            { key: "year",     label: "Year" },
-            { key: "custom",   label: "📅 Custom" },
+            { key: "week", label: "Week" },
+            { key: "month", label: "Month" },
+            { key: "6month", label: "6 Months" },
+            { key: "year", label: "Year" },
+            { key: "custom", label: "📅 Custom" },
           ].map((tf) => (
             <button
               key={tf.key}
               onClick={() => setTimeframe(tf.key)}
-              className={`px-4 py-1.5 rounded-md text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border-2 ${
-                timeframe === tf.key
+              className={`px-4 py-1.5 rounded-md text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border-2 ${timeframe === tf.key
                   ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
                   : "bg-background/50 text-muted-foreground border-border/50 hover:border-emerald-500"
-              }`}
+                }`}
             >
               {tf.label}
             </button>
@@ -777,7 +791,7 @@ export function Dashboard() {
               <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
             </div>
             <div className="flex-1 flex flex-col justify-center">
-              <div className="relative h-[210px] flex items-center justify-center">
+              <div className="relative h-[210px] w-full max-w-[220px] mx-auto mt-5 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -801,12 +815,12 @@ export function Dashboard() {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute flex flex-col items-center justify-center text-center">
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                   <span className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
                   <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+              <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2 text-xs">
                 {sportPopularityData.map((item) => (
                   <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
                     <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
@@ -838,7 +852,7 @@ export function Dashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
                     <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
                       itemStyle={{ color: "var(--foreground)" }}
@@ -882,55 +896,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* -------------------------------------------------------------
-          Middle Row: Recent Activity
-          ------------------------------------------------------------- */}
-      <div className="grid lg:grid-cols-1 gap-6">
-        {/* Recent Activity List */}
-        <Card className="lg:col-span-1 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden flex flex-col justify-between">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-border/40 p-6 bg-muted/10">
-            <div>
-              <CardTitle className="text-lg font-bold tracking-tight">System Logs & Activities</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Live real-time operational feeds</p>
-            </div>
-            <Button variant="ghost" size="sm" className="rounded-xl border border-border/40 hover:bg-muted/50 h-8 text-xs font-semibold">
-              View Audit logs
-            </Button>
-          </CardHeader>
-          <CardContent className="p-0 flex-1">
-            <div className="divide-y divide-border/30">
-              {data?.recentActivity?.bookings?.map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 p-5 hover:bg-muted/20 transition-all cursor-pointer group"
-                >
-                  <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-inner">
-                    {activity.title.includes("Payment") ? (
-                      <IndianRupee className="h-4.5 w-4.5 text-primary" />
-                    ) : activity.title.includes("Review") ? (
-                      <Star className="h-4.5 w-4.5 text-amber-500 fill-amber-500/20" />
-                    ) : activity.title.includes("Cancel") ? (
-                      <Ban className="h-4.5 w-4.5 text-rose-500" />
-                    ) : (
-                      <CheckCircle2 className="h-4.5 w-4.5 text-emerald-500" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-1">
-                      {activity.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0 bg-background/50 px-2.5 py-1 rounded-full border border-border/40">
-                    <Clock className="h-3 w-3 text-muted-foreground" />
-                    {activity.time}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+
       {/* -------------------------------------------------------------
           Bottom Section: Advanced Interactive Booking Feed / Live Table
           ------------------------------------------------------------- */}

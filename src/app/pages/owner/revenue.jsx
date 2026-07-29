@@ -57,6 +57,21 @@ import {
   Bar
 } from "recharts";
 
+const renderCustomYAxisTick = ({ x, y, payload }) => {
+  const value = payload.value;
+  const formattedVal = value >= 1000 ? `${value / 1000}k` : value;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <svg x="-36" y="-7" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black dark:text-white">
+        <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4.5 4.5 0 0 0 0-9" />
+      </svg>
+      <text x="-24" y="2" textAnchor="start" fontSize="10" fill="currentColor" className="text-black dark:text-white" fontWeight="600">
+        {formattedVal}
+      </text>
+    </g>
+  );
+};
+
 // TODO: Replace with actual auth context ownerId
 const OWNER_ID = "owner-123";
 
@@ -283,14 +298,14 @@ export function Revenue() {
   const trendFooter = useMemo(() => {
     switch (timeframe) {
       case "today":
-        return { peak: "10:00 AM", avg: "₹1.4K", label: "Peak Hour", avgLabel: "Est. Hourly Avg" };
+        return { peak: "10:00 AM", avg: "1.4K", label: "Peak Hour", avgLabel: "Est. Hourly Avg" };
       case "monthly":
-        return { peak: "Week 3", avg: "₹46.0K", label: "Peak Period", avgLabel: "Est. Monthly Avg" };
+        return { peak: "Week 3", avg: "46.0K", label: "Peak Period", avgLabel: "Est. Monthly Avg" };
       case "yearly":
-        return { peak: "December", avg: "₹187.9K", label: "Peak Month", avgLabel: "Est. Yearly Avg" };
+        return { peak: "December", avg: "187.9K", label: "Peak Month", avgLabel: "Est. Yearly Avg" };
       case "weekly":
       default:
-        return { peak: "Saturday", avg: "₹26.5K", label: "Peak Day", avgLabel: "Est. Weekly Avg" };
+        return { peak: "Saturday", avg: "26.5K", label: "Peak Day", avgLabel: "Est. Weekly Avg" };
     }
   }, [timeframe]);
 
@@ -404,7 +419,7 @@ export function Revenue() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-7xl mx-auto theme-adaptive pb-16 overflow-hidden px-1">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-7xl mx-auto theme-adaptive pb-16 overflow-hidden px-1">
 
       {/* Hidden svg gradients declaration block */}
       <svg className="absolute w-0 h-0 invisible">
@@ -416,20 +431,8 @@ export function Revenue() {
         </defs>
       </svg>
 
-      {/* -------------------------------------------------------------
-          Header Title & Workspace Switcher Row
-          ------------------------------------------------------------- */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-6">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
-            Revenue Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Analyze facility returns, payment status feeds, and download transaction logs.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 self-end sm:self-auto">
+      <div className="flex items-center justify-end mb-2">
+        <div className="flex flex-wrap items-center gap-3">
           <Button
             onClick={handleExport}
             variant="outline"
@@ -449,7 +452,7 @@ export function Revenue() {
         {/* Widget 1: Total Revenue */}
         <Card
           onClick={() => setStatusFilter("all")}
-          className={`bg-[#eff5ff] dark:bg-blue-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer ${statusFilter === "all" ? "ring-2 ring-[#2563eb] ring-offset-2 ring-offset-background" : ""}`}
+          className={`bg-[#eff5ff] dark:bg-blue-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer ${statusFilter === "all" ? "ring-2 ring-[#2563eb] ring-offset-2 ring-offset-background" : ""}`}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -471,7 +474,7 @@ export function Revenue() {
         {/* Widget 2: Received Revenue */}
         <Card
           onClick={() => setStatusFilter("completed")}
-          className={`bg-[#ecfdf5] dark:bg-emerald-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer ${statusFilter === "completed" ? "ring-2 ring-[#059669] ring-offset-2 ring-offset-background" : ""}`}
+          className={`bg-[#ecfdf5] dark:bg-emerald-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer ${statusFilter === "completed" ? "ring-2 ring-[#059669] ring-offset-2 ring-offset-background" : ""}`}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -494,7 +497,7 @@ export function Revenue() {
         <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
           <Card
             onClick={() => setStatusFilter("pending")}
-            className={`bg-[#f4fbf7] dark:bg-slate-900/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer group hover:-translate-y-0.5 ${statusFilter === "pending" ? "ring-2 ring-[#0f172a] ring-offset-2 ring-offset-background" : ""}`}
+            className={`bg-[#f4fbf7] dark:bg-slate-900/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer group hover:-translate-y-0.5 ${statusFilter === "pending" ? "ring-2 ring-[#0f172a] ring-offset-2 ring-offset-background" : ""}`}
           >
             <div className="flex items-start justify-between">
               <div className="space-y-1">
@@ -502,8 +505,8 @@ export function Revenue() {
                   Upcoming Settlements
                   <Info className="h-3 w-3 opacity-60" />
                 </p>
-                <h3 className="text-3xl font-medium tracking-tight text-[#0f172a] dark:text-slate-100 mt-1 flex items-center">
-                  <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#059669]" />
+                <h3 className="text-3xl font-medium tracking-tight text-[#059669] dark:text-emerald-400 mt-1 flex items-center">
+                  <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
                   {pendingRevenue.toLocaleString('en-IN')}
                 </h3>
               </div>
@@ -560,8 +563,9 @@ export function Revenue() {
                 </div>
                 <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-primary/20 pt-2 sm:pt-0 sm:pl-4">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Gross Pending</span>
-                  <p className="text-2xl font-black text-primary font-mono">
-                    ₹{mockSettlementData.totalGross.toLocaleString('en-IN')}
+                  <p className="text-2xl font-black text-primary font-mono flex items-center justify-start sm:justify-end gap-0.5">
+                    <IndianRupee className="h-5 w-5 shrink-0 stroke-[2.5]" />
+                    {mockSettlementData.totalGross.toLocaleString('en-IN')}
                   </p>
                 </div>
               </div>
@@ -597,7 +601,7 @@ export function Revenue() {
 
                       <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 border-border/20 pt-2 sm:pt-0">
                         <div className="text-left sm:text-right">
-                          <p className="font-mono font-bold text-sm text-foreground">₹{item.grossAmount}</p>
+                          <p className="font-mono font-bold text-sm text-foreground flex items-center justify-start sm:justify-end gap-0.5"><IndianRupee className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" />{item.grossAmount}</p>
                           <span className="text-[10px] text-muted-foreground uppercase font-semibold">{item.paymentMode}</span>
                         </div>
                         <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5 whitespace-nowrap">
@@ -616,20 +620,20 @@ export function Revenue() {
                 </h5>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Gross Upcoming Revenue</span>
-                  <span className="font-mono font-semibold text-foreground">₹{mockSettlementData.calculations.gross.toFixed(2)}</span>
+                  <span className="font-mono font-semibold text-foreground inline-flex items-center gap-0.5"><IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gross.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Payment Gateway Fee (2%)</span>
-                  <span className="font-mono font-semibold text-rose-500">-₹{mockSettlementData.calculations.gatewayFee.toFixed(2)}</span>
+                  <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gatewayFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>GST on Gateway Fee (18%)</span>
-                  <span className="font-mono font-semibold text-rose-500">-₹{mockSettlementData.calculations.gstOnFee.toFixed(2)}</span>
+                  <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gstOnFee.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-border/40 pt-2 flex justify-between text-sm font-bold text-foreground">
                   <span>Net Credited to Bank Account</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base">
-                    ₹{mockSettlementData.calculations.netPayout.toFixed(2)}
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base inline-flex items-center gap-0.5">
+                    <IndianRupee className="h-4 w-4 shrink-0 stroke-[2.5]" />{mockSettlementData.calculations.netPayout.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -658,7 +662,7 @@ export function Revenue() {
         {/* Widget 4: Cancellations */}
         <Card
           onClick={() => setStatusFilter("failed")}
-          className={`bg-[#fff1f2] dark:bg-rose-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-5 min-h-[140px] cursor-pointer ${statusFilter === "failed" ? "ring-2 ring-[#e11d48] ring-offset-2 ring-offset-background" : ""}`}
+          className={`bg-[#fff1f2] dark:bg-rose-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer ${statusFilter === "failed" ? "ring-2 ring-[#e11d48] ring-offset-2 ring-offset-background" : ""}`}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-1">
@@ -682,10 +686,10 @@ export function Revenue() {
       {/* -------------------------------------------------------------
           Two-column grid: Chart on Right, Transactions List on Left
           ------------------------------------------------------------- */}
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
 
         {/* Top Part: Dynamic Revenue Trend Chart */}
-        <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden rounded-2xl p-6 flex flex-col justify-between">
+        <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden rounded-2xl p-5 pb-3 [&:last-child]:pb-3 flex flex-col justify-between">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <CardTitle className="text-lg font-bold tracking-tight text-foreground capitalize">{timeframe} Revenue Trend</CardTitle>
@@ -698,11 +702,10 @@ export function Revenue() {
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer border-2 relative ${
-                    timeframe === tf
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer border-2 relative ${timeframe === tf
                       ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shadow-xs"
                       : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/40"
-                  }`}
+                    }`}
                 >
                   {tf}
                   {tf === "yearly" && (
@@ -713,9 +716,9 @@ export function Revenue() {
             </div>
           </div>
 
-          <div className="h-[280px] sm:h-[320px] w-full mt-6 -ml-2">
+          <div className="h-[200px] sm:h-[220px] w-full mt-3 -ml-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 15, right: 15, left: -15, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revenueGradChart" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor={chartColor} stopOpacity={0.35} />
@@ -723,8 +726,8 @@ export function Revenue() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={4} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
                 <Tooltip
                   contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'hsl(var(--border))', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
                   itemStyle={{ color: 'var(--foreground)' }}
@@ -745,14 +748,17 @@ export function Revenue() {
             </ResponsiveContainer>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-4 border-t border-border/40 pt-4">
+          <div className="mt-3 grid grid-cols-2 gap-4 border-t border-border/40 pt-3">
             <div>
               <p className="text-xs text-muted-foreground font-medium">{trendFooter.label}</p>
               <p className="text-base font-extrabold text-foreground mt-0.5">{trendFooter.peak}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground font-medium">{trendFooter.avgLabel}</p>
-              <p className="text-base font-extrabold text-foreground mt-0.5">{trendFooter.avg}</p>
+              <p className="text-base font-extrabold text-foreground mt-0.5 flex items-center justify-end">
+                <IndianRupee className="h-4 w-4 stroke-[2.5] shrink-0 mr-0.5" />
+                {trendFooter.avg}
+              </p>
             </div>
           </div>
         </Card>

@@ -24,7 +24,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../../components/ui/tabs";
-import { ArrowLeft, Save, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Save, Loader2, AlertCircle, FileText, MapPin, IndianRupee } from "lucide-react";
 import { turfService } from "../../../services/turf.service";
 
 const OWNER_ID = "owner-123";
@@ -150,7 +150,7 @@ export function EditTurf() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-3.5 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link to="/owner-dashboard/turfs">
@@ -173,23 +173,40 @@ export function EditTurf() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted/50">
-            <TabsTrigger value="basic" className="py-2.5">
-              Basic Info
+          <TabsList className="grid w-full grid-cols-3 h-auto p-1.5 bg-card/60 backdrop-blur-xl border border-border/50 rounded-2xl gap-1.5 shadow-xs">
+            <TabsTrigger
+              value="basic"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">1</span>
+              <FileText className="h-3.5 w-3.5 shrink-0 hidden sm:inline" />
+              <span>Basic Info</span>
             </TabsTrigger>
-            <TabsTrigger value="details" className="py-2.5">
-              Details
+
+            <TabsTrigger
+              value="details"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">2</span>
+              <MapPin className="h-3.5 w-3.5 shrink-0 hidden sm:inline" />
+              <span>Details</span>
             </TabsTrigger>
-            <TabsTrigger value="pricing" className="py-2.5">
-              Pricing
+
+            <TabsTrigger
+              value="pricing"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">3</span>
+              <IndianRupee className="h-3.5 w-3.5 shrink-0 hidden sm:inline stroke-[2.5]" />
+              <span>Pricing</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="mt-6 space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
+          <TabsContent value="basic" className="mt-3 space-y-3.5">
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Basic Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -257,7 +274,9 @@ export function EditTurf() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-w-xs">
-                  <Label htmlFor="price">Price per Hour (₹)</Label>
+                  <Label htmlFor="price" className="inline-flex items-center gap-0.5">
+                    Price per Hour (<IndianRupee className="h-3 w-3 stroke-[2.5]" />)
+                  </Label>
                   <Input
                     id="price"
                     type="number"

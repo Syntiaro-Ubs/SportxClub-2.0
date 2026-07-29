@@ -212,64 +212,62 @@ export function StaffManagement() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto theme-adaptive pb-16">
+    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto theme-adaptive pb-16">
       {/* Header Section */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
             Staff & Job Roles
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-0.5 text-sm">
             Manage your turf employees, assign roles, and track their active status.
           </p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="rounded-xl font-bold px-5 py-6 shadow-md hover:scale-[1.02] transition-transform flex items-center gap-2">
-          <Plus className="w-5 h-5" />
+        <Button onClick={() => handleOpenModal()} className="border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 rounded-xl font-bold px-4 h-10 transition-all flex items-center gap-2 cursor-pointer shadow-xs self-start sm:self-auto">
+          <Plus className="w-4 h-4" />
           Add Staff
         </Button>
       </div>
 
       {/* Search Toolbar */}
-      <div className="flex bg-card/20 p-4 rounded-2xl border border-border/40 backdrop-blur-md shadow-sm">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search staff by name, role, or turf..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 rounded-xl bg-background/50 border-border/40 focus:border-primary/50 text-sm w-full"
-          />
-        </div>
+      <div className="relative w-full md:w-96 mt-2">
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600 dark:text-emerald-400" />
+        <Input
+          placeholder="Search staff by name, role, or turf..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 h-10 rounded-xl bg-background border-2 border-emerald-500/40 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm w-full shadow-xs"
+        />
       </div>
 
       {/* Staff Grid/List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredStaff.length > 0 ? (
           filteredStaff.map((staff) => (
             <Card key={staff.id} className="border-border/40 bg-card/30 backdrop-blur-xl shadow-md transition-all duration-300 hover:shadow-lg rounded-2xl overflow-hidden group">
               <CardContent className="p-0">
-                <div className="flex items-start p-5 gap-4">
+                <div className="flex items-start p-4 gap-3">
                   {/* Avatar */}
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                    <User className="h-6 w-6 text-primary" />
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                    <User className="h-5 w-5 text-primary" />
                   </div>
-                  
+
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-lg font-bold text-foreground truncate">
+                        <h3 className="text-base font-bold text-foreground truncate">
                           {staff.firstName} {staff.lastName}
                         </h3>
-                        <Badge variant="outline" className="mt-1 bg-muted/40 border-border/60 text-xs">
+                        <Badge variant="outline" className="mt-0.5 bg-muted/40 border-border/60 text-[11px]">
                           {staff.role}
                         </Badge>
                       </div>
-                      
+
                       {/* Actions Menu */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg -mt-1 -mr-2 text-muted-foreground hover:text-foreground">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg -mt-1 -mr-2 text-muted-foreground hover:text-foreground">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -284,7 +282,7 @@ export function StaffManagement() {
                       </DropdownMenu>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="mt-3 space-y-1.5 text-xs">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{staff.phone}</span>
@@ -453,15 +451,13 @@ export function StaffManagement() {
                     <div
                       key={perm.id}
                       onClick={() => togglePermission(perm.id)}
-                      className={`flex items-start gap-2.5 p-2 rounded-lg border transition-all cursor-pointer select-none ${
-                        isChecked
-                          ? "bg-emerald-500/10 border-emerald-500/40 text-foreground shadow-2xs"
-                          : "bg-background/50 border-border/40 text-muted-foreground hover:bg-accent/40"
-                      }`}
+                      className={`flex items-start gap-2.5 p-2 rounded-lg border transition-all cursor-pointer select-none ${isChecked
+                        ? "bg-emerald-500/10 border-emerald-500/40 text-foreground shadow-2xs"
+                        : "bg-background/50 border-border/40 text-muted-foreground hover:bg-accent/40"
+                        }`}
                     >
-                      <div className={`mt-0.5 h-4 w-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
-                        isChecked ? "bg-emerald-500 border-emerald-500 text-white" : "border-border/60 bg-background"
-                      }`}>
+                      <div className={`mt-0.5 h-4 w-4 rounded flex items-center justify-center border shrink-0 transition-colors ${isChecked ? "bg-emerald-500 border-emerald-500 text-white" : "border-border/60 bg-background"
+                        }`}>
                         {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
                       </div>
                       <div className="space-y-0.5">

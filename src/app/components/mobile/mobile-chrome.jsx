@@ -172,14 +172,14 @@ export function MobileAppBar() {
                   trigger={
                     <button
                       type="button"
-                      className="group relative flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 active:opacity-70 text-left leading-normal cursor-pointer transition"
+                      className="group relative flex items-center gap-1 text-xs font-bold text-black dark:text-white active:opacity-70 text-left leading-normal cursor-pointer transition"
                     >
                       <MapPin className="h-4 w-4 shrink-0 text-emerald-500" />
-                      <span className="truncate max-w-[100px] leading-normal font-bold text-foreground">
+                      <span className="truncate max-w-[100px] leading-normal font-bold text-black dark:text-white">
                         {city === "All" ? "All Areas" : city}
                       </span>
                       <ChevronDown
-                        className="h-3.5 w-3.5 shrink-0 text-foreground transition-transform duration-200"
+                        className="h-3.5 w-3.5 shrink-0 text-black dark:text-white transition-transform duration-200"
                       />
                     </button>
                   }

@@ -67,10 +67,10 @@ function CitySelector() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] md:text-[14px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer transition"
+        className="group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] md:text-[14px] font-medium text-black dark:text-white active:opacity-70 text-left leading-none cursor-pointer transition"
       >
-        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0" />
-        <span className="truncate max-w-[120px] leading-none">
+        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-emerald-600" />
+        <span className="truncate max-w-[120px] leading-none text-black dark:text-white">
           {city === "All" ? "All Areas" : city}
         </span>
         <ChevronDown
@@ -102,11 +102,10 @@ function CitySelector() {
                     <button
                       key={c}
                       onClick={() => handleCitySelect(c)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs  transition cursor-pointer ${
-                        isSelected
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs  transition cursor-pointer ${isSelected
                           ? "bg-primary/10 text-primary"
                           : "text-foreground hover:bg-accent"
-                      }`}
+                        }`}
                     >
                       <span>{c === "All" ? "All Cities" : c}</span>
                       {isSelected && (
@@ -175,11 +174,10 @@ export function Layout() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                    isActive
+                  className={`group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isActive
                       ? "text-primary"
                       : "text-muted-foreground hover:text-primary"
-                  }`}
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{item.name}</span>
@@ -210,7 +208,7 @@ export function Layout() {
             </Link>
           ) : (
             <Link to="/login">
-              <Button 
+              <Button
                 variant="outline"
                 className="rounded-full bg-transparent border border-emerald-600 text-foreground hover:bg-transparent hover:text-foreground hover:opacity-80 transition-all px-5 text-sm font-semibold"
               >
@@ -231,19 +229,18 @@ export function Layout() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
-          className={`flex-1 md:pb-0 ${
-            hideMobileNav
+          className={`flex-1 md:pb-0 ${hideMobileNav
               ? "pb-0"
               : "pb-[calc(104px+env(safe-area-inset-bottom))]"
-          }`}
+            }`}
         >
           <div
             className={
               location.pathname.startsWith("/player-dashboard") ||
-              location.pathname.startsWith("/venues") ||
-              location.pathname.startsWith("/payment") ||
-              location.pathname.startsWith("/squad-booking") ||
-              location.pathname.startsWith("/booking-success")
+                location.pathname.startsWith("/venues") ||
+                location.pathname.startsWith("/payment") ||
+                location.pathname.startsWith("/squad-booking") ||
+                location.pathname.startsWith("/booking-success")
                 ? "w-full"
                 : "px-4 py-5 md:px-6 md:py-6 lg:px-8 md:mx-auto md:max-w-7xl"
             }

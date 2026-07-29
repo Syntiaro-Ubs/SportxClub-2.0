@@ -26,7 +26,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../../components/ui/tabs";
-import { ArrowLeft, Upload, Save, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Upload, Save, Send, Loader2, FileText, MapPin, IndianRupee, Camera } from "lucide-react";
 import { turfService } from "../../../services/turf.service";
 
 const OWNER_ID = "owner-123";
@@ -108,7 +108,7 @@ export function AddTurf() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-3.5 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
         <Link to="/owner-dashboard/turfs">
           <Button variant="outline" size="icon" className="shrink-0">
@@ -129,32 +129,55 @@ export function AddTurf() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted/50">
-            <TabsTrigger value="basic" className="py-2.5">
-              Basic Info
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1.5 bg-card/60 backdrop-blur-xl border border-border/50 rounded-2xl gap-1.5 shadow-xs">
+            <TabsTrigger
+              value="basic"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">1</span>
+              <FileText className="h-3.5 w-3.5 shrink-0 hidden sm:inline" />
+              <span>Basic Info</span>
             </TabsTrigger>
-            <TabsTrigger value="details" className="py-2.5">
-              Details & Rules
+
+            <TabsTrigger
+              value="details"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">2</span>
+              <MapPin className="h-3.5 w-3.5 shrink-0 hidden sm:inline" />
+              <span>Details & Rules</span>
             </TabsTrigger>
-            <TabsTrigger value="pricing" className="py-2.5">
-              Pricing & Hours
+
+            <TabsTrigger
+              value="pricing"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">3</span>
+              <IndianRupee className="h-3.5 w-3.5 shrink-0 hidden sm:inline stroke-[2.5]" />
+              <span>Pricing & Hours</span>
             </TabsTrigger>
-            <TabsTrigger value="media" className="py-2.5">
-              Photos
+
+            <TabsTrigger
+              value="media"
+              className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/30"
+            >
+              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">4</span>
+              <Camera className="h-3.5 w-3.5 shrink-0 hidden sm:inline" />
+              <span>Photos</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="basic" className="mt-6 space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
+          <TabsContent value="basic" className="mt-3 space-y-3.5">
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Basic Information</CardTitle>
                 <CardDescription>
                   The core details about your turf.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="px-0 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Turf Name *</Label>
                   <Input
@@ -225,12 +248,12 @@ export function AddTurf() {
             </div>
           </TabsContent>
 
-          <TabsContent value="details" className="mt-6 space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
+          <TabsContent value="details" className="mt-3 space-y-3.5">
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Location</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="px-0 space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="location">Full Address *</Label>
                   <Input
@@ -252,12 +275,12 @@ export function AddTurf() {
               </CardContent>
             </Card>
 
-            <Card className="border-border/50">
-              <CardHeader>
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Amenities</CardTitle>
                 <CardDescription>Select all that apply</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {AMENITIES.map((amenity) => (
                     <div key={amenity} className="flex items-center space-x-2">
@@ -281,11 +304,11 @@ export function AddTurf() {
               </CardContent>
             </Card>
 
-            <Card className="border-border/50">
-              <CardHeader>
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Rules & Regulations</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="px-0 space-y-2">
                 <Textarea
                   id="rules"
                   placeholder="e.g., Non-marking shoes only. No smoking..."
@@ -309,15 +332,17 @@ export function AddTurf() {
             </div>
           </TabsContent>
 
-          <TabsContent value="pricing" className="mt-6 space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
+          <TabsContent value="pricing" className="mt-3 space-y-3.5">
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Pricing</CardTitle>
                 <CardDescription>Set your standard hourly rate</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="px-0 space-y-4">
                 <div className="space-y-2 max-w-xs">
-                  <Label htmlFor="price">Price per Hour (₹) *</Label>
+                  <Label htmlFor="price" className="inline-flex items-center gap-0.5">
+                    Price per Hour (<IndianRupee className="h-3 w-3 stroke-[2.5]" />) *
+                  </Label>
                   <Input
                     id="price"
                     type="number"
@@ -329,11 +354,11 @@ export function AddTurf() {
               </CardContent>
             </Card>
 
-            <Card className="border-border/50">
-              <CardHeader>
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Operating Hours</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0">
                 <p className="text-sm text-muted-foreground mb-4">
                   You can configure detailed time slots and availability blocks
                   from the Time Slot Management page after creating the turf.
@@ -365,15 +390,15 @@ export function AddTurf() {
             </div>
           </TabsContent>
 
-          <TabsContent value="media" className="mt-6 space-y-6">
-            <Card className="border-border/50">
-              <CardHeader>
+          <TabsContent value="media" className="mt-3 space-y-3.5">
+            <Card className="bg-transparent border-0 shadow-none">
+              <CardHeader className="px-0 pt-0">
                 <CardTitle>Photos</CardTitle>
                 <CardDescription>
                   Upload high-quality images of your turf
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0">
                 <div className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:bg-muted/50 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2">
                   <div className="p-4 rounded-full bg-primary/10 text-primary mb-2">
                     <Upload className="h-8 w-8" />

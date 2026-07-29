@@ -193,15 +193,6 @@ export function TournamentOrganizerDashboard() {
                 <div className="flex items-center gap-2 mb-2">
                   <h4 className="font-semibold text-lg">{tournament.name}</h4>
                   <Badge variant="outline">{tournament.sport}</Badge>
-                  <Badge
-                    className={
-                      tournament.status === "Active"
-                        ? "bg-accent hover:bg-accent"
-                        : "bg-primary hover:bg-primary"
-                    }
-                  >
-                    {tournament.status}
-                  </Badge>
                 </div>
                 <div className="flex items-center gap-6 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
@@ -250,22 +241,27 @@ export function TournamentOrganizerDashboard() {
                   className="flex items-center justify-between p-4 rounded-lg border border-border/50"
                 >
                   <div>
-                    <h4 className="font-semibold mb-1">{team.teamName}</h4>
-                    <p className="text-sm text-muted-foreground">
+                    <h4 className="text-lg font-bold text-foreground mb-0.5">{team.teamName}</h4>
+                    <p className="text-xs text-muted-foreground">
                       Captain: {team.captain} • {team.members} members •
                       Submitted {team.submitted}
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 border-border/60 hover:bg-rose-500/10 hover:border-rose-500 hover:text-rose-500 rounded-xl font-medium transition-all cursor-pointer"
+                    >
                       <X className="h-4 w-4" />
                       Reject
                     </Button>
                     <Button
+                      variant="outline"
                       size="sm"
-                      className="gap-2 bg-accent hover:bg-accent"
+                      className="gap-2 border-2 border-emerald-500 text-black dark:text-white bg-transparent hover:bg-emerald-500/10 rounded-xl font-bold transition-all cursor-pointer"
                     >
-                      <Check className="h-4 w-4" />
+                      <Check className="h-4 w-4 text-emerald-500 stroke-[2.5]" />
                       Approve
                     </Button>
                   </div>

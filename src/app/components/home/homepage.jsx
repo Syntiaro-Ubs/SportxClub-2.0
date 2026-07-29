@@ -479,14 +479,11 @@ export function Navbar() {
                 trigger={
                   <button
                     className={cn(
-                      "group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] lg:text-[14px] font-medium transition-all cursor-pointer",
-                      isDark
-                        ? "bg-transparent text-emerald-600"
-                        : "bg-transparent text-emerald-600"
+                      "group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] lg:text-[14px] font-medium transition-all cursor-pointer bg-transparent text-black dark:text-white"
                     )}
                   >
-                    <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
-                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5">
+                    <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-emerald-600" />
+                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-black dark:text-white">
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
                     <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80 text-black dark:text-white" />
@@ -654,14 +651,11 @@ export function Navbar() {
               activeCity={activeCity}
               onCitySelect={handleCitySelect}
               trigger={
-                <button className="flex items-center gap-1 shrink-0 text-xs cursor-pointer">
+                <button className="flex items-center gap-1 shrink-0 text-xs cursor-pointer text-black dark:text-white">
                   <MapPin
-                    className={cn(
-                      "h-3.5 w-3.5 shrink-0",
-                      isDark ? "text-emerald-600" : "text-emerald-600",
-                    )}
+                    className="h-3.5 w-3.5 shrink-0 text-emerald-600"
                   />
-                  <span className="truncate max-w-[120px] sm:max-w-[150px]">{activeCity === "All" ? "Cities" : activeCity}</span>
+                  <span className="truncate max-w-[120px] sm:max-w-[150px] text-black dark:text-white">{activeCity === "All" ? "Cities" : activeCity}</span>
                 </button>
               }
             />
