@@ -703,8 +703,8 @@ export function Revenue() {
                   key={tf}
                   onClick={() => setTimeframe(tf)}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer border-2 relative ${timeframe === tf
-                      ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shadow-xs"
-                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                    ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shadow-xs"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/40"
                     }`}
                 >
                   {tf}
