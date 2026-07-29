@@ -108,8 +108,7 @@ const formatTimeRange = (time) => {
   const endPeriod = endHour >= 12 && endHour < 24 ? 'pm' : 'am';
   const end12 = endHour > 12 ? endHour - 12 : (endHour === 0 ? 12 : endHour);
 
-  // e.g. 06:00 am - 07:00am
-  return `${start12.toString().padStart(2, '0')}:00 ${startPeriod} - ${end12.toString().padStart(2, '0')}:00${endPeriod}`;
+  return `${start12.toString().padStart(2, '0')}:00 ${startPeriod} - ${end12.toString().padStart(2, '0')}:00 ${endPeriod}`;
 };
 
 // Custom styled Premium Calendar dropdown
@@ -869,12 +868,12 @@ export function TimeSlots() {
                             onClick={() => handleSlotClick(turf, slot, idx)}
                             onMouseEnter={() => handleSlotMouseEnter(turf, idx)}
                             onMouseLeave={handleSlotMouseLeave}
-                            className={`p-2.5 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[66px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`p-2 sm:p-2.5 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <span className="font-bold text-xs whitespace-nowrap text-foreground tracking-tight">{formatTimeRange(slot.time)}</span>
+                            <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{formatTimeRange(slot.time)}</span>
                             <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">Available</span>
-                            <span className={`text-[9px] font-mono font-black px-2.5 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>₹{slot.price}</span>
+                            <span className={`text-[9px] font-mono font-black px-2 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>₹{slot.price}</span>
                           </div>
                         );
                       }
@@ -886,19 +885,19 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-2.5 rounded-xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[66px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <span className="font-bold text-xs whitespace-nowrap text-foreground tracking-tight">{formatTimeRange(slot.time)}</span>
+                            <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{formatTimeRange(slot.time)}</span>
                             <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
-                              <Lock className="w-2.5 h-2.5 text-rose-500" /> Release Slot
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1 truncate max-w-full">
+                              <Lock className="w-2.5 h-2.5 text-rose-500 shrink-0" /> <span className="truncate">Release Slot</span>
                             </span>
 
                             {/* Styled Hover Card Tooltip */}
-                            <div className="absolute bottom-full mb-2.5 hidden group-hover/slot:flex flex-col bg-popover text-popover-foreground border border-border text-[10px] p-2.5 rounded-xl shadow-xl z-20 w-44 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
+                            <div className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 hidden group-hover/slot:flex flex-col bg-popover text-popover-foreground border border-border text-[10px] p-2.5 rounded-xl shadow-xl z-30 w-44 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
                               <div className="flex items-center gap-1.5 border-b border-border/50 pb-1.5 mb-1.5">
-                                <ShieldCheck className="h-3.5 w-3.5 text-rose-500" />
+                                <ShieldCheck className="h-3.5 w-3.5 text-rose-500 shrink-0" />
                                 <span className="font-bold text-foreground">Click to Release</span>
                               </div>
                               <p className="font-semibold text-foreground truncate">{bDetails.name}</p>
@@ -919,17 +918,17 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-2.5 rounded-xl border-2 border-amber-500/40 bg-card hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[66px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-amber-500/40 bg-card hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-                            <span className="font-bold text-xs whitespace-nowrap text-foreground text-center">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
+                            <span className="font-extrabold text-[10px] sm:text-xs text-foreground text-center tracking-tight truncate max-w-full px-0.5">
                               {hasCustomRange ? slot.blockedTimeRange : formatTimeRange(slot.time)}
                             </span>
-                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-400">
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-400 truncate max-w-full">
                               {slot.blockedReason || "Maintenance"}
                             </span>
-                            <span className="text-[8px] font-bold text-amber-600/70 dark:text-amber-400/70">(Click to Unblock)</span>
+                            <span className="text-[8px] font-bold text-amber-600/70 dark:text-amber-400/70 truncate max-w-full">(Click to Unblock)</span>
                           </div>
                         );
                       }

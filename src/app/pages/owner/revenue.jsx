@@ -452,21 +452,21 @@ export function Revenue() {
         {/* Widget 1: Total Revenue */}
         <Card
           onClick={() => setStatusFilter("all")}
-          className={`bg-[#eff5ff] dark:bg-blue-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer ${statusFilter === "all" ? "ring-2 ring-[#2563eb] ring-offset-2 ring-offset-background" : ""}`}
+          className={`bg-transparent border-2 shadow-xs hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 [&:last-child]:pb-2.5 min-h-[90px] cursor-pointer ${statusFilter === "all" ? "border-[#2563eb] shadow-md" : "border-[#2563eb]/40 hover:border-[#2563eb]"}`}
         >
           <div className="flex items-start justify-between">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <p className="text-[10px] font-bold text-[#2563eb] dark:text-blue-400 uppercase tracking-widest">Total Revenue</p>
-              <h3 className="text-3xl font-medium tracking-tight text-[#2563eb] dark:text-blue-400 mt-1 flex items-center">
-                <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#2563eb] dark:text-blue-400" />
+              <h3 className="text-2xl font-bold tracking-tight text-[#2563eb] dark:text-blue-400 mt-0.5 flex items-center">
+                <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#2563eb] dark:text-blue-400" />
                 {grossRevenue.toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="flex items-center justify-center p-1">
-              <Database className="h-5 w-5 text-[#2563eb] dark:text-blue-400" />
+              <Database className="h-4.5 w-4.5 text-[#2563eb] dark:text-blue-400" />
             </div>
           </div>
-          <div className="mt-3 text-xs text-[#2563eb]/80 dark:text-blue-400/80 flex items-center gap-1 font-semibold">
+          <div className="mt-1.5 text-xs text-[#2563eb]/80 dark:text-blue-400/80 flex items-center gap-1 font-semibold">
             <TrendingUp className="h-3.5 w-3.5" /> Gross generated
           </div>
         </Card>
@@ -474,21 +474,21 @@ export function Revenue() {
         {/* Widget 2: Received Revenue */}
         <Card
           onClick={() => setStatusFilter("completed")}
-          className={`bg-[#ecfdf5] dark:bg-emerald-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer ${statusFilter === "completed" ? "ring-2 ring-[#059669] ring-offset-2 ring-offset-background" : ""}`}
+          className={`bg-transparent border-2 shadow-xs hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 [&:last-child]:pb-2.5 min-h-[90px] cursor-pointer ${statusFilter === "completed" ? "border-[#059669] shadow-md" : "border-[#059669]/40 hover:border-[#059669]"}`}
         >
           <div className="flex items-start justify-between">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 uppercase tracking-widest">Received Revenue</p>
-              <h3 className="text-3xl font-medium tracking-tight text-[#059669] dark:text-emerald-400 mt-1 flex items-center">
-                <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
+              <h3 className="text-2xl font-bold tracking-tight text-[#059669] dark:text-emerald-400 mt-0.5 flex items-center">
+                <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
                 {receivedRevenue.toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="flex items-center justify-center p-1">
-              <IndianRupee className="h-5 w-5 text-[#059669] dark:text-emerald-400" />
+              <IndianRupee className="h-4.5 w-4.5 text-[#059669] dark:text-emerald-400" />
             </div>
           </div>
-          <div className="mt-3 text-xs text-[#059669]/80 dark:text-emerald-400/80 flex items-center gap-1 font-semibold">
+          <div className="mt-1.5 text-xs text-[#059669]/80 dark:text-emerald-400/80 flex items-center gap-1 font-semibold">
             <CheckCircle2 className="h-3.5 w-3.5" /> Settled in bank
           </div>
         </Card>
@@ -497,24 +497,24 @@ export function Revenue() {
         <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
           <Card
             onClick={() => setStatusFilter("pending")}
-            className={`bg-[#f4fbf7] dark:bg-slate-900/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer group hover:-translate-y-0.5 ${statusFilter === "pending" ? "ring-2 ring-[#0f172a] ring-offset-2 ring-offset-background" : ""}`}
+            className={`bg-transparent border-2 shadow-xs hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 [&:last-child]:pb-2.5 min-h-[90px] cursor-pointer group hover:-translate-y-0.5 ${statusFilter === "pending" ? "border-[#059669] shadow-md" : "border-[#059669]/40 hover:border-[#059669]"}`}
           >
             <div className="flex items-start justify-between">
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
                   Upcoming Settlements
                   <Info className="h-3 w-3 opacity-60" />
                 </p>
-                <h3 className="text-3xl font-medium tracking-tight text-[#059669] dark:text-emerald-400 mt-1 flex items-center">
-                  <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
+                <h3 className="text-2xl font-bold tracking-tight text-[#059669] dark:text-emerald-400 mt-0.5 flex items-center">
+                  <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
                   {pendingRevenue.toLocaleString('en-IN')}
                 </h3>
               </div>
               <div className="flex items-center justify-center p-1 group-hover:scale-110 transition-transform">
-                <Clock className="h-5 w-5 text-[#059669]" />
+                <Clock className="h-4.5 w-4.5 text-[#059669]" />
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-[#059669] font-semibold pt-2 border-t border-black/5 dark:border-white/10">
+            <div className="mt-1.5 flex items-center justify-between text-xs text-[#059669] font-semibold pt-1 border-t border-black/5 dark:border-white/10">
               <span className="flex items-center gap-1">
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Auto-settled via Escrow
@@ -662,21 +662,21 @@ export function Revenue() {
         {/* Widget 4: Cancellations */}
         <Card
           onClick={() => setStatusFilter("failed")}
-          className={`bg-[#fff1f2] dark:bg-rose-950/40 border-0 shadow-sm hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-4 pb-3.5 [&:last-child]:pb-3.5 min-h-[115px] cursor-pointer ${statusFilter === "failed" ? "ring-2 ring-[#e11d48] ring-offset-2 ring-offset-background" : ""}`}
+          className={`bg-transparent border-2 shadow-xs hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 [&:last-child]:pb-2.5 min-h-[90px] cursor-pointer ${statusFilter === "failed" ? "border-[#e11d48] shadow-md" : "border-[#e11d48]/40 hover:border-[#e11d48]"}`}
         >
           <div className="flex items-start justify-between">
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <p className="text-[10px] font-bold text-[#e11d48] dark:text-rose-400 uppercase tracking-widest">Cancellations</p>
-              <h3 className="text-3xl font-medium tracking-tight text-[#e11d48] dark:text-rose-400 mt-1 flex items-center">
-                <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#e11d48] dark:text-rose-400" />
+              <h3 className="text-2xl font-bold tracking-tight text-[#e11d48] dark:text-rose-400 mt-0.5 flex items-center">
+                <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#e11d48] dark:text-rose-400" />
                 {cancelledRevenue.toLocaleString('en-IN')}
               </h3>
             </div>
             <div className="flex items-center justify-center p-1">
-              <AlertCircle className="h-5 w-5 text-[#e11d48] dark:text-rose-400" />
+              <AlertCircle className="h-4.5 w-4.5 text-[#e11d48] dark:text-rose-400" />
             </div>
           </div>
-          <div className="mt-3 text-xs text-[#e11d48]/80 dark:text-rose-400/80 flex items-center gap-1 font-semibold">
+          <div className="mt-1.5 text-xs text-[#e11d48]/80 dark:text-rose-400/80 flex items-center gap-1 font-semibold">
             <AlertTriangle className="h-3.5 w-3.5" /> Failed or cancelled
           </div>
         </Card>
@@ -703,8 +703,8 @@ export function Revenue() {
                   key={tf}
                   onClick={() => setTimeframe(tf)}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer border-2 relative ${timeframe === tf
-                    ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shadow-xs"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                    ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent shadow-xs"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-emerald-500/40 bg-transparent"
                     }`}
                 >
                   {tf}
@@ -778,15 +778,15 @@ export function Revenue() {
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer ${statusFilter === status
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer border-2 ${statusFilter === status
                       ? status === "completed"
-                        ? "bg-emerald-500/10 !text-emerald-600 dark:!text-emerald-400 font-bold"
+                        ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
                         : status === "pending"
-                          ? "bg-amber-500/10 !text-amber-600 dark:!text-amber-400 font-bold"
+                          ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-transparent font-bold"
                           : status === "failed"
-                            ? "bg-rose-500/10 !text-rose-600 dark:!text-rose-400 font-bold"
-                            : "bg-emerald-600 !text-black font-bold"
-                      : "text-muted-foreground hover:text-foreground"
+                            ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-transparent font-bold"
+                            : "border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                       }`}
                   >
                     {status}
@@ -821,43 +821,43 @@ export function Revenue() {
                 <p className="text-xs text-muted-foreground mt-0.5">Try widening your filters or queries.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto w-full scrollbar-visible pb-3">
-                <table className="w-full text-xs text-left min-w-[700px]">
+              <div className="overflow-x-auto w-full scrollbar-none pb-1">
+                <table className="w-full text-xs text-left min-w-[550px] lg:min-w-full">
                   <thead className="text-[10px] text-muted-foreground uppercase bg-muted/20 border-b border-border/40 font-black tracking-wider">
                     <tr>
-                      <th className="px-5 py-3.5 font-bold whitespace-nowrap">Transaction ID</th>
-                      <th className="px-5 py-3.5 font-bold whitespace-nowrap">Date</th>
-                      <th className="px-5 py-3.5 font-bold whitespace-nowrap">Facility / Turf</th>
-                      <th className="px-5 py-3.5 font-bold whitespace-nowrap">Amount</th>
-                      <th className="px-5 py-3.5 font-bold whitespace-nowrap">Method</th>
-                      <th className="px-5 py-3.5 font-bold text-right whitespace-nowrap">Status</th>
+                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Transaction ID</th>
+                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Date</th>
+                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Facility / Turf</th>
+                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Amount</th>
+                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Method</th>
+                      <th className="px-3.5 sm:px-4 py-3 font-bold text-right whitespace-nowrap">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/30">
                     {filteredPayments.map((tx) => (
                       <tr key={tx.id} className="hover:bg-muted/15 transition-colors group cursor-default">
-                        <td className="px-5 py-3.5 whitespace-nowrap">
+                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
                           <span className="font-mono font-bold text-muted-foreground/80 group-hover:text-foreground transition-colors">{tx.id}</span>
                         </td>
-                        <td className="px-5 py-3.5 whitespace-nowrap text-muted-foreground/90 font-medium">
+                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap text-muted-foreground/90 font-medium">
                           <div className="flex items-center gap-1.5">
                             <CalendarIcon className="h-3 w-3 text-muted-foreground/50" />
                             {tx.date}
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 font-extrabold text-foreground whitespace-nowrap">
+                        <td className="px-3.5 sm:px-4 py-3 font-extrabold text-foreground whitespace-nowrap">
                           {tx.source}
                         </td>
-                        <td className="px-5 py-3.5 whitespace-nowrap">
+                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
                           <div className="font-black flex items-center text-foreground">
                             <IndianRupee className="h-3.5 w-3.5 mr-0.5 text-muted-foreground" />
                             {tx.amount.toLocaleString('en-IN')}
                           </div>
                         </td>
-                        <td className="px-5 py-3.5 whitespace-nowrap">
+                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
                           <Badge variant="secondary" className="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase bg-muted/50 border-0 text-muted-foreground">{tx.method || "UPI"}</Badge>
                         </td>
-                        <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                        <td className="px-3.5 sm:px-4 py-3 text-right whitespace-nowrap">
                           <Badge className={`capitalize text-[9px] font-extrabold tracking-wider rounded-lg px-2.5 py-0.5 ${getStatusColor(tx.status)}`}>
                             {tx.status}
                           </Badge>

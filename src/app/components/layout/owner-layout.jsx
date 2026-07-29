@@ -152,8 +152,8 @@ export function OwnerLayout() {
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
               className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${isActive
-                ? "bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/20 shadow-2xs"
-                : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/30 shadow-2xs"
+                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 }`}
             >
               <div className="flex items-center gap-3">
@@ -164,7 +164,7 @@ export function OwnerLayout() {
                 <span
                   className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full transition-all shrink-0 ${isActive
                     ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                    : "bg-muted text-muted-foreground group-hover:bg-accent group-hover:text-foreground"
+                    : "bg-muted text-muted-foreground group-hover:bg-muted-foreground/20 group-hover:text-foreground"
                     }`}
                 >
                   {item.badge}

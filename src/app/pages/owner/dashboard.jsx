@@ -752,9 +752,9 @@ export function Dashboard() {
             <button
               key={tf.key}
               onClick={() => setTimeframe(tf.key)}
-              className={`px-4 py-1.5 rounded-md text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border-2 ${timeframe === tf.key
-                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                  : "bg-background/50 text-muted-foreground border-border/50 hover:border-emerald-500"
+              className={`px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border-2 ${timeframe === tf.key
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent"
+                  : "bg-transparent text-muted-foreground border-border/40 hover:border-emerald-500/70"
                 }`}
             >
               {tf.label}
@@ -781,25 +781,25 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* All 3 Graphs without background card box */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* All 3 Graphs perfectly aligned in one horizontal line */}
+        <div className="grid lg:grid-cols-3 gap-8 items-start">
 
           {/* Sport Popularity — First */}
           <div className="flex flex-col">
-            <div className="mb-4">
+            <div className="min-h-[52px] flex flex-col justify-start">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
             </div>
-            <div className="flex-1 flex flex-col justify-center">
-              <div className="relative h-[210px] w-full max-w-[220px] mx-auto mt-5 flex items-center justify-center">
+            <div className="flex flex-col justify-center">
+              <div className="relative h-[220px] w-full max-w-[220px] mx-auto flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={sportPopularityData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={95}
+                      innerRadius={55}
+                      outerRadius={85}
                       paddingAngle={0}
                       dataKey="value"
                       stroke="none"
@@ -816,18 +816,16 @@ export function Dashboard() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
+                  <span className="text-xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
+                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
               </div>
-              <div className="mt-4 grid grid-cols-3 gap-1.5 sm:gap-2 text-xs">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs">
                 {sportPopularityData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
-                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground truncate">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{item.count} slots ({item.value}%)</p>
-                    </div>
+                  <div key={item.name} className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <span className="font-semibold text-foreground text-xs">{item.name}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium">({item.count})</span>
                   </div>
                 ))}
               </div>
@@ -836,12 +834,12 @@ export function Dashboard() {
 
           {/* Revenue Trend — Second */}
           <div className="flex flex-col">
-            <div className="mb-4">
+            <div className="min-h-[52px] flex flex-col justify-start">
               <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Revenue overview based on booking data.</p>
             </div>
-            <div className="flex-1 flex flex-col justify-center pt-4">
-              <div className="h-[220px]">
+            <div className="flex flex-col justify-center">
+              <div className="h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
@@ -868,12 +866,12 @@ export function Dashboard() {
 
           {/* Bookings Filled — Third */}
           <div className="flex flex-col">
-            <div className="mb-4">
+            <div className="min-h-[52px] flex flex-col justify-start">
               <CardTitle className="text-lg font-bold tracking-tight">Bookings Filled</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Slot occupancy across your turfs.</p>
             </div>
-            <div className="flex-1 flex flex-col justify-center pt-4">
-              <div className="h-[220px]">
+            <div className="flex flex-col justify-center">
+              <div className="h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={bookingsFilledData} margin={{ top: 10, right: 25, left: -10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
@@ -953,61 +951,61 @@ export function Dashboard() {
 
         {/* Table Sheet Content */}
         <CardContent className="p-0">
-          <div className="overflow-x-auto w-full scrollbar-visible pb-3">
-            <table className="w-full text-left border-collapse min-w-[850px]">
+          <div className="overflow-x-auto w-full scrollbar-none pb-1">
+            <table className="w-full text-left border-collapse min-w-[650px] lg:min-w-full">
               <thead>
-                <tr className="border-b border-border/40 bg-muted/10 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  <th className="px-6 py-4 whitespace-nowrap">Booking ID</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Customer Details</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Turf & Sport</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Slot Time & Date</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Amount Paid</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Status</th>
-                  <th className="px-6 py-4 text-center whitespace-nowrap">Actions</th>
+                <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Booking ID</th>
+                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Customer Details</th>
+                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Turf & Sport</th>
+                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Slot Time & Date</th>
+                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Amount Paid</th>
+                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Status</th>
+                  <th className="px-3.5 sm:px-4 py-3 text-center whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/30 text-sm">
+              <tbody className="divide-y divide-border/30 text-xs sm:text-sm">
                 {filteredBookings.length > 0 ? (
                   filteredBookings.map((booking) => (
                     <tr
                       key={booking.id}
                       className="hover:bg-muted/10 transition-colors group"
                     >
-                      <td className="px-6 py-4 font-mono text-xs font-semibold text-foreground whitespace-nowrap">
+                      <td className="px-3.5 sm:px-4 py-3 font-mono text-xs font-semibold text-foreground whitespace-nowrap">
                         {booking.id}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
                         <div>
-                          <p className="font-bold text-foreground group-hover:text-primary transition-colors">{booking.customerName}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5 font-medium">{booking.phone}</p>
+                          <p className="font-bold text-foreground group-hover:text-primary transition-colors text-xs sm:text-sm">{booking.customerName}</p>
+                          <p className="text-[11px] text-muted-foreground font-medium">{booking.phone}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
+                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
                           <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-accent/10 border-accent/20 text-accent font-bold">
                             {booking.sport}
                           </Badge>
                           <span className="text-xs font-semibold text-foreground">{booking.turfName}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
                         <div>
                           <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
                             <Clock className="h-3 w-3 text-muted-foreground" />
                             {booking.slotTime}
                           </p>
-                          <p className="text-[10px] text-muted-foreground font-semibold mt-0.5">
+                          <p className="text-[10px] text-muted-foreground font-semibold">
                             {booking.date} · <span className="italic">{booking.timeAgo}</span>
                           </p>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
                         <div>
-                          <p className="font-bold text-foreground">₹{booking.amount.toLocaleString()}</p>
+                          <p className="font-bold text-foreground text-xs sm:text-sm">₹{booking.amount.toLocaleString()}</p>
                           <span className="text-[10px] text-muted-foreground font-medium uppercase">{booking.paymentType}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
                         {booking.status === "Confirmed" && (
                           <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5">
                             Confirmed
@@ -1024,27 +1022,27 @@ export function Dashboard() {
                           </Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center justify-center gap-2">
+                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
                           {booking.status === "Pending" ? (
                             <>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleConfirmBooking(booking.id, booking.customerName)}
-                                className="h-8 w-8 p-0 rounded-lg bg-emerald-500/5 hover:bg-emerald-500 border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white transition-all shadow-sm"
+                                className="h-7 w-7 p-0 rounded-lg bg-emerald-500/5 hover:bg-emerald-500 border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white transition-all shadow-xs"
                                 title="Approve Booking"
                               >
-                                <Check className="h-4 w-4" />
+                                <Check className="h-3.5 w-3.5" />
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleCancelBooking(booking.id, booking.customerName)}
-                                className="h-8 w-8 p-0 rounded-lg bg-rose-500/5 hover:bg-rose-500 border-rose-500/20 hover:border-rose-500 text-rose-500 hover:text-white transition-all shadow-sm"
+                                className="h-7 w-7 p-0 rounded-lg bg-rose-500/5 hover:bg-rose-500 border-rose-500/20 hover:border-rose-500 text-rose-500 hover:text-white transition-all shadow-xs"
                                 title="Decline Booking"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" />
                               </Button>
                             </>
                           ) : booking.status === "Confirmed" ? (
