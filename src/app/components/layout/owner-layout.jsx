@@ -15,11 +15,14 @@ import {
   User,
   Trophy,
   FlaskConical,
+  PanelLeft,
+  PanelLeftClose,
 } from "lucide-react";
 import { Logo } from "../brand/Logo";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Switch } from "../ui/switch";
+import { ThemeToggleButton } from "../ui/theme-toggle-button";
 import { useAuth } from "../../providers/auth-provider";
 import {
   DropdownMenu,
@@ -58,9 +61,20 @@ export function OwnerLayout() {
   const navigate = useNavigate();
   const { currentUser, updateUser, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem("ownerSidebarCollapsed") === "true";
+  });
   const [isTestMode, setIsTestMode] = useState(() => {
     return localStorage.getItem("ownerTestMode") === "true";
   });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("ownerSidebarCollapsed", next ? "true" : "false");
+      return next;
+    });
+  };
 
   // 10-Minute Reminder Toast for active Test Mode
   useEffect(() => {
@@ -111,12 +125,18 @@ export function OwnerLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card/50 backdrop-blur-2xl">
       <div className="flex h-[76px] shrink-0 items-center justify-between px-6 border-b border-border/40">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 overflow-hidden">
           <Logo />
         </Link>
-        <span className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-          Owner
-        </span>
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          title="Hide Sidebar (Ctrl+\)"
+          aria-label="Hide Sidebar"
+          className="hidden md:flex p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+        >
+          <PanelLeftClose className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-visible">
@@ -138,12 +158,12 @@ export function OwnerLayout() {
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground group-hover:text-foreground"}`} />
-                <span>{item.name}</span>
+                <Icon className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground group-hover:text-foreground"}`} />
+                <span className="truncate">{item.name}</span>
               </div>
               {item.badge && (
                 <span
-                  className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full transition-all ${
+                  className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full transition-all shrink-0 ${
                     isActive
                       ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                       : "bg-muted text-muted-foreground group-hover:bg-accent group-hover:text-foreground"
@@ -163,8 +183,8 @@ export function OwnerLayout() {
           className="w-full justify-start gap-3 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 px-3 py-2.5 h-auto rounded-xl transition-colors font-semibold text-sm cursor-pointer"
           onClick={handleLogout}
         >
-          <LogOut className="h-5 w-5" />
-          Sign Out
+          <LogOut className="h-5 w-5 shrink-0" />
+          <span>Sign Out</span>
         </Button>
       </div>
     </div>
@@ -172,13 +192,13 @@ export function OwnerLayout() {
 
   return (
     <div className="flex min-h-dvh bg-background text-foreground overflow-x-hidden w-full max-w-full">
-      {/* Desktop Sidebar */}
-      <aside className="hidden w-64 flex-col border-r border-border/40 bg-card/30 md:flex fixed inset-y-0 z-50">
+      {/* Desktop Sidebar — Completely hides 100% offscreen when collapsed */}
+      <aside className={`hidden flex-col border-r border-border/40 bg-card/30 md:flex fixed inset-y-0 z-50 w-64 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "-translate-x-full opacity-0 pointer-events-none" : "translate-x-0 opacity-100"}`}>
         <SidebarContent />
       </aside>
 
-      {/* Mobile Header */}
-      <div className="flex flex-col flex-1 md:pl-64 w-full max-w-full overflow-x-hidden">
+      {/* Main Content Area — Expands to 100% full width when sidebar is hidden */}
+      <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-64"}`}>
         <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/80 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             type="button"
@@ -191,6 +211,18 @@ export function OwnerLayout() {
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Sidebar Toggle Button in Header — Only shown when sidebar is hidden */}
+              {isSidebarCollapsed && (
+                <button
+                  type="button"
+                  onClick={toggleSidebar}
+                  title="Show Sidebar (Ctrl+\)"
+                  aria-label="Show Sidebar"
+                  className="hidden md:flex items-center justify-center p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 shadow-xs transition-all cursor-pointer"
+                >
+                  <PanelLeft className="h-5 w-5 animate-pulse" />
+                </button>
+              )}
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
                 {ownerNavigation.find(
                   (n) =>
@@ -199,8 +231,6 @@ export function OwnerLayout() {
                       location.pathname.startsWith(n.href)),
                 )?.name || "Dashboard"}
               </h1>
-
-
             </div>
 
             <div className="flex items-center gap-x-3 sm:gap-x-5">
@@ -213,6 +243,9 @@ export function OwnerLayout() {
                   className="data-[state=checked]:bg-rose-500 data-[state=checked]:border-rose-500 cursor-pointer"
                 />
               </div>
+
+              {/* Dark / Light Mode Theme Toggle Button */}
+              <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2.5 rounded-full p-1 pr-3 transition-all cursor-pointer">
@@ -288,7 +321,7 @@ export function OwnerLayout() {
         </AnimatePresence>
 
         <main className="flex-1 w-full max-w-full overflow-x-hidden">
-          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:py-8 lg:px-8 w-full max-w-full overflow-x-hidden">
+          <div className="mx-auto max-w-7xl px-4 pt-1 pb-6 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
             <Outlet context={{ activeProfile, setDemoProfile, isTestMode, setIsTestMode }} />
           </div>
         </main>

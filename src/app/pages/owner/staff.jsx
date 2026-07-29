@@ -26,6 +26,7 @@ import {
   DialogFooter,
 } from "../../components/ui/dialog";
 import { Switch } from "../../components/ui/switch";
+import { Checkbox } from "../../components/ui/checkbox";
 import {
   Search,
   Plus,
@@ -34,7 +35,11 @@ import {
   Pencil,
   Trash2,
   Mail,
-  Phone
+  Phone,
+  ShieldCheck,
+  Key,
+  Lock,
+  Check
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -47,6 +52,22 @@ import {
 const JOB_ROLES = ["Manager", "Receptionist", "Maintenance", "Security", "Coach"];
 const MOCK_TURFS = ["Cricket Ground 1", "Cricket Ground 2", "Premium Football Turf"];
 
+const PERMISSION_OPTIONS = [
+  { id: "bookings", label: "Manage Bookings & Slots", desc: "Can view, book, hold, and release time slots" },
+  { id: "pricing", label: "Modify Slot Pricing & Discounts", desc: "Can override slot rates and apply promo codes" },
+  { id: "turfs", label: "Turf & Facility Controls", desc: "Can toggle Open/Closed status & block custom times" },
+  { id: "revenue", label: "Financial & Revenue Reports", desc: "Can view daily earnings, payouts, and sales logs" },
+  { id: "staff", label: "Staff Account Management", desc: "Can add or update staff member profiles & roles" },
+];
+
+const ROLE_PERMISSIONS_MAP = {
+  Manager: ["bookings", "pricing", "turfs", "revenue", "staff"],
+  Receptionist: ["bookings", "pricing"],
+  Maintenance: ["turfs"],
+  Security: ["bookings"],
+  Coach: ["bookings"],
+};
+
 export function StaffManagement() {
   const [staffList, setStaffList] = useState([
     {
@@ -58,6 +79,7 @@ export function StaffManagement() {
       role: "Manager",
       turf: "Cricket Ground 1",
       isActive: true,
+      permissions: ["bookings", "pricing", "turfs", "revenue", "staff"],
     },
     {
       id: "2",
@@ -68,6 +90,7 @@ export function StaffManagement() {
       role: "Maintenance",
       turf: "Premium Football Turf",
       isActive: true,
+      permissions: ["turfs"],
     },
     {
       id: "3",
@@ -78,6 +101,7 @@ export function StaffManagement() {
       role: "Receptionist",
       turf: "Cricket Ground 2",
       isActive: false,
+      permissions: ["bookings", "pricing"],
     },
   ]);
 
@@ -93,6 +117,7 @@ export function StaffManagement() {
     role: "",
     turf: "",
     isActive: true,
+    permissions: ["bookings"],
   });
 
   const filteredStaff = useMemo(() => {
@@ -103,10 +128,32 @@ export function StaffManagement() {
     );
   }, [staffList, searchQuery]);
 
+  const handleRoleChange = (role) => {
+    const defaultPermissions = ROLE_PERMISSIONS_MAP[role] || ["bookings"];
+    setFormData((prev) => ({
+      ...prev,
+      role,
+      permissions: defaultPermissions,
+    }));
+  };
+
+  const togglePermission = (permId) => {
+    setFormData((prev) => {
+      const current = prev.permissions || [];
+      const updated = current.includes(permId)
+        ? current.filter((id) => id !== permId)
+        : [...current, permId];
+      return { ...prev, permissions: updated };
+    });
+  };
+
   const handleOpenModal = (staff = null) => {
     if (staff) {
       setEditingStaff(staff);
-      setFormData(staff);
+      setFormData({
+        ...staff,
+        permissions: staff.permissions || ROLE_PERMISSIONS_MAP[staff.role] || ["bookings"],
+      });
     } else {
       setEditingStaff(null);
       setFormData({
@@ -117,6 +164,7 @@ export function StaffManagement() {
         role: "",
         turf: "",
         isActive: true,
+        permissions: ["bookings"],
       });
     }
     setIsModalOpen(true);
@@ -281,7 +329,7 @@ export function StaffManagement() {
 
       {/* Add / Edit Staff Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px] rounded-2xl border border-border/40 bg-popover shadow-xl">
+        <DialogContent className="sm:max-w-[580px] max-h-[90vh] overflow-y-auto rounded-2xl border border-border/40 bg-popover shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-bold flex items-center gap-2 text-xl">
               <User className="h-5 w-5 text-primary" />
@@ -346,7 +394,7 @@ export function StaffManagement() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="role" className="text-xs font-semibold">Job Role *</Label>
-                <Select value={formData.role} onValueChange={(val) => setFormData({ ...formData, role: val })} required>
+                <Select value={formData.role} onValueChange={handleRoleChange} required>
                   <SelectTrigger id="role" className="rounded-lg text-sm">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -372,7 +420,61 @@ export function StaffManagement() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between border border-border/50 rounded-xl p-4 bg-muted/20 mt-2">
+            {/* Granular Access Permissions Section */}
+            <div className="border border-border/40 rounded-xl p-3.5 bg-muted/10 space-y-2.5 mt-1">
+              <div className="flex items-center justify-between border-b border-border/30 pb-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Access Permissions</Label>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, permissions: PERMISSION_OPTIONS.map(p => p.id) }))}
+                    className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                  >
+                    Select All
+                  </button>
+                  <span className="text-muted-foreground text-[10px]">&bull;</span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, permissions: [] }))}
+                    className="text-[10px] font-bold text-muted-foreground hover:text-foreground hover:underline cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
+                {PERMISSION_OPTIONS.map((perm) => {
+                  const isChecked = (formData.permissions || []).includes(perm.id);
+                  return (
+                    <div
+                      key={perm.id}
+                      onClick={() => togglePermission(perm.id)}
+                      className={`flex items-start gap-2.5 p-2 rounded-lg border transition-all cursor-pointer select-none ${
+                        isChecked
+                          ? "bg-emerald-500/10 border-emerald-500/40 text-foreground shadow-2xs"
+                          : "bg-background/50 border-border/40 text-muted-foreground hover:bg-accent/40"
+                      }`}
+                    >
+                      <div className={`mt-0.5 h-4 w-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                        isChecked ? "bg-emerald-500 border-emerald-500 text-white" : "border-border/60 bg-background"
+                      }`}>
+                        {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                      </div>
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold leading-tight text-foreground">{perm.label}</p>
+                        <p className="text-[9.5px] text-muted-foreground leading-tight">{perm.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between border border-border/50 rounded-xl p-3.5 bg-muted/20 mt-1">
               <div className="space-y-0.5">
                 <Label htmlFor="active-status" className="text-sm font-semibold cursor-pointer">Account Status</Label>
                 <p className="text-[10px] text-muted-foreground">Is this staff member currently active?</p>

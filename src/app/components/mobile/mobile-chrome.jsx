@@ -163,7 +163,7 @@ export function MobileAppBar() {
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {isHomePage && (
               <div className="min-w-0 flex items-center relative">
                 <LocationModal
@@ -171,31 +171,39 @@ export function MobileAppBar() {
                   onCitySelect={handleCitySelect}
                   trigger={
                     <button
-                      className="group relative flex items-center gap-1 px-1.5 py-1.5 rounded-md text-[12px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer transition"
+                      type="button"
+                      className="group relative flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 active:opacity-70 text-left leading-normal cursor-pointer transition"
                     >
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate max-w-[70px] leading-none">
+                      <MapPin className="h-4 w-4 shrink-0 text-emerald-500" />
+                      <span className="truncate max-w-[100px] leading-normal font-bold text-foreground">
                         {city === "All" ? "All Areas" : city}
                       </span>
                       <ChevronDown
-                        className="h-3 w-3 shrink-0 text-black dark:text-white transition-transform duration-200"
+                        className="h-3.5 w-3.5 shrink-0 text-foreground transition-transform duration-200"
                       />
                     </button>
                   }
                 />
               </div>
             )}
+
+            {/* Dark Mode / Light Mode Theme Toggle Button (No background, border, or hover fill) */}
+            <ThemeToggleButton
+              variant="ghost"
+              className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground p-0 cursor-pointer flex items-center justify-center shrink-0"
+            />
+
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="h-10.5 w-10.5 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs backdrop-blur-md cursor-pointer"
+              className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground p-0 cursor-pointer flex items-center justify-center shrink-0"
               aria-label="Toggle Menu"
             >
               {menuOpen ? (
-                <X className="h-4.5 w-4.5" />
+                <X className="h-5 w-5" />
               ) : (
-                <MoreVertical className="h-4.5 w-4.5" />
+                <MoreVertical className="h-5 w-5" />
               )}
             </Button>
           </div>
@@ -308,7 +316,7 @@ export function MobileAppBar() {
 }
 
 export function MobileBottomNav
-({ activeTab }) {
+  ({ activeTab }) {
   const { currentUser } = useAuth();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 md:hidden">

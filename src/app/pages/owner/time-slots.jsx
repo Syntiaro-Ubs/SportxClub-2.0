@@ -617,14 +617,14 @@ export function TimeSlots() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto theme-adaptive pb-16">
+    <div className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto theme-adaptive pb-16">
 
       {/* -------------------------------------------------------------
           Header Title & Details Row
           ------------------------------------------------------------- */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-0">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
             Turf Slot Management
           </h1>
         </div>
@@ -632,9 +632,9 @@ export function TimeSlots() {
         {blockedSchedules.length > 0 && (
           <Button
             onClick={() => setIsSchedulesModalOpen(true)}
-            className="h-9 px-3.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
+            className="h-8 px-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
           >
-            <CalendarDays className="w-4 h-4 text-emerald-500" />
+            <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />
             Active Multi-Day Holds ({blockedSchedules.length})
           </Button>
         )}
@@ -643,16 +643,16 @@ export function TimeSlots() {
       {/* -------------------------------------------------------------
           Toolbar: Search, Legends & Interactive Filters
           ------------------------------------------------------------- */}
-      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between bg-card/20 p-4 rounded-2xl border border-border/40 backdrop-blur-md shadow-sm">
+      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between py-1">
 
         {/* Search Field */}
         <div className="relative w-full lg:w-80">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 shrink-0" />
           <Input
             placeholder="Search turfs by name or sport..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 rounded-xl bg-background/50 border-border/40 focus:border-primary/50 text-xs w-full"
+            className="pl-10 h-10 rounded-xl bg-background/50 border-emerald-500/40 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 text-xs w-full transition-all"
           />
         </div>
 
@@ -711,23 +711,24 @@ export function TimeSlots() {
         </div>
 
         {/* Date Selector Navigation */}
-        <div className="flex items-center justify-between w-fit mx-auto lg:w-auto lg:mx-0 bg-card/60 border border-border/50 p-0.5 rounded-lg shadow-xs relative">
+        <div className="flex items-center gap-1 bg-background/50 border border-border/40 p-1 rounded-xl shadow-xs">
           <Button
             variant="ghost"
             size="icon"
-            className="!h-7 !w-7 !size-7 rounded-md text-muted-foreground hover:text-foreground shrink-0 p-0"
+            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 cursor-pointer p-0 shrink-0"
             onClick={() => setSelectedDate(addDays(selectedDate, -1))}
+            title="Previous Day"
           >
-            &larr;
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center justify-center gap-1.5 px-3 py-1 text-[11px] font-bold text-foreground hover:bg-muted/40 rounded-md transition-colors cursor-pointer min-w-[110px]"
+                className="flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-bold text-foreground hover:bg-accent/40 rounded-lg transition-colors cursor-pointer"
                 title="Select specific date"
               >
-                <CalendarIcon className="w-3.5 h-3.5 text-primary shrink-0 scale-90" />
+                <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <span>{format(selectedDate, 'MMM dd, yyyy')}</span>
               </button>
             </PopoverTrigger>
@@ -745,10 +746,11 @@ export function TimeSlots() {
           <Button
             variant="ghost"
             size="icon"
-            className="!h-7 !w-7 !size-7 rounded-md text-muted-foreground hover:text-foreground shrink-0 p-0"
+            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 cursor-pointer p-0 shrink-0"
             onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+            title="Next Day"
           >
-            &rarr;
+            <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -766,7 +768,7 @@ export function TimeSlots() {
                 className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 rounded-2xl flex flex-col justify-between"
               >
                 {/* Card Header Section */}
-                <CardHeader className="border-b border-border/40 bg-muted/20 pt-3.5 px-5 pb-2.5">
+                <CardHeader className="border-b border-border/40 bg-muted/20 py-2.5 px-4">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
                     {/* Left Side: Turf Title + Badges & Action Buttons */}
                     <div className="flex flex-col sm:flex-row sm:items-center flex-wrap gap-3.5">
@@ -792,7 +794,7 @@ export function TimeSlots() {
 
                       <div className="flex flex-wrap items-center gap-2.5">
                         {/* Slots remaining badge */}
-                        <Badge variant="outline" className={`px-3 py-1.5 text-[10px] font-extrabold rounded-xl shadow-2xs ${availableSlots > 5
+                        <Badge variant="outline" className={`px-3 py-1.5 text-[10px] font-extrabold rounded-lg shadow-2xs ${availableSlots > 5
                           ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
                           : availableSlots > 0
                             ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
@@ -808,7 +810,7 @@ export function TimeSlots() {
                             setSelectedTurfForCustomBlock(turf);
                             setIsBlockModalOpen(true);
                           }}
-                          className="h-8 rounded-xl bg-background text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs"
+                          className="h-8 rounded-lg bg-background text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs"
                         >
                           <Power className="w-3.5 h-3.5 text-emerald-500" /> Block Custom Time
                         </Button>
@@ -816,7 +818,7 @@ export function TimeSlots() {
                     </div>
 
                     {/* Far Right Side: ONLY Turf Open Toggle Switch */}
-                    <div className="flex items-center gap-2 bg-background/60 px-3.5 py-1.5 rounded-xl border border-border/40 shadow-2xs sm:ml-auto shrink-0">
+                    <div className="flex items-center gap-2 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs sm:ml-auto shrink-0">
                       <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
                       <Switch
                         id={`turf-status-${turf.id}`}
@@ -828,7 +830,7 @@ export function TimeSlots() {
                 </CardHeader>
 
                 {/* Card Content Section */}
-                <CardContent className="px-5 pt-3 pb-5 relative flex-1">
+                <CardContent className="px-4 py-3 relative flex-1">
 
                   {/* Closed Overlay */}
                   {turf.status === 'Closed' && (
@@ -842,7 +844,7 @@ export function TimeSlots() {
                   )}
 
                   {/* Grid Slots */}
-                  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
+                  <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
                     }`}>
                     {turf.slots.map((rawSlot, idx) => {
                       const slot = getEffectiveSlot(turf.id, rawSlot);
@@ -867,12 +869,12 @@ export function TimeSlots() {
                             onClick={() => handleSlotClick(turf, slot, idx)}
                             onMouseEnter={() => handleSlotMouseEnter(turf, idx)}
                             onMouseLeave={handleSlotMouseLeave}
-                            className={`p-3.5 rounded-2xl flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 min-h-[82px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`p-2.5 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[66px] ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
                             <span className="font-bold text-xs whitespace-nowrap text-foreground tracking-tight">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">Available</span>
-                            <span className={`text-[10px] font-mono font-black mt-0.5 px-3 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>₹{slot.price}</span>
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">Available</span>
+                            <span className={`text-[9px] font-mono font-black px-2.5 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>₹{slot.price}</span>
                           </div>
                         );
                       }
@@ -884,12 +886,12 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-3.5 rounded-2xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-all duration-200 min-h-[82px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-2.5 rounded-xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[66px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
                             <span className="font-bold text-xs whitespace-nowrap text-foreground tracking-tight">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[10px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
-                            <span className="text-[9.5px] font-bold mt-0.5 px-2.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1">
                               <Lock className="w-2.5 h-2.5 text-rose-500" /> Release Slot
                             </span>
 
@@ -917,7 +919,7 @@ export function TimeSlots() {
                           <div
                             key={idx}
                             onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-3.5 rounded-2xl border-2 border-amber-500/40 bg-card hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[82px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
+                            className={`relative group/slot p-2.5 rounded-xl border-2 border-amber-500/40 bg-card hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[66px] ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
                               }`}
                           >
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
@@ -1460,7 +1462,7 @@ export function TimeSlots() {
               </Button>
               <Button
                 type="submit"
-                className="rounded-xl px-5 border-none text-black bg-emerald-500 hover:bg-emerald-600 hover:scale-[1.02] transition-all font-extrabold text-xs h-10 cursor-pointer shadow-md shadow-emerald-500/20"
+                className="rounded-xl px-5 border border-emerald-500/60 text-foreground bg-background hover:bg-emerald-500/10 hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-extrabold text-xs h-10 cursor-pointer transition-all"
               >
                 Block Turf Now
               </Button>
