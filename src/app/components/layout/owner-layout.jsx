@@ -151,11 +151,10 @@ export function OwnerLayout() {
               key={item.name}
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${
-                isActive
-                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border-l-4 border-emerald-500 shadow-sm shadow-emerald-500/10"
-                  : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
-              }`}
+              className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${isActive
+                ? "bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/20 shadow-2xs"
+                : "text-muted-foreground hover:bg-accent/40 hover:text-foreground"
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Icon className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground group-hover:text-foreground"}`} />
@@ -163,11 +162,10 @@ export function OwnerLayout() {
               </div>
               {item.badge && (
                 <span
-                  className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full transition-all shrink-0 ${
-                    isActive
-                      ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                      : "bg-muted text-muted-foreground group-hover:bg-accent group-hover:text-foreground"
-                  }`}
+                  className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full transition-all shrink-0 ${isActive
+                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                    : "bg-muted text-muted-foreground group-hover:bg-accent group-hover:text-foreground"
+                    }`}
                 >
                   {item.badge}
                 </span>
@@ -224,12 +222,7 @@ export function OwnerLayout() {
                 </button>
               )}
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
-                {ownerNavigation.find(
-                  (n) =>
-                    location.pathname === n.href ||
-                    (n.href !== "/owner-dashboard" &&
-                      location.pathname.startsWith(n.href)),
-                )?.name || "Dashboard"}
+                Dashboard
               </h1>
             </div>
 

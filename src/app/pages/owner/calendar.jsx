@@ -194,11 +194,11 @@ export function CalendarView() {
 
         {/* Right Column: Bookings Matrix & Quick Summary (Span 8) */}
         <div className="xl:col-span-8 space-y-6">
-          <Card className="border-border/40 bg-card/35 backdrop-blur-xl shadow-xl rounded-[24px] min-h-[500px] flex flex-col overflow-hidden transition-all duration-300 hover:shadow-2xl">
-            <CardHeader className="border-b border-border/30 bg-muted/20 pb-5 p-6">
+          <Card className="border-border/40 bg-card/35 backdrop-blur-xl shadow-xl rounded-[24px] min-h-[500px] flex flex-col gap-0 overflow-hidden transition-all duration-300 hover:shadow-2xl">
+            <CardHeader className="border-b border-border/30 bg-muted/20 px-4 py-3 [.border-b]:pb-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <CardTitle className="text-2xl font-black text-foreground tracking-tight">
+                  <CardTitle className="text-xl font-extrabold text-foreground tracking-tight">
                     {date ? format(date, "MMMM d, yyyy") : "Select a date"}
                   </CardTitle>
                   <CardDescription className="text-xs font-medium text-muted-foreground">
@@ -206,28 +206,28 @@ export function CalendarView() {
                   </CardDescription>
                 </div>
                 {isDateDisabled ? (
-                  <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg flex items-center gap-1.5 self-start sm:self-auto shadow-xs">
+                  <Badge className="bg-transparent text-rose-500 border-2 border-rose-500 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg flex items-center gap-1.5 self-start sm:self-auto">
                     <Ban className="w-3.5 h-3.5" /> Bookings Blocked
                   </Badge>
                 ) : (
-                  <Badge className="bg-primary/15 text-primary border border-primary/20 text-xs font-bold px-3 py-1 rounded-lg self-start sm:self-auto shadow-xs">
+                  <Badge className="bg-transparent text-emerald-600 dark:text-emerald-400 border-2 border-emerald-500 text-xs font-bold px-3 py-1 rounded-lg self-start sm:self-auto">
                     {selectedBookings.length} {selectedBookings.length === 1 ? "Booking" : "Bookings"}
                   </Badge>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-6 flex-1 flex flex-col">
+            <CardContent className="p-3.5 pt-3 flex-1 flex flex-col">
 
               {/* Daily Statistics Cards Grid */}
               {!isDateDisabled && selectedBookings.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3.5">
                   <div className="p-4 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-border/20 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Booked Sessions</p>
                       <p className="text-xl font-black text-foreground">{selectedBookings.length}</p>
                     </div>
-                    <div className="h-9 w-9 rounded-xl bg-primary/15 flex items-center justify-center text-primary border border-primary/15 shadow-inner">
-                      <CheckCircle className="h-4.5 w-4.5" />
+                    <div className="text-emerald-500">
+                      <CheckCircle className="h-5 w-5" />
                     </div>
                   </div>
 
@@ -238,20 +238,21 @@ export function CalendarView() {
                         {selectedBookings.reduce((sum, b) => sum + (b.duration || 1), 0)} Hrs
                       </p>
                     </div>
-                    <div className="h-9 w-9 rounded-xl bg-blue-500/15 flex items-center justify-center text-blue-500 border border-blue-500/15 shadow-inner">
-                      <Clock className="h-4.5 w-4.5" />
+                    <div className="text-blue-500">
+                      <Clock className="h-5 w-5" />
                     </div>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-border/20 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Potential Revenue</p>
-                      <p className="text-xl font-black text-emerald-500">
-                        ₹{selectedBookings.reduce((sum, b) => sum + (b.amount || 0), 0).toLocaleString('en-IN')}
+                      <p className="text-xl font-black text-foreground flex items-center gap-0.5">
+                        <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0" />
+                        <span>{selectedBookings.reduce((sum, b) => sum + (b.amount || 0), 0).toLocaleString('en-IN')}</span>
                       </p>
                     </div>
-                    <div className="h-9 w-9 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-500 border border-emerald-500/15 shadow-inner">
-                      <IndianRupee className="h-4.5 w-4.5" />
+                    <div className="text-emerald-500">
+                      <IndianRupee className="h-5 w-5 stroke-[2.5]" />
                     </div>
                   </div>
                 </div>

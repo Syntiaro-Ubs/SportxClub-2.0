@@ -224,60 +224,45 @@ export function Promotions() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mr-4 -mt-4 opacity-10 pointer-events-none">
-            <Ticket className="w-32 h-32 text-primary" />
-          </div>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="p-3 rounded-xl bg-primary/20 text-primary">
-                <Tag className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Campaigns</p>
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-3xl font-bold text-foreground">{activePromotions}</h3>
-                  <span className="text-sm text-muted-foreground">/ {data.length} Total</span>
-                </div>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        {/* Card 1: Active Campaigns */}
+        <div className="p-4 rounded-2xl bg-background border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xs flex items-center justify-between transition-all duration-300">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Campaigns</p>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-black text-foreground">{activePromotions}</span>
+              <span className="text-xs font-bold text-muted-foreground">/ {data.length} Total</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="text-foreground">
+            <Tag className="w-5 h-5 stroke-[2.5]" />
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mr-4 -mt-4 opacity-10 pointer-events-none">
-            <Users className="w-32 h-32 text-emerald-500" />
+        {/* Card 2: Total Redemptions */}
+        <div className="p-4 rounded-2xl bg-background border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xs flex items-center justify-between transition-all duration-300">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Redemptions</p>
+            <p className="text-2xl font-black text-foreground">{totalRedemptions}</p>
           </div>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-500">
-                <Users className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Redemptions</p>
-                <h3 className="text-3xl font-bold text-foreground">{totalRedemptions}</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="text-foreground">
+            <Users className="w-5 h-5 stroke-[2.5]" />
+          </div>
+        </div>
 
-        <Card className="bg-gradient-to-br from-indigo-500/10 to-indigo-500/5 border-indigo-500/20 shadow-sm relative overflow-hidden group cursor-pointer hover:border-indigo-500/40 transition-colors" onClick={() => alert("Advertisement portal coming soon!")}>
-          <div className="absolute top-0 right-0 -mr-4 -mt-4 opacity-10 pointer-events-none transition-transform group-hover:scale-110 group-hover:rotate-12 duration-500">
-            <Megaphone className="w-32 h-32 text-indigo-500" />
+        {/* Card 3: Boost Your Turf */}
+        <div
+          className="p-4 rounded-2xl bg-background border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xs flex items-center justify-between transition-all duration-300 cursor-pointer group"
+          onClick={() => alert("Advertisement portal coming soon!")}
+        >
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Boost Your Turf</p>
+            <p className="text-base font-black text-foreground group-hover:text-emerald-600 transition-colors">Start Advertisement</p>
           </div>
-          <CardContent className="p-6 h-full flex flex-col justify-center">
-            <div className="flex items-center gap-4 relative z-10">
-              <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-500">
-                <Megaphone className="w-6 h-6" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-bold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">Boost your Turf</p>
-                <h3 className="text-xl font-bold text-foreground mt-0.5">Start Advertisement</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="text-foreground group-hover:text-emerald-600 transition-colors">
+            <Megaphone className="w-5 h-5 stroke-[2.5]" />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -294,25 +279,17 @@ export function Promotions() {
                 transition={{ delay: index * 0.1 }}
               >
                 <Card className="h-full border-border/50 bg-card/50 backdrop-blur-xl shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
-                  {/* Status Indicator Bar */}
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 ${promo.status === 'active' ? 'bg-emerald-500' : 'bg-muted'}`} />
-
-                  <CardHeader className="pb-3 pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <Badge variant={promo.status === "active" ? "default" : "secondary"} className="mb-2 uppercase text-[10px] tracking-wider font-semibold">
-                          {promo.status}
-                        </Badge>
-                        <div className="flex items-center gap-2">
-                          {isPercentage ? (
-                            <Percent className="w-5 h-5 text-primary" />
-                          ) : (
-                            <IndianRupee className="w-5 h-5 text-primary" />
-                          )}
-                          <h3 className="text-2xl font-bold tracking-tight">
-                            {promo.discount}{isPercentage ? '%' : ''} OFF
-                          </h3>
-                        </div>
+                  <CardHeader className="pb-3 pt-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {isPercentage ? (
+                          <Percent className="w-5 h-5 text-emerald-500 stroke-[2.5]" />
+                        ) : (
+                          <IndianRupee className="w-5 h-5 text-emerald-500 stroke-[2.5]" />
+                        )}
+                        <h3 className="text-2xl font-bold tracking-tight">
+                          {promo.discount}{isPercentage ? '%' : ''} OFF
+                        </h3>
                       </div>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                         <MoreVertical className="w-4 h-4" />
