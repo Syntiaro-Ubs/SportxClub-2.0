@@ -199,15 +199,13 @@ export function OwnerLayout() {
                       location.pathname.startsWith(n.href)),
                 )?.name || "Dashboard"}
               </h1>
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live Hub
-              </span>
+
+
             </div>
 
             <div className="flex items-center gap-x-3 sm:gap-x-5">
               {/* Test Mode Toggle Switch */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/60 shadow-2xs">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground select-none">Test Mode</span>
                 <Switch
                   checked={isTestMode}
@@ -217,22 +215,21 @@ export function OwnerLayout() {
               </div>
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2.5 rounded-full p-1 pr-3 transition-all cursor-pointer border border-border/50 bg-card hover:bg-accent/40 shadow-2xs">
+                <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2.5 rounded-full p-1 pr-3 transition-all cursor-pointer">
                   <div className="relative">
-                    <Avatar className="h-9 w-9 border border-border/60">
+                    <Avatar className="h-9 w-9">
                       {activeProfile.profilePicture ? (
                         <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                       ) : (
-                        <AvatarFallback className="bg-emerald-500/10 text-emerald-600 font-black text-xs">
-                          {ownerName.split(" ").map(n => n[0]).join("")}
+                        <AvatarFallback className="text-foreground">
+                          <User className="h-4 w-4" />
                         </AvatarFallback>
                       )}
                     </Avatar>
-                    <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
+
                   </div>
                   <div className="hidden lg:flex flex-col text-left">
                     <span className="text-xs font-bold leading-none text-foreground">{ownerName}</span>
-                    <span className="text-[10px] text-muted-foreground font-medium mt-0.5">Venue Partner</span>
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 rounded-2xl border-border/60 p-1.5 shadow-xl" align="end" forceMount>
@@ -252,6 +249,7 @@ export function OwnerLayout() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
             </div>
           </div>
         </header>

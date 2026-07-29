@@ -265,7 +265,10 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sportFilter, setSportFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [timeframe, setTimeframe] = useState("weekly");
+  const [timeframe, setTimeframe] = useState("today");
+  const [activeGraph, setActiveGraph] = useState("sports");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   // Modals state
   const [isBlockSlotOpen, setIsBlockSlotOpen] = useState(false);
@@ -334,7 +337,7 @@ export function Dashboard() {
       ];
     }
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
-    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const timeScaleMap = { today: 0.15, tomorrow: 0.18, week: 1, monthly: 4, month: 4, "6month": 24, yearly: 48, year: 48, custom: 1, weekly: 1 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
 
     return [
@@ -361,7 +364,7 @@ export function Dashboard() {
       ];
     }
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
-    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const timeScaleMap = { today: 0.15, tomorrow: 0.18, week: 1, monthly: 4, month: 4, "6month": 24, yearly: 48, year: 48, custom: 1, weekly: 1 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
 
     return [
@@ -388,7 +391,7 @@ export function Dashboard() {
       ];
     }
     const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
-    const timeScaleMap = { today: 0.15, weekly: 1, monthly: 4, yearly: 48 };
+    const timeScaleMap = { today: 0.15, tomorrow: 0.18, week: 1, monthly: 4, month: 4, "6month": 24, yearly: 48, year: 48, custom: 1, weekly: 1 };
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
 
     return [
@@ -729,72 +732,71 @@ export function Dashboard() {
           ------------------------------------------------------------- */}
       <div className="bg-card/70 dark:bg-card/50 backdrop-blur-2xl p-6 sm:p-7 rounded-3xl border border-border/60 shadow-lg shadow-black/5 space-y-6">
 
-        {/* Header and Timeframe */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black tracking-tight text-foreground">Performance Analytics</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Detailed breakdown of your venue's metrics.</p>
-          </div>
 
-          <div className="flex items-center gap-1 bg-background/80 p-1.5 rounded-2xl border border-border/60 shadow-2xs">
-            {["today", "weekly", "monthly", "yearly"].map((tf) => (
-              <button
-                key={tf}
-                onClick={() => setTimeframe(tf)}
-                className={`px-4 py-2 rounded-xl text-[11px] font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                  timeframe === tf
-                    ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
-                }`}
-              >
-                {tf}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* 4 KPI Buttons */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Timeframe Filter Pills */}
+        <div className="flex items-center gap-2 flex-wrap">
           {[
-            { id: "all", label: "Total Revenue", amount: isTestMode ? "₹0" : "₹45,000", activeStyle: "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-500/10" },
-            { id: "completed", label: "Received", amount: isTestMode ? "₹0" : "₹28,500", activeStyle: "border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-500/10" },
-            { id: "pending", label: "Upcoming", amount: isTestMode ? "₹0" : "₹12,000", activeStyle: "border-amber-500 bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-2 ring-amber-500/30 shadow-lg shadow-amber-500/10" },
-            { id: "failed", label: "Cancellations", amount: isTestMode ? "₹0" : "₹4,500", activeStyle: "border-rose-500 bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-2 ring-rose-500/30 shadow-lg shadow-rose-500/10" },
-          ].map((stat) => (
+            { key: "today",    label: "Today" },
+            { key: "tomorrow", label: "Tomorrow" },
+            { key: "week",     label: "Week" },
+            { key: "month",    label: "Month" },
+            { key: "6month",   label: "6 Months" },
+            { key: "year",     label: "Year" },
+            { key: "custom",   label: "📅 Custom" },
+          ].map((tf) => (
             <button
-              key={stat.id}
-              onClick={() => setStatusFilter(stat.id)}
-              className={`p-4 rounded-2xl border text-left transition-all duration-300 cursor-pointer ${
-                statusFilter === stat.id
-                  ? stat.activeStyle
-                  : "border-border/60 bg-background/60 text-muted-foreground hover:text-foreground hover:bg-card/80 hover:border-border"
+              key={tf.key}
+              onClick={() => setTimeframe(tf.key)}
+              className={`px-4 py-1.5 rounded-md text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border-2 ${
+                timeframe === tf.key
+                  ? "border-emerald-500 text-muted-foreground"
+                  : "bg-background/50 text-muted-foreground border-border/50 hover:border-emerald-500"
               }`}
             >
-              <p className="text-[10px] font-extrabold uppercase tracking-wider mb-1 opacity-80">{stat.label}</p>
-              <p className="text-2xl font-black tracking-tight">{stat.amount}</p>
+              {tf.label}
             </button>
           ))}
+
+          {/* Custom Date Range — shown only when custom is active */}
+          {timeframe === "custom" && (
+            <div className="flex items-center gap-2 ml-1 animate-in fade-in slide-in-from-left-2 duration-200">
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-border/60 bg-background/70 text-foreground focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all cursor-pointer"
+              />
+              <span className="text-xs text-muted-foreground font-bold">to</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-border/60 bg-background/70 text-foreground focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all cursor-pointer"
+              />
+            </div>
+          )}
         </div>
 
-        {/* The 3 Graphs in one line */}
+        {/* All 3 Graphs in one row */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Right Column: Sport Share Pie Chart */}
-          <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
-            <CardHeader className="border-b border-border/40 p-6">
+
+          {/* Sport Popularity — First */}
+          <Card className={`rounded-2xl flex flex-col transition-all duration-200 ${activeGraph === "sports" ? "" : ""}`}>
+            <CardHeader className="p-6">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
             </CardHeader>
             <CardContent className="p-6 flex-1 flex flex-col justify-center">
-
-              <div className="relative h-[200px] flex items-center justify-center">
+              <div className="relative h-[160px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={sportPopularityData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={65}
-                      outerRadius={85}
+                      innerRadius={55}
+                      outerRadius={72}
                       paddingAngle={0}
                       dataKey="value"
                       stroke="none"
@@ -815,9 +817,7 @@ export function Dashboard() {
                   <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
               </div>
-
-              {/* Premium Custom Legend */}
-              <div className="mt-6 grid grid-cols-2 gap-3 text-xs">
+              <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
                 {sportPopularityData.map((item) => (
                   <div key={item.name} className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
                     <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
@@ -828,71 +828,68 @@ export function Dashboard() {
                   </div>
                 ))}
               </div>
-
             </CardContent>
           </Card>
-          <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
-            <CardHeader className="border-b border-border/40 p-6">
+
+          {/* Revenue Trend — Second */}
+          <Card className={`rounded-2xl flex flex-col transition-all duration-200 ${activeGraph === "revenue" ? "" : ""}`}>
+            <CardHeader className="p-6">
               <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">Revenue overview based on booking data.</p>
             </CardHeader>
             <CardContent className="p-6 flex-1 flex flex-col justify-center">
-              {/* 1. Revenue Chart Content */}
-              <div className="flex flex-col">
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="chartRevenueGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
-                        itemStyle={{ color: "var(--foreground)" }}
-                        labelStyle={{ color: "hsl(var(--muted-foreground))", fontWeight: "bold" }}
-                        formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
-                      />
-                      <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={2.5} fillOpacity={1} fill="url(#chartRevenueGrad)" activeDot={{ r: 6, stroke: "var(--background)", strokeWidth: 2 }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="chartRevenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      labelStyle={{ color: "hsl(var(--muted-foreground))", fontWeight: "bold" }}
+                      formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={2.5} fillOpacity={1} fill="url(#chartRevenueGrad)" activeDot={{ r: 6, stroke: "var(--background)", strokeWidth: 2 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg flex flex-col justify-between">
-            <CardHeader className="border-b border-border/40 p-6">
+          {/* Bookings Filled — Third */}
+          <Card className={`rounded-2xl flex flex-col transition-all duration-200 ${activeGraph === "bookings" ? "" : ""}`}>
+            <CardHeader className="p-6">
               <CardTitle className="text-lg font-bold tracking-tight">Bookings Filled</CardTitle>
+              <p className="text-sm text-muted-foreground mt-0.5">Slot occupancy across your turfs.</p>
             </CardHeader>
             <CardContent className="p-6 flex-1 flex flex-col justify-center">
-              {/* 2. Bookings Chart Content */}
-              <div className="flex flex-col">
-                <div className="h-[250px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={bookingsFilledData} margin={{ top: 10, right: 25, left: -10, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
-                      <Tooltip
-                        cursor={false}
-                        contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
-                        itemStyle={{ color: "var(--foreground)" }}
-                        labelStyle={{ color: "hsl(var(--muted-foreground))", fontWeight: "bold" }}
-                        formatter={(value) => [value, "Bookings"]}
-                      />
-                      <Bar dataKey="bookings" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={32} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="h-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 25, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
+                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      cursor={false}
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      labelStyle={{ color: "hsl(var(--muted-foreground))", fontWeight: "bold" }}
+                      formatter={(value) => [value, "Bookings"]}
+                    />
+                    <Bar dataKey="bookings" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-
             </CardContent>
           </Card>
+
         </div>
       </div>
 
