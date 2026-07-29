@@ -454,12 +454,13 @@ export function Revenue() {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-[#2563eb] dark:text-blue-400 uppercase tracking-widest">Total Revenue</p>
-              <h3 className="text-3xl font-medium tracking-tight text-[#2563eb] dark:text-blue-400 mt-1">
-                ₹{grossRevenue.toLocaleString('en-IN')}
+              <h3 className="text-3xl font-medium tracking-tight text-[#2563eb] dark:text-blue-400 mt-1 flex items-center">
+                <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#2563eb] dark:text-blue-400" />
+                {grossRevenue.toLocaleString('en-IN')}
               </h3>
             </div>
-            <div className="h-9 w-9 rounded-full bg-[#dbeafe] dark:bg-blue-900/60 flex items-center justify-center border-0 shadow-inner">
-              <Database className="h-4.5 w-4.5 text-[#2563eb] dark:text-blue-400" />
+            <div className="flex items-center justify-center p-1">
+              <Database className="h-5 w-5 text-[#2563eb] dark:text-blue-400" />
             </div>
           </div>
           <div className="mt-3 text-xs text-[#2563eb]/80 dark:text-blue-400/80 flex items-center gap-1 font-semibold">
@@ -475,12 +476,13 @@ export function Revenue() {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 uppercase tracking-widest">Received Revenue</p>
-              <h3 className="text-3xl font-medium tracking-tight text-[#059669] dark:text-emerald-400 mt-1">
-                ₹{receivedRevenue.toLocaleString('en-IN')}
+              <h3 className="text-3xl font-medium tracking-tight text-[#059669] dark:text-emerald-400 mt-1 flex items-center">
+                <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
+                {receivedRevenue.toLocaleString('en-IN')}
               </h3>
             </div>
-            <div className="h-9 w-9 rounded-full bg-[#d1fae5] dark:bg-emerald-900/60 flex items-center justify-center border-0 shadow-inner">
-              <IndianRupee className="h-4.5 w-4.5 text-[#059669] dark:text-emerald-400" />
+            <div className="flex items-center justify-center p-1">
+              <IndianRupee className="h-5 w-5 text-[#059669] dark:text-emerald-400" />
             </div>
           </div>
           <div className="mt-3 text-xs text-[#059669]/80 dark:text-emerald-400/80 flex items-center gap-1 font-semibold">
@@ -500,12 +502,13 @@ export function Revenue() {
                   Upcoming Settlements
                   <Info className="h-3 w-3 opacity-60" />
                 </p>
-                <h3 className="text-3xl font-medium tracking-tight text-[#0f172a] dark:text-slate-100 mt-1">
-                  ₹{pendingRevenue.toLocaleString('en-IN')}
+                <h3 className="text-3xl font-medium tracking-tight text-[#0f172a] dark:text-slate-100 mt-1 flex items-center">
+                  <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#059669]" />
+                  {pendingRevenue.toLocaleString('en-IN')}
                 </h3>
               </div>
-              <div className="h-9 w-9 rounded-full bg-[#d1fae5] dark:bg-emerald-900/60 flex items-center justify-center border-0 shadow-inner group-hover:scale-110 transition-transform">
-                <Clock className="h-4.5 w-4.5 text-[#059669]" />
+              <div className="flex items-center justify-center p-1 group-hover:scale-110 transition-transform">
+                <Clock className="h-5 w-5 text-[#059669]" />
               </div>
             </div>
             <div className="mt-3 flex items-center justify-between text-xs text-[#059669] font-semibold pt-2 border-t border-black/5 dark:border-white/10">
@@ -660,12 +663,13 @@ export function Revenue() {
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <p className="text-[10px] font-bold text-[#e11d48] dark:text-rose-400 uppercase tracking-widest">Cancellations</p>
-              <h3 className="text-3xl font-medium tracking-tight text-[#e11d48] dark:text-rose-400 mt-1">
-                ₹{cancelledRevenue.toLocaleString('en-IN')}
+              <h3 className="text-3xl font-medium tracking-tight text-[#e11d48] dark:text-rose-400 mt-1 flex items-center">
+                <IndianRupee className="h-6 w-6 stroke-[2.5] shrink-0 mr-0.5 text-[#e11d48] dark:text-rose-400" />
+                {cancelledRevenue.toLocaleString('en-IN')}
               </h3>
             </div>
-            <div className="h-9 w-9 rounded-full bg-[#ffe4e6] dark:bg-rose-900/60 flex items-center justify-center border-0 shadow-inner">
-              <AlertCircle className="h-4.5 w-4.5 text-[#e11d48] dark:text-rose-400" />
+            <div className="flex items-center justify-center p-1">
+              <AlertCircle className="h-5 w-5 text-[#e11d48] dark:text-rose-400" />
             </div>
           </div>
           <div className="mt-3 text-xs text-[#e11d48]/80 dark:text-rose-400/80 flex items-center gap-1 font-semibold">
@@ -694,12 +698,16 @@ export function Revenue() {
                 <button
                   key={tf}
                   onClick={() => setTimeframe(tf)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer ${timeframe === tf
-                    ? "bg-emerald-500 text-black shadow-md shadow-emerald-500/20"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
-                    }`}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer border-2 relative ${
+                    timeframe === tf
+                      ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shadow-xs"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                  }`}
                 >
                   {tf}
+                  {tf === "yearly" && (
+                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-rose-500 rounded-full" />
+                  )}
                 </button>
               ))}
             </div>

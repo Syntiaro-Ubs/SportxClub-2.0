@@ -535,34 +535,31 @@ export function Dashboard() {
         {/* Card 1: Gross Revenue */}
         <Card
           onClick={() => navigate("/owner-dashboard/revenue")}
-          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
         >
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Total Revenue</p>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <h3 className="text-2xl font-black tracking-tight text-foreground">
-                    ₹{isTestMode ? "0" : (data?.stats?.monthlyRevenue || 184200).toLocaleString()}
+                <div className="flex items-center gap-2 mt-1">
+                  <h3 className="text-2xl font-black tracking-tight text-foreground flex items-center">
+                    <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5" />
+                    {isTestMode ? "0" : (data?.stats?.monthlyRevenue || 184200).toLocaleString()}
                   </h3>
-                  <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                    <TrendingUp className="h-3 w-3" />
-                    {isTestMode ? "0%" : "+12.5%"}
-                  </span>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-inner">
-                <IndianRupee className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex h-9 w-9 items-center justify-center">
+                <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
               </div>
             </div>
 
-            <div className="mt-6 flex items-end justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-3 items-center">
                 <span>Online: <strong className="text-foreground font-bold">{isTestMode ? "₹0" : "₹139K"}</strong></span>
                 <span className="opacity-30">|</span>
                 <span>Cash: <strong className="text-foreground font-bold">{isTestMode ? "₹0" : "₹45K"}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
+              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
                 Revenue
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -573,59 +570,57 @@ export function Dashboard() {
         {/* Card 2: Bookings Count */}
         <Card
           onClick={() => navigate("/owner-dashboard/bookings")}
-          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
         >
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Today's Bookings</p>
-                <h3 className="text-2xl font-black tracking-tight text-foreground mt-0.5">
-                  {isTestMode ? 0 : (data?.stats?.todaysBookings || 18)} Bookings
-                </h3>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 mt-0.5">
-                  <TrendingUp className="h-3 w-3" />
-                  {isTestMode ? "0%" : "+8.2% vs yesterday"}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <h3 className="text-2xl font-black tracking-tight text-foreground">
+                    {isTestMode ? 0 : (data?.stats?.todaysBookings || 18)} Bookings
+                  </h3>
+                </div>
               </div>
 
               {/* Progress Ring */}
-              <div className="relative flex items-center justify-center shrink-0 w-14 h-14 translate-y-[-2px]">
-                <svg className="w-14 h-14 transform -rotate-90">
+              <div className="relative flex items-center justify-center shrink-0 w-11 h-11">
+                <svg className="w-11 h-11 transform -rotate-90">
                   <circle
-                    cx="28"
-                    cy="28"
-                    r={ringRadius}
+                    cx="22"
+                    cy="22"
+                    r={18}
                     stroke="currentColor"
                     className="text-muted/20"
                     strokeWidth="3.5"
                     fill="transparent"
                   />
                   <circle
-                    cx="28"
-                    cy="28"
-                    r={ringRadius}
+                    cx="22"
+                    cy="22"
+                    r={18}
                     stroke="currentColor"
                     strokeWidth="4"
                     fill="transparent"
-                    strokeDasharray={ringCircumference}
-                    strokeDashoffset={ringDashoffset}
+                    strokeDasharray={113}
+                    strokeDashoffset={113 - (113 * progressPercentage) / 100}
                     strokeLinecap="round"
                     className="text-emerald-500 transition-all duration-500"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center text-center">
-                  <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">{progressPercentage}%</span>
+                  <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400">{progressPercentage}%</span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-4 flex items-end justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
               <div className="flex gap-2.5 items-center">
                 <span>Confirmed: <strong className="text-foreground font-bold">{isTestMode ? 0 : 14}</strong></span>
                 <span className="opacity-30">·</span>
                 <span>Pending: <strong className="text-amber-500 font-bold">{isTestMode ? 0 : 4}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
+              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
                 Details
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -636,13 +631,13 @@ export function Dashboard() {
         {/* Card 3: Active Turfs */}
         <Card
           onClick={() => navigate("/owner-dashboard/turfs")}
-          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
         >
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Active Turfs</p>
-                <div className="flex items-baseline gap-2 mt-0.5">
+                <div className="flex items-baseline gap-2 mt-1">
                   <h3 className="text-2xl font-black tracking-tight text-foreground">
                     {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}
                   </h3>
@@ -651,19 +646,19 @@ export function Dashboard() {
                   </span>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 shadow-inner">
-                <MapPin className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex h-9 w-9 items-center justify-center">
+                <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
 
-            <div className="mt-6 flex items-end justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-2">
+            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-2 items-center">
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Operational
                 </span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
+              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
                 Manage
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -674,15 +669,15 @@ export function Dashboard() {
         {/* Card 4: Quality Feedback */}
         <Card
           onClick={() => navigate("/owner-dashboard/reviews")}
-          className="relative overflow-hidden border border-amber-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[165px]"
+          className="relative overflow-hidden border border-amber-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between min-h-[175px]"
         >
           <CardContent className="p-5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Turf Quality Rating</p>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-2 mt-1">
                   <h3 className="text-2xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
-                  <div className="flex items-center text-amber-500 translate-y-[-1px]">
+                  <div className="flex items-center text-amber-500">
                     {[1, 2, 3, 4, 5].map((starIndex) => {
                       const ratingVal = isTestMode ? 0 : (data?.stats?.averageRating || 4.8);
                       const isFilled = ratingVal >= starIndex;
@@ -702,25 +697,19 @@ export function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-inner">
-                <Star className="h-4.5 w-4.5 text-amber-500 fill-amber-500/20" />
+              <div className="flex h-9 w-9 items-center justify-center">
+                <Star className="h-5 w-5 text-amber-500 fill-amber-500/20" />
               </div>
             </div>
 
-            {/* Segmented stacked horizontal review bar */}
-            <div className="mt-3 space-y-1.5">
-              <div className="flex justify-between text-[9px] text-muted-foreground font-bold items-center">
-                <span>Reviews: {isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</span>
-                <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-1 group/btn border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover/btn:bg-emerald-500 group-hover/btn:text-black shadow-2xs group-hover/btn:shadow-md cursor-pointer">
-                  Reviews
-                  <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
-                </span>
+            <div className="mt-auto flex items-center justify-between border-t border-border/40 pt-3 text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-2 items-center">
+                <span>Reviews: <strong className="text-foreground font-bold">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
               </div>
-              <div className="h-2 w-full bg-muted/60 rounded-full flex overflow-hidden border border-border/30">
-                <div className="h-full bg-emerald-500 transition-all" style={{ width: isTestMode ? "0%" : "85%" }} title="5 Stars: 85%" />
-                <div className="h-full bg-amber-500 transition-all" style={{ width: isTestMode ? "0%" : "10%" }} title="4 Stars: 10%" />
-                <div className="h-full bg-rose-500 transition-all" style={{ width: isTestMode ? "0%" : "5%" }} title="3 Stars or below: 5%" />
-              </div>
+              <span className="px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer">
+                Reviews
+                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -730,7 +719,7 @@ export function Dashboard() {
       {/* -------------------------------------------------------------
           Visual Graphs Section & Quick Operations
           ------------------------------------------------------------- */}
-      <div className="bg-card/70 dark:bg-card/50 backdrop-blur-2xl p-6 sm:p-7 rounded-3xl border border-border/60 shadow-lg shadow-black/5 space-y-6">
+      <div className="space-y-6">
 
 
 
@@ -750,7 +739,7 @@ export function Dashboard() {
               onClick={() => setTimeframe(tf.key)}
               className={`px-4 py-1.5 rounded-md text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border-2 ${
                 timeframe === tf.key
-                  ? "border-emerald-500 text-muted-foreground"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
                   : "bg-background/50 text-muted-foreground border-border/50 hover:border-emerald-500"
               }`}
             >
@@ -778,25 +767,25 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* All 3 Graphs in one row */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        {/* All 3 Graphs without background card box */}
+        <div className="grid lg:grid-cols-3 gap-8">
 
           {/* Sport Popularity — First */}
-          <Card className={`rounded-2xl flex flex-col transition-all duration-200 ${activeGraph === "sports" ? "" : ""}`}>
-            <CardHeader className="p-6">
+          <div className="flex flex-col">
+            <div className="mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
-            </CardHeader>
-            <CardContent className="p-6 flex-1 flex flex-col justify-center">
-              <div className="relative h-[160px] flex items-center justify-center">
+            </div>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="relative h-[210px] flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={sportPopularityData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={55}
-                      outerRadius={72}
+                      innerRadius={60}
+                      outerRadius={95}
                       paddingAngle={0}
                       dataKey="value"
                       stroke="none"
@@ -828,16 +817,16 @@ export function Dashboard() {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Revenue Trend — Second */}
-          <Card className={`rounded-2xl flex flex-col transition-all duration-200 ${activeGraph === "revenue" ? "" : ""}`}>
-            <CardHeader className="p-6">
+          <div className="flex flex-col">
+            <div className="mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Revenue overview based on booking data.</p>
-            </CardHeader>
-            <CardContent className="p-6 flex-1 flex flex-col justify-center">
+            </div>
+            <div className="flex-1 flex flex-col justify-center pt-4">
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -860,16 +849,16 @@ export function Dashboard() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Bookings Filled — Third */}
-          <Card className={`rounded-2xl flex flex-col transition-all duration-200 ${activeGraph === "bookings" ? "" : ""}`}>
-            <CardHeader className="p-6">
+          <div className="flex flex-col">
+            <div className="mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Bookings Filled</CardTitle>
               <p className="text-sm text-muted-foreground mt-0.5">Slot occupancy across your turfs.</p>
-            </CardHeader>
-            <CardContent className="p-6 flex-1 flex flex-col justify-center">
+            </div>
+            <div className="flex-1 flex flex-col justify-center pt-4">
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={bookingsFilledData} margin={{ top: 10, right: 25, left: -10, bottom: 0 }}>
@@ -887,8 +876,8 @@ export function Dashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
         </div>
       </div>
