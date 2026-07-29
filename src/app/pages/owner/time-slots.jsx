@@ -765,7 +765,7 @@ export function TimeSlots() {
             return (
               <Card
                 key={turf.id}
-                className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 rounded-2xl flex flex-col justify-between"
+                className="gap-0 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20 rounded-2xl flex flex-col justify-between"
               >
                 {/* Card Header Section */}
                 <CardHeader className="border-b border-border/40 bg-muted/20 py-2.5 [.border-b]:pb-2.5 px-4">
@@ -830,7 +830,7 @@ export function TimeSlots() {
                 </CardHeader>
 
                 {/* Card Content Section */}
-                <CardContent className="px-4 pt-2.5 pb-3 relative flex-1">
+                <CardContent className="px-4 pt-1.5 pb-3 relative flex-1">
 
                   {/* Closed Overlay */}
                   {turf.status === 'Closed' && (

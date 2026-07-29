@@ -124,19 +124,19 @@ export function OwnerLayout() {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card/50 backdrop-blur-2xl">
-      <div className="flex h-[76px] shrink-0 items-center justify-between px-6 border-b border-border/40">
-        <Link to="/" className="flex items-center gap-2 overflow-hidden">
-          <Logo />
-        </Link>
+      <div className="flex h-[76px] shrink-0 items-center gap-3 px-4 border-b border-border/40">
         <button
           type="button"
           onClick={toggleSidebar}
-          title="Hide Sidebar (Ctrl+\)"
-          aria-label="Hide Sidebar"
-          className="hidden md:flex p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+          title="Collapse Sidebar (Ctrl+\)"
+          aria-label="Collapse Sidebar"
+          className="hidden md:flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0 my-auto"
         >
-          <PanelLeftClose className="h-5 w-5" />
+          <Menu className="h-5 w-5" />
         </button>
+        <Link to="/" className="flex items-center shrink-0 my-auto">
+          <Logo />
+        </Link>
       </div>
 
       <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-visible">
@@ -214,11 +214,11 @@ export function OwnerLayout() {
                 <button
                   type="button"
                   onClick={toggleSidebar}
-                  title="Show Sidebar (Ctrl+\)"
-                  aria-label="Show Sidebar"
-                  className="hidden md:flex items-center justify-center p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 shadow-xs transition-all cursor-pointer"
+                  title="Expand Sidebar (Ctrl+\)"
+                  aria-label="Expand Sidebar"
+                  className="hidden md:flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0"
                 >
-                  <PanelLeft className="h-5 w-5 animate-pulse" />
+                  <Menu className="h-5 w-5" />
                 </button>
               )}
               <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
