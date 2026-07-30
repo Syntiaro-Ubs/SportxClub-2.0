@@ -405,7 +405,8 @@ export function BookingSuccess() {
                 <div className="pt-3 border-t border-border/20 flex justify-center">
                   <Button
                     onClick={handleDownloadReceipt}
-                    className="w-1/2 bg-emerald-600 text-black hover:bg-emerald-700 font-bold rounded-xl gap-2 h-10 border-none cursor-pointer text-xs"
+                    variant="outline"
+                    className="w-1/2 bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-bold rounded-xl gap-2 h-10 cursor-pointer text-xs transition-all shadow-xs"
                   >
                     <Download className="h-3.5 w-3.5" />
                     Receipt

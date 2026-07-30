@@ -624,7 +624,7 @@ export function VenueBooking() {
     return (
       <div
         key={venue.id}
-        className="w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)] xl:w-[calc(25%-9px)] flex-shrink-0 snap-start bg-white dark:bg-[#0f172a] rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-200 dark:border-slate-800 flex flex-col group cursor-pointer"
+        className="w-[calc(50%-6px)] sm:w-[calc(33.333%-8px)] lg:w-[calc(25%-9px)] flex-shrink-0 snap-start bg-white dark:bg-[#0f172a] rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-slate-200 dark:border-slate-800 flex flex-col group cursor-pointer"
         onClick={() => navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } })}
       >
         <div className="relative h-[240px] sm:h-[350px] md:h-[400px] w-full overflow-hidden">

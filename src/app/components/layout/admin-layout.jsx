@@ -41,7 +41,7 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -54,7 +54,7 @@ export function AdminLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex h-14 shrink-0 items-center px-6">
-        <Link to="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
+        <Link to="/admin" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
           <Logo />
         </Link>
       </div>
@@ -67,11 +67,10 @@ export function AdminLayout() {
               key={item.name}
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-              }`}
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors ${isActive
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                }`}
             >
               <Icon className="h-5 w-5" />
               {item.name}
@@ -109,7 +108,7 @@ export function AdminLayout() {
                 {currentRouteName}
               </h1>
             </div>
-            
+
             <div className="flex items-center gap-x-4 lg:gap-x-6">
               <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
               <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">

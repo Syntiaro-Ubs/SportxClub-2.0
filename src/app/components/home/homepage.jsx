@@ -403,15 +403,10 @@ export function Navbar() {
 
   const menuItems = [
     { label: "Turf", to: "/venues", hasChevron: true },
+    { label: "Cart", to: "/bookings", hasChevron: true },
     { label: "Events", to: "/community", hasChevron: true },
     { label: "Coaching", to: "/ai-assistant", hasChevron: true },
     { label: "Tournaments", to: "/tournaments", hasChevron: true },
-    {
-      label: "Cart",
-      to: "/bookings",
-      hasChevron: true,
-      isCart: true,
-    },
     {
       label: "Turf Owner Login",
       to: "/login?type=owner",
@@ -712,14 +707,6 @@ export function Navbar() {
                 const itemContent = (
                   <div className="flex items-center justify-between w-full py-4 px-3 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] group">
                     <div className="flex items-center gap-3">
-                      {item.isCart && (
-                        <ShoppingCart
-                          className={cn(
-                            "h-5 w-5",
-                            isDark ? "text-emerald-600" : "text-emerald-600",
-                          )}
-                        />
-                      )}
                       <span
                         className={cn(
                           "text-sm tracking-wide transition-colors duration-150",

@@ -93,7 +93,7 @@ export function CommunityFeed() {
       {/* Main Feed */}
       <div className="lg:col-span-2 space-y-6">
         <div>
-          <h1 className="text-3xl ">Community Feed</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Community Feed</h1>
           <p className="text-muted-foreground mt-1">
             Stay connected with the sports community
           </p>
@@ -107,7 +107,7 @@ export function CommunityFeed() {
                 {currentUser?.profilePicture && (
                   <AvatarImage src={currentUser.profilePicture} className="object-cover" />
                 )}
-                <AvatarFallback className="bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold">
                   {displayInitials}
                 </AvatarFallback>
               </Avatar>
@@ -142,7 +142,7 @@ export function CommunityFeed() {
               <CardContent className="p-6">
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar>
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback className="bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold">
                       {post.author
                         .split(" ")
                         .map((n) => n[0])
@@ -158,8 +158,8 @@ export function CommunityFeed() {
                         </p>
                       </div>
                       {post.type === "match" && (
-                        <Badge className="gap-1">
-                          <Trophy className="h-3 w-3" />
+                        <Badge className="gap-1 bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold shadow-none">
+                          <Trophy className="h-3 w-3 stroke-[2.5]" />
                           Match Win
                         </Badge>
                       )}
@@ -206,7 +206,7 @@ export function CommunityFeed() {
         {/* Stats */}
         <Card className="border-border/50">
           <CardContent className="p-6">
-            <h3 className=" mb-4">Your Activity</h3>
+            <h3 className="text-base font-bold mb-3 text-foreground">Your Activity</h3>
             <div className="space-y-4">
               {[
                 { label: "Posts", value: "24" },
@@ -232,7 +232,7 @@ export function CommunityFeed() {
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="h-5 w-5 text-primary" />
-              <h3 className="">Trending Topics</h3>
+              <h3 className="text-base font-bold text-foreground">Trending Topics</h3>
             </div>
             <div className="space-y-3">
               {trendingTopics.map((topic) => (
@@ -251,13 +251,13 @@ export function CommunityFeed() {
         {/* Suggested Connections */}
         <Card className="border-border/50">
           <CardContent className="p-6">
-            <h3 className=" mb-4">Suggested Players</h3>
+            <h3 className="text-base font-bold mb-3 text-foreground">Suggested Players</h3>
             <div className="space-y-4">
               {displaySuggestions.map((name) => (
                 <div key={name} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
-                      <AvatarFallback className="text-sm bg-primary text-primary-foreground">
+                      <AvatarFallback className="text-xs bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold">
                         {name
                           .split(" ")
                           .map((n) => n[0])

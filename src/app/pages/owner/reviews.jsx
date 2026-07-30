@@ -135,9 +135,6 @@ export function ReviewsList() {
               {stats.total} Feedback
             </Badge>
           </h1>
-          <p className="text-xs font-medium text-muted-foreground mt-0.5">
-            See what players are saying about your sports facilities and turfs.
-          </p>
         </div>
       </div>
 
@@ -199,10 +196,10 @@ export function ReviewsList() {
               key={tab.key}
               onClick={() => setSelectedRatingFilter(tab.key)}
               className={cn(
-                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap border",
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap border-2",
                 selectedRatingFilter === tab.key
-                  ? "border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-2xs"
-                  : "border-border/50 bg-background text-muted-foreground hover:border-border hover:text-foreground"
+                  ? "border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 shadow-2xs"
+                  : "border-border/50 bg-transparent text-muted-foreground hover:border-border hover:text-foreground"
               )}
             >
               {tab.label}

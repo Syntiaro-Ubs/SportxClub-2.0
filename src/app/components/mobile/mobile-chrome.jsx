@@ -64,6 +64,11 @@ export function MobileAppBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHomePage = location.pathname === "/";
+  const logoTarget = location.pathname.startsWith("/owner-dashboard")
+    ? "/owner-dashboard"
+    : location.pathname.startsWith("/admin")
+      ? "/admin"
+      : "/";
   const [locationQuery, setLocationQuery] = useState("");
 
   useEffect(() => {
@@ -156,7 +161,7 @@ export function MobileAppBar() {
                 <ChevronLeft className="h-5 w-5" />
               </button>
             )}
-            <Link to="/" className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
+            <Link to={logoTarget} className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
               <Logo />
             </Link>
 
@@ -233,7 +238,7 @@ export function MobileAppBar() {
             >
               {/* Drawer Header */}
               <div className="flex h-[76px] items-center justify-between px-5 border-b border-border/40">
-                <Link to="/" onClick={() => setMenuOpen(false)} className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
+                <Link to={logoTarget} onClick={() => setMenuOpen(false)} className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
                   <Logo />
                 </Link>
                 <Button

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { 
-  FileText, 
-  Search, 
-  Download, 
+import {
+  FileText,
+  Search,
+  Download,
   Filter,
   ArrowUpRight,
   ArrowDownRight,
@@ -15,20 +15,20 @@ import {
   CalendarDays,
   TrendingUp,
 } from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle, 
-  CardDescription 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
 } from "../../components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from "../../components/ui/table";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -121,21 +121,21 @@ export function OwnerReport() {
   const getStatusBadge = (status) => {
     switch (status) {
       case "Success":
-        return <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border-none font-medium gap-1"><CheckCircle2 className="w-3 h-3"/> Success</Badge>;
+        return <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border-none font-medium gap-1"><CheckCircle2 className="w-3 h-3" /> Success</Badge>;
       case "Cancelled":
-        return <Badge className="bg-red-500/15 text-red-600 dark:text-red-400 hover:bg-red-500/25 border-none font-medium gap-1"><XCircle className="w-3 h-3"/> Cancelled</Badge>;
+        return <Badge className="bg-red-500/15 text-red-600 dark:text-red-400 hover:bg-red-500/25 border-none font-medium gap-1"><XCircle className="w-3 h-3" /> Cancelled</Badge>;
       case "Refunded":
-        return <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-500/25 border-none font-medium gap-1"><RefreshCcw className="w-3 h-3"/> Refunded</Badge>;
+        return <Badge className="bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-500/25 border-none font-medium gap-1"><RefreshCcw className="w-3 h-3" /> Refunded</Badge>;
       case "Pending":
-        return <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border-none font-medium gap-1"><Clock className="w-3 h-3"/> Pending</Badge>;
+        return <Badge className="bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 border-none font-medium gap-1"><Clock className="w-3 h-3" /> Pending</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const filteredData = mockReportsData.filter(item => {
-    const matchesSearch = 
-      item.player.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch =
+      item.player.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.turf.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "All" || item.status === statusFilter;
@@ -150,83 +150,82 @@ export function OwnerReport() {
     >
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Reports & History</h1>
-          <p className="text-muted-foreground">Detailed transaction and booking history.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Reports & History</h1>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline"><Download className="w-4 h-4 mr-2"/> Export CSV</Button>
+          <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Export CSV</Button>
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+        <Card className="p-3.5 space-y-0.5">
+          <div className="flex flex-row items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Total Revenue</span>
             <IndianRupee className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold flex items-center">
-              <IndianRupee className="w-6 h-6 mr-1" />
+          </div>
+          <div>
+            <div className="text-xl font-extrabold flex items-center tracking-tight">
+              <IndianRupee className="w-5 h-5 mr-0.5" />
               125,000
             </div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-emerald-500 flex items-center"><ArrowUpRight className="w-3 h-3"/> 12.5%</span> from last month
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+              <span className="text-emerald-500 font-bold flex items-center"><ArrowUpRight className="w-3 h-3" /> 12.5%</span> from last month
             </p>
-          </CardContent>
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Successful Bookings</CardTitle>
+        <Card className="p-3.5 space-y-0.5">
+          <div className="flex flex-row items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Successful Bookings</span>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">284</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-emerald-500 flex items-center"><ArrowUpRight className="w-3 h-3"/> 8.2%</span> from last month
+          </div>
+          <div>
+            <div className="text-xl font-extrabold tracking-tight">284</div>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+              <span className="text-emerald-500 font-bold flex items-center"><ArrowUpRight className="w-3 h-3" /> 8.2%</span> from last month
             </p>
-          </CardContent>
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cancellations</CardTitle>
+        <Card className="p-3.5 space-y-0.5">
+          <div className="flex flex-row items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Cancellations</span>
             <XCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-red-500 flex items-center"><ArrowUpRight className="w-3 h-3"/> 2.1%</span> from last month
+          </div>
+          <div>
+            <div className="text-xl font-extrabold tracking-tight">12</div>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+              <span className="text-red-500 font-bold flex items-center"><ArrowUpRight className="w-3 h-3" /> 2.1%</span> from last month
             </p>
-          </CardContent>
+          </div>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Refund Processed</CardTitle>
+        <Card className="p-3.5 space-y-0.5">
+          <div className="flex flex-row items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground">Refund Processed</span>
             <RefreshCcw className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold flex items-center">
-              <IndianRupee className="w-6 h-6 mr-1" />
+          </div>
+          <div>
+            <div className="text-xl font-extrabold flex items-center tracking-tight">
+              <IndianRupee className="w-5 h-5 mr-0.5 stroke-[2.5]" />
               8,500
             </div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <span className="text-emerald-500 flex items-center"><ArrowDownRight className="w-3 h-3"/> 4.3%</span> from last month
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+              <span className="text-emerald-500 font-bold flex items-center"><ArrowDownRight className="w-3 h-3" /> 4.3%</span> from last month
             </p>
-          </CardContent>
+          </div>
         </Card>
       </div>
-      
+
       {/* Transaction Table */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <CardTitle>Transaction History</CardTitle>
+            <CardTitle className="text-xl font-bold">Transaction History</CardTitle>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search player, turf or ID..." 
-                  className="pl-9 bg-muted/50" 
+                <Input
+                  placeholder="Search player, turf or ID..."
+                  className="pl-9 bg-muted/50"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -236,11 +235,10 @@ export function OwnerReport() {
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                      statusFilter === status 
-                        ? "bg-background shadow-sm text-foreground" 
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${statusFilter === status
+                      ? "bg-background shadow-sm text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                      }`}
                   >
                     {status}
                   </button>
@@ -251,41 +249,45 @@ export function OwnerReport() {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border overflow-hidden">
-            <Table>
+            <Table className="text-center">
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead>Transaction ID</TableHead>
-                  <TableHead>Player</TableHead>
-                  <TableHead>Turf & Sport</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="text-center font-bold">Transaction ID</TableHead>
+                  <TableHead className="text-center font-bold">Player</TableHead>
+                  <TableHead className="text-center font-bold">Turf & Sport</TableHead>
+                  <TableHead className="text-center font-bold">Date & Time</TableHead>
+                  <TableHead className="text-center font-bold">Amount</TableHead>
+                  <TableHead className="text-center font-bold">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredData.map((trx) => (
                   <TableRow key={trx.id}>
-                    <TableCell className="font-mono text-xs">{trx.id}</TableCell>
-                    <TableCell className="font-medium">{trx.player}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
+                    <TableCell className="font-mono text-xs text-center">{trx.id}</TableCell>
+                    <TableCell className="font-medium text-center">{trx.player}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center justify-center text-center">
                         <span>{trx.turf}</span>
                         <span className="text-xs text-muted-foreground">{trx.sport}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col">
+                    <TableCell className="text-center">
+                      <div className="flex flex-col items-center justify-center text-center">
                         <span>{new Date(trx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                         <span className="text-xs text-muted-foreground">{trx.time}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      <span className="flex items-center">
-                        <IndianRupee className="w-4 h-4 mr-0.5" />
+                    <TableCell className="font-medium text-center">
+                      <span className="flex items-center justify-center text-center">
+                        <IndianRupee className="w-4 h-4 mr-0.5 stroke-[2.5]" />
                         {trx.amount}
                       </span>
                     </TableCell>
-                    <TableCell>{getStatusBadge(trx.status)}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center text-center">
+                        {getStatusBadge(trx.status)}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filteredData.length === 0 && (

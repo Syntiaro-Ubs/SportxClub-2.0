@@ -244,7 +244,7 @@ export function Payment() {
                 Checkout
               </p>
               <h1 className={cn(
-                "mt-2 text-3xl tracking-tight font-black md:text-4xl lg:text-5xl",
+                "mt-2 text-xl tracking-tight font-black md:text-2xl lg:text-3xl",
                 isDark ? "text-white" : "text-slate-900"
               )}>
                 Secure booking and payment

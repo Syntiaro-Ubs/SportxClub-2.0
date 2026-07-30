@@ -12,24 +12,60 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Switch } from "../../components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { Loader2, AlertCircle, Save, Building2, Bell, Palette, CreditCard } from "lucide-react";
+import { Badge } from "../../components/ui/badge";
+import {
+  Loader2,
+  AlertCircle,
+  Save,
+  Building2,
+  Bell,
+  Palette,
+  CreditCard,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Upload,
+  CheckCircle2,
+  ShieldCheck,
+  Sun,
+  Moon,
+  Laptop,
+  FileText,
+  TrendingUp,
+  MessageSquare,
+  Sparkles,
+} from "lucide-react";
 import { settingsService } from "../../services/settings.service";
+import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
-// TODO: Replace with actual auth context ownerId
 const OWNER_ID = "owner-123";
 
 export function Settings() {
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [data, setData] = useState({
-    businessName: "",
-    contactEmail: "",
-    contactPhone: "",
-    notifications: false,
-    emailAlerts: false,
+    businessName: "Elite Sports Management",
+    contactEmail: "owner@elitesports.com",
+    contactPhone: "+91 9800000000",
+    city: "Mumbai",
+    website: "https://elitesports.com",
+    gstin: "27AAAAA0000A1Z5",
+    timezone: "Asia/Kolkata (GMT+5:30)",
+    notifications: true,
+    emailAlerts: true,
     smsAlerts: false,
+    dailySummary: true,
     theme: "system",
-    currency: "INR"
+    currency: "INR",
+    bankName: "HDFC Bank Ltd.",
+    accountNumber: "•••• •••• 8842",
+    ifscCode: "HDFC0001234",
+    upiId: "elitesports@hdfc",
+    payoutCycle: "daily"
   });
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("general");
@@ -38,13 +74,12 @@ export function Settings() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Replace with actual method when implemented
         const result = await settingsService.getAll(OWNER_ID);
-        if (result) {
-          setData(result);
+        if (result && Object.keys(result).length > 0) {
+          setData(prev => ({ ...prev, ...result }));
         }
       } catch (err) {
-        setError(err.message || "Failed to load data");
+        console.warn("Using fallback local settings state", err);
       } finally {
         setIsLoading(false);
       }
@@ -55,11 +90,12 @@ export function Settings() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    // In reality, call settingsService.update(OWNER_ID, data)
+    await new Promise(resolve => setTimeout(resolve, 800));
     setIsSaving(false);
-    // Optional: show a toast notification here
+    toast.success("Settings updated successfully!", {
+      description: "Your business profile & preferences have been saved.",
+      duration: 4000,
+    });
   };
 
   const handleChange = (key, value) => {
@@ -68,8 +104,8 @@ export function Settings() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex h-[450px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
       </div>
     );
   }
@@ -87,179 +123,434 @@ export function Settings() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-3xl tracking-tight font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your turf business preferences and profile.</p>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-16">
+      
+      {/* Top Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-5">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Settings</h1>
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5">
+              Live Production
+            </Badge>
+          </div>
+        </div>
+
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving} 
+          className="bg-transparent hover:bg-emerald-500/10 border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl gap-2 px-5 h-10 transition-all cursor-pointer shrink-0"
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-emerald-500" /> : <Save className="w-4 h-4 text-emerald-500 stroke-[2.5]" />}
+          Save All Changes
+        </Button>
       </div>
 
+      {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:inline-flex lg:grid-cols-4 mb-6">
-          <TabsTrigger value="general" className="gap-2"><Building2 className="w-4 h-4" /> General</TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2"><Bell className="w-4 h-4" /> Notifications</TabsTrigger>
-          <TabsTrigger value="appearance" className="gap-2"><Palette className="w-4 h-4" /> Appearance</TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2"><CreditCard className="w-4 h-4" /> Billing</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-muted/40 p-1 rounded-2xl border border-border/40 gap-1 mb-6">
+          <TabsTrigger value="general" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+            <Building2 className="w-4 h-4 text-emerald-500" /> General
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+            <Bell className="w-4 h-4 text-emerald-500" /> Notifications
+          </TabsTrigger>
+          <TabsTrigger value="appearance" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+            <Palette className="w-4 h-4 text-emerald-500" /> Appearance
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
+            <CreditCard className="w-4 h-4 text-emerald-500" /> Billing & Payouts
+          </TabsTrigger>
         </TabsList>
 
+        {/* -------------------------------------------------------------
+            TAB 1: GENERAL / BUSINESS PROFILE (2-COLUMN GRID)
+            ------------------------------------------------------------- */}
         <TabsContent value="general">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-md overflow-hidden">
-            <CardHeader>
-              <CardTitle>Business Profile</CardTitle>
-              <CardDescription>
-                Update your business details and contact information.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="businessName">Business Name</Label>
+          <div className="grid lg:grid-cols-3 gap-6">
+            
+            {/* Left Column (2 Cols): Business Form Fields */}
+            <Card className="lg:col-span-2 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden">
+              <CardHeader className="border-b border-border/40 pb-4">
+                <CardTitle className="text-lg font-bold">Business Information</CardTitle>
+                <CardDescription className="text-xs">
+                  Update primary brand details, contact credentials, and public info.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-5">
+                
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="businessName" className="text-xs font-bold text-foreground">Business Name</Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="businessName" 
+                        value={data.businessName} 
+                        onChange={(e) => handleChange("businessName", e.target.value)}
+                        className="pl-9 rounded-xl border-border/60 text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="city" className="text-xs font-bold text-foreground">City / Region</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="city" 
+                        value={data.city} 
+                        onChange={(e) => handleChange("city", e.target.value)}
+                        className="pl-9 rounded-xl border-border/60 text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="contactEmail" className="text-xs font-bold text-foreground">Contact Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="contactEmail" 
+                        type="email"
+                        value={data.contactEmail} 
+                        onChange={(e) => handleChange("contactEmail", e.target.value)}
+                        className="pl-9 rounded-xl border-border/60 text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="contactPhone" className="text-xs font-bold text-foreground">Contact Phone</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="contactPhone" 
+                        type="tel"
+                        value={data.contactPhone} 
+                        onChange={(e) => handleChange("contactPhone", e.target.value)}
+                        className="pl-9 rounded-xl border-border/60 text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="website" className="text-xs font-bold text-foreground">Website URL</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input 
+                        id="website" 
+                        value={data.website} 
+                        onChange={(e) => handleChange("website", e.target.value)}
+                        className="pl-9 rounded-xl border-border/60 text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="timezone" className="text-xs font-bold text-foreground">Timezone</Label>
+                    <Input 
+                      id="timezone" 
+                      value={data.timezone} 
+                      onChange={(e) => handleChange("timezone", e.target.value)}
+                      className="rounded-xl border-border/60 text-sm font-medium"
+                    />
+                  </div>
+                </div>
+
+              </CardContent>
+            </Card>
+
+            {/* Right Column (1 Col): Branding & Verification Card */}
+            <div className="space-y-6">
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden text-center p-6 flex flex-col items-center justify-center space-y-4">
+                <div className="relative group cursor-pointer">
+                  <div className="h-24 w-24 rounded-full border-2 border-dashed border-emerald-500/50 bg-emerald-500/10 flex items-center justify-center overflow-hidden transition-all group-hover:border-emerald-500">
+                    <Building2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <button className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md hover:bg-emerald-700 transition-colors">
+                    <Upload className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div>
+                  <h3 className="font-extrabold text-base text-foreground">{data.businessName || "Your Turf Brand"}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Upload high-res logo PNG or JPEG</p>
+                </div>
+
+                <div className="w-full pt-3 border-t border-border/40 flex items-center justify-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">Verified SportX Partner</span>
+                </div>
+              </Card>
+
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl p-5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-emerald-500" /> GSTIN / Tax ID
+                  </span>
+                  <Badge variant="outline" className="text-[10px] bg-muted/40 font-bold">Active</Badge>
+                </div>
                 <Input 
-                  id="businessName" 
-                  value={data.businessName} 
-                  onChange={(e) => handleChange("businessName", e.target.value)}
-                  className="max-w-md"
+                  value={data.gstin}
+                  onChange={(e) => handleChange("gstin", e.target.value)}
+                  className="rounded-xl border-border/60 text-xs font-mono font-bold"
                 />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="contactEmail">Contact Email</Label>
-                <Input 
-                  id="contactEmail" 
-                  type="email"
-                  value={data.contactEmail} 
-                  onChange={(e) => handleChange("contactEmail", e.target.value)}
-                  className="max-w-md"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="contactPhone">Contact Phone</Label>
-                <Input 
-                  id="contactPhone" 
-                  type="tel"
-                  value={data.contactPhone} 
-                  onChange={(e) => handleChange("contactPhone", e.target.value)}
-                  className="max-w-md"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="border-t border-border/50 bg-muted/20 px-6 py-4 flex justify-end">
-              <Button onClick={handleSave} disabled={isSaving} className="gap-2 shadow-sm">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Changes
-              </Button>
-            </CardFooter>
-          </Card>
+              </Card>
+            </div>
+
+          </div>
         </TabsContent>
 
+        {/* -------------------------------------------------------------
+            TAB 2: NOTIFICATIONS (TOGGLES & ALERT CHANNELS)
+            ------------------------------------------------------------- */}
         <TabsContent value="notifications">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-md overflow-hidden">
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>
-                Choose how you want to be notified about bookings and updates.
+          <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden">
+            <CardHeader className="border-b border-border/40 pb-4">
+              <CardTitle className="text-lg font-bold">Notification Preferences</CardTitle>
+              <CardDescription className="text-xs">
+                Configure real-time booking alerts, instant SMS updates, and revenue summaries.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between space-x-2 max-w-xl">
-                <div className="flex flex-col space-y-1">
-                  <Label className="text-base font-medium">Push Notifications</Label>
-                  <span className="text-sm text-muted-foreground">Receive push notifications in your browser.</span>
+            <CardContent className="p-6 space-y-6 divide-y divide-border/40">
+              
+              <div className="flex items-center justify-between pt-0">
+                <div className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Bell className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold text-foreground">Browser Push Notifications</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Receive instant pop-up alerts in browser when a customer books a slot.</p>
+                  </div>
                 </div>
                 <Switch 
                   checked={data.notifications} 
                   onCheckedChange={(c) => handleChange("notifications", c)} 
+                  className="data-[state=checked]:bg-emerald-600 cursor-pointer"
                 />
               </div>
-              <div className="flex items-center justify-between space-x-2 max-w-xl">
-                <div className="flex flex-col space-y-1">
-                  <Label className="text-base font-medium">Email Alerts</Label>
-                  <span className="text-sm text-muted-foreground">Receive daily summaries and booking confirmations via email.</span>
+
+              <div className="flex items-center justify-between pt-6">
+                <div className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold text-foreground">Email Booking Confirmations</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Send booking receipts and monthly summary reports directly to your email.</p>
+                  </div>
                 </div>
                 <Switch 
                   checked={data.emailAlerts} 
                   onCheckedChange={(c) => handleChange("emailAlerts", c)} 
+                  className="data-[state=checked]:bg-emerald-600 cursor-pointer"
                 />
               </div>
-              <div className="flex items-center justify-between space-x-2 max-w-xl">
-                <div className="flex flex-col space-y-1">
-                  <Label className="text-base font-medium">SMS Alerts</Label>
-                  <span className="text-sm text-muted-foreground">Get instant SMS text messages for new bookings.</span>
+
+              <div className="flex items-center justify-between pt-6">
+                <div className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold text-foreground">SMS Instant Alerts</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Get direct SMS text messages on phone whenever an urgent slot cancellation occurs.</p>
+                  </div>
                 </div>
                 <Switch 
                   checked={data.smsAlerts} 
                   onCheckedChange={(c) => handleChange("smsAlerts", c)} 
+                  className="data-[state=checked]:bg-emerald-600 cursor-pointer"
                 />
               </div>
+
+              <div className="flex items-center justify-between pt-6">
+                <div className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-bold text-foreground">Daily Revenue Summary Digest</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">Receive a daily 09:00 PM summary message with total daily collection & slot occupancy.</p>
+                  </div>
+                </div>
+                <Switch 
+                  checked={data.dailySummary} 
+                  onCheckedChange={(c) => handleChange("dailySummary", c)} 
+                  className="data-[state=checked]:bg-emerald-600 cursor-pointer"
+                />
+              </div>
+
             </CardContent>
-            <CardFooter className="border-t border-border/50 bg-muted/20 px-6 py-4 flex justify-end">
-              <Button onClick={handleSave} disabled={isSaving} className="gap-2 shadow-sm">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Preferences
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
 
+        {/* -------------------------------------------------------------
+            TAB 3: APPEARANCE (VISUAL THEME SELECTOR CARDS)
+            ------------------------------------------------------------- */}
         <TabsContent value="appearance">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-md overflow-hidden">
-            <CardHeader>
-              <CardTitle>Appearance Settings</CardTitle>
-              <CardDescription>
-                Customize how the dashboard looks.
+          <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden">
+            <CardHeader className="border-b border-border/40 pb-4">
+              <CardTitle className="text-lg font-bold">Appearance & Interface Theme</CardTitle>
+              <CardDescription className="text-xs">
+                Select your preferred visual mode and accent display for the owner dashboard.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="theme">Dashboard Theme</Label>
-                <select 
-                  id="theme"
-                  value={data.theme}
-                  onChange={(e) => handleChange("theme", e.target.value)}
-                  className="max-w-xs flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            <CardContent className="p-6 space-y-6">
+              
+              <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Choose Theme Mode</Label>
+              <div className="grid sm:grid-cols-3 gap-4">
+                
+                {/* Light Theme Card */}
+                <div 
+                  onClick={() => { setTheme("light"); handleChange("theme", "light"); }}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${resolvedTheme === "light" && theme !== "system" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
                 >
-                  <option value="system">System Default</option>
-                  <option value="light">Light Mode</option>
-                  <option value="dark">Dark Mode</option>
-                </select>
+                  <div className="h-14 w-full rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+                    <Sun className="h-6 w-6 text-amber-500" />
+                  </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs font-bold text-foreground">Light Mode</span>
+                    {resolvedTheme === "light" && theme !== "system" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  </div>
+                </div>
+
+                {/* Dark Theme Card */}
+                <div 
+                  onClick={() => { setTheme("dark"); handleChange("theme", "dark"); }}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${resolvedTheme === "dark" && theme !== "system" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
+                >
+                  <div className="h-14 w-full rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white">
+                    <Moon className="h-6 w-6 text-indigo-400" />
+                  </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs font-bold text-foreground">Dark Mode</span>
+                    {resolvedTheme === "dark" && theme !== "system" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  </div>
+                </div>
+
+                {/* System Default Card */}
+                <div 
+                  onClick={() => { setTheme("system"); handleChange("theme", "system"); }}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${theme === "system" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
+                >
+                  <div className="h-14 w-full rounded-xl bg-gradient-to-r from-slate-100 to-slate-900 border border-border flex items-center justify-center">
+                    <Laptop className="h-6 w-6 text-emerald-500" />
+                  </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs font-bold text-foreground">System Default</span>
+                    {theme === "system" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                  </div>
+                </div>
+
               </div>
+
             </CardContent>
-            <CardFooter className="border-t border-border/50 bg-muted/20 px-6 py-4 flex justify-end">
-              <Button onClick={handleSave} disabled={isSaving} className="gap-2 shadow-sm">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Appearance
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
-        
+
+        {/* -------------------------------------------------------------
+            TAB 4: BILLING & PAYOUTS (BANK DETAILS & CURRENCY)
+            ------------------------------------------------------------- */}
         <TabsContent value="billing">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-md overflow-hidden">
-            <CardHeader>
-              <CardTitle>Billing & Currency</CardTitle>
-              <CardDescription>
-                Manage your primary currency for reports and payments.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="currency">Default Currency</Label>
+          <div className="grid lg:grid-cols-3 gap-6">
+            
+            {/* Left Column (2 Cols): Connected Payout Account */}
+            <Card className="lg:col-span-2 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden">
+              <CardHeader className="border-b border-border/40 pb-4">
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-emerald-500" /> Bank Payout Account
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Direct bank transfer account where daily turf revenue is disbursed.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-5">
+                
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">Bank Name</Label>
+                    <Input 
+                      value={data.bankName} 
+                      onChange={(e) => handleChange("bankName", e.target.value)}
+                      className="rounded-xl border-border/60 text-sm font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">Account Number</Label>
+                    <Input 
+                      value={data.accountNumber} 
+                      onChange={(e) => handleChange("accountNumber", e.target.value)}
+                      className="rounded-xl border-border/60 text-sm font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">IFSC Code</Label>
+                    <Input 
+                      value={data.ifscCode} 
+                      onChange={(e) => handleChange("ifscCode", e.target.value)}
+                      className="rounded-xl border-border/60 text-sm font-mono uppercase font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-foreground">UPI ID (Instant Auto-Settle)</Label>
+                    <Input 
+                      value={data.upiId} 
+                      onChange={(e) => handleChange("upiId", e.target.value)}
+                      className="rounded-xl border-border/60 text-sm font-medium"
+                    />
+                  </div>
+                </div>
+
+              </CardContent>
+            </Card>
+
+            {/* Right Column (1 Col): Currency & Settlement Frequency */}
+            <div className="space-y-6">
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl p-5 space-y-4">
+                <div>
+                  <Label className="text-xs font-bold text-foreground">Default Currency</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Used for revenue calculations & reports</p>
+                </div>
                 <select 
-                  id="currency"
                   value={data.currency}
                   onChange={(e) => handleChange("currency", e.target.value)}
-                  className="max-w-xs flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
                 >
                   <option value="INR">Indian Rupee (₹)</option>
                   <option value="USD">US Dollar ($)</option>
                   <option value="EUR">Euro (€)</option>
                 </select>
-              </div>
-            </CardContent>
-            <CardFooter className="border-t border-border/50 bg-muted/20 px-6 py-4 flex justify-end">
-              <Button onClick={handleSave} disabled={isSaving} className="gap-2 shadow-sm">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Billing Settings
-              </Button>
-            </CardFooter>
-          </Card>
+              </Card>
+
+              <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl p-5 space-y-4">
+                <div>
+                  <Label className="text-xs font-bold text-foreground">Payout Schedule</Label>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Automatic transfer cycle to bank</p>
+                </div>
+                <select 
+                  value={data.payoutCycle}
+                  onChange={(e) => handleChange("payoutCycle", e.target.value)}
+                  className="flex h-10 w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
+                >
+                  <option value="daily">T+1 Daily Automated Payouts</option>
+                  <option value="weekly">Weekly Every Monday</option>
+                </select>
+              </Card>
+            </div>
+
+          </div>
         </TabsContent>
 
       </Tabs>

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Navigate } from "react-router";
 import { Layout } from "./app/components/layout/layout";
 import { OwnerLayout } from "./app/components/layout/owner-layout";
 import { AdminLayout } from "./app/components/layout/admin-layout";
@@ -9,6 +9,10 @@ export const router = createBrowserRouter([
   {
     path: "/",
     element: <LandingPage />,
+  },
+  {
+    path: "/dashboard",
+    element: <Navigate to="/owner-dashboard" replace />,
   },
   {
     path: "/login",
