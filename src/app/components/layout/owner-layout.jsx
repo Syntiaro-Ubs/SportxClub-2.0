@@ -17,6 +17,8 @@ import {
   FlaskConical,
   PanelLeft,
   PanelLeftClose,
+  FileText,
+  Settings,
 } from "lucide-react";
 import { Logo } from "../brand/Logo";
 import { Button } from "../ui/button";
@@ -49,6 +51,7 @@ const ownerNavigation = [
   { name: "Revenue", href: "/owner-dashboard/revenue", icon: IndianRupee },
   { name: "Bookings", href: "/owner-dashboard/bookings", icon: CalendarDays, badge: "18" },
   { name: "My Turfs", href: "/owner-dashboard/turfs", icon: MapPin, badge: "4" },
+  { name: "Report", href: "/owner-dashboard/report", icon: FileText },
   { name: "Roles", href: "/owner-dashboard/staff", icon: User },
   { name: "Events", href: "/owner-dashboard/tournaments", icon: Trophy, badge: "2" },
   { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
@@ -124,7 +127,7 @@ export function OwnerLayout() {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card/50 backdrop-blur-2xl">
-      <div className="flex h-[76px] shrink-0 items-center gap-3 px-4 border-b border-border/40">
+      <div className="flex h-14 shrink-0 items-center gap-3 px-4 border-b border-border/40">
         <button
           type="button"
           onClick={toggleSidebar}
@@ -165,14 +168,22 @@ export function OwnerLayout() {
         })}
       </div>
 
-      <div className="p-4 mt-auto border-t border-border/40 flex flex-col gap-1">
+      <div className="p-4 mt-auto border-t border-border/40 flex flex-row gap-2">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 px-3 py-2.5 h-auto rounded-xl transition-colors font-semibold text-sm cursor-pointer"
+          className="flex-1 justify-start gap-3 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 px-3 py-2.5 h-auto rounded-xl transition-colors font-semibold text-sm cursor-pointer"
           onClick={handleLogout}
         >
           <LogOut className="h-5 w-5 shrink-0" />
           <span>Sign Out</span>
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-[46px] shrink-0 justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 p-0 h-[42px] rounded-xl transition-colors cursor-pointer"
+          onClick={() => navigate("/owner-dashboard/settings")}
+          title="Settings"
+        >
+          <Settings className="h-5 w-5 shrink-0" />
         </Button>
       </div>
     </div>
@@ -187,7 +198,7 @@ export function OwnerLayout() {
 
       {/* Main Content Area — Expands to 100% full width when sidebar is hidden */}
       <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-64"}`}>
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/80 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/80 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
           <button
             type="button"
             className="-m-2.5 p-2.5 text-muted-foreground md:hidden hover:text-foreground transition-colors cursor-pointer"

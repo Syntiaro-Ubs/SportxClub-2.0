@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 export function AppDownloadCTA() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
-  
+
   // State for mock phone animations and cycling screens
   const [mockScreen, setMockScreen] = useState("dashboard"); // "dashboard" or "download"
   const [activeSport, setActiveSport] = useState("Football");
@@ -123,10 +123,10 @@ export function AppDownloadCTA() {
     <section className="py-12 md:py-20 bg-slate-50 dark:bg-[#050811] relative overflow-hidden transition-colors duration-300">
       {/* Ambient glowing backdrop */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[180px] bg-emerald-500/[0.04] dark:bg-blue-500/[0.03] pointer-events-none" />
-      
+
       <div className="mx-auto max-w-[1200px] px-6 sm:px-8 lg:px-12 relative z-10">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-16">
-          
+
           {/* Left: Content Area */}
           <div className="flex-1 max-w-xl flex flex-col items-start text-left">
             {/* Tag */}
@@ -134,22 +134,22 @@ export function AppDownloadCTA() {
               <Smartphone className="w-3.5 h-3.5" />
               <span>Get The App</span>
             </div>
-            
+
             {/* Title */}
             <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white mb-6 mt-6 leading-[1.1] transition-colors duration-300">
               Book turfs on the go <br />
               with the <span className="text-emerald-600 dark:text-emerald-600 transition-colors duration-300">SportXClub App</span>
             </h2>
-            
+
             {/* Subtext */}
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 mb-10 leading-relaxed font-light transition-colors duration-300">
               Download the SportXClub app for faster bookings, instant notifications, and exclusive app-only offers — available on both Android and iOS.
             </p>
-            
+
             {/* Store Buttons */}
             <div className="flex flex-wrap gap-4 w-full sm:w-auto">
               {/* Google Play */}
-              <a 
+              <a
                 href="#"
                 className="inline-flex items-center gap-3.5 bg-white text-slate-900 px-6 py-3.5 rounded-2xl font-bold transition duration-300 hover:scale-[1.03] active:scale-98 shadow-md border border-slate-200 dark:border-white/10 w-full sm:w-auto justify-center"
               >
@@ -165,9 +165,9 @@ export function AppDownloadCTA() {
                   <span className="text-sm font-black text-slate-900">Google Play</span>
                 </div>
               </a>
-              
+
               {/* App Store */}
-              <a 
+              <a
                 href="#"
                 className="inline-flex items-center gap-3.5 bg-white text-slate-900 px-6 py-3.5 rounded-2xl font-bold transition duration-300 hover:scale-[1.03] active:scale-98 shadow-md border border-slate-200 dark:border-white/10 w-full sm:w-auto justify-center"
               >
@@ -182,10 +182,10 @@ export function AppDownloadCTA() {
               </a>
             </div>
           </div>
-          
+
           {/* Right: Phone Mockup Frame */}
           <div className="flex-1 relative z-10 flex items-center justify-center w-full max-w-sm">
-            <motion.div 
+            <motion.div
               initial={{ y: 0 }}
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -193,34 +193,34 @@ export function AppDownloadCTA() {
             >
               {/* Top notch */}
               <div className="absolute top-0.5 inset-x-0 h-4 w-28 mx-auto rounded-full bg-slate-800 z-30" />
-              
+
               {/* Phone Content Screen */}
               <div className="absolute inset-0 pt-6 pb-12 flex flex-col overflow-hidden bg-white dark:bg-[#070b12] text-slate-900 dark:text-white transition-colors duration-300">
-                
+
                 {/* Status Bar */}
                 <div className="flex justify-between items-center text-[9px] px-4 py-2 font-semibold text-slate-500 dark:text-slate-400 select-none">
                   <span>{currentTime}</span>
                   <div className="flex items-center gap-1.5">
                     {/* Blinking message indicator */}
-                    <motion.svg 
+                    <motion.svg
                       animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
                       transition={{ repeat: Infinity, duration: 1.8 }}
-                      className="w-3.5 h-3.5 fill-current text-emerald-500 dark:text-emerald-600" 
+                      className="w-3.5 h-3.5 fill-current text-emerald-500 dark:text-emerald-600"
                       viewBox="0 0 24 24"
                     >
-                      <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+                      <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
                     </motion.svg>
                     <div className="w-3 h-2 rounded-xs border border-current opacity-70 flex items-center p-[1px]"><div className="w-full h-full bg-current rounded-xs" /></div>
                   </div>
                 </div>
-                
+
                 {/* Screen Content Wrapper with Screen Transition */}
                 <div className="flex-1 relative overflow-hidden flex flex-col">
-                  
+
                   <AnimatePresence mode="wait">
                     {mockScreen === "dashboard" ? (
                       /* SCREEN 1: Live booking dashboard view */
-                      <motion.div 
+                      <motion.div
                         key="dashboard"
                         initial={{ opacity: 0, x: -5 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -230,7 +230,7 @@ export function AppDownloadCTA() {
                       >
                         {/* Let it Breathe Banner */}
                         <div className="rounded-xl p-3 bg-gradient-to-r from-blue-600 to-blue-700 relative overflow-hidden flex flex-col justify-between aspect-[3.2/1] shrink-0 shadow-md">
-                          <motion.div 
+                          <motion.div
                             className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full pointer-events-none"
                             animate={{ x: ["100%", "-100%"] }}
                             transition={{ repeat: Infinity, duration: 3.5, ease: "linear", repeatDelay: 1.5 }}
@@ -261,8 +261,8 @@ export function AppDownloadCTA() {
                                   )}
                                   <span className={cn(
                                     "relative z-10 px-2.5 py-1 rounded-full font-bold text-[8px] flex items-center gap-1 transition-colors duration-300",
-                                    isActive 
-                                      ? "text-white dark:text-slate-900" 
+                                    isActive
+                                      ? "text-white dark:text-slate-900"
                                       : "bg-slate-100 border border-slate-200 text-slate-600 dark:bg-[#121620] dark:border-slate-800 dark:text-slate-350"
                                   )}>
                                     <span>{emoji}</span>
@@ -282,7 +282,7 @@ export function AppDownloadCTA() {
                           </div>
 
                           <AnimatePresence mode="wait">
-                            <motion.div 
+                            <motion.div
                               key={activeSport}
                               initial={{ opacity: 0, y: 8 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -293,7 +293,7 @@ export function AppDownloadCTA() {
                               <div className="flex justify-between items-start">
                                 <div>
                                   <h5 className="text-[10px] font-bold text-slate-900 dark:text-white leading-tight">{details.title}</h5>
-                                  <p className="text-[7px] text-slate-500 dark:text-slate-400 mt-0.5">{details.location}</p>
+                                  <p className="text-[7px] text-slate-500 dark:text-slate-400 mt-0.5">{typeof details.location === 'object' ? (details.location?.city || details.location?.address || 'Location unavailable') : details.location}</p>
                                 </div>
                                 <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white border border-slate-250 text-[7px] text-slate-600 dark:bg-slate-800/80 dark:border-slate-700/50 dark:text-slate-400 font-medium">
                                   <span className="w-1 h-1 rounded-full bg-emerald-500 animate-ping" />
@@ -320,12 +320,12 @@ export function AppDownloadCTA() {
                                 <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-600">{details.price}</span>
                               </div>
 
-                              <motion.button 
-                                animate={{ 
-                                  boxShadow: isDark 
+                              <motion.button
+                                animate={{
+                                  boxShadow: isDark
                                     ? ["0px 0px 0px rgba(109,255,59,0)", "0px 0px 8px rgba(109,255,59,0.3)", "0px 0px 0px rgba(109,255,59,0)"]
                                     : ["0px 0px 0px rgba(16,185,129,0)", "0px 0px 8px rgba(16,185,129,0.25)", "0px 0px 0px rgba(16,185,129,0)"],
-                                  scale: [1, 1.012, 1] 
+                                  scale: [1, 1.012, 1]
                                 }}
                                 transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
                                 className="w-full py-1.5 rounded-lg bg-emerald-500 text-white dark:bg-emerald-600 dark:text-slate-950 font-black text-[9px] hover:bg-emerald-600 dark:hover:bg-emerald-700"
@@ -341,7 +341,7 @@ export function AppDownloadCTA() {
                           <h4 className="text-[9px] font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-2">Recommended Turfs</h4>
                           <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                             {details.turfs.map((turf) => (
-                              <motion.div 
+                              <motion.div
                                 key={turf.name}
                                 whileHover={{ scale: 1.03 }}
                                 className="rounded-xl overflow-hidden bg-slate-50 border border-slate-200/80 dark:bg-[#111622] dark:border-slate-800/80 shadow-xs shrink-0 w-[110px] transition-colors duration-300"
@@ -358,7 +358,7 @@ export function AppDownloadCTA() {
                       </motion.div>
                     ) : (
                       /* SCREEN 2: App Download, QR Scanner & Installation Perks view */
-                      <motion.div 
+                      <motion.div
                         key="download"
                         initial={{ opacity: 0, x: 5 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -371,7 +371,7 @@ export function AppDownloadCTA() {
                           <div className="flex items-center gap-3">
                             {/* Animated glowing App Icon */}
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg relative overflow-hidden shrink-0">
-                              <motion.div 
+                              <motion.div
                                 className="absolute inset-0 bg-white/20 skew-x-[-15deg] translate-x-[-100%]"
                                 animate={{ x: ["100%", "-100%"] }}
                                 transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
@@ -388,23 +388,23 @@ export function AppDownloadCTA() {
                           <div className="space-y-1">
                             <div className="flex justify-between text-[8px] font-bold text-slate-500">
                               <span>
-                                {progressPercent < 100 
-                                  ? `Downloading... ${progressPercent}%` 
-                                  : progressPercent === 100 
-                                    ? "Installing..." 
+                                {progressPercent < 100
+                                  ? `Downloading... ${progressPercent}%`
+                                  : progressPercent === 100
+                                    ? "Installing..."
                                     : "Installed"
                                 }
                               </span>
                               <span>
-                                {progressPercent < 100 
-                                  ? `${Math.round(24 * (progressPercent/100))} MB / 24 MB`
+                                {progressPercent < 100
+                                  ? `${Math.round(24 * (progressPercent / 100))} MB / 24 MB`
                                   : "Completed"
                                 }
                               </span>
                             </div>
                             {/* Inner progress bar track */}
                             <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden relative">
-                              <motion.div 
+                              <motion.div
                                 className="h-full rounded-full bg-emerald-500 dark:bg-emerald-600"
                                 style={{ width: `${progressPercent}%` }}
                                 transition={{ type: "tween", ease: "linear" }}
@@ -441,7 +441,7 @@ export function AppDownloadCTA() {
                             <rect x="40" y="30" width="10" height="10" fill="#0f172a" />
                             <rect x="5" y="35" width="15" height="10" fill="#0f172a" />
                             <rect x="25" y="45" width="10" height="15" fill="#0f172a" />
-                            
+
                             <rect x="70" y="35" width="15" height="5" fill="#0f172a" />
                             <rect x="85" y="45" width="10" height="15" fill="#0f172a" />
                             <rect x="55" y="55" width="25" height="10" fill="#0f172a" />
@@ -466,7 +466,7 @@ export function AppDownloadCTA() {
                               { title: "🔔 Real-Time Alerts", desc: "Get notifications when local slots open up." },
                               { title: "💳 Payment Splits", desc: "Quickly split match fees with your teammates." }
                             ].map((perk, idx) => (
-                              <motion.div 
+                              <motion.div
                                 key={idx}
                                 initial={{ opacity: 0, y: 5 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -512,14 +512,14 @@ export function AppDownloadCTA() {
                 </div>
                 <div className="flex flex-col items-center gap-0.5 flex-1 shrink-0 max-w-[25%]">
                   <svg className="w-3.5 h-3.5 fill-current mx-auto" viewBox="0 0 24 24">
-                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
                   </svg>
                   <span className="text-[6px] font-medium text-center block mt-0.5">Community</span>
                 </div>
               </div>
             </motion.div>
           </div>
-          
+
         </div>
       </div>
     </section>

@@ -144,7 +144,7 @@ export function BookingsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-primary" />
-                      {booking.location}
+                      {typeof booking.location === 'object' ? (booking.location?.city || booking.location?.address || 'Location unavailable') : booking.location}
                     </div>
                   </div>
                 </div>

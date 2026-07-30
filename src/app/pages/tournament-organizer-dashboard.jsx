@@ -384,8 +384,8 @@ export function TournamentOrganizerDashboard() {
                     {tournament.sport}
                   </Badge>
                   <Badge className={`text-[10px] font-bold rounded-md px-2 py-0.5 ${tournament.status === "Active"
-                      ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30"
-                      : "bg-blue-500/15 text-blue-600 border border-blue-500/30"
+                    ? "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30"
+                    : "bg-blue-500/15 text-blue-600 border border-blue-500/30"
                     }`}>
                     {tournament.status}
                   </Badge>

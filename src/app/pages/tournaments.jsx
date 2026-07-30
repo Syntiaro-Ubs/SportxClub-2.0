@@ -266,7 +266,7 @@ export function Tournaments() {
                             </span>
                             <span className="flex items-center gap-1.5">
                               <MapPin className="h-3.5 w-3.5" />
-                              {tournament.location}
+                              {typeof tournament.location === 'object' ? (tournament.location?.city || tournament.location?.address || 'Location unavailable') : tournament.location}
                             </span>
                           </div>
                         </div>

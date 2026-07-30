@@ -14,6 +14,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { ThemeToggleButton } from "../ui/theme-toggle-button";
 
 const adminNavigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -52,7 +53,7 @@ export function AdminLayout() {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      <div className="flex h-[76px] shrink-0 items-center px-6">
+      <div className="flex h-14 shrink-0 items-center px-6">
         <Link to="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
           <Logo />
         </Link>
@@ -96,7 +97,7 @@ export function AdminLayout() {
 
       {/* Mobile Header and Main */}
       <div className="flex flex-col flex-1 md:pl-64 w-full max-w-full overflow-x-hidden">
-        <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
           <button type="button" className="-m-2.5 p-2.5 text-muted-foreground md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <span className="sr-only">Open sidebar</span>
             <Menu className="h-6 w-6" aria-hidden="true" />
@@ -110,6 +111,7 @@ export function AdminLayout() {
             </div>
             
             <div className="flex items-center gap-x-4 lg:gap-x-6">
+              <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
               <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors">
                 <Bell className="h-5 w-5" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive border-2 border-background"></span>

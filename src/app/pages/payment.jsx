@@ -191,7 +191,7 @@ export function Payment() {
         playHours: 1,
         venue: {
           name: booking.venue,
-          location: `${booking.location}, Mumbai, Maharashtra`,
+          location: `${typeof booking.location === 'object' ? (booking.location?.city || booking.location?.address || '') : (booking.location || '')}, Mumbai, Maharashtra`,
         },
         squadLobby: {
           members: [
@@ -775,7 +775,7 @@ export function Payment() {
                     "mt-1.5 text-xs font-semibold",
                     isDark ? "text-white/50" : "text-slate-400"
                   )}>
-                    {booking.location}
+                    {typeof booking.location === 'object' ? (booking.location?.city || booking.location?.address || 'Location unavailable') : booking.location}
                   </p>
                 </div>
 
