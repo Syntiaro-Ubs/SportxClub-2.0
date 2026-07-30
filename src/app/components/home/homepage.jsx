@@ -285,7 +285,7 @@ function AnimatedNumber({ value, suffix = "" }) {
   );
 }
 
-function SectionHeading({ eyebrow, title, description, centered = false }) {
+function SectionHeading({ eyebrow, title, description, centered = false, titleClassName }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
 
@@ -309,7 +309,7 @@ function SectionHeading({ eyebrow, title, description, centered = false }) {
       )}
 
       {title && (
-        <h2 className="mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+        <h2 className={cn("mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-[2.6rem] font-black tracking-tight text-slate-900 dark:text-white leading-tight", titleClassName)}>
           {title}
         </h2>
       )}
@@ -429,7 +429,7 @@ export function Navbar() {
             : "border-slate-200/80 bg-white/95 text-slate-900",
         )}
       >
-        <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-4 px-6 lg:px-8">
+        <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-6 lg:px-8">
           {/* Left Section: Logo */}
           <div className="flex flex-1 items-center justify-start">
             <Link to="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
@@ -1064,20 +1064,9 @@ export function HeroSection() {
                         className="absolute inset-0 h-full w-full object-cover brightness-100 contrast-100"
                       />
 
-                      {/* Dark gradient for bottom text readability */}
-                      <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
 
                       {/* Banner Content (Only visible on active slide) */}
                       <div className={cn("absolute inset-0 flex flex-col justify-end px-5 sm:px-8 md:px-10 pb-2 md:pb-4 md:max-w-xl lg:max-w-2xl z-10 transition-opacity duration-500", isActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
-                        <div className="flex flex-wrap items-center gap-2 mb-1.5 sm:mb-2.5">
-                          <Badge className="rounded-full px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-widest border border-white/50 bg-black/70 text-white backdrop-blur-md shadow-lg">
-                            {slide.tag}
-                          </Badge>
-                          <span className="text-[11px] font-extrabold uppercase tracking-widest px-3 py-0.5 rounded-full border border-white/50 bg-black/70 text-white backdrop-blur-md shadow-lg">
-                            {slide.badgeText}
-                          </span>
-                        </div>
-
                         <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-normal tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
                           {slide.title}
                         </h1>
@@ -1247,7 +1236,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                             {venue.name}
                           </h3>
                           <span className="text-[10px] !text-white/80 font-medium truncate drop-shadow">
-                            {venue.location}
+                            {typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}
                           </span>
                         </div>
                       </div>
@@ -1311,9 +1300,7 @@ function SportCard({ name, count, image, index }) {
             )}
           />
 
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/50 to-black/90 transition-all duration-300 ease-out opacity-100 group-hover:opacity-95 z-10"
-          />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
           <div className="absolute inset-x-0 bottom-0 z-20 p-6 sm:p-7">
             <p
@@ -1378,9 +1365,8 @@ function MoreSportsCard() {
               />
             ))}
           </div>
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/50 to-black/90 transition-all duration-300 ease-out z-10"
-          />
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
+          <div className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-black/60 to-transparent z-10" />
 
           <div className="relative z-20 flex flex-1 flex-col justify-between p-6 sm:p-7">
             <div className="flex items-center justify-between">
@@ -1790,7 +1776,7 @@ export function DiscoveryRails() {
                         <div>
                           <p className="text-sm  text-white">{event.title}</p>
                           <p className="mt-1 text-xs text-white/52">
-                            {event.location}
+                            {typeof event.location === 'object' ? (event.location?.city || event.location?.address || 'Location unavailable') : event.location}
                           </p>
                         </div>
                         <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-white/35" />
@@ -1818,8 +1804,8 @@ export function WhySportXClub() {
         <SectionHeading
           eyebrow="Why SportXClub"
           title="Built for booking speed, tournament control, and trust."
-          description="A premium product should feel clear, secure, and deliberate at every step of the journey."
           centered
+          titleClassName="!text-xl md:!text-2xl lg:!text-3xl"
         />
 
         <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -1852,257 +1838,6 @@ export function WhySportXClub() {
   );
 }
 
-export function TournamentCTA() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme !== "light";
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
-
-  return (
-    <section className="py-12 md:py-16">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div
-          className={cn(
-            "relative overflow-hidden rounded-[28px] border",
-            isDark
-              ? "border-white/[0.08] bg-[#101216]"
-              : "border-slate-200 bg-[#F5F5F5]",
-          )}
-        >
-          <div className="absolute inset-0">
-            <img
-              src={asset("/tournaments/tournament-launchpad-bg.png")}
-              alt=""
-              aria-hidden="true"
-              className={cn(
-                "h-full w-full object-cover",
-                isDark ? "opacity-90" : "opacity-100",
-              )}
-            />
-
-            <div
-              className={cn(
-                "absolute inset-0",
-                isDark
-                  ? "bg-[linear-gradient(90deg,rgba(5,5,5,0.96)_0%,rgba(5,5,5,0.85)_45%,rgba(5,5,5,0.25)_100%)]"
-                  : "bg-[linear-gradient(90deg,rgba(245,245,245,0.55)_0%,rgba(245,245,245,0.40)_45%,rgba(245,245,245,0.10)_100%)]",
-              )}
-            />
-          </div>
-
-          <div className="relative grid gap-10 px-6 py-10 md:px-10 md:py-12 lg:grid-cols-[1.12fr_0.88fr] lg:items-center lg:px-12">
-            <div className="max-w-2xl">
-              <Badge
-                className={cn(
-                  "rounded-full border px-4 py-2 text-xs  uppercase tracking-[0.26em]",
-                  isDark
-                    ? "border-emerald-600/20 bg-emerald-600/10 text-emerald-600"
-                    : "border-emerald-600/30 bg-emerald-600/15 text-[#3eb315]",
-                )}
-              >
-                Tournament launchpad
-              </Badge>
-              <h2
-                className={cn(
-                  "mt-6 text-3xl  tracking-tight md:text-5xl md:leading-[1.04]",
-                  isDark ? "text-white" : "text-slate-900",
-                )}
-              >
-                Host your tournament with the same polish players expect from
-                the app.
-              </h2>
-              <p
-                className={cn(
-                  "mt-5 max-w-xl text-base leading-8 md:text-lg",
-                  isDark ? "text-white/70" : "text-slate-600",
-                )}
-              >
-                Promote brackets, prize pools, and registration with a premium
-                call-to-action section that feels credible and production-ready.
-              </p>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button
-                  onClick={(e) => {
-                    if (!currentUser) {
-                      e.preventDefault();
-                      toast.error("Please login first to host a tournament.");
-                      navigate("/login");
-                    } else {
-                      navigate("/organizer-dashboard");
-                    }
-                  }}
-                  className={cn(
-                    "h-12 rounded-full px-6 cursor-pointer",
-                    isDark
-                      ? "bg-emerald-600 text-[#050505] hover:bg-emerald-700"
-                      : "bg-emerald-600 text-[#050505] hover:bg-[#5fe032] shadow-sm",
-                  )}
-                >
-                  Host Your Tournament
-                </Button>
-              </div>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-[440px]">
-              <div
-                className={cn(
-                  "absolute -left-6 top-8 h-48 w-48 rounded-full blur-3xl",
-                  isDark ? "bg-emerald-600/14" : "bg-emerald-600/10",
-                )}
-              />
-              <div
-                className={cn(
-                  "absolute -right-6 bottom-0 h-52 w-52 rounded-full blur-3xl",
-                  isDark ? "bg-white/[0.1]" : "bg-white/[0.4]",
-                )}
-              />
-              <div
-                className={cn(
-                  "relative overflow-hidden rounded-[26px] border p-5 backdrop-blur-md",
-                  isDark
-                    ? "border-white/[0.08] bg-[#050505]/72"
-                    : "border-slate-200 bg-white/95 shadow-xl shadow-slate-200/50",
-                )}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={cn(
-                      "h-24 w-24 shrink-0 overflow-hidden rounded-[22px] border",
-                      isDark
-                        ? "border-white/[0.08] bg-[#101216]"
-                        : "border-slate-100 bg-slate-50",
-                    )}
-                  >
-                    <ImageWithFallback
-                      src={asset("/tournaments/tournament-1-cover.webp")}
-                      alt="Tournament cover"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className={cn(
-                        "text-xs  uppercase tracking-[0.24em]",
-                        isDark ? "text-emerald-600/80" : "text-[#5fe032]",
-                      )}
-                    >
-                      Featured event
-                    </p>
-                    <h3
-                      className={cn(
-                        "mt-2 text-lg ",
-                        isDark ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      City Five-A-Side Cup
-                    </h3>
-                    <p
-                      className={cn(
-                        "mt-2 text-sm",
-                        isDark ? "text-white/60" : "text-slate-500",
-                      )}
-                    >
-                      24 teams. 4 venues. 1 knockout weekend.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div
-                    className={cn(
-                      "rounded-[18px] border p-4",
-                      isDark
-                        ? "border-white/[0.08] bg-white/[0.03]"
-                        : "border-slate-100 bg-white",
-                    )}
-                  >
-                    <p
-                      className={cn(
-                        "text-xs uppercase tracking-[0.22em]",
-                        isDark ? "text-white/45" : "text-slate-500",
-                      )}
-                    >
-                      Prize pool
-                    </p>
-                    <p
-                      className={cn(
-                        "mt-2 text-xl ",
-                        isDark ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      ₹2.5L
-                    </p>
-                  </div>
-                  <div
-                    className={cn(
-                      "rounded-[18px] border p-4",
-                      isDark
-                        ? "border-white/[0.08] bg-white/[0.03]"
-                        : "border-slate-100 bg-white",
-                    )}
-                  >
-                    <p
-                      className={cn(
-                        "text-xs uppercase tracking-[0.22em]",
-                        isDark ? "text-white/45" : "text-slate-500",
-                      )}
-                    >
-                      Registrations
-                    </p>
-                    <p
-                      className={cn(
-                        "mt-2 text-xl ",
-                        isDark ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      72%
-                    </p>
-                  </div>
-                </div>
-
-                <div
-                  className={cn(
-                    "mt-5 flex items-center gap-4 rounded-[20px] border p-4",
-                    isDark
-                      ? "border-emerald-600/16 bg-emerald-600/10"
-                      : "border-emerald-600/20 bg-emerald-600/10",
-                  )}
-                >
-                  <img
-                    src={asset("/tournaments/trophy-3d.png")}
-                    alt=""
-                    aria-hidden="true"
-                    className="h-16 w-16 object-contain"
-                  />
-
-                  <div>
-                    <p
-                      className={cn(
-                        "text-sm ",
-                        isDark ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      Tournament-ready templates
-                    </p>
-                    <p
-                      className={cn(
-                        "mt-1 text-sm",
-                        isDark ? "text-white/60" : "text-slate-600",
-                      )}
-                    >
-                      Landing pages, bracket pages, and updates in one flow.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 
 
@@ -2277,7 +2012,7 @@ export function StoreSection() {
         <SectionHeading
           eyebrow="Pro Store"
           title="Sport Related Facilities & Equipment"
-          description="Gear up with the best sports merchandise and equipment. Delivered straight to your venue or home."
+          titleClassName="!text-xl md:!text-2xl lg:!text-3xl"
         />
       </div>
 
@@ -2533,7 +2268,7 @@ export function TurfGallery() {
         <SectionHeading
           eyebrow="Gallery"
           title="Immersive Turf Experiences"
-          description="A glimpse into the premium sports facilities available for booking."
+          titleClassName="!text-xl md:!text-2xl lg:!text-3xl"
         />
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">
@@ -2575,7 +2310,7 @@ export function TurfGallery() {
                 <div className="flex items-center gap-2 mb-2">
                   <MapPin className="h-4 w-4 text-emerald-600" />
                   <span className="text-sm text-[#ffffff]/90 drop-shadow-md">
-                    {turf.location}
+                    {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
                   </span>
                 </div>
                 <h3 className="text-2xl text-[#ffffff] drop-shadow-lg">
@@ -2625,7 +2360,7 @@ export function HomePage() {
       <DiscoveryRails />
       <TurfGallery />
       <WhySportXClub />
-      <TournamentCTA />
+
       <AppDownloadCTA />
 
       <Footer />

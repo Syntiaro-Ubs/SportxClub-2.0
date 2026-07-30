@@ -16,6 +16,7 @@ import {
   Eye,
   Trash2,
   PowerOff,
+  IndianRupee,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -139,9 +140,14 @@ export function TurfList() {
   }
 
   const filteredData = data.filter(
-    (turf) =>
-      turf.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      turf.location.toLowerCase().includes(searchQuery.toLowerCase()),
+    (turf) => {
+      const loc = turf.location;
+      const locStr = typeof loc === 'object' ? (loc?.address || loc?.city || loc?.landmark || '') : (loc || '');
+      const nameStr = turf.name || '';
+      const queryStr = searchQuery || '';
+      return nameStr.toLowerCase().includes(queryStr.toLowerCase()) ||
+        locStr.toLowerCase().includes(queryStr.toLowerCase());
+    }
   );
 
   return (
@@ -150,7 +156,7 @@ export function TurfList() {
         <Link to="/owner-dashboard/turfs/add">
           <Button
             variant="outline"
-            className="gap-2 border border-slate-300 dark:border-slate-700 text-foreground hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors font-bold cursor-pointer rounded-full px-5"
+            className="gap-2 border border-slate-300 dark:border-slate-700 text-foreground hover:bg-transparent hover:border-emerald-500 transition-colors font-bold cursor-pointer rounded-full px-5"
           >
             <Plus className="h-4 w-4 text-emerald-500" />
             Add New Turf
@@ -214,7 +220,7 @@ export function TurfList() {
                     <h3 className=" text-lg line-clamp-1">{turf.name}</h3>
                     <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                       <MapPin className="h-3.5 w-3.5" />
-                      {turf.location}
+                      {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
                     </p>
                   </div>
                   <DropdownMenu>
@@ -258,9 +264,10 @@ export function TurfList() {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-border/50 flex justify-between items-center">
-                  <span className="">
-                    ₹{turf.price}
-                    <span className="text-sm font-normal text-muted-foreground">
+                  <span className="flex items-center">
+                    <IndianRupee className="w-4 h-4 mr-0.5" />
+                    {turf.price}
+                    <span className="text-sm font-normal text-muted-foreground ml-0.5">
                       /hr
                     </span>
                   </span>

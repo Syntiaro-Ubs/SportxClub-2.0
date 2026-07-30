@@ -521,9 +521,9 @@ export function Dashboard() {
     if (isTestMode) return [];
     return bookings.filter(b => {
       const matchesSearch =
-        b.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.turfName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.id.toLowerCase().includes(searchQuery.toLowerCase());
+        (b.customerName || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (b.turfName || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (b.id || '').toLowerCase().includes((searchQuery || '').toLowerCase());
 
       const matchesSport = sportFilter === "all" || b.sport.toLowerCase() === sportFilter.toLowerCase();
       const matchesStatus = statusFilter === "all" || b.status.toLowerCase() === statusFilter.toLowerCase();
@@ -958,12 +958,12 @@ export function Dashboard() {
                 <SelectValue placeholder="All Sports" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="all">All Sports</SelectItem>
-                <SelectItem value="football">Football</SelectItem>
-                <SelectItem value="cricket">Cricket</SelectItem>
-                <SelectItem value="tennis">Tennis</SelectItem>
-                <SelectItem value="badminton">Badminton</SelectItem>
-                <SelectItem value="basketball">Basketball</SelectItem>
+                <SelectItem value="all" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">All Sports</SelectItem>
+                <SelectItem value="football" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Football</SelectItem>
+                <SelectItem value="cricket" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Cricket</SelectItem>
+                <SelectItem value="tennis" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Tennis</SelectItem>
+                <SelectItem value="badminton" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Badminton</SelectItem>
+                <SelectItem value="basketball" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Basketball</SelectItem>
               </SelectContent>
             </Select>
 
@@ -973,10 +973,10 @@ export function Dashboard() {
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent className="rounded-xl">
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="all" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">All Statuses</SelectItem>
+                <SelectItem value="confirmed" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Confirmed</SelectItem>
+                <SelectItem value="pending" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Pending</SelectItem>
+                <SelectItem value="cancelled" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>

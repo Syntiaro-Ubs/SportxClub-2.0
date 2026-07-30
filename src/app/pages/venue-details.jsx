@@ -54,10 +54,10 @@ const defaultVenue = {
 
 const gallery = [
   asset("/venues/turf-1.webp"),
-  asset("/venues/turf-2.webp"),
-  asset("/venues/turf-3.webp"),
-  asset("/venues/turf-4.webp"),
-  asset("/venues/turf-5.webp"),
+  asset("/venues/new_football_turf.png"),
+  asset("/venues/elite_turf_football.png"),
+  asset("/venues/champions_sports_arena_football.jpg"),
+  asset("/venues/new_football_turf_2.png"),
   asset("/venues/turf-6.webp"),
 ];
 
@@ -73,6 +73,22 @@ const marqueeVerticalStyle = `
     animation: marqueeVertical 22s linear infinite;
   }
   .animate-marquee-vertical:hover {
+    animation-play-state: paused;
+  }
+`;
+
+const marqueeHorizontalStyle = `
+  @keyframes marqueeHorizontal {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .animate-marquee-horizontal {
+    display: flex;
+    gap: 12px;
+    animation: marqueeHorizontal 20s linear infinite;
+    width: max-content;
+  }
+  .animate-marquee-horizontal:hover {
     animation-play-state: paused;
   }
 `;
@@ -159,7 +175,7 @@ export function VenueDetails() {
     ? {
       name: passedVenue.name,
       location: passedVenue.location,
-      address: `${passedVenue.location}, Mumbai, Maharashtra`,
+      address: `${typeof passedVenue.location === 'object' ? (passedVenue.location?.address || passedVenue.location?.city || '') : (passedVenue.location || '')}, Mumbai, Maharashtra`,
       rating:
         typeof passedVenue.rating === "number"
           ? passedVenue.rating
@@ -194,7 +210,13 @@ export function VenueDetails() {
   const [sortBy, setSortBy] = useState("recent");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
 
-  const timeSlots = [
+  const isToday = selectedDate === new Date().toISOString().split("T")[0];
+
+  const baseTimeSlots = [
+    { startHour: 11, label: "11:00 AM", endLabel: "12:00 PM" },
+    { startHour: 12, label: "12:00 PM", endLabel: "01:00 PM" },
+    { startHour: 13, label: "01:00 PM", endLabel: "02:00 PM" },
+    { startHour: 14, label: "02:00 PM", endLabel: "03:00 PM" },
     { startHour: 15, label: "03:00 PM", endLabel: "04:00 PM" },
     { startHour: 16, label: "04:00 PM", endLabel: "05:00 PM" },
     {
@@ -214,6 +236,8 @@ export function VenueDetails() {
       bookedBy: "Night League",
     },
   ];
+
+  const timeSlots = isToday ? baseTimeSlots.filter(slot => slot.startHour >= 15) : baseTimeSlots;
 
   const formatSlotRange = (startHour, hours) => {
     const formatHour = (h) => {
@@ -494,123 +518,119 @@ export function VenueDetails() {
         </div>
       </div>
 
+      <style>{marqueeHorizontalStyle}</style>
+
       <div className="mx-auto max-w-[1440px] px-4 pt-6 pb-2 sm:px-6 lg:px-8 lg:pt-8 lg:pb-6">
-        {/* Bento Box Media Header Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-8">
-          {/* Main Hero Photo (Spans 2 columns on desktop) */}
-          <div className="relative lg:col-span-2 w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-auto lg:h-[400px] rounded-2xl overflow-hidden group">
-            <ImageWithFallback
-              src={venue.image || gallery[0]}
-              alt={venue.name}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-black/30 to-transparent" />
+        {/* Main 12-Column Layout Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Left Column: Hero Photo, Venue Overview, Amenities, Map, Reviews */}
+          <div className="lg:col-span-6 xl:col-span-7 space-y-6 lg:space-y-8 order-2 lg:order-1">
+            {/* Unified Photo Gallery Container */}
+            <div className="flex flex-col gap-3">
+              {/* Main Hero Photo (Spans 1 column on desktop) */}
+              <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-auto md:h-[280px] rounded-2xl overflow-hidden group">
+                <ImageWithFallback
+                  src={venue.image || gallery[0]}
+                  alt={venue.name}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-black/30 to-transparent" />
 
-            {/* Bottom Venue Details Overlay */}
-            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10">
-              <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                <Badge
-                  className={cn(
-                    "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
-                    isDark
-                      ? "bg-transparent text-emerald-600"
-                      : "bg-transparent text-white",
-                  )}
-                >
-                  FIFA Standard
-                </Badge>
-                <Badge
-                  className={cn(
-                    "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
-                    isDark
-                      ? "bg-transparent text-emerald-600"
-                      : "bg-transparent text-white",
-                  )}
-                >
-                  Pro Lighting
-                </Badge>
-                <Badge
-                  className={cn(
-                    "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
-                    isDark
-                      ? "bg-transparent text-emerald-600"
-                      : "bg-transparent text-white",
-                  )}
-                >
-                  📐 {venue.area}
-                </Badge>
-              </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black !text-white tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
-                {venue.name}
-              </h1>
-              <div className="flex items-center gap-3 mt-2 text-xs sm:text-sm font-semibold !text-white/90">
-                <div
-                  className={cn(
-                    "flex items-center gap-1",
-                    isDark ? "text-emerald-600" : "text-white"
-                  )}
-                >
-                  <MapPin className="h-4 w-4 shrink-0" />
-                  <span>{venue.location}</span>
+                {/* Bottom Venue Details Overlay */}
+                <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10">
+                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                    <Badge
+                      className={cn(
+                        "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
+                        isDark
+                          ? "bg-transparent text-emerald-600"
+                          : "bg-transparent text-white",
+                      )}
+                    >
+                      FIFA Standard
+                    </Badge>
+                    <Badge
+                      className={cn(
+                        "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
+                        isDark
+                          ? "bg-transparent text-emerald-600"
+                          : "bg-transparent text-white",
+                      )}
+                    >
+                      Pro Lighting
+                    </Badge>
+                    <Badge
+                      className={cn(
+                        "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
+                        isDark
+                          ? "bg-transparent text-emerald-600"
+                          : "bg-transparent text-white",
+                      )}
+                    >
+                      📐 {venue.area}
+                    </Badge>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black !text-white tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+                    {venue.name}
+                  </h1>
+                  <div className="flex items-center gap-3 mt-2 text-xs sm:text-sm font-semibold !text-white/90">
+                    <div
+                      className={cn(
+                        "flex items-center gap-1",
+                        isDark ? "text-emerald-600" : "text-white"
+                      )}
+                    >
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      <span>{typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}</span>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex items-center gap-1 px-1 rounded-full",
+                        isDark
+                          ? "bg-transparent text-emerald-600"
+                          : "bg-transparent text-[#10B981]",
+                      )}
+                    >
+                      <Star
+                        className={cn(
+                          "h-3.5 w-3.5 fill-current",
+                          isDark ? "text-emerald-600" : "text-[#10B981]",
+                        )}
+                      />
+                      <span className="font-bold">
+                        {venue.rating.toFixed(1)}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[10px]",
+                          isDark ? "text-emerald-600/80" : "text-white/80",
+                        )}
+                      >
+                        ({venue.reviews})
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div
-                  className={cn(
-                    "flex items-center gap-1 px-1 rounded-full",
-                    isDark
-                      ? "bg-transparent text-emerald-600"
-                      : "bg-transparent text-[#10B981]",
-                  )}
-                >
-                  <Star
-                    className={cn(
-                      "h-3.5 w-3.5 fill-current",
-                      isDark ? "text-emerald-600" : "text-[#10B981]",
-                    )}
-                  />
-                  <span className="font-bold">
-                    {venue.rating.toFixed(1)}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-[10px]",
-                      isDark ? "text-emerald-600/80" : "text-white/80",
-                    )}
-                  >
-                    ({venue.reviews})
-                  </span>
+              </div>
+
+              {/* Automatic Scrolling Marquee for Secondary Photos */}
+              <div className="overflow-hidden relative w-full rounded-xl">
+                
+                <div className="animate-marquee-horizontal">
+                  {[...gallery.slice(1, 4), ...gallery.slice(1, 4), ...gallery.slice(1, 4)].map((img, idx) => (
+                    <div key={idx} className="relative aspect-video sm:aspect-[21/9] md:aspect-video rounded-xl overflow-hidden group border border-slate-200 dark:border-white/5 w-[150px] sm:w-[220px] md:w-[280px] shrink-0">
+                      <ImageWithFallback
+                        src={img}
+                        alt={`Venue Photo ${idx + 1}`}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Secondary Bento Photos Stack with Vertical Marquee */}
-          <div className="hidden lg:block relative h-[400px] overflow-hidden rounded-2xl border border-slate-200 dark:border-white/5 select-none">
-            <style dangerouslySetInnerHTML={{ __html: marqueeVerticalStyle }} />
-
-
-
-            <div className="animate-marquee-vertical">
-              {gallery.slice(1).concat(gallery.slice(1)).map((img, idx) => (
-                <div
-                  key={idx}
-                  className="h-[194px] w-full shrink-0 relative rounded-2xl overflow-hidden group border border-slate-250 dark:border-white/5"
-                >
-                  <ImageWithFallback
-                    src={img}
-                    alt={`Venue Scroll ${idx}`}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 50 / 50 Split Layout Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          {/* Left Column (50% Screen): Venue Overview, Amenities, Map, Reviews */}
-          <div className="space-y-6 order-2 lg:order-1">
             {/* Amenities Section */}
             <div className="space-y-4">
               <h3
@@ -951,8 +971,8 @@ export function VenueDetails() {
             </div>
           </div>
 
-          {/* Right Column (50% Screen): High-Converting Interactive Slot Booking Widget */}
-          <div className="lg:sticky lg:top-20 space-y-6 order-1 lg:order-2">
+          {/* Right Column: High-Converting Interactive Slot Booking Widget */}
+          <div className="lg:col-span-6 xl:col-span-5 lg:sticky lg:top-20 space-y-6 order-1 lg:order-2">
             <Card
               className={cn(
                 "rounded-[28px] border shadow-2xl overflow-hidden relative isolate transition-colors duration-300",
@@ -969,11 +989,11 @@ export function VenueDetails() {
                 )}
               />
 
-              <CardContent className="p-6 sm:p-8 space-y-6 relative z-10">
+              <CardContent className="p-4 sm:p-5 space-y-4 relative z-10">
                 {/* Header */}
                 <div
                   className={cn(
-                    "flex items-center justify-between border-b pb-5",
+                    "flex items-center justify-between border-b pb-3",
                     isDark ? "border-white/10" : "border-slate-200",
                   )}
                 >
@@ -1001,7 +1021,7 @@ export function VenueDetails() {
                 </div>
 
                 {/* Step 1: Select Sport Pills */}
-                <div className="space-y-2.5">
+                <div className="space-y-1.5">
                   <label
                     className={cn(
                       "text-xs font-bold uppercase tracking-wider flex items-center justify-between",
@@ -1024,7 +1044,7 @@ export function VenueDetails() {
                         type="button"
                         onClick={() => setSelectedSport(sp)}
                         className={cn(
-                          "h-11 px-4 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 w-full",
+                          "h-9 px-3 rounded-2xl border text-[11px] font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1.5 w-full",
                           selectedSport === sp
                             ? isDark
                               ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 shadow-[0_0_15px_rgba(109,255,59,0.2)]"
@@ -1048,7 +1068,7 @@ export function VenueDetails() {
                 </div>
 
                 {/* Step 2: Date Selector (Quick Pills + Picker) */}
-                <div className="space-y-2.5">
+                <div className="space-y-1.5">
                   <label
                     className={cn(
                       "text-xs font-bold uppercase tracking-wider flex items-center justify-between",
@@ -1071,7 +1091,7 @@ export function VenueDetails() {
                         type="button"
                         onClick={() => setSelectedDate(opt.iso)}
                         className={cn(
-                          "h-10 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center flex-1",
+                          "h-8 px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center flex-1",
                           selectedDate === opt.iso
                             ? isDark
                               ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 font-extrabold shadow-md"
@@ -1094,7 +1114,7 @@ export function VenueDetails() {
                           setShowCalendar(!showCalendar);
                         }}
                         className={cn(
-                          "h-10 w-10 rounded-xl border transition-all flex items-center justify-center cursor-pointer",
+                          "h-8 w-8 rounded-xl border transition-all flex items-center justify-center cursor-pointer",
                           isCustomDate
                             ? isDark
                               ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 shadow-[0_0_12px_rgba(109,255,59,0.3)]"
@@ -1217,7 +1237,7 @@ export function VenueDetails() {
                 </div>
 
                 {/* Step 3: Duration Selection */}
-                <div className="space-y-2.5">
+                <div className="space-y-1.5">
                   <label
                     className={cn(
                       "text-xs font-bold uppercase tracking-wider",
@@ -1236,7 +1256,7 @@ export function VenueDetails() {
                           setShowCustomHours(false);
                         }}
                         className={cn(
-                          "h-10 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
+                          "h-8 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
                           playHours === hrs && !showCustomHours
                             ? isDark
                               ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 font-extrabold shadow-md"
@@ -1284,7 +1304,7 @@ export function VenueDetails() {
                           }
                         }}
                         className={cn(
-                          "h-10 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
+                          "h-8 px-1 sm:px-2 rounded-xl border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 w-full",
                           (playHours > 3 || showCustomHours)
                             ? isDark
                               ? "bg-emerald-600/10 border border-emerald-600 text-emerald-600 font-extrabold shadow-md"
@@ -1302,7 +1322,7 @@ export function VenueDetails() {
                 </div>
 
                 {/* Step 4: Time Slot Matrix */}
-                <div className="space-y-2.5 pt-1">
+                <div className="space-y-1.5 pt-0.5">
                   <div className="flex items-center justify-between">
                     <label
                       className={cn(
@@ -1322,7 +1342,7 @@ export function VenueDetails() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                     {timeSlots.map((slot) => {
                       const slotHour = slot.startHour;
                       const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
@@ -1340,7 +1360,7 @@ export function VenueDetails() {
                           disabled={overlaps || outOfBounds}
                           onClick={() => !cannotSelect && setStartTime(hourToTimeStr(slotHour))}
                           className={cn(
-                            "py-3 px-5 rounded-2xl border flex flex-col items-center justify-center transition-all min-h-[78px] text-center relative",
+                            "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative",
                             !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
                             isSelected
                               ? isDark
@@ -1397,26 +1417,26 @@ export function VenueDetails() {
                                     : "text-emerald-600/70",
                             )}
                           >
-                             {cannotSelect ? (
-                               <div className="flex flex-col items-center w-full">
-                                 <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
-                                 {isBooked && (
-                                   <div className="flex flex-col items-center mt-1 w-full gap-0.5">
-                                     <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white/50 leading-none">
-                                       Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
-                                     </span>
-                                     <div
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         setCancelledSlots([...cancelledSlots, slotHour]);
-                                       }}
-                                       className="px-1.5 py-0.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm mt-0.5"
-                                     >
-                                       CANCEL
-                                     </div>
-                                   </div>
-                                 )}
-                               </div>
+                            {cannotSelect ? (
+                              <div className="flex flex-col items-center w-full">
+                                <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
+                                {isBooked && (
+                                  <div className="flex flex-col items-center mt-1 w-full gap-0.5">
+                                    <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white/50 leading-none">
+                                      Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
+                                    </span>
+                                    <div
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCancelledSlots([...cancelledSlots, slotHour]);
+                                      }}
+                                      className="px-1.5 py-0.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm mt-0.5"
+                                    >
+                                      CANCEL
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             ) : isSelected ? (
                               "Selected ✓"
                             ) : (
@@ -1432,7 +1452,7 @@ export function VenueDetails() {
                 {/* Booking Order Summary Box */}
                 <div
                   className={cn(
-                    "rounded-2xl border p-4 space-y-2.5 transition-colors",
+                    "rounded-xl border p-3 space-y-1.5 transition-colors",
                     isDark
                       ? "border-white/10 bg-white/[0.03]"
                       : "border-slate-200 bg-slate-50/90",
@@ -1440,55 +1460,7 @@ export function VenueDetails() {
                 >
                   <div
                     className={cn(
-                      "flex items-center justify-between text-xs",
-                      isDark ? "text-white/70" : "text-slate-600",
-                    )}
-                  >
-                    <span>Venue Rate ({playHours} hr):</span>
-                    <span
-                      className={cn(
-                        "font-bold",
-                        isDark ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      ₹{getSlotPrice(getStartHour(startTime), playHours)}
-                    </span>
-                  </div>
-                  <div
-                    className={cn(
-                      "flex items-center justify-between text-xs",
-                      isDark ? "text-white/70" : "text-slate-600",
-                    )}
-                  >
-                    <span>Convenience Fee:</span>
-                    <span
-                      className={cn(
-                        "font-bold",
-                        isDark ? "text-emerald-600" : "text-emerald-600",
-                      )}
-                    >
-                      FREE (₹0)
-                    </span>
-                  </div>
-                  <div
-                    className={cn(
-                      "flex items-center justify-between text-xs",
-                      isDark ? "text-white/70" : "text-slate-600",
-                    )}
-                  >
-                    <span>Selected Time:</span>
-                    <span
-                      className={cn(
-                        "font-bold",
-                        isDark ? "text-emerald-600" : "text-emerald-600",
-                      )}
-                    >
-                      {formatSlotRange(getStartHour(startTime), playHours)}
-                    </span>
-                  </div>
-                  <div
-                    className={cn(
-                      "border-t pt-2.5 flex items-center justify-between",
+                      "flex items-center justify-between",
                       isDark ? "border-white/10" : "border-slate-200",
                     )}
                   >

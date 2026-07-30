@@ -250,7 +250,7 @@ export function TimeSlots() {
         setIsLoading(true);
         const savedMockTurfs = JSON.parse(localStorage.getItem("mock_turfs") || "[]");
         const approvedStr = localStorage.getItem("approved_turfs");
-        
+
         let baseTurfs = [
           {
             id: '1',
@@ -700,7 +700,7 @@ export function TimeSlots() {
                 </SelectItem>
                 {turfs.map(turf => (
                   <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                    {turf.name} <span className="text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {turf.location})</span>
+                    {turf.name} <span className="text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location})</span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -726,16 +726,16 @@ export function TimeSlots() {
                 <SelectValue placeholder="Duration" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
-                <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
+                <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
                   1 Hour <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
                 </SelectItem>
-                <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
+                <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
                   2 Hours <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
                 </SelectItem>
-                <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
+                <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
                   3 Hours <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
                 </SelectItem>
-                <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400">
+                <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
                   ⚙️ Custom Duration... {selectedDurationOption === "custom" && `(${playHours} hrs)`}
                 </SelectItem>
               </SelectContent>
@@ -803,7 +803,7 @@ export function TimeSlots() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 cursor-pointer p-0 shrink-0"
+            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent border border-transparent hover:border-emerald-500 cursor-pointer p-0 shrink-0"
             onClick={() => setSelectedDate(addDays(selectedDate, -1))}
             title="Previous Day"
           >
@@ -813,7 +813,7 @@ export function TimeSlots() {
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-bold text-foreground hover:bg-accent/40 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-bold text-foreground hover:bg-transparent border border-transparent hover:border-emerald-500 rounded-lg transition-colors cursor-pointer"
                 title="Select specific date"
               >
                 <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
@@ -834,7 +834,7 @@ export function TimeSlots() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 cursor-pointer p-0 shrink-0"
+            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent border border-transparent hover:border-emerald-500 cursor-pointer p-0 shrink-0"
             onClick={() => setSelectedDate(addDays(selectedDate, 1))}
             title="Next Day"
           >
@@ -876,7 +876,7 @@ export function TimeSlots() {
                         <CardDescription className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
                           <span className="text-primary font-bold">{turf.sportType}</span>
                           <span className="opacity-40">&bull;</span>
-                          <span>{turf.location}</span>
+                          <span>{typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}</span>
                         </CardDescription>
                       </div>
 
@@ -1224,7 +1224,7 @@ export function TimeSlots() {
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Turf Details</p>
                 <p className="font-bold text-sm text-foreground">{generatedPass?.turfName}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{generatedPass?.location}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{typeof generatedPass?.location === 'object' ? (generatedPass.location?.city || generatedPass.location?.address || 'Location unavailable') : generatedPass?.location}</p>
               </div>
 
               <div className="flex justify-between items-center pt-2.5 border-t border-border/20 mt-3">

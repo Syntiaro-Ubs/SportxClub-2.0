@@ -655,7 +655,7 @@ export function VenueBooking() {
                   {venue.name}
                 </h3>
                 <span className="text-white/80 text-[9px] sm:text-[11px] font-medium truncate">
-                  {venue.location}
+                  {typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}
                 </span>
               </div>
             </div>

@@ -374,8 +374,8 @@ export function Revenue() {
   const filteredPayments = useMemo(() => {
     return activePayments.filter(tx => {
       const matchesSearch =
-        tx.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tx.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.id || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
+        (tx.source || '').toLowerCase().includes((searchQuery || '').toLowerCase()) ||
         tx.amount.toString().includes(searchQuery);
 
       const matchesStatus = statusFilter === "all" || tx.status.toLowerCase() === statusFilter.toLowerCase();
@@ -438,7 +438,7 @@ export function Revenue() {
           <Button
             onClick={handleExport}
             variant="outline"
-            className="gap-2 h-10 rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.03] transition-all duration-300 font-bold text-xs cursor-pointer shadow-xs"
+            className="gap-2 h-10 rounded-[18px] px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-transparent hover:border-emerald-500 transition-all duration-300 font-bold text-xs cursor-pointer shadow-xs"
           >
             <Download className="h-4 w-4" /> Export Report
           </Button>
