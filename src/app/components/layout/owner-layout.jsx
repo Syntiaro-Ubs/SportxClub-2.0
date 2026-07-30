@@ -49,7 +49,7 @@ const ownerNavigation = [
   { name: "Revenue", href: "/owner-dashboard/revenue", icon: IndianRupee },
   { name: "Bookings", href: "/owner-dashboard/bookings", icon: CalendarDays, badge: "18" },
   { name: "My Turfs", href: "/owner-dashboard/turfs", icon: MapPin, badge: "4" },
-  { name: "Roles & Permission", href: "/owner-dashboard/staff", icon: User },
+  { name: "Roles", href: "/owner-dashboard/staff", icon: User },
   { name: "Events", href: "/owner-dashboard/tournaments", icon: Trophy, badge: "2" },
   { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
   { name: "Reviews", href: "/owner-dashboard/reviews", icon: Star, badge: "4.8★" },
@@ -139,7 +139,7 @@ export function OwnerLayout() {
         </Link>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4 space-y-1.5 scrollbar-visible">
+      <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4 scrollbar-visible">
         {ownerNavigation.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -151,25 +151,15 @@ export function OwnerLayout() {
               key={item.name}
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-200 ${isActive
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold border border-emerald-500/30 shadow-2xs"
-                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+              className={`group flex items-center justify-between w-full py-4 px-3 border-b border-border/40 transition-colors duration-150 hover:bg-muted/30 ${isActive
+                ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
+                : "text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400"
                 }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`h-5 w-5 shrink-0 transition-transform duration-200 group-hover:scale-110 ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground group-hover:text-foreground"}`} />
-                <span className="truncate">{item.name}</span>
+                <Icon className={`h-5 w-5 shrink-0 transition-colors duration-150 ${isActive ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400"}`} />
+                <span className="text-sm tracking-wide transition-colors duration-150 truncate">{item.name}</span>
               </div>
-              {item.badge && (
-                <span
-                  className={`px-2 py-0.5 text-[10px] font-extrabold rounded-full transition-all shrink-0 ${isActive
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                    : "bg-muted text-muted-foreground group-hover:bg-muted-foreground/20 group-hover:text-foreground"
-                    }`}
-                >
-                  {item.badge}
-                </span>
-              )}
             </Link>
           );
         })}
