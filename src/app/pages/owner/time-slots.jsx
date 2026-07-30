@@ -98,15 +98,17 @@ const getBookingDetailsMock = (time) => {
   }
 };
 
-// Format time range e.g. "06:00" -> "06:00 am - 07:00 am"
-const formatTimeRange = (time) => {
+// Format time range e.g. "06:00", durationHours = 2 -> "06:00 am - 08:00 am"
+const formatTimeRange = (time, durationHours = 1) => {
+  if (!time) return "";
   const startHour = parseInt(time.split(':')[0], 10);
   const startPeriod = startHour >= 12 ? 'pm' : 'am';
   const start12 = startHour > 12 ? startHour - 12 : (startHour === 0 ? 12 : startHour);
 
-  const endHour = startHour + 1;
-  const endPeriod = endHour >= 12 && endHour < 24 ? 'pm' : 'am';
-  const end12 = endHour > 12 ? endHour - 12 : (endHour === 0 ? 12 : endHour);
+  const totalEndHours = startHour + (durationHours || 1);
+  const endHourRaw = totalEndHours % 24;
+  const endPeriod = (totalEndHours >= 12 && totalEndHours < 24) || totalEndHours >= 36 ? 'pm' : 'am';
+  const end12 = endHourRaw > 12 ? endHourRaw - 12 : (endHourRaw === 0 ? 12 : endHourRaw);
 
   return `${start12.toString().padStart(2, '0')}:00 ${startPeriod} - ${end12.toString().padStart(2, '0')}:00 ${endPeriod}`;
 };
@@ -208,6 +210,9 @@ export function TimeSlots() {
   const [selectedSlotForBooking, setSelectedSlotForBooking] = useState(null);
   const [playHours, setPlayHours] = useState(1);
   const [hoveredSlotInfo, setHoveredSlotInfo] = useState(null);
+  const [selectedDurationOption, setSelectedDurationOption] = useState("1"); // "1", "2", "3", "custom"
+  const [isCustomDurationDialogOpen, setIsCustomDurationDialogOpen] = useState(false);
+  const [tempCustomHours, setTempCustomHours] = useState(4);
   const [bookingDetails, setBookingDetails] = useState({
     customerName: "",
     customerPhone: "",
@@ -243,57 +248,84 @@ export function TimeSlots() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Try to load from our simulated DB onboarding details
+        const savedMockTurfs = JSON.parse(localStorage.getItem("mock_turfs") || "[]");
         const approvedStr = localStorage.getItem("approved_turfs");
-        let formattedTurfs = [];
+        
+        let baseTurfs = [
+          {
+            id: '1',
+            name: 'Cricket Ground 1',
+            location: 'Downtown Sports Complex',
+            sportType: 'Cricket',
+            status: 'Active',
+            slots: generateMockSlots(),
+          },
+          {
+            id: '2',
+            name: 'Cricket Ground 2',
+            location: 'Downtown Sports Complex',
+            sportType: 'Cricket',
+            status: 'Active',
+            slots: generateMockSlots(),
+          },
+          {
+            id: '3',
+            name: 'Premium Football Turf',
+            location: 'Downtown Sports Complex',
+            sportType: 'Football',
+            status: 'Closed',
+            slots: generateMockSlots(),
+          }
+        ];
 
         if (approvedStr) {
           const approved = JSON.parse(approvedStr);
           if (approved.length > 0) {
-            formattedTurfs = approved.map(item => ({
-              id: item.id,
-              name: item.turf.name,
-              location: `${item.location.address ? item.location.address + ', ' : ''}${item.location.city}`,
-              sportType: item.turf.sports && item.turf.sports.length > 0 ? item.turf.sports.join(" & ") : "General",
-              status: 'Active',
+            baseTurfs = approved.map(item => ({
+              id: String(item.id),
+              name: item.turf?.name || item.name || "Sports Turf",
+              location: item.location?.address ? `${item.location.address}, ${item.location.city}` : (item.location || 'Downtown Sports Complex'),
+              sportType: item.turf?.sports && item.turf.sports.length > 0 ? item.turf.sports.join(" & ") : (item.sportType || "Cricket"),
+              status: item.status || 'Active',
               slots: generateMockSlots(),
             }));
           }
         }
 
-        if (formattedTurfs.length > 0) {
-          setTurfs(formattedTurfs);
-          if (!selectedTurfId) setSelectedTurfId(formattedTurfs[0].id);
-        } else {
-          // Fallback mock database
-          const fallbackTurfs = [
-            {
-              id: '1',
-              name: 'Cricket Ground 1',
-              location: 'Downtown Sports Complex',
-              sportType: 'Cricket',
-              status: 'Active',
+        // Merge savedMockTurfs edits into baseTurfs
+        const allSaved = [...savedMockTurfs];
+        const finalTurfs = baseTurfs.map(bt => {
+          const match = allSaved.find(s => String(s.id) === String(bt.id));
+          if (match) {
+            return {
+              ...bt,
+              name: match.name || bt.name,
+              location: match.location || bt.location,
+              sportType: match.sportType || bt.sportType,
+              status: match.status || bt.status,
+              price: match.price || bt.price,
+            };
+          }
+          return bt;
+        });
+
+        // Append any new custom created turfs
+        allSaved.forEach(s => {
+          if (!finalTurfs.some(ft => String(ft.id) === String(s.id))) {
+            finalTurfs.push({
+              id: String(s.id),
+              name: s.name,
+              location: s.location || 'Downtown Sports Complex',
+              sportType: s.sportType || 'Cricket',
+              status: s.status || 'Active',
               slots: generateMockSlots(),
-            },
-            {
-              id: '2',
-              name: 'Cricket Ground 2',
-              location: 'Downtown Sports Complex',
-              sportType: 'Cricket',
-              status: 'Active',
-              slots: generateMockSlots(),
-            },
-            {
-              id: '3',
-              name: 'Premium Football Turf',
-              location: 'Downtown Sports Complex',
-              sportType: 'Football',
-              status: 'Closed',
-              slots: generateMockSlots(),
-            }
-          ];
-          setTurfs(fallbackTurfs);
-          if (!selectedTurfId) setSelectedTurfId(fallbackTurfs[0].id);
+            });
+          }
+        });
+
+        setTurfs(finalTurfs);
+        if (!selectedTurfId && finalTurfs.length > 0) {
+          setSelectedTurfId(finalTurfs[0].id);
         }
       } catch (err) {
         console.error("Failed to fetch turfs", err);
@@ -303,6 +335,14 @@ export function TimeSlots() {
     };
 
     fetchData();
+
+    const handleUpdate = () => fetchData();
+    window.addEventListener("turf_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("turf_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
   }, [selectedDate]);
 
   // Compute availability totals for legend count labels
@@ -324,9 +364,9 @@ export function TimeSlots() {
     return { available, booked, maintenance };
   }, [turfs]);
 
-  // Filtered turfs computed state (only selected turf)
+  // Filtered turfs computed state (selected turf or all turfs if selectedTurfId === "all")
   const filteredTurfs = useMemo(() => {
-    if (!selectedTurfId) return [];
+    if (!selectedTurfId || selectedTurfId === "all") return turfs;
     return turfs.filter(t => t.id === selectedTurfId);
   }, [turfs, selectedTurfId]);
 
@@ -645,20 +685,63 @@ export function TimeSlots() {
           ------------------------------------------------------------- */}
       <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between py-1">
 
-        {/* Turf Selector Dropdown */}
-        <div className="w-full lg:w-fit shrink-0">
-          <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
-            <SelectTrigger className="h-10 rounded-xl bg-background/50 border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full">
-              <SelectValue placeholder="Select Turf" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
-              {turfs.map(turf => (
-                <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  {turf.name} <span className="text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {turf.location})</span>
+        {/* Turf & Duration Selector Dropdowns */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shrink-0">
+
+          {/* Turf Selector Dropdown */}
+          <div className="w-full sm:w-fit shrink-0">
+            <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
+              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full px-4">
+                <SelectValue placeholder="Select Turf" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
+                <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
+                  ⚡ All Turfs <span className="text-[10px] text-muted-foreground ml-2 font-normal">(View All Grounds Stacked)</span>
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                {turfs.map(turf => (
+                  <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                    {turf.name} <span className="text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {turf.location})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Duration Selector Dropdown (1hr, 2hr, 3hr, custom) */}
+          <div className="w-full sm:w-fit shrink-0">
+            <Select
+              value={selectedDurationOption}
+              onValueChange={(val) => {
+                setSelectedDurationOption(val);
+                if (val === "1") setPlayHours(1);
+                else if (val === "2") setPlayHours(2);
+                else if (val === "3") setPlayHours(3);
+                else if (val === "custom") {
+                  setIsCustomDurationDialogOpen(true);
+                }
+              }}
+            >
+              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center gap-1.5 px-4">
+                <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <SelectValue placeholder="Duration" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
+                <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
+                  1 Hour <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
+                </SelectItem>
+                <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
+                  2 Hours <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
+                </SelectItem>
+                <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
+                  3 Hours <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
+                </SelectItem>
+                <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400">
+                  ⚙️ Custom Duration... {selectedDurationOption === "custom" && `(${playHours} hrs)`}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
         </div>
 
         {/* Dynamic Legend Filters */}
@@ -807,29 +890,32 @@ export function TimeSlots() {
                           }`}>
                           {availableSlots} Slots Left
                         </Badge>
-
-                        {/* Block Time Button */}
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setSelectedTurfForCustomBlock(turf);
-                            setIsBlockModalOpen(true);
-                          }}
-                          className="h-8 rounded-lg bg-background text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs"
-                        >
-                          <Power className="w-3.5 h-3.5 text-emerald-500" /> Block Custom Time
-                        </Button>
                       </div>
                     </div>
 
-                    {/* Far Right Side: ONLY Turf Open Toggle Switch */}
-                    <div className="flex items-center gap-2 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs sm:ml-auto shrink-0">
-                      <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
-                      <Switch
-                        id={`turf-status-${turf.id}`}
-                        checked={turf.status === 'Active'}
-                        onCheckedChange={() => toggleTurfStatus(turf.id)}
-                      />
+                    {/* Far Right Side: Block Custom Time Button & Turf Open Toggle Switch */}
+                    <div className="flex flex-wrap items-center gap-2.5 sm:ml-auto shrink-0">
+                      {/* Block Custom Time Button */}
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setSelectedTurfForCustomBlock(turf);
+                          setIsBlockModalOpen(true);
+                        }}
+                        className="h-8 rounded-lg bg-background text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/50 hover:border-rose-600 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <Power className="w-3.5 h-3.5 text-rose-500" /> Block Custom Time
+                      </Button>
+
+                      {/* Turf Open Toggle Switch */}
+                      <div className="flex items-center gap-2 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs">
+                        <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
+                        <Switch
+                          id={`turf-status-${turf.id}`}
+                          checked={turf.status === 'Active'}
+                          onCheckedChange={() => toggleTurfStatus(turf.id)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -848,99 +934,101 @@ export function TimeSlots() {
                     </div>
                   )}
 
-                  {/* Grid Slots */}
+                  {/* Grid Slots - Dynamically Grouped by Selected Duration */}
                   <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
                     }`}>
-                    {turf.slots.map((rawSlot, idx) => {
-                      const slot = getEffectiveSlot(turf.id, rawSlot);
-                      const isFilteredOut = selectedLegendFilter !== "all" && slot.status !== selectedLegendFilter;
+                    {(() => {
+                      const effectiveSlots = turf.slots.map(rawSlot => getEffectiveSlot(turf.id, rawSlot));
+                      const groupedSlots = [];
+                      const step = Math.max(1, playHours);
 
-                      // Render Available Slot
-                      if (slot.status === 'Available') {
-                        const isHoveredGroup = hoveredSlotInfo &&
-                          hoveredSlotInfo.turfId === turf.id &&
-                          idx >= hoveredSlotInfo.startIdx &&
-                          idx < hoveredSlotInfo.startIdx + playHours;
+                      for (let i = 0; i < effectiveSlots.length; i += step) {
+                        const actualDur = Math.min(step, effectiveSlots.length - i);
+                        let totalPrice = 0;
+                        let hasBooked = false;
+                        let hasMaintenance = false;
 
-                        const hoverValidClass = isHoveredGroup && hoveredSlotInfo.isValid
-                          ? 'bg-card border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 scale-[1.02] shadow-md shadow-emerald-500/10 font-bold'
-                          : isHoveredGroup && !hoveredSlotInfo.isValid
-                            ? 'bg-card border-2 border-rose-500 text-rose-600'
-                            : 'bg-card border-2 border-emerald-500/40 hover:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:shadow-md hover:-translate-y-0.5';
+                        for (let j = 0; j < actualDur; j++) {
+                          const s = effectiveSlots[i + j];
+                          totalPrice += s.price;
+                          if (s.status === 'Booked') hasBooked = true;
+                          else if (s.status === 'Maintenance') hasMaintenance = true;
+                        }
 
-                        return (
-                          <div
-                            key={idx}
-                            onClick={() => handleSlotClick(turf, slot, idx)}
-                            onMouseEnter={() => handleSlotMouseEnter(turf, idx)}
-                            onMouseLeave={handleSlotMouseLeave}
-                            className={`p-2 sm:p-2.5 rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${hoverValidClass} ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
-                              }`}
-                          >
-                            <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">Available</span>
-                            <span className={`text-[9px] font-mono font-black px-2 py-0.5 rounded-full border border-emerald-500/30 ${isHoveredGroup && hoveredSlotInfo.isValid ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'}`}>₹{slot.price}</span>
-                          </div>
-                        );
+                        let groupStatus = 'Available';
+                        if (hasBooked) groupStatus = 'Booked';
+                        else if (hasMaintenance) groupStatus = 'Maintenance';
+
+                        const firstSlot = effectiveSlots[i];
+                        groupedSlots.push({
+                          slot: { ...firstSlot, status: groupStatus, price: totalPrice },
+                          startIndex: i,
+                          duration: actualDur,
+                          price: totalPrice,
+                          status: groupStatus,
+                          displayTime: formatTimeRange(firstSlot.time, actualDur)
+                        });
                       }
 
-                      // Render Booked Slot
-                      if (slot.status === 'Booked') {
-                        const bDetails = getBookingDetailsMock(slot.time);
-                        return (
-                          <div
-                            key={idx}
-                            onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
-                              }`}
-                          >
-                            <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{formatTimeRange(slot.time)}</span>
-                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1 truncate max-w-full">
-                              <Lock className="w-2.5 h-2.5 text-rose-500 shrink-0" /> <span className="truncate">Release Slot</span>
-                            </span>
+                      return groupedSlots.map((item, idx) => {
+                        const { slot, startIndex, displayTime, status, price } = item;
+                        const isFilteredOut = selectedLegendFilter !== "all" && status !== selectedLegendFilter;
 
-                            {/* Styled Hover Card Tooltip */}
-                            <div className="absolute bottom-full mb-2.5 left-1/2 -translate-x-1/2 hidden group-hover/slot:flex flex-col bg-popover text-popover-foreground border border-border text-[10px] p-2.5 rounded-xl shadow-xl z-30 w-44 pointer-events-none transition-all duration-200 animate-in fade-in zoom-in-95">
-                              <div className="flex items-center gap-1.5 border-b border-border/50 pb-1.5 mb-1.5">
-                                <ShieldCheck className="h-3.5 w-3.5 text-rose-500 shrink-0" />
-                                <span className="font-bold text-foreground">Click to Release</span>
-                              </div>
-                              <p className="font-semibold text-foreground truncate">{bDetails.name}</p>
-                              <p className="text-muted-foreground text-[9px] mt-0.5">{bDetails.phone}</p>
-                              <div className="flex justify-between items-center mt-1.5 pt-1.5 border-t border-border/20 text-[9px]">
-                                <span className="text-muted-foreground">Channel:</span>
-                                <span className="font-bold text-rose-500 uppercase">{bDetails.method}</span>
-                              </div>
+                        // Available Grouped Slot
+                        if (status === 'Available') {
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => handleSlotClick(turf, slot, startIndex)}
+                              onMouseEnter={() => handleSlotMouseEnter(turf, startIndex)}
+                              onMouseLeave={handleSlotMouseLeave}
+                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-emerald-500/40 bg-card hover:border-emerald-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                            >
+                              <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{displayTime}</span>
+                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">
+                                Available {playHours > 1 ? `(${item.duration}h)` : ''}
+                              </span>
+                              <span className="text-[9px] font-mono font-black px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">₹{price}</span>
                             </div>
-                          </div>
-                        );
-                      }
+                          );
+                        }
 
-                      // Render Maintenance Slot
-                      if (slot.status === 'Maintenance') {
-                        const hasCustomRange = !!slot.blockedTimeRange;
-                        return (
-                          <div
-                            key={idx}
-                            onClick={() => handleSlotClick(turf, slot, idx)}
-                            className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-amber-500/40 bg-card hover:border-amber-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''
-                              }`}
-                          >
-                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
-                            <span className="font-extrabold text-[10px] sm:text-xs text-foreground text-center tracking-tight truncate max-w-full px-0.5">
-                              {hasCustomRange ? slot.blockedTimeRange : formatTimeRange(slot.time)}
-                            </span>
-                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-600 dark:text-amber-400 truncate max-w-full">
-                              {slot.blockedReason || "Maintenance"}
-                            </span>
-                            <span className="text-[8px] font-bold text-amber-600/70 dark:text-amber-400/70 truncate max-w-full">(Click to Unblock)</span>
-                          </div>
-                        );
-                      }
+                        // Booked Grouped Slot
+                        if (status === 'Booked') {
+                          const bDetails = getBookingDetailsMock(slot.time);
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => handleSlotClick(turf, slot, startIndex)}
+                              className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                            >
+                              <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{displayTime}</span>
+                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1 truncate max-w-full">
+                                <Lock className="w-2.5 h-2.5 text-rose-500 shrink-0" /> <span className="truncate">Release Slot</span>
+                              </span>
+                            </div>
+                          );
+                        }
 
-                      return null;
-                    })}
+                        // Maintenance Grouped Slot
+                        if (status === 'Maintenance') {
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => handleSlotClick(turf, slot, startIndex)}
+                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-amber-500/40 bg-amber-500/5 hover:border-amber-500 hover:shadow-md flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
+                              <span className="font-extrabold text-[10px] sm:text-xs text-foreground text-center tracking-tight truncate max-w-full px-0.5">{displayTime}</span>
+                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500">MAINTENANCE</span>
+                            </div>
+                          );
+                        }
+
+                        return null;
+                      });
+                    })()}
                   </div>
                 </CardContent>
               </Card>
@@ -1585,6 +1673,75 @@ export function TimeSlots() {
               className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
             >
               Release Slot Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* -------------------------------------------------------------
+          Custom Play Duration Dialog Modal
+          ------------------------------------------------------------- */}
+      <Dialog open={isCustomDurationDialogOpen} onOpenChange={setIsCustomDurationDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] rounded-3xl border border-border/40 bg-popover p-6 shadow-2xl">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-lg font-black tracking-tight text-foreground flex items-center gap-2">
+              <Clock className="h-5 w-5 text-emerald-500" />
+              Custom Play Duration
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Select consecutive hours for walk-in bookings and slot reservations.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold text-foreground">Duration (in Hours)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={tempCustomHours}
+                  onChange={(e) => setTempCustomHours(Math.max(1, Math.min(12, parseInt(e.target.value) || 1)))}
+                  className="h-10 text-sm font-bold text-center rounded-xl border-emerald-500/40"
+                />
+                <span className="text-xs font-extrabold text-muted-foreground shrink-0">Hour(s)</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {[4, 5, 6, 8].map(h => (
+                <Button
+                  key={h}
+                  type="button"
+                  variant="outline"
+                  onClick={() => setTempCustomHours(h)}
+                  className={`flex-1 h-8 rounded-lg text-xs font-bold ${tempCustomHours === h ? 'border-emerald-500 text-emerald-500 bg-emerald-500/10' : ''}`}
+                >
+                  {h} hrs
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsCustomDurationDialogOpen(false)}
+              className="rounded-xl text-xs font-bold"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setPlayHours(tempCustomHours);
+                setSelectedDurationOption("custom");
+                setIsCustomDurationDialogOpen(false);
+                toast.success(`Custom duration set to ${tempCustomHours} hour(s)`);
+              }}
+              className="rounded-xl bg-emerald-600 text-black hover:bg-emerald-700 font-bold text-xs px-5"
+            >
+              Apply Duration
             </Button>
           </DialogFooter>
         </DialogContent>

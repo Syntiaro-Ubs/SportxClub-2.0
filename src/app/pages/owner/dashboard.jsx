@@ -133,6 +133,45 @@ const renderCustomYAxisTick = ({ x, y, payload }) => {
   );
 };
 
+const PremiumStar = ({ size = 16, fillPercent = 100, className = "" }) => {
+  const gradientId = useMemo(() => `star-grad-${Math.random().toString(36).substring(2, 9)}`, []);
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className={`shrink-0 drop-shadow-[0_1.5px_4px_rgba(245,158,11,0.5)] ${className}`}
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#FDE047" />
+          <stop offset="40%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#D97706" />
+        </linearGradient>
+        {fillPercent < 100 && fillPercent > 0 && (
+          <linearGradient id={`${gradientId}-partial`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset={`${fillPercent}%`} stopColor="#F59E0B" />
+            <stop offset={`${fillPercent}%`} stopColor="rgba(245, 158, 11, 0.18)" />
+          </linearGradient>
+        )}
+      </defs>
+      <path
+        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        fill={
+          fillPercent >= 100
+            ? `url(#${gradientId})`
+            : fillPercent > 0
+            ? `url(#${gradientId}-partial)`
+            : "rgba(245, 158, 11, 0.18)"
+        }
+        stroke="#D97706"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
+
 const mockHourlyOccupancy = [
   { hour: '06:00 AM', rate: 25 },
   { hour: '08:00 AM', rate: 45 },
@@ -574,7 +613,7 @@ export function Dashboard() {
                 <span className="opacity-30">|</span>
                 <span className="flex items-center gap-0.5">Cash: <strong className="text-foreground font-bold inline-flex items-center gap-0.5 ml-0.5"><IndianRupee className="h-2.5 w-2.5 shrink-0 stroke-[2.5]" />{isTestMode ? "0" : "45K"}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
                 Revenue
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -635,7 +674,7 @@ export function Dashboard() {
                 <span className="opacity-30">·</span>
                 <span>Pending: <strong className="text-amber-500 font-bold ml-0.5">{isTestMode ? 0 : 4}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
                 Details
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -673,7 +712,7 @@ export function Dashboard() {
                   Operational
                 </span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
                 Manage
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -692,28 +731,23 @@ export function Dashboard() {
                 <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Turf Quality Rating</p>
                 <div className="flex items-center gap-2 mt-1">
                   <h3 className="text-xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
-                  <div className="flex items-center text-amber-500">
+                  <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((starIndex) => {
                       const ratingVal = isTestMode ? 0 : (data?.stats?.averageRating || 4.8);
-                      const isFilled = ratingVal >= starIndex;
-                      const isHalf = ratingVal >= starIndex - 0.5 && ratingVal < starIndex;
+                      const fillPercent = Math.max(0, Math.min(100, (ratingVal - (starIndex - 1)) * 100));
                       return (
-                        <Star
+                        <PremiumStar
                           key={starIndex}
-                          className={`h-3.5 w-3.5 ${isFilled
-                            ? "fill-amber-500 text-amber-500"
-                            : isHalf
-                              ? "fill-amber-500/50 text-amber-500"
-                              : "fill-transparent text-amber-500/40"
-                            }`}
+                          size={15}
+                          fillPercent={fillPercent}
                         />
                       );
                     })}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-center">
-                <Star className="h-5 w-5 text-amber-500 fill-amber-500/20" />
+              <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
+                <PremiumStar size={20} fillPercent={100} />
               </div>
             </div>
 
@@ -721,7 +755,7 @@ export function Dashboard() {
               <div className="flex gap-2 items-center">
                 <span>Reviews: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
                 Reviews
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
