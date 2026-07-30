@@ -87,6 +87,36 @@ const mockChartData = [
   { name: "Sun", amount: 24000 },
 ];
 
+const sportPopularityData = [
+  { name: 'Football', value: 45, count: 8, color: '#059669' },
+  { name: 'Cricket', value: 30, count: 5, color: '#2563eb' },
+  { name: 'Tennis', value: 12, count: 2, color: '#d97706' },
+  { name: 'Badminton', value: 8, count: 2, color: '#ec4899' },
+  { name: 'Basketball', value: 5, count: 1, color: '#ef4444' },
+];
+
+const revenueTrendData = [
+  { name: 'Mon', revenue: 24000 },
+  { name: 'Tue', revenue: 18000 },
+  { name: 'Wed', revenue: 32000 },
+  { name: 'Thu', revenue: 15000 },
+  { name: 'Fri', revenue: 42000 },
+  { name: 'Sat', revenue: 58000 },
+  { name: 'Sun', revenue: 49000 },
+];
+
+const bookingsFilledData = [
+  { name: 'Mon', bookings: 12 },
+  { name: 'Tue', bookings: 9 },
+  { name: 'Wed', bookings: 16 },
+  { name: 'Thu', bookings: 8 },
+  { name: 'Fri', bookings: 21 },
+  { name: 'Sat', bookings: 29 },
+  { name: 'Sun', bookings: 24 },
+];
+
+const totalBookings = sportPopularityData.reduce((sum, item) => sum + item.count, 0);
+
 const mockTransactions = [
   { id: "TXN8930A4", date: "Jul 26, 2026", source: "Cricket Ground 1", amount: 1200, status: "completed", method: "UPI" },
   { id: "TXN8929A2", date: "Jul 26, 2026", source: "Premium Football Turf", amount: 1600, status: "completed", method: "Card" },
@@ -690,80 +720,116 @@ export function Revenue() {
           ------------------------------------------------------------- */}
       <div className="flex flex-col gap-4">
 
-        {/* Top Part: Dynamic Revenue Trend Chart */}
-        <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden rounded-2xl p-5 pb-3 [&:last-child]:pb-3 flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <CardTitle className="text-lg font-bold tracking-tight text-foreground capitalize">{timeframe} Revenue Trend</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Track your {timeframe} financial performance</p>
-            </div>
+        {/* All 3 Graphs perfectly aligned in one horizontal line (from Dashboard) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start my-4 border-t border-b border-border/30 py-6 w-full min-w-0">
 
-            {/* Timeframe Selector */}
-            <div className="flex items-center gap-1 bg-card/60 p-1.5 rounded-xl border border-border/50 shadow-inner">
-              {["today", "weekly", "monthly", "yearly"].map((tf) => (
-                <button
-                  key={tf}
-                  onClick={() => setTimeframe(tf)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold capitalize transition-all duration-200 cursor-pointer border-2 relative ${timeframe === tf
-                    ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent shadow-xs"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-emerald-500/40 bg-transparent"
-                    }`}
-                >
-                  {tf}
-                  {tf === "yearly" && (
-                    <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-rose-500 rounded-full" />
-                  )}
-                </button>
-              ))}
+          {/* Sport Popularity — First */}
+          <div className="flex flex-col min-w-0">
+            <div className="min-h-[28px] flex flex-col justify-start mb-4">
+              <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
+            </div>
+            <div className="flex flex-row items-center justify-between gap-2 w-full h-[210px] min-w-0">
+              <div className="relative h-[180px] w-[180px] shrink-0 flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={sportPopularityData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={0}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {sportPopularityData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} className="outline-none focus:outline-none" />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "10px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      formatter={(value) => [`${value}% share`, "Popularity"]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                  <span className="text-lg font-black tracking-tight text-foreground">{totalBookings}</span>
+                  <span className="text-[9px] font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-start justify-center gap-y-1 text-xs h-full shrink-0">
+                {sportPopularityData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-1.5 px-1 py-[1px] rounded-md hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="font-bold text-foreground text-[11px]">{item.name}</span>
+                      <span className="text-[11px] text-muted-foreground font-semibold">({item.count})</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="h-[200px] sm:h-[220px] w-full mt-3 -ml-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 15, left: -15, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="revenueGradChart" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.35} />
-                    <stop offset="95%" stopColor={chartColor} stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={4} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: 'var(--popover)', borderColor: 'hsl(var(--border))', borderRadius: '12px', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
-                  itemStyle={{ color: 'var(--foreground)' }}
-                  labelStyle={{ color: 'hsl(var(--muted-foreground))', fontWeight: "bold" }}
-                  formatter={(value) => [`₹${value.toLocaleString('en-IN')}`, "Revenue"]}
-                  cursor={{ stroke: 'rgba(0,0,0,0.05)' }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="amount"
-                  stroke={chartColor}
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#revenueGradChart)"
-                  activeDot={{ r: 6, fill: chartColor, stroke: "var(--background)", strokeWidth: 2 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          {/* Revenue Trend — Second */}
+          <div className="flex flex-col min-w-0">
+            <div className="min-h-[28px] flex flex-col justify-start mb-4">
+              <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
+            </div>
+            <div className="flex flex-col justify-center min-w-0">
+              <div className="h-[210px] w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenuePageChartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
+                    <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      labelStyle={{ color: "var(--foreground)", fontWeight: "bold" }}
+                      formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
+                    />
+                    <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={2.5} fillOpacity={1} fill="url(#revenuePageChartGrad)" activeDot={{ r: 6, stroke: "var(--background)", strokeWidth: 2 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-4 border-t border-border/40 pt-3">
-            <div>
-              <p className="text-xs text-muted-foreground font-medium">{trendFooter.label}</p>
-              <p className="text-base font-extrabold text-foreground mt-0.5">{trendFooter.peak}</p>
+          {/* Bookings Filled — Third */}
+          <div className="flex flex-col min-w-0">
+            <div className="min-h-[28px] flex flex-col justify-start mb-4">
+              <CardTitle className="text-lg font-bold tracking-tight">Bookings Filled</CardTitle>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-muted-foreground font-medium">{trendFooter.avgLabel}</p>
-              <p className="text-base font-extrabold text-foreground mt-0.5 flex items-center justify-end">
-                <IndianRupee className="h-4 w-4 stroke-[2.5] shrink-0 mr-0.5" />
-                {trendFooter.avg}
-              </p>
+            <div className="flex flex-col justify-center min-w-0">
+              <div className="h-[210px] w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
+                    <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      cursor={false}
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
+                      itemStyle={{ color: "var(--foreground)" }}
+                      labelStyle={{ color: "var(--foreground)", fontWeight: "bold" }}
+                      formatter={(value) => [value, "Bookings"]}
+                    />
+                    <Bar dataKey="bookings" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
-        </Card>
+
+        </div>
 
         {/* Settlement Breakdown Modal */}
         <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
@@ -900,10 +966,9 @@ export function Revenue() {
         {/* -------------------------------------------------------------
           Two-column grid: Transaction History (Left 8 cols - No Horizontal Scroll) & Turf Performance (Right 4 cols)
           ------------------------------------------------------------- */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start mt-6 sm:mt-8">
-
-          {/* Left Side: Transaction List (col-span-12 lg:col-span-8) */}
-          <Card className="border-0 bg-transparent shadow-none flex flex-col justify-between w-full lg:col-span-8">
+        {/* Full-width Transaction History Section */}
+        <div className="w-full mt-6 sm:mt-8">
+          <Card className="border-0 bg-transparent shadow-none flex flex-col justify-between w-full">
             <div className="bg-transparent p-0 pb-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -961,45 +1026,47 @@ export function Revenue() {
                 </div>
               ) : (
                 <div className="w-full overflow-hidden">
-                  <table className="w-full text-xs text-left">
-                    <thead className="text-[11px] text-muted-foreground uppercase bg-transparent border-b border-border/40 font-black tracking-wider">
+                  <table className="w-full text-xs text-center border-collapse">
+                    <thead className="text-[11px] text-muted-foreground bg-transparent border-b border-border/40 font-black tracking-wider text-center">
                       <tr>
-                        <th className="px-2 py-2 font-bold whitespace-nowrap">Transaction ID</th>
-                        <th className="px-2 py-2 font-bold whitespace-nowrap">Date</th>
-                        <th className="px-2 py-2 font-bold whitespace-nowrap">Facility</th>
-                        <th className="px-2 py-2 font-bold whitespace-nowrap">Amount</th>
-                        <th className="px-2 py-2 font-bold whitespace-nowrap">Method</th>
-                        <th className="px-2 py-2 font-bold text-right whitespace-nowrap pr-2">Status</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap text-center">Transaction ID</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap text-center">Date</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap text-center">Facility</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap text-center">Amount</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap text-center">Method</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap text-center">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
                       {filteredPayments.map((tx) => (
                         <tr key={tx.id} className="hover:bg-emerald-500/5 transition-colors group cursor-default">
-                          <td className="px-2 py-2 whitespace-nowrap">
+                          <td className="px-2 py-2 whitespace-nowrap text-center">
                             <span className="font-mono font-bold text-foreground/90 group-hover:text-foreground transition-colors text-xs">{tx.id}</span>
                           </td>
-                          <td className="px-2 py-2 whitespace-nowrap text-muted-foreground font-medium text-xs">
-                            <div className="flex items-center gap-1">
+                          <td className="px-2 py-2 whitespace-nowrap text-muted-foreground font-medium text-xs text-center">
+                            <div className="flex items-center justify-center gap-1">
                               <CalendarIcon className="h-3 w-3 text-muted-foreground/60 shrink-0" />
                               <span>{tx.date}</span>
                             </div>
                           </td>
-                          <td className="px-2 py-2 font-bold text-foreground whitespace-nowrap truncate max-w-[130px] text-xs">
+                          <td className="px-2 py-2 font-bold text-foreground whitespace-nowrap text-center text-xs">
                             {tx.source}
                           </td>
-                          <td className="px-2 py-2 whitespace-nowrap">
-                            <div className="font-extrabold flex items-center text-foreground text-xs">
-                              <IndianRupee className="h-3 w-3 mr-0.5 text-muted-foreground shrink-0" />
+                          <td className="px-2 py-2 whitespace-nowrap text-center">
+                            <div className="font-extrabold flex items-center justify-center text-foreground text-xs">
+                              <IndianRupee className="h-3 w-3 mr-0.5 text-muted-foreground shrink-0 stroke-[2.5]" />
                               {tx.amount.toLocaleString('en-IN')}
                             </div>
                           </td>
-                          <td className="px-2 py-2 whitespace-nowrap">
+                          <td className="px-2 py-2 whitespace-nowrap text-center">
                             <span className="text-[11px] font-mono font-extrabold uppercase text-muted-foreground/90 tracking-wider">{tx.method || "UPI"}</span>
                           </td>
-                          <td className="px-2 py-2 text-right whitespace-nowrap pr-2">
-                            <Badge className={`capitalize text-[10px] font-bold tracking-wider rounded-md px-2 py-0.5 ${getStatusColor(tx.status)}`}>
-                              {tx.status}
-                            </Badge>
+                          <td className="px-2 py-2 whitespace-nowrap text-center">
+                            <div className="flex items-center justify-center">
+                              <Badge className={`capitalize text-[10px] font-bold tracking-wider rounded-md px-2 py-0.5 ${getStatusColor(tx.status)}`}>
+                                {tx.status}
+                              </Badge>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -1009,62 +1076,6 @@ export function Revenue() {
               )}
             </CardContent>
           </Card>
-
-          {/* Right Side: Turf Performance & Settlement Insights (col-span-12 lg:col-span-4) */}
-          <div className="lg:col-span-4 flex flex-col justify-between w-full">
-            
-            {/* Widget 1: Top Performing Turfs - Borderless & Matching Left */}
-            <Card className="border-0 bg-transparent shadow-none flex flex-col justify-between w-full">
-              <div className="bg-transparent p-0 pb-3">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-1.5">
-                      <Trophy className="h-4.5 w-4.5 text-amber-500 shrink-0" />
-                      Top Turf Performers
-                    </CardTitle>
-                    <CardDescription className="text-xs text-muted-foreground">Revenue share breakdown by venue</CardDescription>
-                  </div>
-
-                  <div className="flex items-center gap-1 bg-transparent p-1 rounded-xl border border-slate-300 dark:border-slate-700">
-                    <span className="px-3 py-1 rounded-lg text-[10px] font-extrabold capitalize tracking-wider border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold">
-                      This Month
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <CardContent className="p-0 space-y-3 mt-2">
-                {[
-                  { name: "Cricket Ground 1", type: "Box Cricket", rev: "₹6,400", bookings: "18 slots", share: "59%", color: "bg-emerald-500", rank: "🥇 #1" },
-                  { name: "Premium Football Turf", type: "Football 7v7", rev: "₹3,200", bookings: "10 slots", share: "29%", color: "bg-blue-500", rank: "🥈 #2" },
-                  { name: "Cricket Ground 2", type: "Night Turf", rev: "₹1,200", bookings: "4 slots", share: "12%", color: "bg-amber-500", rank: "🥉 #3" },
-                ].map((turf, i) => (
-                  <div key={i} className="p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs hover:border-emerald-500/40 transition-all">
-                    <div className="flex items-center justify-between text-xs font-bold">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-xs font-black">{turf.rank}</span>
-                        <div>
-                          <p className="text-foreground font-extrabold text-xs">{turf.name}</p>
-                          <p className="text-[10px] text-muted-foreground font-medium">{turf.type} · <span className="text-foreground/80 font-bold">{turf.bookings}</span></p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-extrabold text-foreground">{turf.rev}</p>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{turf.share} share</span>
-                      </div>
-                    </div>
-                    {/* Progress bar */}
-                    <div className="w-full h-1.5 bg-slate-200/80 dark:bg-slate-800 rounded-full overflow-hidden mt-2.5">
-                      <div className={`h-full ${turf.color} rounded-full transition-all duration-500`} style={{ width: turf.share }} />
-                    </div>
-                  </div>
-                ))}
-
-              </CardContent>
-            </Card>
-
-          </div>
-
         </div>
 
       </div>

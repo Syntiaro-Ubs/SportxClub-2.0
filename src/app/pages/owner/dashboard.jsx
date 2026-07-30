@@ -123,10 +123,10 @@ const renderCustomYAxisTick = ({ x, y, payload }) => {
   const formattedVal = value >= 1000 ? `${value / 1000}k` : value;
   return (
     <g transform={`translate(${x},${y})`}>
-      <svg x="-36" y="-7" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black dark:text-white">
+      <svg x="-36" y="-7" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--foreground)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 3h12M6 8h12M6 13l8.5 8M6 13h3a4.5 4.5 0 0 0 0-9" />
       </svg>
-      <text x="-24" y="2" textAnchor="start" fontSize="10" fill="currentColor" className="text-black dark:text-white" fontWeight="600">
+      <text x="-24" y="2" textAnchor="start" fontSize="10" fill="var(--foreground)" fontWeight="600">
         {formattedVal}
       </text>
     </g>
@@ -161,8 +161,8 @@ const PremiumStar = ({ size = 16, fillPercent = 100, className = "" }) => {
           fillPercent >= 100
             ? `url(#${gradientId})`
             : fillPercent > 0
-            ? `url(#${gradientId}-partial)`
-            : "rgba(245, 158, 11, 0.18)"
+              ? `url(#${gradientId}-partial)`
+              : "rgba(245, 158, 11, 0.18)"
         }
         stroke="#D97706"
         strokeWidth="1.2"
@@ -558,7 +558,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-7xl mx-auto theme-adaptive pb-16 overflow-x-hidden">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-[1440px] mx-auto theme-adaptive pb-16 overflow-x-hidden">
 
       {/* Hidden Global SVG definitions for linear gradients */}
       <svg width="0" height="0" className="absolute z-[-1] pointer-events-none">
@@ -584,7 +584,7 @@ export function Dashboard() {
       {/* -------------------------------------------------------------
           New Diverse KPI Cards Grid (Content-Specific Layouts)
           ------------------------------------------------------------- */}
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
         {/* Card 1: Gross Revenue */}
         <Card
@@ -597,7 +597,7 @@ export function Dashboard() {
                 <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Total Revenue</p>
                 <div className="flex items-center gap-2 mt-1">
                   <h3 className="text-xl font-black tracking-tight text-foreground flex items-center">
-                    <IndianRupee className="h-4 w-4 stroke-[2.5] shrink-0 mr-0.5" />
+                    <IndianRupee className="h-4.5 w-4.5 stroke-[2.5] shrink-0 mr-0.5" />
                     {isTestMode ? "0" : (data?.stats?.monthlyRevenue || 184200).toLocaleString()}
                   </h3>
                 </div>
@@ -691,14 +691,9 @@ export function Dashboard() {
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Active Turfs</p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <h3 className="text-xl font-black tracking-tight text-foreground">
-                    {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}
-                  </h3>
-                  <span className="text-[10px] font-bold text-muted-foreground flex items-center gap-0.5">
-                    / {isTestMode ? "0" : (data?.stats?.totalTurfs || 5)} Total
-                  </span>
-                </div>
+                <h3 className="text-2xl font-black tracking-tight text-foreground mt-1">
+                  {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}/{isTestMode ? "0" : (data?.stats?.totalTurfs || 5)}
+                </h3>
               </div>
               <div className="flex items-center justify-center">
                 <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -816,23 +811,23 @@ export function Dashboard() {
         </div>
 
         {/* All 3 Graphs perfectly aligned in one horizontal line */}
-        <div className="grid lg:grid-cols-3 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 items-start w-full min-w-0">
 
           {/* Sport Popularity — First */}
-          <div className="flex flex-col">
-            <div className="min-h-[32px] flex flex-col justify-start mb-6">
+          <div className="flex flex-col min-w-0">
+            <div className="min-h-[28px] flex flex-col justify-start mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
             </div>
-            <div className="flex flex-row items-center justify-center gap-6 w-full h-[220px]">
-              <div className="relative h-[210px] w-[210px] shrink-0 flex items-center justify-center">
+            <div className="flex flex-row items-center justify-between gap-4 w-full h-[210px] min-w-0">
+              <div className="relative h-[180px] w-[180px] shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={sportPopularityData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={65}
-                      outerRadius={95}
+                      innerRadius={55}
+                      outerRadius={85}
                       paddingAngle={0}
                       dataKey="value"
                       stroke="none"
@@ -849,14 +844,14 @@ export function Dashboard() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-                  <span className="text-xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
+                  <span className="text-lg font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
                   <span className="text-[9px] font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
               </div>
-              <div className="flex flex-col items-start justify-center gap-y-2.5 text-xs">
+              <div className="flex flex-col items-start justify-center gap-y-1 text-xs h-full shrink-0">
                 {sportPopularityData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
-                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                  <div key={item.name} className="flex items-center gap-1.5 px-1 py-[1px] rounded-md hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                     <div className="flex items-center gap-1.5 whitespace-nowrap">
                       <span className="font-bold text-foreground text-[11px]">{item.name}</span>
                       <span className="text-[11px] text-muted-foreground font-semibold">({item.count})</span>
@@ -868,27 +863,27 @@ export function Dashboard() {
           </div>
 
           {/* Revenue Trend — Second */}
-          <div className="flex flex-col">
-            <div className="min-h-[32px] flex flex-col justify-start mb-6">
+          <div className="flex flex-col min-w-0">
+            <div className="min-h-[28px] flex flex-col justify-start mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
             </div>
-            <div className="flex flex-col justify-center">
-              <div className="h-[220px] w-full">
+            <div className="flex flex-col justify-center min-w-0">
+              <div className="h-[210px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
                     <defs>
                       <linearGradient id="chartRevenueGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
                         <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
+                    <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
                       itemStyle={{ color: "var(--foreground)" }}
-                      labelStyle={{ color: "hsl(var(--muted-foreground))", fontWeight: "bold" }}
+                      labelStyle={{ color: "var(--foreground)", fontWeight: "bold" }}
                       formatter={(value) => [`₹${value.toLocaleString()}`, "Revenue"]}
                     />
                     <Area type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={2.5} fillOpacity={1} fill="url(#chartRevenueGrad)" activeDot={{ r: 6, stroke: "var(--background)", strokeWidth: 2 }} />
@@ -899,22 +894,22 @@ export function Dashboard() {
           </div>
 
           {/* Bookings Filled — Third */}
-          <div className="flex flex-col">
-            <div className="min-h-[32px] flex flex-col justify-start mb-6">
+          <div className="flex flex-col min-w-0">
+            <div className="min-h-[28px] flex flex-col justify-start mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Bookings Filled</CardTitle>
             </div>
-            <div className="flex flex-col justify-center">
-              <div className="h-[220px] w-full">
+            <div className="flex flex-col justify-center min-w-0">
+              <div className="h-[210px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 25, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.3} />
-                    <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} />
+                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
+                    <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                    <YAxis stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip
                       cursor={false}
-                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "hsl(var(--border))", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
+                      contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
                       itemStyle={{ color: "var(--foreground)" }}
-                      labelStyle={{ color: "hsl(var(--muted-foreground))", fontWeight: "bold" }}
+                      labelStyle={{ color: "var(--foreground)", fontWeight: "bold" }}
                       formatter={(value) => [value, "Bookings"]}
                     />
                     <Bar dataKey="bookings" fill="#10b981" radius={[6, 6, 0, 0]} maxBarSize={32} />
@@ -934,30 +929,30 @@ export function Dashboard() {
       <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg">
 
         {/* Table Toolbar / Controls */}
-        <CardHeader className="flex flex-col gap-4 border-b border-border/40 p-6 md:flex-row md:items-center md:justify-between">
+        <CardHeader className="flex flex-col gap-3 border-b border-border/40 p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-lg font-bold tracking-tight">Active Bookings Directory</CardTitle>
-            <p className="text-sm text-muted-foreground mt-0.5">Filter, search, approve or decline real-time bookings.</p>
+            <CardTitle className="text-base font-bold tracking-tight">Active Bookings Directory</CardTitle>
+            <p className="text-xs text-muted-foreground mt-0.5">Filter, search, approve or decline real-time bookings.</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Search Input */}
-            <div className="relative w-full sm:w-60">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative flex-1 min-w-[130px] sm:max-w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search customer, turf..."
+                placeholder="Search customer..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 rounded-xl bg-background/50 border-border/40 focus:border-primary/50 text-xs w-full"
+                className="pl-8 h-8 rounded-xl bg-background/60 border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs w-full font-medium transition-all shadow-xs"
               />
             </div>
 
             {/* Sport Select Filter */}
             <Select value={sportFilter} onValueChange={setSportFilter}>
-              <SelectTrigger className="w-[130px] h-10 rounded-xl border-border/40 text-xs">
+              <SelectTrigger className="w-[105px] h-8 rounded-xl border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs font-medium transition-all shadow-xs shrink-0 px-2.5">
                 <SelectValue placeholder="All Sports" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
                 <SelectItem value="all" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">All Sports</SelectItem>
                 <SelectItem value="football" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Football</SelectItem>
                 <SelectItem value="cricket" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Cricket</SelectItem>
@@ -969,10 +964,10 @@ export function Dashboard() {
 
             {/* Status Select Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px] h-10 rounded-xl border-border/40 text-xs">
+              <SelectTrigger className="w-[105px] h-8 rounded-xl border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs font-medium transition-all shadow-xs shrink-0 px-2.5">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
                 <SelectItem value="all" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">All Statuses</SelectItem>
                 <SelectItem value="confirmed" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Confirmed</SelectItem>
                 <SelectItem value="pending" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Pending</SelectItem>
@@ -982,131 +977,134 @@ export function Dashboard() {
           </div>
         </CardHeader>
 
-        {/* Table Sheet Content */}
-        <CardContent className="p-0">
-          <div className="overflow-x-auto w-full scrollbar-none pb-1">
-            <table className="w-full text-left border-collapse min-w-[650px] lg:min-w-full">
-              <thead>
-                <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Booking ID</th>
-                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Customer Details</th>
-                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Turf & Sport</th>
-                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Slot Time & Date</th>
-                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Amount Paid</th>
-                  <th className="px-3.5 sm:px-4 py-3 whitespace-nowrap">Status</th>
-                  <th className="px-3.5 sm:px-4 py-3 text-center whitespace-nowrap">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/30 text-xs sm:text-sm">
-                {filteredBookings.length > 0 ? (
-                  filteredBookings.map((booking) => (
-                    <tr
-                      key={booking.id}
-                      className="hover:bg-muted/10 transition-colors group"
-                    >
-                      <td className="px-3.5 sm:px-4 py-3 font-mono text-xs font-semibold text-foreground whitespace-nowrap">
-                        {booking.id}
-                      </td>
-                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                        <div>
-                          <p className="font-bold text-foreground group-hover:text-primary transition-colors text-xs sm:text-sm">{booking.customerName}</p>
-                          <p className="text-[11px] text-muted-foreground font-medium">{booking.phone}</p>
-                        </div>
-                      </td>
-                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0.5 bg-accent/10 border-accent/20 text-accent font-bold">
-                            {booking.sport}
-                          </Badge>
-                          <span className="text-xs font-semibold text-foreground">{booking.turfName}</span>
-                        </div>
-                      </td>
-                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                        <div>
-                          <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                            <Clock className="h-3 w-3 text-muted-foreground" />
-                            {booking.slotTime}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground font-semibold">
-                            {booking.date} · <span className="italic">{booking.timeAgo}</span>
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                        <div>
-                          <p className="font-bold text-foreground text-xs sm:text-sm">₹{booking.amount.toLocaleString()}</p>
-                          <span className="text-[10px] text-muted-foreground font-medium uppercase">{booking.paymentType}</span>
-                        </div>
-                      </td>
-                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
+        {/* Table Sheet Content — Zero Scrollbar Layout */}
+        <CardContent className="p-0 overflow-hidden">
+          <table className="w-full table-fixed text-center border-collapse">
+            <thead>
+              <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground text-center">
+                <th className="w-[11%] px-1.5 py-2 text-center">Booking ID</th>
+                <th className="w-[19%] px-1.5 py-2 text-center">Customer Details</th>
+                <th className="w-[22%] px-1.5 py-2 text-center">Turf & Sport</th>
+                <th className="w-[20%] px-1.5 py-2 text-center">Slot Time & Date</th>
+                <th className="w-[12%] px-1.5 py-2 text-center">Amount Paid</th>
+                <th className="w-[10%] px-1.5 py-2 text-center">Status</th>
+                <th className="w-[6%] px-1.5 py-2 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/30 text-xs">
+              {filteredBookings.length > 0 ? (
+                filteredBookings.map((booking) => (
+                  <tr
+                    key={booking.id}
+                    className="hover:bg-muted/10 transition-colors group"
+                  >
+                    <td className="px-1.5 py-2 font-mono text-[11px] font-bold text-foreground text-center truncate">
+                      {booking.id}
+                    </td>
+                    <td className="px-1.5 py-2 text-center truncate">
+                      <div className="flex flex-col items-center justify-center text-center truncate">
+                        <p className="font-bold text-foreground group-hover:text-primary transition-colors text-xs truncate">{booking.customerName}</p>
+                        <p className="text-[10px] text-muted-foreground font-medium truncate">{booking.phone}</p>
+                      </div>
+                    </td>
+                    <td className="px-1.5 py-2 text-center truncate">
+                      <div className="flex items-center justify-center gap-1 text-center truncate">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 bg-accent/10 border-accent/20 text-accent font-bold shrink-0">
+                          {booking.sport}
+                        </Badge>
+                        <span className="text-xs font-semibold text-foreground truncate">{booking.turfName}</span>
+                      </div>
+                    </td>
+                    <td className="px-1.5 py-2 text-center truncate">
+                      <div className="flex flex-col items-center justify-center text-center truncate">
+                        <p className="text-[11px] font-bold text-foreground flex items-center justify-center gap-1 truncate">
+                          <Clock className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
+                          {booking.slotTime}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground font-semibold truncate">
+                          {booking.date} · <span className="italic">{booking.timeAgo}</span>
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-1.5 py-2 text-center truncate">
+                      <div className="flex flex-col items-center justify-center text-center truncate">
+                        <p className="font-bold text-foreground text-xs flex items-center justify-center truncate">
+                          <IndianRupee className="h-3 w-3 mr-0.5 inline-block shrink-0 stroke-[2.5]" />
+                          {booking.amount.toLocaleString()}
+                        </p>
+                        <span className="text-[9px] text-muted-foreground font-medium uppercase truncate">{booking.paymentType}</span>
+                      </div>
+                    </td>
+                    <td className="px-1.5 py-2 text-center truncate">
+                      <div className="flex justify-center text-center">
                         {booking.status === "Confirmed" && (
-                          <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5">
+                          <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
                             Confirmed
                           </Badge>
                         )}
                         {booking.status === "Pending" && (
-                          <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5">
+                          <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
                             Pending
                           </Badge>
                         )}
                         {booking.status === "Cancelled" && (
-                          <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5">
+                          <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
                             Cancelled
                           </Badge>
                         )}
-                      </td>
-                      <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center justify-center gap-1.5">
-                          {booking.status === "Pending" ? (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleConfirmBooking(booking.id, booking.customerName)}
-                                className="h-7 w-7 p-0 rounded-lg bg-emerald-500/5 hover:bg-emerald-500 border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white transition-all shadow-xs"
-                                title="Approve Booking"
-                              >
-                                <Check className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCancelBooking(booking.id, booking.customerName)}
-                                className="h-7 w-7 p-0 rounded-lg bg-rose-500/5 hover:bg-rose-500 border-rose-500/20 hover:border-rose-500 text-rose-500 hover:text-white transition-all shadow-xs"
-                                title="Decline Booking"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </Button>
-                            </>
-                          ) : booking.status === "Confirmed" ? (
+                      </div>
+                    </td>
+                    <td className="px-1.5 py-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {booking.status === "Pending" ? (
+                          <>
                             <Button
                               size="sm"
-                              variant="ghost"
-                              onClick={() => handleCancelBooking(booking.id, booking.customerName)}
-                              className="h-8 text-xs px-2.5 rounded-lg border border-border/50 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/5 transition-all"
+                              variant="outline"
+                              onClick={() => handleConfirmBooking(booking.id, booking.customerName)}
+                              className="h-6 w-6 p-0 rounded-md bg-emerald-500/5 hover:bg-emerald-500 border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white transition-all shadow-xs"
+                              title="Approve Booking"
                             >
-                              Decline
+                              <Check className="h-3 w-3" />
                             </Button>
-                          ) : (
-                            <span className="text-xs text-muted-foreground font-semibold italic">No actions available</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="7" className="py-12 text-center text-muted-foreground text-sm">
-                      <div className="flex flex-col items-center gap-2">
-                        <Search className="h-8 w-8 opacity-20" />
-                        No matching bookings found
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCancelBooking(booking.id, booking.customerName)}
+                              className="h-6 w-6 p-0 rounded-md bg-rose-500/5 hover:bg-rose-500 border-rose-500/20 hover:border-rose-500 text-rose-500 hover:text-white transition-all shadow-xs"
+                              title="Decline Booking"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </>
+                        ) : booking.status === "Confirmed" ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleCancelBooking(booking.id, booking.customerName)}
+                            className="h-6 text-[10px] px-1.5 rounded-md border border-border/50 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/5 transition-all"
+                          >
+                            Decline
+                          </Button>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground font-semibold italic">N/A</span>
+                        )}
                       </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="py-12 text-center text-muted-foreground text-xs">
+                    <div className="flex flex-col items-center gap-2">
+                      <Search className="h-8 w-8 opacity-20" />
+                      No matching bookings found
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </CardContent>
       </Card>
 

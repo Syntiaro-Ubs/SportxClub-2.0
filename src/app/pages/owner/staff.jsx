@@ -219,9 +219,6 @@ export function StaffManagement() {
           <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
             Staff & Job Roles
           </h1>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            Manage your turf employees, assign roles, and track their active status.
-          </p>
         </div>
         <Button onClick={() => handleOpenModal()} className="border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 rounded-xl font-bold px-4 h-10 transition-all flex items-center gap-2 cursor-pointer shadow-xs self-start sm:self-auto">
           <Plus className="w-4 h-4" />

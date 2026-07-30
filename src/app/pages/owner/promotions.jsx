@@ -229,10 +229,9 @@ export function Promotions() {
         <div className="p-4 rounded-2xl bg-background border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xs flex items-center justify-between transition-all duration-300">
           <div className="space-y-1">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Campaigns</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-foreground">{activePromotions}</span>
-              <span className="text-xs font-bold text-muted-foreground">/ {data.length} Total</span>
-            </div>
+            <p className="text-2xl font-black text-foreground">
+              {activePromotions}/{data.length}
+            </p>
           </div>
           <div className="text-foreground">
             <Tag className="w-5 h-5 stroke-[2.5]" />

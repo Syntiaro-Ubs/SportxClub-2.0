@@ -119,28 +119,28 @@ export function CalendarView() {
   });
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-7xl mx-auto pb-16 relative overflow-hidden px-1">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-[1440px] mx-auto pb-6 relative overflow-hidden px-1">
       {/* Background visual accents */}
       <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl opacity-50 pointer-events-none -z-10 animate-pulse" />
       <div className="absolute bottom-10 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl opacity-30 pointer-events-none -z-10" />
 
       {/* Header section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/40 pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border/40 pb-3">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
             Booking Calendar
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Interact with the date matrix to block bookings, view schedules, and track slots.
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Interactive Calendar (Span 4) */}
-        <div className="xl:col-span-4 xl:sticky xl:top-24">
-          <Card className="border-border/40 bg-card/35 backdrop-blur-xl shadow-xl rounded-[24px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-primary/20">
-            <CardContent className="p-6 flex flex-col items-center">
+        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20">
+          <Card className="border-border/40 bg-card/35 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20">
+            <CardContent className="p-4 flex flex-col items-center">
               <Calendar
                 mode="single"
                 selected={date}
@@ -150,18 +150,18 @@ export function CalendarView() {
                 modifiersClassNames={{
                   blocked: "text-rose-500 font-bold bg-rose-500/10 rounded-full"
                 }}
-                className="w-full bg-transparent border-none p-0 shadow-none flex justify-center mb-6"
+                className="w-full bg-transparent border-none p-0 shadow-none flex justify-center mb-4"
               />
 
-              <div className="w-full pt-5 border-t border-border/30">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">Availability Status</span>
+              <div className="w-full pt-4 border-t border-border/30">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold tracking-wide text-muted-foreground">Availability Status</span>
                   {isDateDisabled ? (
-                    <Badge variant="destructive" className="animate-pulse bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-lg">
+                    <Badge variant="destructive" className="animate-pulse bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-lg">
                       Blocked
                     </Badge>
                   ) : (
-                    <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-lg">
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-lg">
                       Available
                     </Badge>
                   )}
@@ -169,7 +169,7 @@ export function CalendarView() {
                 <Button
                   variant={isDateDisabled ? "outline" : "default"}
                   className={cn(
-                    "w-full gap-2 h-11 font-extrabold rounded-xl text-xs transition-all duration-300 cursor-pointer shadow-xs",
+                    "w-full gap-2 h-10 font-extrabold rounded-xl text-xs transition-all duration-300 cursor-pointer shadow-xs",
                     isDateDisabled
                       ? "bg-white dark:bg-slate-900 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-300 dark:hover:border-red-800 hover:scale-[1.02]"
                       : "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-600 border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-600 dark:hover:border-emerald-600 hover:scale-[1.02]"
@@ -193,12 +193,12 @@ export function CalendarView() {
         </div>
 
         {/* Right Column: Bookings Matrix & Quick Summary (Span 8) */}
-        <div className="xl:col-span-8 space-y-6">
-          <Card className="border-border/40 bg-card/35 backdrop-blur-xl shadow-xl rounded-[24px] min-h-[500px] flex flex-col gap-0 overflow-hidden transition-all duration-300 hover:shadow-2xl">
-            <CardHeader className="border-b border-border/30 bg-muted/20 px-4 py-3 [.border-b]:pb-3">
+        <div className="lg:col-span-7 xl:col-span-8 space-y-4">
+          <Card className="border-0 bg-transparent shadow-none rounded-2xl min-h-[400px] flex flex-col gap-0 overflow-hidden transition-all duration-300">
+            <CardHeader className="border-0 bg-transparent px-0 py-1 pb-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="space-y-1">
-                  <CardTitle className="text-xl font-extrabold text-foreground tracking-tight">
+                <div className="space-y-0.5">
+                  <CardTitle className="text-lg font-extrabold text-foreground tracking-tight">
                     {date ? format(date, "MMMM d, yyyy") : "Select a date"}
                   </CardTitle>
                   <CardDescription className="text-xs font-medium text-muted-foreground">
@@ -216,12 +216,12 @@ export function CalendarView() {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="p-3.5 pt-3 flex-1 flex flex-col">
+            <CardContent className="px-0 py-3 flex-1 flex flex-col">
 
               {/* Daily Statistics Cards Grid */}
               {!isDateDisabled && selectedBookings.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3.5">
-                  <div className="p-4 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-border/20 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+                  <div className="p-4 rounded-2xl bg-transparent border border-slate-300 dark:border-slate-700/80 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Booked Sessions</p>
                       <p className="text-xl font-black text-foreground">{selectedBookings.length}</p>
@@ -231,7 +231,7 @@ export function CalendarView() {
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-border/20 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+                  <div className="p-4 rounded-2xl bg-transparent border border-slate-300 dark:border-slate-700/80 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Duration</p>
                       <p className="text-xl font-black text-foreground">
@@ -243,7 +243,7 @@ export function CalendarView() {
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-border/20 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+                  <div className="p-4 rounded-2xl bg-transparent border border-slate-300 dark:border-slate-700/80 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
                     <div className="space-y-1">
                       <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Potential Revenue</p>
                       <p className="text-xl font-black text-foreground flex items-center gap-0.5">
@@ -292,7 +292,7 @@ export function CalendarView() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.08 }}
-                        className="p-5 rounded-2xl border border-border/50 bg-background/80 hover:bg-emerald-600/5 dark:hover:bg-emerald-600/5 hover:border-emerald-600/30 hover:scale-[1.01] hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row gap-4 sm:items-center justify-between group relative overflow-hidden"
+                        className="p-5 rounded-2xl border border-slate-300 dark:border-slate-700/80 bg-transparent hover:bg-emerald-600/5 dark:hover:bg-emerald-600/5 hover:border-emerald-600/30 hover:scale-[1.01] hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row gap-4 sm:items-center justify-between group relative overflow-hidden"
                       >
                         {/* Decorative vertical status bar */}
                         <div className={cn(

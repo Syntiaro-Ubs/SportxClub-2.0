@@ -193,13 +193,10 @@ export function TournamentOrganizerDashboard() {
             <span className="p-2 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <Trophy className="h-5 w-5" />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
               Tournament Organizer Dashboard
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1 font-medium">
-            Create, schedule fixtures, approve teams and manage live match scores in real-time
-          </p>
         </div>
 
         {/* Create Tournament CTA */}
@@ -339,7 +336,7 @@ export function TournamentOrganizerDashboard() {
           return (
             <Card
               key={stat.label}
-              className="bg-slate-50/80 dark:bg-slate-900/60 border-2 border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 min-h-[90px] text-foreground shadow-2xs hover:shadow-xs"
+              className="gap-0 bg-slate-50/80 dark:bg-slate-900/60 border-2 border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 min-h-[90px] text-foreground shadow-2xs hover:shadow-xs"
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">

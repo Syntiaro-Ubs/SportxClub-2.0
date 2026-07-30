@@ -171,7 +171,7 @@ function CustomCalendar({ selectedDate, onSelect }) {
           let btnClasses = "h-8 w-8 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer ";
 
           if (isSelected) {
-            btnClasses += "border-2 border-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold shadow-xs";
+            btnClasses += "border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 font-extrabold shadow-xs";
           } else if (isToday) {
             btnClasses += "border border-emerald-600/45 text-emerald-600 hover:bg-emerald-600/10";
           } else if (!isCurrentMonth) {
@@ -688,10 +688,10 @@ export function TimeSlots() {
         {/* Turf & Duration Selector Dropdowns */}
         <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shrink-0">
 
-          {/* Turf Selector Dropdown */}
-          <div className="w-full sm:w-fit shrink-0">
+          {/* Turf Selector Dropdown — Compact Half Width */}
+          <div className="w-full sm:w-[170px] max-w-[185px] shrink-0">
             <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
-              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full px-4">
+              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full px-3.5 overflow-hidden">
                 <SelectValue placeholder="Select Turf" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
@@ -707,8 +707,8 @@ export function TimeSlots() {
             </Select>
           </div>
 
-          {/* Duration Selector Dropdown (1hr, 2hr, 3hr, custom) */}
-          <div className="w-full sm:w-fit shrink-0">
+          {/* Duration Selector Dropdown — Compact Half Width */}
+          <div className="w-full sm:w-[170px] max-w-[185px] shrink-0">
             <Select
               value={selectedDurationOption}
               onValueChange={(val) => {
@@ -721,7 +721,7 @@ export function TimeSlots() {
                 }
               }}
             >
-              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center gap-1.5 px-4">
+              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center gap-1.5 px-3.5 overflow-hidden">
                 <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 <SelectValue placeholder="Duration" />
               </SelectTrigger>
@@ -798,49 +798,29 @@ export function TimeSlots() {
           )}
         </div>
 
-        {/* Date Selector Navigation */}
-        <div className="flex items-center gap-1 bg-background/50 border border-border/40 p-1 rounded-xl shadow-xs">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent border border-transparent hover:border-emerald-500 cursor-pointer p-0 shrink-0"
-            onClick={() => setSelectedDate(addDays(selectedDate, -1))}
-            title="Previous Day"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex items-center justify-center gap-1.5 px-3 py-1 text-xs font-bold text-foreground hover:bg-transparent border border-transparent hover:border-emerald-500 rounded-lg transition-colors cursor-pointer"
-                title="Select specific date"
-              >
-                <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>{format(selectedDate, 'MMM dd, yyyy')}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
-              <CustomCalendar
-                selectedDate={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
-                  }
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-transparent border border-transparent hover:border-emerald-500 cursor-pointer p-0 shrink-0"
-            onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-            title="Next Day"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Date Selector Popover (Calendar Only — Navigation buttons removed) */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 px-4.5 py-1.5 h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground hover:bg-muted/30 transition-all cursor-pointer shadow-2xs shrink-0"
+              title="Select specific date"
+            >
+              <CalendarIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+              <span>{format(selectedDate, 'MMM dd, yyyy')}</span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
+            <CustomCalendar
+              selectedDate={selectedDate}
+              onSelect={(date) => {
+                if (date) {
+                  setSelectedDate(date);
+                }
+              }}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* -------------------------------------------------------------
@@ -935,7 +915,7 @@ export function TimeSlots() {
                   )}
 
                   {/* Grid Slots - Dynamically Grouped by Selected Duration */}
-                  <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
+                  <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
                     }`}>
                     {(() => {
                       const effectiveSlots = turf.slots.map(rawSlot => getEffectiveSlot(turf.id, rawSlot));
@@ -1064,9 +1044,9 @@ export function TimeSlots() {
               <button
                 type="button"
                 onClick={() => setBookingActionType("booking")}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${bookingActionType === "booking"
-                  ? "bg-emerald-500 text-black shadow-sm font-black"
-                  : "text-muted-foreground hover:bg-muted/40"
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${bookingActionType === "booking"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-extrabold shadow-xs"
+                  : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
               >
                 Walk-in Booking
@@ -1074,9 +1054,9 @@ export function TimeSlots() {
               <button
                 type="button"
                 onClick={() => setBookingActionType("block")}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${bookingActionType === "block"
-                  ? "bg-amber-500 text-black shadow-sm font-black"
-                  : "text-muted-foreground hover:bg-muted/40"
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${bookingActionType === "block"
+                  ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-transparent font-extrabold shadow-xs"
+                  : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
               >
                 Block Slot
@@ -1364,7 +1344,7 @@ export function TimeSlots() {
                 type="button"
                 onClick={() => setCustomBlockForm(prev => ({ ...prev, blockType: "single" }))}
                 className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${customBlockForm.blockType === "single"
-                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-extrabold"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-extrabold"
                   : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
               >
@@ -1374,7 +1354,7 @@ export function TimeSlots() {
                 type="button"
                 onClick={() => setCustomBlockForm(prev => ({ ...prev, blockType: "multiday" }))}
                 className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${customBlockForm.blockType === "multiday"
-                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-extrabold"
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-extrabold"
                   : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
               >

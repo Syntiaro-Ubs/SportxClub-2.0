@@ -57,6 +57,7 @@ const ownerNavigation = [
   { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
   { name: "Reviews", href: "/owner-dashboard/reviews", icon: Star, badge: "4.8★" },
   { name: "Promotions", href: "/owner-dashboard/promotions", icon: Tag },
+  { name: "Settings", href: "/owner-dashboard/settings", icon: Settings },
 ];
 
 export function OwnerLayout() {
@@ -137,7 +138,7 @@ export function OwnerLayout() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Link to="/" className="flex items-center shrink-0 my-auto">
+        <Link to="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
           <Logo />
         </Link>
       </div>
@@ -154,7 +155,7 @@ export function OwnerLayout() {
               key={item.name}
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`group flex items-center justify-between w-full py-4 px-3 border-b border-border/40 transition-colors duration-150 hover:bg-muted/30 ${isActive
+              className={`group flex items-center justify-between w-full py-2.5 px-3 border-b border-border/40 transition-colors duration-150 hover:bg-muted/30 ${isActive
                 ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
                 : "text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400"
                 }`}
@@ -168,22 +169,14 @@ export function OwnerLayout() {
         })}
       </div>
 
-      <div className="p-4 mt-auto border-t border-border/40 flex flex-row gap-2">
+      <div className="p-4 mt-auto border-t border-border/40">
         <Button
           variant="ghost"
-          className="flex-1 justify-start gap-3 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 px-3 py-2.5 h-auto rounded-xl transition-colors font-semibold text-sm cursor-pointer"
+          className="w-full justify-start gap-3 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 px-3 py-2.5 h-auto rounded-xl transition-colors font-semibold text-sm cursor-pointer"
           onClick={handleLogout}
         >
           <LogOut className="h-5 w-5 shrink-0" />
           <span>Sign Out</span>
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-[46px] shrink-0 justify-center text-muted-foreground hover:text-foreground hover:bg-muted/30 p-0 h-[42px] rounded-xl transition-colors cursor-pointer"
-          onClick={() => navigate("/owner-dashboard/settings")}
-          title="Settings"
-        >
-          <Settings className="h-5 w-5 shrink-0" />
         </Button>
       </div>
     </div>
@@ -192,37 +185,47 @@ export function OwnerLayout() {
   return (
     <div className="flex min-h-dvh bg-background text-foreground overflow-x-hidden w-full max-w-full">
       {/* Desktop Sidebar — Completely hides 100% offscreen when collapsed */}
-      <aside className={`hidden flex-col border-r border-border/40 bg-card/30 md:flex fixed inset-y-0 z-50 w-64 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "-translate-x-full opacity-0 pointer-events-none" : "translate-x-0 opacity-100"}`}>
+      <aside className={`hidden flex-col border-r border-border/40 bg-card/30 md:flex fixed inset-y-0 z-50 w-56 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "-translate-x-full opacity-0 pointer-events-none" : "translate-x-0 opacity-100"}`}>
         <SidebarContent />
       </aside>
 
       {/* Main Content Area — Expands to 100% full width when sidebar is hidden */}
-      <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-64"}`}>
+      <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-56"}`}>
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/80 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            className="-m-2.5 p-2.5 text-muted-foreground md:hidden hover:text-foreground transition-colors cursor-pointer"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <span className="sr-only">Open sidebar</span>
-            <Menu className="h-6 w-6" aria-hidden="true" />
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              type="button"
+              className="-m-1.5 p-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center shrink-0"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <span className="sr-only">Open sidebar</span>
+              <Menu className="h-6 w-6" aria-hidden="true" />
+            </button>
+            <Link to="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+              <Logo />
+            </Link>
+          </div>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Sidebar Toggle Button in Header — Only shown when sidebar is hidden */}
+              {/* Sidebar Toggle Button & Logo when sidebar navigation is hidden */}
               {isSidebarCollapsed && (
-                <button
-                  type="button"
-                  onClick={toggleSidebar}
-                  title="Expand Sidebar (Ctrl+\)"
-                  aria-label="Expand Sidebar"
-                  className="hidden md:flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
+                <div className="hidden md:flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    title="Expand Sidebar (Ctrl+\)"
+                    aria-label="Expand Sidebar"
+                    className="flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                  <Link to="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+                    <Logo />
+                  </Link>
+                </div>
               )}
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
+              <h1 className="hidden md:block text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
                 Dashboard
               </h1>
             </div>
@@ -244,12 +247,12 @@ export function OwnerLayout() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2.5 rounded-full p-1 pr-3 transition-all cursor-pointer">
                   <div className="relative">
-                    <Avatar className="h-9 w-9">
+                    <Avatar className="h-9 w-9 border-2 border-emerald-500">
                       {activeProfile.profilePicture ? (
                         <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                       ) : (
-                        <AvatarFallback className="text-foreground">
-                          <User className="h-4 w-4" />
+                        <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 font-black text-xs">
+                          {ownerName.trim().split(/\s+/).map((n) => n[0]).join("").slice(0, 2)}
                         </AvatarFallback>
                       )}
                     </Avatar>
@@ -297,7 +300,7 @@ export function OwnerLayout() {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-                className="fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-background shadow-xl md:hidden"
+                className="fixed inset-y-0 left-0 z-50 w-full max-w-[240px] bg-background shadow-xl md:hidden"
               >
                 <div className="absolute right-4 top-4">
                   <Button
@@ -315,7 +318,7 @@ export function OwnerLayout() {
         </AnimatePresence>
 
         <main className="flex-1 w-full max-w-full overflow-x-hidden">
-          <div className="mx-auto max-w-7xl px-4 pt-1 pb-6 sm:px-6 lg:px-8 w-full max-w-full overflow-x-hidden">
+          <div className="mx-auto max-w-[1440px] px-4 pt-1 pb-6 sm:px-6 lg:px-8 w-full overflow-x-hidden">
             <Outlet context={{ activeProfile, setDemoProfile, isTestMode, setIsTestMode }} />
           </div>
         </main>

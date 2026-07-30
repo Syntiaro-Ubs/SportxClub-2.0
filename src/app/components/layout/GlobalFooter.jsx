@@ -122,20 +122,17 @@ export function GlobalFooter() {
         ))}
 
         {/* Social Column */}
-        <div className="space-y-2 sm:space-y-3">
+        <div className="space-y-2 sm:space-y-3 min-w-max">
           <h4 className={`text-[10px] uppercase font-bold tracking-[0.24em] ${isDark ? "text-white/50" : "text-slate-400"
             }`}>
             Social
           </h4>
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex items-center flex-nowrap gap-1.5 sm:gap-2">
             {socialLinks.map((social) => (
               <a
                 key={social.label}
                 href={`#${social.label.toLowerCase()}`}
-                className={`h-11 w-11 rounded-full flex items-center justify-center border transition-all hover:scale-110 active:scale-95 relative overflow-hidden ${isDark
-                  ? "bg-white/[0.04] border-white/[0.08] hover:border-white/20 hover:bg-white/10"
-                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
-                  }`}
+                className={`h-9 w-9 rounded-full flex items-center justify-center border-0 bg-transparent transition-all hover:scale-110 active:scale-95 relative overflow-hidden hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
                 style={{ color: social.brandColor }}
                 aria-label={social.label}
               >
@@ -146,9 +143,10 @@ export function GlobalFooter() {
         </div>
       </div>
 
-      <div className={`max-w-7xl mx-auto border-t mt-6 pt-4 flex flex-row items-center justify-between text-[8.5px] sm:text-[10px] transition-colors duration-300 ${isDark ? "border-white/[0.08] text-white/65" : "border-slate-200 text-slate-700"
+      <div className={`max-w-7xl mx-auto border-t mt-6 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[8.5px] sm:text-[10px] transition-colors duration-300 ${isDark ? "border-white/[0.08] text-white/65" : "border-slate-200 text-slate-700"
         }`}>
-        <p className="font-light text-left text-[7.5px] sm:text-[9px] tracking-wide">
+        <div className="flex-1 hidden sm:block"></div>
+        <p className="font-light text-center flex-1 text-[8.5px] sm:text-[10px] tracking-wide">
           Powered By{" "}
           <a
             href="https://www.syntiaro.com/"
@@ -162,7 +160,7 @@ export function GlobalFooter() {
             SYNTIARO
           </a>
         </p>
-        <div className="flex gap-3 sm:gap-4 justify-end">
+        <div className="flex-1 flex gap-3 sm:gap-4 justify-center sm:justify-end">
           <Link to="/" className={`hover:underline ${isDark ? "hover:text-white" : "hover:text-slate-900"}`}>
             Privacy
           </Link>

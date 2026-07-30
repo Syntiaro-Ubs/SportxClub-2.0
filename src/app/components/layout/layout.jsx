@@ -103,8 +103,8 @@ function CitySelector() {
                       key={c}
                       onClick={() => handleCitySelect(c)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs  transition cursor-pointer ${isSelected
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-accent"
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground hover:bg-accent"
                         }`}
                     >
                       <span>{c === "All" ? "All Cities" : c}</span>
@@ -175,8 +175,8 @@ export function Layout() {
                   key={item.name}
                   to={item.href}
                   className={`group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isActive
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-primary"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-primary"
                     }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -194,11 +194,11 @@ export function Layout() {
                 variant="ghost"
                 className="group relative rounded-md gap-2.5 text-muted-foreground hover:text-primary hover:bg-transparent px-3 h-10 cursor-pointer focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"
               >
-                <Avatar className="h-6 w-6 border border-border/80">
+                <Avatar className="h-6.5 w-6.5 border-2 border-emerald-500">
                   {currentUser?.profilePicture && (
                     <AvatarImage src={currentUser.profilePicture} className="object-cover" />
                   )}
-                  <AvatarFallback className="bg-primary text-[10px] font-bold text-primary-foreground">
+                  <AvatarFallback className="bg-transparent text-[10px] font-black text-emerald-600 dark:text-emerald-400">
                     {currentUser?.fullName
                       ? currentUser.fullName.trim().split(/\s+/).map((n) => n[0]).join("").slice(0, 2)
                       : "U"}
@@ -231,8 +231,8 @@ export function Layout() {
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
           className={`flex-1 md:pb-0 ${hideMobileNav
-              ? "pb-0"
-              : "pb-[calc(104px+env(safe-area-inset-bottom))]"
+            ? "pb-0"
+            : "pb-[calc(104px+env(safe-area-inset-bottom))]"
             }`}
         >
           <div

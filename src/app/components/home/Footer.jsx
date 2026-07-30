@@ -144,15 +144,12 @@ export function Footer() {
                   ))}
                 </ul>
               ) : (
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="mt-5 flex items-center flex-nowrap gap-1.5 sm:gap-2">
                   {column.links.map((link) => (
                     <a
                       key={link.label}
                       href={`#${link.label.toLowerCase()}`}
-                      className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition hover:-translate-y-1 ${isDark
-                        ? "border-white/[0.08] bg-white/[0.04] hover:border-white/20 hover:bg-white/10"
-                        : "border-slate-200 bg-white shadow-sm hover:border-slate-300 hover:bg-slate-50"
-                        }`}
+                      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-0 bg-transparent transition hover:-translate-y-1 hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
                       style={{ color: link.brandColor }}
                       aria-label={link.label}
                     >
