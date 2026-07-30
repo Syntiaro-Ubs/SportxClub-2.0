@@ -30,6 +30,8 @@ import {
   ChevronRight,
   Info,
   CreditCard,
+  Trophy,
+  Award,
 } from "lucide-react";
 import {
   Dialog,
@@ -419,7 +421,7 @@ export function Revenue() {
   };
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-7xl mx-auto theme-adaptive pb-16 overflow-hidden px-1">
+    <div className="space-y-2.5 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-7xl mx-auto theme-adaptive pb-16 overflow-hidden px-1">
 
       {/* Hidden svg gradients declaration block */}
       <svg className="absolute w-0 h-0 invisible">
@@ -431,7 +433,7 @@ export function Revenue() {
         </defs>
       </svg>
 
-      <div className="flex items-center justify-end mb-2">
+      <div className="flex items-center justify-end">
         <div className="flex flex-wrap items-center gap-3">
           <Button
             onClick={handleExport}
@@ -446,7 +448,7 @@ export function Revenue() {
       {/* -------------------------------------------------------------
           KPI Widgets cards grid (2 Cards)
           ------------------------------------------------------------- */}
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 
         {/* Widget 1: Total Received Revenue */}
         {/* Widget 1: Total Revenue */}
@@ -763,113 +765,307 @@ export function Revenue() {
           </div>
         </Card>
 
-        {/* Bottom Part: Transaction List */}
-        <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg overflow-hidden rounded-2xl flex flex-col justify-between">
-          <div className="border-b border-border/40 bg-muted/20 p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle className="text-lg font-bold tracking-tight text-foreground">Transaction History</CardTitle>
-                <CardDescription className="text-xs text-muted-foreground">Recent payments and settlement receipts</CardDescription>
+        {/* Settlement Breakdown Modal */}
+        <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
+          <DialogContent className="sm:max-w-[620px] max-h-[88vh] overflow-y-auto rounded-3xl p-6">
+            <DialogHeader className="space-y-1.5 pb-2 border-b border-border/40">
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-extrabold text-foreground">
+                    Escrow Settlement Breakdown
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground">
+                    Next payout credit schedule & itemized user payments
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {/* Summary Credit Banner */}
+              <div className="rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-primary tracking-widest">
+                    Expected Bank Credit ETA
+                  </span>
+                  <h4 className="text-lg font-black text-foreground flex items-center gap-2">
+                    <Building2 className="h-4.5 w-4.5 text-primary" />
+                    {mockSettlementData.expectedDate}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Destination: <strong className="text-foreground">{mockSettlementData.nodalBank}</strong>
+                  </p>
+                </div>
+                <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-primary/20 pt-2 sm:pt-0 sm:pl-4">
+                  <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Gross Pending</span>
+                  <p className="text-2xl font-black text-primary font-mono flex items-center justify-start sm:justify-end gap-0.5">
+                    <IndianRupee className="h-5 w-5 shrink-0 stroke-[2.5]" />
+                    {mockSettlementData.totalGross.toLocaleString('en-IN')}
+                  </p>
+                </div>
               </div>
 
-              {/* Status filtering pills row */}
-              <div className="flex flex-wrap items-center gap-1 bg-card/60 p-1 rounded-xl border border-border/50 shadow-inner">
-                {["all", "completed", "pending", "failed"].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => setStatusFilter(status)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold capitalize tracking-widest transition-all cursor-pointer border-2 ${statusFilter === status
-                      ? status === "completed"
-                        ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
-                        : status === "pending"
-                          ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-transparent font-bold"
-                          : status === "failed"
-                            ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-transparent font-bold"
-                            : "border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                      }`}
-                  >
-                    {status}
-                  </button>
+              {/* User-Wise History List */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-muted-foreground tracking-wider flex items-center justify-between">
+                  <span>User Transactions ({mockSettlementData.breakdown.length})</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Razorpay Verified Escrow
+                  </span>
+                </h4>
+
+                <div className="divide-y divide-border/30 border border-border/40 rounded-2xl overflow-hidden bg-card/40">
+                  {mockSettlementData.breakdown.map((item) => (
+                    <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/20 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-sm text-foreground">{item.userName}</p>
+                            <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              {item.id}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                            {item.turfName} · <span className="text-foreground">{item.slotTime}</span> ({item.slotDate})
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 border-border/20 pt-2 sm:pt-0">
+                        <div className="text-left sm:text-right">
+                          <p className="font-mono font-bold text-sm text-foreground flex items-center justify-start sm:justify-end gap-0.5"><IndianRupee className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" />{item.grossAmount}</p>
+                          <span className="text-[10px] text-muted-foreground font-semibold">{item.paymentMode}</span>
+                        </div>
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5 whitespace-nowrap">
+                          {item.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Settlement Deductions Breakdown Table */}
+              <div className="rounded-2xl border border-border/40 bg-muted/20 p-4 space-y-2">
+                <h5 className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
+                  <CreditCard className="h-4 w-4 text-primary" /> Net Payout Calculation Summary
+                </h5>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Gross Upcoming Revenue</span>
+                  <span className="font-mono font-semibold text-foreground inline-flex items-center gap-0.5"><IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gross.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Payment Gateway Fee (2%)</span>
+                  <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gatewayFee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>GST on Gateway Fee (18%)</span>
+                  <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gstOnFee.toFixed(2)}</span>
+                </div>
+                <div className="border-t border-border/40 pt-2 flex justify-between text-sm font-bold text-foreground">
+                  <span>Net Credited to Bank Account</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base inline-flex items-center gap-0.5">
+                    <IndianRupee className="h-4 w-4 shrink-0 stroke-[2.5]" />{mockSettlementData.calculations.netPayout.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  toast.success("Settlement advice PDF generated!");
+                }}
+                className="rounded-xl h-10 text-xs font-bold gap-2 cursor-pointer"
+              >
+                <Download className="h-4 w-4" /> Download Settlement Advice (PDF)
+              </Button>
+              <Button
+                onClick={() => setIsSettlementsModalOpen(false)}
+                className="rounded-xl h-10 text-xs bg-primary text-primary-foreground font-bold cursor-pointer hover:opacity-95"
+              >
+                Close Breakdown
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* -------------------------------------------------------------
+          Two-column grid: Transaction History (Left 8 cols - No Horizontal Scroll) & Turf Performance (Right 4 cols)
+          ------------------------------------------------------------- */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start mt-6 sm:mt-8">
+
+          {/* Left Side: Transaction List (col-span-12 lg:col-span-8) */}
+          <Card className="border-0 bg-transparent shadow-none flex flex-col justify-between w-full lg:col-span-8">
+            <div className="bg-transparent p-0 pb-3">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground">Transaction History</CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">Recent payments and settlement receipts</CardDescription>
+                </div>
+
+                {/* Status filtering pills row */}
+                <div className="flex flex-wrap items-center gap-1 bg-transparent p-1 rounded-xl border border-slate-300 dark:border-slate-700">
+                  {["all", "completed", "pending", "failed"].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setStatusFilter(status)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold capitalize tracking-wider transition-all cursor-pointer border-2 ${statusFilter === status
+                        ? status === "completed"
+                          ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
+                          : status === "pending"
+                            ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-transparent font-bold"
+                            : status === "failed"
+                              ? "border-rose-500 text-rose-600 dark:text-rose-400 bg-transparent font-bold"
+                              : "border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Search input */}
+              <div className="relative mt-3 max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by transaction ID, turf, or price..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 rounded-xl bg-transparent border border-slate-300 dark:border-slate-700 text-xs w-full focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <CardContent className="p-0">
+              {isLoading ? (
+                <div className="flex h-[200px] items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : filteredPayments.length === 0 ? (
+                <div className="text-center py-16 flex flex-col items-center text-muted-foreground">
+                  <div className="h-14 w-14 rounded-2xl bg-transparent border border-border/40 flex items-center justify-center mb-3">
+                    <IndianRupee className="h-6 w-6 opacity-40" />
+                  </div>
+                  <p className="text-sm font-bold text-foreground">No Transactions Found</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Try widening your filters or queries.</p>
+                </div>
+              ) : (
+                <div className="w-full overflow-hidden">
+                  <table className="w-full text-xs text-left">
+                    <thead className="text-[11px] text-muted-foreground uppercase bg-transparent border-b border-border/40 font-black tracking-wider">
+                      <tr>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap">Transaction ID</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap">Date</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap">Facility</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap">Amount</th>
+                        <th className="px-2 py-2 font-bold whitespace-nowrap">Method</th>
+                        <th className="px-2 py-2 font-bold text-right whitespace-nowrap pr-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {filteredPayments.map((tx) => (
+                        <tr key={tx.id} className="hover:bg-emerald-500/5 transition-colors group cursor-default">
+                          <td className="px-2 py-2 whitespace-nowrap">
+                            <span className="font-mono font-bold text-foreground/90 group-hover:text-foreground transition-colors text-xs">{tx.id}</span>
+                          </td>
+                          <td className="px-2 py-2 whitespace-nowrap text-muted-foreground font-medium text-xs">
+                            <div className="flex items-center gap-1">
+                              <CalendarIcon className="h-3 w-3 text-muted-foreground/60 shrink-0" />
+                              <span>{tx.date}</span>
+                            </div>
+                          </td>
+                          <td className="px-2 py-2 font-bold text-foreground whitespace-nowrap truncate max-w-[130px] text-xs">
+                            {tx.source}
+                          </td>
+                          <td className="px-2 py-2 whitespace-nowrap">
+                            <div className="font-extrabold flex items-center text-foreground text-xs">
+                              <IndianRupee className="h-3 w-3 mr-0.5 text-muted-foreground shrink-0" />
+                              {tx.amount.toLocaleString('en-IN')}
+                            </div>
+                          </td>
+                          <td className="px-2 py-2 whitespace-nowrap">
+                            <span className="text-[11px] font-mono font-extrabold uppercase text-muted-foreground/90 tracking-wider">{tx.method || "UPI"}</span>
+                          </td>
+                          <td className="px-2 py-2 text-right whitespace-nowrap pr-2">
+                            <Badge className={`capitalize text-[10px] font-bold tracking-wider rounded-md px-2 py-0.5 ${getStatusColor(tx.status)}`}>
+                              {tx.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Right Side: Turf Performance & Settlement Insights (col-span-12 lg:col-span-4) */}
+          <div className="lg:col-span-4 flex flex-col justify-between w-full">
+            
+            {/* Widget 1: Top Performing Turfs - Borderless & Matching Left */}
+            <Card className="border-0 bg-transparent shadow-none flex flex-col justify-between w-full">
+              <div className="bg-transparent p-0 pb-3">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground flex items-center gap-1.5">
+                      <Trophy className="h-4.5 w-4.5 text-amber-500 shrink-0" />
+                      Top Turf Performers
+                    </CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">Revenue share breakdown by venue</CardDescription>
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-transparent p-1 rounded-xl border border-slate-300 dark:border-slate-700">
+                    <span className="px-3 py-1 rounded-lg text-[10px] font-extrabold capitalize tracking-wider border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold">
+                      This Month
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <CardContent className="p-0 space-y-3 mt-2">
+                {[
+                  { name: "Cricket Ground 1", type: "Box Cricket", rev: "₹6,400", bookings: "18 slots", share: "59%", color: "bg-emerald-500", rank: "🥇 #1" },
+                  { name: "Premium Football Turf", type: "Football 7v7", rev: "₹3,200", bookings: "10 slots", share: "29%", color: "bg-blue-500", rank: "🥈 #2" },
+                  { name: "Cricket Ground 2", type: "Night Turf", rev: "₹1,200", bookings: "4 slots", share: "12%", color: "bg-amber-500", rank: "🥉 #3" },
+                ].map((turf, i) => (
+                  <div key={i} className="p-3.5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs hover:border-emerald-500/40 transition-all">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs font-black">{turf.rank}</span>
+                        <div>
+                          <p className="text-foreground font-extrabold text-xs">{turf.name}</p>
+                          <p className="text-[10px] text-muted-foreground font-medium">{turf.type} · <span className="text-foreground/80 font-bold">{turf.bookings}</span></p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-extrabold text-foreground">{turf.rev}</p>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{turf.share} share</span>
+                      </div>
+                    </div>
+                    {/* Progress bar */}
+                    <div className="w-full h-1.5 bg-slate-200/80 dark:bg-slate-800 rounded-full overflow-hidden mt-2.5">
+                      <div className={`h-full ${turf.color} rounded-full transition-all duration-500`} style={{ width: turf.share }} />
+                    </div>
+                  </div>
                 ))}
-              </div>
-            </div>
 
-            {/* Live Search input */}
-            <div className="relative mt-4">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by transaction ID, turf, or price..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 rounded-lg bg-background/50 border-border/40 text-xs w-full focus:border-primary/50"
-              />
-            </div>
+              </CardContent>
+            </Card>
+
           </div>
 
-          <CardContent className="p-0">
-            {isLoading ? (
-              <div className="flex h-[200px] items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : filteredPayments.length === 0 ? (
-              <div className="text-center py-16 flex flex-col items-center text-muted-foreground">
-                <div className="h-14 w-14 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
-                  <IndianRupee className="h-6 w-6 opacity-40" />
-                </div>
-                <p className="text-sm font-bold text-foreground">No Transactions Found</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Try widening your filters or queries.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto w-full scrollbar-none pb-1">
-                <table className="w-full text-xs text-left min-w-[550px] lg:min-w-full">
-                  <thead className="text-[10px] text-muted-foreground uppercase bg-muted/20 border-b border-border/40 font-black tracking-wider">
-                    <tr>
-                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Transaction ID</th>
-                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Date</th>
-                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Facility / Turf</th>
-                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Amount</th>
-                      <th className="px-3.5 sm:px-4 py-3 font-bold whitespace-nowrap">Method</th>
-                      <th className="px-3.5 sm:px-4 py-3 font-bold text-right whitespace-nowrap">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/30">
-                    {filteredPayments.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-muted/15 transition-colors group cursor-default">
-                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                          <span className="font-mono font-bold text-muted-foreground/80 group-hover:text-foreground transition-colors">{tx.id}</span>
-                        </td>
-                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap text-muted-foreground/90 font-medium">
-                          <div className="flex items-center gap-1.5">
-                            <CalendarIcon className="h-3 w-3 text-muted-foreground/50" />
-                            {tx.date}
-                          </div>
-                        </td>
-                        <td className="px-3.5 sm:px-4 py-3 font-extrabold text-foreground whitespace-nowrap">
-                          {tx.source}
-                        </td>
-                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                          <div className="font-black flex items-center text-foreground">
-                            <IndianRupee className="h-3.5 w-3.5 mr-0.5 text-muted-foreground" />
-                            {tx.amount.toLocaleString('en-IN')}
-                          </div>
-                        </td>
-                        <td className="px-3.5 sm:px-4 py-3 whitespace-nowrap">
-                          <Badge variant="secondary" className="px-2 py-0.5 rounded-lg text-[9px] font-extrabold uppercase bg-muted/50 border-0 text-muted-foreground">{tx.method || "UPI"}</Badge>
-                        </td>
-                        <td className="px-3.5 sm:px-4 py-3 text-right whitespace-nowrap">
-                          <Badge className={`capitalize text-[9px] font-extrabold tracking-wider rounded-lg px-2.5 py-0.5 ${getStatusColor(tx.status)}`}>
-                            {tx.status}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        </div>
 
       </div>
     </div>

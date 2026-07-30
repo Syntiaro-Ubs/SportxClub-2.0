@@ -70,25 +70,51 @@ export function TurfList() {
     const fetchTurfs = async () => {
       try {
         setIsLoading(true);
-        // Using actual API method
-        const ownerId = currentUser?.id || "guest";
-        const result = await turfService.getAll(ownerId);
-        
-        if (result && result.length > 0) {
-          setData(result);
-        } else {
-          // If no turfs returned, show demo turfs
-          setData(DEMO_TURFS);
+        const savedMockTurfs = JSON.parse(localStorage.getItem("mock_turfs") || "[]");
+        const approvedTurfs = JSON.parse(localStorage.getItem("approved_turfs") || "[]");
+
+        let baseData = DEMO_TURFS;
+        try {
+          const ownerId = currentUser?.id || "guest";
+          const result = await turfService.getAll(ownerId);
+          if (result && result.length > 0) {
+            baseData = result;
+          }
+        } catch (err) {
+          console.log("Using cached/local turfs for owner turfs list");
         }
+
+        // Merge any updated turf details from localStorage
+        const allSaved = [...savedMockTurfs, ...approvedTurfs];
+        const mergedData = baseData.map(item => {
+          const match = allSaved.find(s => String(s.id) === String(item.id));
+          return match ? { ...item, ...match } : item;
+        });
+
+        // Add any new local turfs that aren't in baseData
+        allSaved.forEach(s => {
+          if (!mergedData.some(m => String(m.id) === String(s.id))) {
+            mergedData.push(s);
+          }
+        });
+
+        setData(mergedData);
       } catch (err) {
-        // Fallback to demo turfs since API is not available
-        console.warn("Backend API not available, falling back to demo turfs.");
         setData(DEMO_TURFS);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchTurfs();
+
+    const handleUpdate = () => fetchTurfs();
+    window.addEventListener("turf_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("turf_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
   }, [currentUser]);
 
   if (isLoading) {
@@ -124,7 +150,7 @@ export function TurfList() {
         <Link to="/owner-dashboard/turfs/add">
           <Button
             variant="outline"
-            className="gap-2 border-emerald-500/50 text-foreground hover:bg-emerald-500/10 hover:border-emerald-500 transition-colors font-bold cursor-pointer rounded-xl"
+            className="gap-2 border border-slate-300 dark:border-slate-700 text-foreground hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors font-bold cursor-pointer rounded-full px-5"
           >
             <Plus className="h-4 w-4 text-emerald-500" />
             Add New Turf
@@ -137,12 +163,12 @@ export function TurfList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
           <Input
             placeholder="Search by name or location..."
-            className="pl-9 rounded-xl border-emerald-500/40 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 text-xs transition-all"
+            className="pl-9 rounded-full border border-slate-300 dark:border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 text-xs transition-all bg-background/60"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <Button variant="outline" className="rounded-xl border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">Filter</Button>
+        <Button variant="outline" className="rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold px-5 cursor-pointer transition-all">Filter</Button>
       </div>
 
       {filteredData.length === 0 ? (
