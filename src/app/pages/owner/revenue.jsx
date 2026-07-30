@@ -456,7 +456,7 @@ export function Revenue() {
         >
           <div className="flex items-start justify-between">
             <div className="space-y-0.5">
-              <p className="text-[10px] font-bold text-[#2563eb] dark:text-blue-400 uppercase tracking-widest">Total Revenue</p>
+              <p className="text-[10px] font-bold text-[#2563eb] dark:text-blue-400 tracking-widest">Total Revenue</p>
               <h3 className="text-2xl font-bold tracking-tight text-[#2563eb] dark:text-blue-400 mt-0.5 flex items-center">
                 <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#2563eb] dark:text-blue-400" />
                 {grossRevenue.toLocaleString('en-IN')}
@@ -478,7 +478,7 @@ export function Revenue() {
         >
           <div className="flex items-start justify-between">
             <div className="space-y-0.5">
-              <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 uppercase tracking-widest">Received Revenue</p>
+              <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 tracking-widest">Received Payment</p>
               <h3 className="text-2xl font-bold tracking-tight text-[#059669] dark:text-emerald-400 mt-0.5 flex items-center">
                 <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
                 {receivedRevenue.toLocaleString('en-IN')}
@@ -501,7 +501,7 @@ export function Revenue() {
           >
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
-                <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 tracking-widest flex items-center gap-1">
                   Upcoming Settlements
                   <Info className="h-3 w-3 opacity-60" />
                 </p>
@@ -520,7 +520,7 @@ export function Revenue() {
                 Auto-settled via Escrow
               </span>
               <DialogTrigger asChild>
-                <button className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-0.5 hover:underline cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                <button className="text-[10px] font-bold tracking-wider flex items-center gap-0.5 hover:underline cursor-pointer" onClick={(e) => e.stopPropagation()}>
                   View History <ChevronRight className="h-3 w-3" />
                 </button>
               </DialogTrigger>
@@ -550,7 +550,7 @@ export function Revenue() {
               {/* Summary Credit Banner */}
               <div className="rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                  <span className="text-[10px] font-bold text-primary tracking-widest">
                     Expected Bank Credit ETA
                   </span>
                   <h4 className="text-lg font-black text-foreground flex items-center gap-2">
@@ -562,7 +562,7 @@ export function Revenue() {
                   </p>
                 </div>
                 <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-primary/20 pt-2 sm:pt-0 sm:pl-4">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Gross Pending</span>
+                  <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Gross Pending</span>
                   <p className="text-2xl font-black text-primary font-mono flex items-center justify-start sm:justify-end gap-0.5">
                     <IndianRupee className="h-5 w-5 shrink-0 stroke-[2.5]" />
                     {mockSettlementData.totalGross.toLocaleString('en-IN')}
@@ -572,7 +572,7 @@ export function Revenue() {
 
               {/* User-Wise History List */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center justify-between">
+                <h4 className="text-xs font-bold text-muted-foreground tracking-wider flex items-center justify-between">
                   <span>User Transactions ({mockSettlementData.breakdown.length})</span>
                   <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                     <ShieldCheck className="h-3.5 w-3.5" /> Razorpay Verified Escrow
@@ -602,7 +602,7 @@ export function Revenue() {
                       <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 border-border/20 pt-2 sm:pt-0">
                         <div className="text-left sm:text-right">
                           <p className="font-mono font-bold text-sm text-foreground flex items-center justify-start sm:justify-end gap-0.5"><IndianRupee className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" />{item.grossAmount}</p>
-                          <span className="text-[10px] text-muted-foreground uppercase font-semibold">{item.paymentMode}</span>
+                          <span className="text-[10px] text-muted-foreground font-semibold">{item.paymentMode}</span>
                         </div>
                         <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5 whitespace-nowrap">
                           {item.status}
@@ -666,7 +666,7 @@ export function Revenue() {
         >
           <div className="flex items-start justify-between">
             <div className="space-y-0.5">
-              <p className="text-[10px] font-bold text-[#e11d48] dark:text-rose-400 uppercase tracking-widest">Cancellations</p>
+              <p className="text-[10px] font-bold text-[#e11d48] dark:text-rose-400 tracking-widest">Cancellations</p>
               <h3 className="text-2xl font-bold tracking-tight text-[#e11d48] dark:text-rose-400 mt-0.5 flex items-center">
                 <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#e11d48] dark:text-rose-400" />
                 {cancelledRevenue.toLocaleString('en-IN')}
@@ -778,7 +778,7 @@ export function Revenue() {
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-widest transition-all cursor-pointer border-2 ${statusFilter === status
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-extrabold capitalize tracking-widest transition-all cursor-pointer border-2 ${statusFilter === status
                       ? status === "completed"
                         ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
                         : status === "pending"

@@ -555,7 +555,7 @@ export function Dashboard() {
           <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Total Revenue</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Total Revenue</p>
                 <div className="flex items-center gap-2 mt-1">
                   <h3 className="text-xl font-black tracking-tight text-foreground flex items-center">
                     <IndianRupee className="h-4 w-4 stroke-[2.5] shrink-0 mr-0.5" />
@@ -574,7 +574,7 @@ export function Dashboard() {
                 <span className="opacity-30">|</span>
                 <span className="flex items-center gap-0.5">Cash: <strong className="text-foreground font-bold inline-flex items-center gap-0.5 ml-0.5"><IndianRupee className="h-2.5 w-2.5 shrink-0 stroke-[2.5]" />{isTestMode ? "0" : "45K"}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Revenue
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -590,7 +590,7 @@ export function Dashboard() {
           <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Today's Bookings</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Today's Bookings</p>
                 <div className="flex items-center gap-2 mt-1">
                   <h3 className="text-xl font-black tracking-tight text-foreground">
                     {isTestMode ? 0 : (data?.stats?.todaysBookings || 18)} Bookings
@@ -635,7 +635,7 @@ export function Dashboard() {
                 <span className="opacity-30">·</span>
                 <span>Pending: <strong className="text-amber-500 font-bold ml-0.5">{isTestMode ? 0 : 4}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Details
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -651,7 +651,7 @@ export function Dashboard() {
           <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Active Turfs</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Active Turfs</p>
                 <div className="flex items-baseline gap-2 mt-1">
                   <h3 className="text-xl font-black tracking-tight text-foreground">
                     {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}
@@ -673,7 +673,7 @@ export function Dashboard() {
                   Operational
                 </span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Manage
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -689,7 +689,7 @@ export function Dashboard() {
           <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
               <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Turf Quality Rating</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Turf Quality Rating</p>
                 <div className="flex items-center gap-2 mt-1">
                   <h3 className="text-xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
                   <div className="flex items-center text-amber-500">
@@ -721,7 +721,7 @@ export function Dashboard() {
               <div className="flex gap-2 items-center">
                 <span>Reviews: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 text-[9px] font-extrabold tracking-wider rounded-md transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-emerald-500/15 dark:hover:bg-emerald-500/20 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 shadow-xs cursor-pointer shrink-0">
                 Reviews
                 <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -752,9 +752,9 @@ export function Dashboard() {
             <button
               key={tf.key}
               onClick={() => setTimeframe(tf.key)}
-              className={`px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider transition-all duration-200 cursor-pointer border-2 ${timeframe === tf.key
-                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent"
-                  : "bg-transparent text-muted-foreground border-border/40 hover:border-emerald-500/70"
+              className={`px-4 py-1.5 rounded-md text-xs font-extrabold tracking-wider transition-all duration-200 cursor-pointer border-2 ${timeframe === tf.key
+                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent"
+                : "bg-transparent text-muted-foreground border-border/40 hover:border-emerald-500/70"
                 }`}
             >
               {tf.label}
@@ -786,20 +786,19 @@ export function Dashboard() {
 
           {/* Sport Popularity — First */}
           <div className="flex flex-col">
-            <div className="min-h-[52px] flex flex-col justify-start">
+            <div className="min-h-[32px] flex flex-col justify-start mb-6">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Top sports booked in last 30 days.</p>
             </div>
-            <div className="flex flex-col justify-center">
-              <div className="relative h-[220px] w-full max-w-[220px] mx-auto flex items-center justify-center">
+            <div className="flex flex-row items-center justify-center gap-6 w-full h-[220px]">
+              <div className="relative h-[210px] w-[210px] shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={sportPopularityData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
+                      innerRadius={65}
+                      outerRadius={95}
                       paddingAngle={0}
                       dataKey="value"
                       stroke="none"
@@ -817,15 +816,17 @@ export function Dashboard() {
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
                   <span className="text-xl font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
-                  <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
+                  <span className="text-[9px] font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
               </div>
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs">
+              <div className="flex flex-col items-start justify-center gap-y-2.5 text-xs">
                 {sportPopularityData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30">
-                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <span className="font-semibold text-foreground text-xs">{item.name}</span>
-                    <span className="text-[10px] text-muted-foreground font-medium">({item.count})</span>
+                  <div key={item.name} className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
+                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="font-bold text-foreground text-[11px]">{item.name}</span>
+                      <span className="text-[11px] text-muted-foreground font-semibold">({item.count})</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -834,9 +835,8 @@ export function Dashboard() {
 
           {/* Revenue Trend — Second */}
           <div className="flex flex-col">
-            <div className="min-h-[52px] flex flex-col justify-start">
+            <div className="min-h-[32px] flex flex-col justify-start mb-6">
               <CardTitle className="text-lg font-bold tracking-tight">Revenue Trend</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Revenue overview based on booking data.</p>
             </div>
             <div className="flex flex-col justify-center">
               <div className="h-[220px] w-full">
@@ -866,9 +866,8 @@ export function Dashboard() {
 
           {/* Bookings Filled — Third */}
           <div className="flex flex-col">
-            <div className="min-h-[52px] flex flex-col justify-start">
+            <div className="min-h-[32px] flex flex-col justify-start mb-6">
               <CardTitle className="text-lg font-bold tracking-tight">Bookings Filled</CardTitle>
-              <p className="text-sm text-muted-foreground mt-0.5">Slot occupancy across your turfs.</p>
             </div>
             <div className="flex flex-col justify-center">
               <div className="h-[220px] w-full">

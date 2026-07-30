@@ -200,7 +200,7 @@ export function TimeSlots() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters State
-  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTurfId, setSelectedTurfId] = useState("");
   const [selectedLegendFilter, setSelectedLegendFilter] = useState("all"); // 'all', 'Available', 'Booked', 'Maintenance'
 
   // Manual Booking State
@@ -263,9 +263,10 @@ export function TimeSlots() {
 
         if (formattedTurfs.length > 0) {
           setTurfs(formattedTurfs);
+          if (!selectedTurfId) setSelectedTurfId(formattedTurfs[0].id);
         } else {
           // Fallback mock database
-          setTurfs([
+          const fallbackTurfs = [
             {
               id: '1',
               name: 'Cricket Ground 1',
@@ -290,7 +291,9 @@ export function TimeSlots() {
               status: 'Closed',
               slots: generateMockSlots(),
             }
-          ]);
+          ];
+          setTurfs(fallbackTurfs);
+          if (!selectedTurfId) setSelectedTurfId(fallbackTurfs[0].id);
         }
       } catch (err) {
         console.error("Failed to fetch turfs", err);
@@ -321,13 +324,11 @@ export function TimeSlots() {
     return { available, booked, maintenance };
   }, [turfs]);
 
-  // Filtered turfs computed state (name or sport type search)
+  // Filtered turfs computed state (only selected turf)
   const filteredTurfs = useMemo(() => {
-    return turfs.filter(t =>
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.sportType.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [turfs, searchQuery]);
+    if (!selectedTurfId) return [];
+    return turfs.filter(t => t.id === selectedTurfId);
+  }, [turfs, selectedTurfId]);
 
   const handleSlotClick = (turf, slot, slotIdx) => {
     if (turf.status === 'Closed') return;
@@ -644,15 +645,20 @@ export function TimeSlots() {
           ------------------------------------------------------------- */}
       <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between py-1">
 
-        {/* Search Field */}
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 shrink-0" />
-          <Input
-            placeholder="Search turfs by name or sport..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-10 rounded-xl bg-background/50 border-emerald-500/40 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 text-xs w-full transition-all"
-          />
+        {/* Turf Selector Dropdown */}
+        <div className="w-full lg:w-fit shrink-0">
+          <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
+            <SelectTrigger className="h-10 rounded-xl bg-background/50 border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full">
+              <SelectValue placeholder="Select Turf" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
+              {turfs.map(turf => (
+                <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                  {turf.name} <span className="text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {turf.location})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Dynamic Legend Filters */}
@@ -757,7 +763,7 @@ export function TimeSlots() {
       {/* -------------------------------------------------------------
           Turfs Grid & Matrix Slots
           ------------------------------------------------------------- */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 w-full max-w-full">
         {filteredTurfs.length > 0 ? (
           filteredTurfs.map(turf => {
             const availableSlots = turf.status === 'Active' ? turf.slots.filter(s => s.status === 'Available').length : 0;
@@ -843,7 +849,7 @@ export function TimeSlots() {
                   )}
 
                   {/* Grid Slots */}
-                  <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
+                  <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
                     }`}>
                     {turf.slots.map((rawSlot, idx) => {
                       const slot = getEffectiveSlot(turf.id, rawSlot);
