@@ -224,16 +224,18 @@ const trending = [
 function SectionHeader({ title, action = "View all" }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <h2 className="text-[1.05rem]  tracking-tight text-foreground">
+      <h2 className="text-[1.05rem] font-bold tracking-tight text-foreground">
         {title}
       </h2>
+      {/* 
       <button
         type="button"
-        className="inline-flex items-center gap-1 text-sm  text-primary"
+        className="inline-flex items-center gap-1 text-sm text-primary"
       >
         {action}
         <ArrowRight className="h-4 w-4" />
       </button>
+      */}
     </div>
   );
 }
@@ -294,7 +296,7 @@ function SearchBar() {
         isListening ? "ring-4 ring-primary/10 rounded-[24px]" : "focus-within:ring-4 focus-within:ring-primary/10 rounded-[24px]"
       )}>
         <div className="flex items-center gap-2">
-          <div className="flex h-9.5 flex-1 items-center gap-2.5 rounded-[16px] border border-border/60 bg-transparent px-3.5">
+          <div className="flex h-9.5 flex-1 items-center gap-2.5 rounded-[16px] border border-border/60 dark:border-white/30 focus-within:dark:border-white bg-transparent px-3.5">
             <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
               type="search"
@@ -313,7 +315,7 @@ function SearchBar() {
               "flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-[16px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
               isListening
                 ? "border-red-500 bg-red-500/20 text-red-500 animate-pulse"
-                : "border-border/60 bg-transparent hover:bg-muted"
+                : "border-border/60 dark:border-white/30 bg-transparent hover:bg-muted"
             )}
             aria-label="Voice search"
           >
@@ -325,7 +327,7 @@ function SearchBar() {
                 type="button"
                 className={cn(
                   "flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-[16px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
-                  "border-border/60 bg-transparent hover:bg-muted"
+                  "border-border/60 dark:border-white/30 bg-transparent hover:bg-muted"
                 )}
                 aria-label="Open filters"
               >
@@ -679,7 +681,7 @@ export function MobileHomePage() {
                           <MapPin className="h-3.5 w-3.5 text-primary/80" />
                           <span className="truncate">{venue.distance} away</span>
                         </div>
-                        <div className="flex h-7.5 w-7.5 items-center justify-center rounded-full border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400 bg-transparent hover:bg-emerald-600/10 transition-colors">
+                        <div className="flex h-7.5 w-7.5 items-center justify-center rounded-full border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-white bg-transparent hover:bg-emerald-600/10 transition-colors">
                           <ArrowRight className="h-3.5 w-3.5" />
                         </div>
                       </div>
@@ -728,7 +730,7 @@ export function MobileHomePage() {
                         <p className="text-sm  text-primary">{item.prize}</p>
                         <Button
                           variant="outline"
-                          className="h-8 rounded-full px-4 text-xs font-bold border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400 bg-transparent hover:bg-emerald-600/10 transition-colors shadow-none cursor-pointer"
+                          className="h-8 rounded-full px-4 text-xs font-bold border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-white bg-transparent hover:bg-emerald-600/10 transition-colors shadow-none cursor-pointer"
                         >
                           Join
                         </Button>
@@ -761,14 +763,14 @@ export function MobileHomePage() {
                     <div className="absolute bottom-0 left-0 right-0 p-3.5 flex flex-col justify-end h-full z-10">
                       <div className="mb-auto self-end">
                         <div className="flex h-7 w-7 items-center justify-center">
-                          <Sparkles className="h-4.5 w-4.5 text-emerald-400 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
+                          <Sparkles className="h-4.5 w-4.5 text-emerald-400 dark:text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
                         </div>
                       </div>
                       <h3 className="text-base font-extrabold !text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-[1.15] mb-0.5 truncate">
                         {item.name}
                       </h3>
                       <p className="text-xs !text-white flex items-center gap-1.5 font-semibold truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
-                        <Star className="h-3 w-3 fill-emerald-400 text-emerald-400" />
+                        <Star className="h-3 w-3 fill-emerald-400 text-emerald-400 dark:text-white dark:fill-white" />
                         {item.detail}
                       </p>
                     </div>

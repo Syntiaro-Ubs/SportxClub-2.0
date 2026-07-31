@@ -138,12 +138,12 @@ export function OwnerLayout() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Link to="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
-          <Logo />
-        </Link>
+        <a href="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+          <Logo className="h-[50px] md:h-[80px]" />
+        </a>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-y-auto px-3 py-4 scrollbar-visible">
+      <div className="flex flex-1 flex-col overflow-y-auto px-3 pt-1 md:pt-4 pb-4 scrollbar-visible">
         {ownerNavigation.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -191,7 +191,7 @@ export function OwnerLayout() {
 
       {/* Main Content Area — Expands to 100% full width when sidebar is hidden */}
       <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-56"}`}>
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/80 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/80 dark:bg-black/80 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 md:hidden">
             <button
               type="button"
@@ -201,9 +201,9 @@ export function OwnerLayout() {
               <span className="sr-only">Open sidebar</span>
               <Menu className="h-6 w-6" aria-hidden="true" />
             </button>
-            <Link to="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
-              <Logo />
-            </Link>
+            <a href="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+              <Logo className="h-[50px] md:h-[80px]" />
+            </a>
           </div>
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6 items-center justify-between">
@@ -220,9 +220,9 @@ export function OwnerLayout() {
                   >
                     <Menu className="h-5 w-5" />
                   </button>
-                  <Link to="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
-                    <Logo />
-                  </Link>
+                  <a href="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+                    <Logo className="h-[50px] md:h-[80px]" />
+                  </a>
                 </div>
               )}
               <h1 className="hidden md:block text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
@@ -300,7 +300,7 @@ export function OwnerLayout() {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", bounce: 0, duration: 0.3 }}
-                className="fixed inset-y-0 left-0 z-50 w-full max-w-[240px] bg-background shadow-xl md:hidden"
+                className="fixed inset-y-0 left-0 z-50 w-full max-w-[190px] bg-background shadow-xl md:hidden"
               >
                 <div className="absolute right-4 top-4">
                   <Button

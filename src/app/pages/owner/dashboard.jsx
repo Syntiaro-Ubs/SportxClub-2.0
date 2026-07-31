@@ -608,7 +608,7 @@ export function Dashboard() {
             </div>
 
             <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-1.5 text-[9px] sm:text-[10px] font-semibold text-muted-foreground">
-              <div className="hidden sm:flex gap-2 items-center">
+              <div className="hidden sm:flex gap-1 items-center">
                 <span>Online: <strong className="text-foreground font-bold ml-0.5">₹{isTestMode ? "0" : "139K"}</strong></span>
                 <span className="opacity-30">|</span>
                 <span>Cash: <strong className="text-foreground font-bold ml-0.5">₹{isTestMode ? "0" : "45K"}</strong></span>
@@ -675,7 +675,7 @@ export function Dashboard() {
             </div>
 
             <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-1.5 text-[9px] sm:text-[10px] font-semibold text-muted-foreground">
-              <div className="hidden sm:flex gap-2 items-center">
+              <div className="hidden sm:flex gap-1 items-center">
                 <span>Confirmed: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : 14}</strong></span>
                 <span className="opacity-30">·</span>
                 <span>Pending: <strong className="text-amber-500 font-bold ml-0.5">{isTestMode ? 0 : 4}</strong></span>
@@ -832,7 +832,7 @@ export function Dashboard() {
                       data={sportPopularityData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={55}
+                      innerRadius={45}
                       outerRadius={85}
                       paddingAngle={0}
                       dataKey="value"
@@ -983,9 +983,10 @@ export function Dashboard() {
           </div>
         </CardHeader>
 
-        {/* Table Sheet Content — Forced Always-Visible Horizontal Scrollbar for Mobile View */}
-        <CardContent className="p-0 overflow-x-scroll md:overflow-x-visible overflow-y-hidden pb-3 md:pb-0 [scrollbar-width:auto] [scrollbar-color:#059669_#e2e8f0] dark:[scrollbar-color:#10b981_#1e293b] [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-600 dark:[&::-webkit-scrollbar-thumb]:bg-emerald-500 [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white dark:[&::-webkit-scrollbar-thumb]:border-slate-900 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-200 dark:[&::-webkit-scrollbar-track]:bg-slate-800">
-          <table className="w-full min-w-[780px] md:min-w-full md:table-fixed text-center border-collapse">
+        {/* Table Sheet Content */}
+        <CardContent className="p-0">
+          <div className="w-full overflow-x-auto scrollbar-visible pb-2">
+            <table className="w-full min-w-[780px] md:min-w-full md:table-fixed text-center border-collapse">
             <thead>
               <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground text-center">
                 <th className="w-[11%] px-1.5 py-2 text-center">Booking ID</th>
@@ -1111,6 +1112,7 @@ export function Dashboard() {
               )}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
 

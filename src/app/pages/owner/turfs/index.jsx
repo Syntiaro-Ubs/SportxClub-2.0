@@ -185,29 +185,29 @@ export function TurfList() {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-end items-center">
-        <Link to="/owner-dashboard/turfs/add">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
+            <Input
+              placeholder="Search by name or location..."
+              className="pl-9 rounded-full border border-slate-300 dark:border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 text-xs transition-all bg-background/60"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" className="rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold px-5 cursor-pointer transition-all shrink-0">Filter</Button>
+        </div>
+
+        <Link to="/owner-dashboard/turfs/add" className="shrink-0">
           <Button
             variant="outline"
-            className="gap-2 border border-slate-300 dark:border-slate-700 text-foreground hover:bg-transparent hover:border-emerald-500 transition-colors font-bold cursor-pointer rounded-full px-5"
+            className="gap-2 border border-slate-300 dark:border-slate-700 text-foreground hover:bg-transparent hover:border-emerald-500 transition-colors font-bold cursor-pointer rounded-full px-5 w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 text-emerald-500" />
             Add New Turf
           </Button>
         </Link>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
-          <Input
-            placeholder="Search by name or location..."
-            className="pl-9 rounded-full border border-slate-300 dark:border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 text-xs transition-all bg-background/60"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Button variant="outline" className="rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold px-5 cursor-pointer transition-all">Filter</Button>
       </div>
 
       {filteredData.length === 0 ? (

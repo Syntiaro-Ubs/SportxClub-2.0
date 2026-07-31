@@ -136,7 +136,7 @@ export function AppDownloadCTA() {
             </div>
 
             {/* Title */}
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white mb-6 mt-6 leading-[1.1] transition-colors duration-300">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-6 mt-6 leading-[1.1] transition-colors duration-300">
               Book turfs on the go <br />
               with the <span className="text-emerald-600 dark:text-emerald-600 transition-colors duration-300">SportXClub App</span>
             </h2>

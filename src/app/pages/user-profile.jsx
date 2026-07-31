@@ -617,7 +617,7 @@ export function UserProfile() {
             <Button variant="outline" className="w-full sm:w-auto rounded-2xl border-border px-6 h-12 text-sm font-semibold bg-muted/20 hover:bg-muted text-foreground cursor-pointer" onClick={() => setTxHistoryOpen(true)}>
               <History className="h-4 w-4 mr-2" /> Transaction History
             </Button>
-            <Button className="w-full sm:w-auto rounded-2xl bg-emerald-600 text-black hover:bg-emerald-700 px-6 h-12 text-sm font-bold cursor-pointer" onClick={() => setTopUpOpen(true)}>
+            <Button className="w-full sm:w-auto rounded-2xl border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] px-6 h-12 text-sm font-bold cursor-pointer transition-all" onClick={() => setTopUpOpen(true)}>
               + Top Up Wallet
             </Button>
           </div>
@@ -780,7 +780,7 @@ export function UserProfile() {
                   <h5 className="font-bold text-sm text-foreground line-clamp-1">{item.name}</h5>
                   <p className="text-base font-extrabold text-emerald-600 mt-1">₹{item.price}</p>
                 </div>
-                <Button size="sm" className="w-full bg-white border border-slate-200 text-slate-900 hover:bg-emerald-600 hover:border-emerald-600 hover:text-black rounded-xl font-bold h-10 cursor-pointer transition-all duration-200" onClick={() => {
+                <Button size="sm" className="w-full bg-white border border-slate-200 text-slate-900 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] rounded-xl font-bold h-10 cursor-pointer transition-all duration-200" onClick={() => {
                   setPurchasedItemId(item.id);
                   setWalletBalance(prev => {
                     if (prev >= item.price) {
@@ -805,7 +805,7 @@ export function UserProfile() {
           <h2 className="text-xl font-black text-left flex items-center gap-2 text-slate-800 dark:text-white">
             <History className="h-5 w-5 text-primary" /> Match Logs & History
           </h2>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {matchHistory.map((match) => {
               const isWon = match.result === "Won";
               const sportColors = {
@@ -854,8 +854,8 @@ export function UserProfile() {
                     <div className="shrink-0">
                       <Badge
                         className={`text-xs font-black px-3.5 py-1.5 rounded-xl border-0 ${isWon
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 hover:bg-emerald-500/15"
-                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15"
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 hover:bg-emerald-500/15"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15"
                           }`}
                       >
                         {isWon ? "✓ WON" : "✗ LOST"}

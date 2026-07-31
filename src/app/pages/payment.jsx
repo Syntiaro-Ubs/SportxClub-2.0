@@ -240,7 +240,7 @@ export function Payment() {
             <div>
               <p className={cn(
                 "text-[10px] uppercase tracking-widest font-black",
-                isDark ? "text-emerald-600" : "text-emerald-600"
+                isDark ? "text-white" : "text-emerald-600"
               )}>
                 Checkout
               </p>
@@ -261,7 +261,7 @@ export function Payment() {
             <div className={cn(
               "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-black uppercase tracking-wider",
               isDark
-                ? "border-emerald-600/20 bg-emerald-600/10 text-emerald-600"
+                ? "border-emerald-600/20 bg-emerald-600/10 text-white"
                 : "border-emerald-300 bg-emerald-50 text-emerald-700"
             )}>
               <ShieldCheck className="h-4.5 w-4.5" />
@@ -480,7 +480,7 @@ export function Payment() {
                           </span>
                           <span className={cn(
                             "text-xs font-black uppercase tracking-wider",
-                            isDark ? "text-emerald-600" : "text-emerald-700"
+                            isDark ? "text-white" : "text-emerald-700"
                           )}>
                             SportXClub 2.0
                           </span>
@@ -788,7 +788,7 @@ export function Payment() {
                     <Badge className={cn(
                       "rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest border-none",
                       isDark
-                        ? "bg-emerald-600/10 text-emerald-600"
+                        ? "bg-emerald-600/10 text-white"
                         : "bg-emerald-50 text-emerald-700"
                     )}>
                       {booking.sport}

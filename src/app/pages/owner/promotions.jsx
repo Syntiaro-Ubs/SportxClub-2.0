@@ -133,7 +133,7 @@ export function Promotions() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-full overflow-hidden relative">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl tracking-tight font-bold">Promotions & Offers</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Promotions & Offers</h1>
           <p className="text-muted-foreground mt-2">Create and manage discount codes to attract more players.</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

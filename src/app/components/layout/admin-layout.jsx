@@ -54,9 +54,9 @@ export function AdminLayout() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex h-14 shrink-0 items-center px-6">
-        <Link to="/admin" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
-          <Logo />
-        </Link>
+        <a href="/admin" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
+          <Logo className="h-[50px] md:h-[80px]" />
+        </a>
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto px-4 py-4 space-y-1">
         {adminNavigation.map((item) => {
@@ -96,7 +96,7 @@ export function AdminLayout() {
 
       {/* Mobile Header and Main */}
       <div className="flex flex-col flex-1 md:pl-64 w-full max-w-full overflow-x-hidden">
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 dark:bg-black/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
           <button type="button" className="-m-2.5 p-2.5 text-muted-foreground md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <span className="sr-only">Open sidebar</span>
             <Menu className="h-6 w-6" aria-hidden="true" />

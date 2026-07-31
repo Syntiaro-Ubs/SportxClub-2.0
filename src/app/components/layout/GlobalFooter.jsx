@@ -37,6 +37,7 @@ export function GlobalFooter() {
   const socialLinks = [
     {
       label: "LinkedIn",
+      href: "https://www.linkedin.com/company/sportxclubs/",
       brandColor: "#0A66C2",
       icon: (
         <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -46,6 +47,7 @@ export function GlobalFooter() {
     },
     {
       label: "Instagram",
+      href: "https://www.instagram.com/sportxclubs?igsh=cmEyaTlzODhjNzh6",
       brandColor: "#E4405F",
       icon: (
         <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -90,7 +92,9 @@ export function GlobalFooter() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1.2fr] gap-5 lg:gap-8 items-start">
         {/* Left Column: Logo, description, and app badges */}
         <div className="space-y-2.5 sm:space-y-4 max-w-md">
-          <Logo />
+          <a href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
+            <Logo className="h-[50px] md:h-[80px]" />
+          </a>
           <p className={`text-xs leading-relaxed transition-colors duration-300 ${isDark ? "text-white/60" : "text-slate-650"
             }`}>
             SportXClub is the premium way to discover, book, and compete across the best sports venues and tournaments.
@@ -131,7 +135,9 @@ export function GlobalFooter() {
             {socialLinks.map((social) => (
               <a
                 key={social.label}
-                href={`#${social.label.toLowerCase()}`}
+                href={social.href || `#${social.label.toLowerCase()}`}
+                target={social.href ? "_blank" : "_self"}
+                rel={social.href ? "noopener noreferrer" : ""}
                 className={`h-9 w-9 rounded-full flex items-center justify-center border-0 bg-transparent transition-all hover:scale-110 active:scale-95 relative overflow-hidden hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
                 style={{ color: social.brandColor }}
                 aria-label={social.label}

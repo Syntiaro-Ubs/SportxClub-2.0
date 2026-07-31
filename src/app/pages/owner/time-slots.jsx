@@ -662,31 +662,14 @@ export function TimeSlots() {
       {/* -------------------------------------------------------------
           Header Title & Details Row
           ------------------------------------------------------------- */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-0">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+      <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-6 py-2">
+        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-1 min-w-0">
+          <h1 className="text-xl font-bold tracking-tight text-foreground shrink-0">
             Turf Slot Management
           </h1>
-        </div>
 
-        {blockedSchedules.length > 0 && (
-          <Button
-            onClick={() => setIsSchedulesModalOpen(true)}
-            className="h-8 px-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
-          >
-            <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />
-            Active Multi-Day Holds ({blockedSchedules.length})
-          </Button>
-        )}
-      </div>
-
-      {/* -------------------------------------------------------------
-          Toolbar: Search, Legends & Interactive Filters
-          ------------------------------------------------------------- */}
-      <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between py-1">
-
-        {/* Turf, Duration & Calendar Selector Row */}
-        <div className="flex flex-row items-center gap-2 w-full sm:w-auto shrink-0">
+          {/* Turf, Duration & Calendar Selector Row */}
+          <div className="flex flex-row flex-wrap items-center gap-2 shrink-0">
 
           {/* Turf Selector Dropdown */}
           <div className="flex-1 sm:flex-initial sm:w-[155px] min-w-0">
@@ -767,8 +750,20 @@ export function TimeSlots() {
               />
             </PopoverContent>
           </Popover>
-
+          </div>
         </div>
+
+        {blockedSchedules.length > 0 && (
+          <div className="shrink-0">
+            <Button
+              onClick={() => setIsSchedulesModalOpen(true)}
+              className="h-10 px-4 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 font-extrabold text-xs flex items-center gap-2 cursor-pointer shadow-xs"
+            >
+              <CalendarDays className="w-3.5 h-3.5 text-emerald-500" />
+              Active Holds ({blockedSchedules.length})
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* -------------------------------------------------------------

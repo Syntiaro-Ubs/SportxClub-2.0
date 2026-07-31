@@ -127,7 +127,7 @@ export function CalendarView() {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border/40 pb-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
             Booking Calendar
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
