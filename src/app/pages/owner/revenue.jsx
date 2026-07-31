@@ -476,9 +476,9 @@ export function Revenue() {
       </div>
 
       {/* -------------------------------------------------------------
-          KPI Widgets cards grid (2 Cards)
+          KPI Widgets cards grid (2 Cards per row on Mobile)
           ------------------------------------------------------------- */}
-      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2.5 sm:gap-3.5 grid-cols-2 lg:grid-cols-4">
 
         {/* Widget 1: Total Received Revenue */}
         {/* Widget 1: Total Revenue */}
@@ -535,7 +535,6 @@ export function Revenue() {
               <div className="space-y-0.5">
                 <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 tracking-widest flex items-center gap-1">
                   Upcoming Settlements
-                  <Info className="h-3 w-3 opacity-60" />
                 </p>
                 <h3 className="text-2xl font-bold tracking-tight text-[#059669] dark:text-emerald-400 mt-0.5 flex items-center">
                   <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
@@ -977,12 +976,12 @@ export function Revenue() {
                 </div>
 
                 {/* Status filtering pills row */}
-                <div className="flex flex-wrap items-center gap-1 bg-transparent p-1 rounded-xl border border-slate-300 dark:border-slate-700">
+                <div className="inline-flex w-fit items-center gap-0.5 bg-transparent p-0.5 rounded-full border border-slate-300 dark:border-slate-700">
                   {["all", "completed", "pending", "failed"].map((status) => (
                     <button
                       key={status}
                       onClick={() => setStatusFilter(status)}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold capitalize tracking-wider transition-all cursor-pointer border-2 ${statusFilter === status
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold capitalize tracking-wider transition-all cursor-pointer border ${statusFilter === status
                         ? status === "completed"
                           ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
                           : status === "pending"
@@ -1000,13 +999,13 @@ export function Revenue() {
               </div>
 
               {/* Live Search input */}
-              <div className="relative mt-3 max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative mt-2.5 max-w-[260px] sm:max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search by transaction ID, turf, or price..."
+                  placeholder="Search by transaction ID, turf..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 rounded-xl bg-transparent border border-slate-300 dark:border-slate-700 text-xs w-full focus:border-emerald-500"
+                  className="pl-7 h-7.5 rounded-full bg-transparent border border-slate-300 dark:border-slate-700 text-[11px] w-full focus:border-emerald-500"
                 />
               </div>
             </div>
@@ -1025,8 +1024,8 @@ export function Revenue() {
                   <p className="text-xs text-muted-foreground mt-0.5">Try widening your filters or queries.</p>
                 </div>
               ) : (
-                <div className="w-full overflow-hidden">
-                  <table className="w-full text-xs text-center border-collapse">
+                <div className="w-full overflow-x-scroll md:overflow-x-visible overflow-y-hidden pb-3 md:pb-0 [scrollbar-width:auto] [scrollbar-color:#059669_#e2e8f0] dark:[scrollbar-color:#10b981_#1e293b] [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-600 dark:[&::-webkit-scrollbar-thumb]:bg-emerald-500 [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white dark:[&::-webkit-scrollbar-thumb]:border-slate-900 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-200 dark:[&::-webkit-scrollbar-track]:bg-slate-800">
+                  <table className="w-full min-w-[650px] md:min-w-full text-xs text-center border-collapse">
                     <thead className="text-[11px] text-muted-foreground bg-transparent border-b border-border/40 font-black tracking-wider text-center">
                       <tr>
                         <th className="px-2 py-2 font-bold whitespace-nowrap text-center">Transaction ID</th>

@@ -582,70 +582,76 @@ export function Dashboard() {
 
 
       {/* -------------------------------------------------------------
-          New Diverse KPI Cards Grid (Content-Specific Layouts)
+          New Diverse KPI Cards Grid (2 Cards per row on Mobile)
           ------------------------------------------------------------- */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2.5 sm:gap-4 grid-cols-2 lg:grid-cols-4">
 
         {/* Card 1: Gross Revenue */}
         <Card
           onClick={() => navigate("/owner-dashboard/revenue")}
           className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
+          <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Total Revenue</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-xl font-black tracking-tight text-foreground flex items-center">
-                    <IndianRupee className="h-4.5 w-4.5 stroke-[2.5] shrink-0 mr-0.5" />
+              <div className="space-y-0.5">
+                <p className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground tracking-widest">Total Revenue</p>
+                <div className="flex items-center gap-1 mt-0.5 sm:mt-1">
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight text-foreground flex items-center">
+                    <IndianRupee className="h-3.5 w-3.5 sm:h-4.5 sm:w-4.5 stroke-[2.5] shrink-0 mr-0.5" />
                     {isTestMode ? "0" : (data?.stats?.monthlyRevenue || 184200).toLocaleString()}
                   </h3>
                 </div>
               </div>
               <div className="flex items-center justify-center">
-                <IndianRupee className="h-5 w-5 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
+                <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
               </div>
             </div>
 
-            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-2.5 items-center">
-                <span className="flex items-center gap-0.5">Online: <strong className="text-foreground font-bold inline-flex items-center gap-0.5 ml-0.5"><IndianRupee className="h-2.5 w-2.5 shrink-0 stroke-[2.5]" />{isTestMode ? "0" : "139K"}</strong></span>
+            <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-1.5 text-[9px] sm:text-[10px] font-semibold text-muted-foreground">
+              <div className="hidden sm:flex gap-2 items-center">
+                <span>Online: <strong className="text-foreground font-bold ml-0.5">₹{isTestMode ? "0" : "139K"}</strong></span>
                 <span className="opacity-30">|</span>
-                <span className="flex items-center gap-0.5">Cash: <strong className="text-foreground font-bold inline-flex items-center gap-0.5 ml-0.5"><IndianRupee className="h-2.5 w-2.5 shrink-0 stroke-[2.5]" />{isTestMode ? "0" : "45K"}</strong></span>
+                <span>Cash: <strong className="text-foreground font-bold ml-0.5">₹{isTestMode ? "0" : "45K"}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0 ml-auto">
                 Revenue
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
+                <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Card 2: Bookings Count */}
+        {/* Card 2: Today's Bookings */}
         <Card
           onClick={() => navigate("/owner-dashboard/bookings")}
           className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Today's Bookings</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-xl font-black tracking-tight text-foreground">
-                    {isTestMode ? 0 : (data?.stats?.todaysBookings || 18)} Bookings
-                  </h3>
-                </div>
+          <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
+            <div className="flex items-start justify-between">
+              <div className="space-y-0.5">
+                <p className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground tracking-widest">Today's Bookings</p>
+                <h3 className="text-lg sm:text-xl font-black tracking-tight text-foreground mt-0.5 sm:mt-1">
+                  {isTestMode ? "0 Bookings" : `${data?.stats?.todayBookings || 12} Bookings`}
+                </h3>
               </div>
-
               {/* Progress Ring */}
-              <div className="relative flex items-center justify-center shrink-0 w-9 h-9">
-                <svg className="w-9 h-9 transform -rotate-90">
+              <div className="relative flex items-center justify-center shrink-0 w-8 h-8 sm:w-9 sm:h-9">
+                <svg className="w-8 h-8 sm:w-9 sm:h-9 transform -rotate-90">
+                  <circle
+                    cx="16"
+                    cy="16"
+                    r={12}
+                    stroke="currentColor"
+                    className="text-muted/20 sm:hidden"
+                    strokeWidth="2.5"
+                    fill="transparent"
+                  />
                   <circle
                     cx="18"
                     cy="18"
                     r={14}
                     stroke="currentColor"
-                    className="text-muted/20"
+                    className="text-muted/20 hidden sm:block"
                     strokeWidth="3"
                     fill="transparent"
                   />
@@ -659,7 +665,7 @@ export function Dashboard() {
                     strokeDasharray={88}
                     strokeDashoffset={88 - (88 * progressPercentage) / 100}
                     strokeLinecap="round"
-                    className="text-emerald-500 transition-all duration-500"
+                    className="text-emerald-500 transition-all duration-500 hidden sm:block"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center justify-center text-center">
@@ -668,15 +674,15 @@ export function Dashboard() {
               </div>
             </div>
 
-            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-2.5 items-center">
+            <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-1.5 text-[9px] sm:text-[10px] font-semibold text-muted-foreground">
+              <div className="hidden sm:flex gap-2 items-center">
                 <span>Confirmed: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : 14}</strong></span>
                 <span className="opacity-30">·</span>
                 <span>Pending: <strong className="text-amber-500 font-bold ml-0.5">{isTestMode ? 0 : 4}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0 ml-auto">
                 Details
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
+                <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </div>
           </CardContent>
@@ -687,29 +693,29 @@ export function Dashboard() {
           onClick={() => navigate("/owner-dashboard/turfs")}
           className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
+          <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Active Turfs</p>
-                <h3 className="text-2xl font-black tracking-tight text-foreground mt-1">
+              <div className="space-y-0.5">
+                <p className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground tracking-widest">Active Turfs</p>
+                <h3 className="text-lg sm:text-xl font-black tracking-tight text-foreground mt-0.5 sm:mt-1">
                   {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}/{isTestMode ? "0" : (data?.stats?.totalTurfs || 5)}
                 </h3>
               </div>
               <div className="flex items-center justify-center">
-                <MapPin className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
               </div>
             </div>
 
-            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-2 items-center">
-                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[9px]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-1.5 text-[9px] sm:text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-1.5 items-center">
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[8px] sm:text-[9px]">
+                  <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   Operational
                 </span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
                 Manage
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
+                <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </div>
           </CardContent>
@@ -720,20 +726,20 @@ export function Dashboard() {
           onClick={() => navigate("/owner-dashboard/reviews")}
           className="relative overflow-hidden border border-amber-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
-          <CardContent className="p-3.5 pb-2.5 [&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
+          <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
             <div className="flex items-start justify-between">
-              <div className="space-y-1">
-                <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Turf Quality Rating</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <h3 className="text-xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
-                  <div className="flex items-center gap-1">
+              <div className="space-y-0.5">
+                <p className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground tracking-widest">Turf Quality Rating</p>
+                <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1">
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight text-foreground">{isTestMode ? "0.0" : (data?.stats?.averageRating || 4.8)}</h3>
+                  <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((starIndex) => {
                       const ratingVal = isTestMode ? 0 : (data?.stats?.averageRating || 4.8);
                       const fillPercent = Math.max(0, Math.min(100, (ratingVal - (starIndex - 1)) * 100));
                       return (
                         <PremiumStar
                           key={starIndex}
-                          size={15}
+                          size={12}
                           fillPercent={fillPercent}
                         />
                       );
@@ -742,17 +748,17 @@ export function Dashboard() {
                 </div>
               </div>
               <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
-                <PremiumStar size={20} fillPercent={100} />
+                <PremiumStar size={18} fillPercent={100} />
               </div>
             </div>
 
-            <div className="mt-2.5 flex items-center justify-between border-t border-border/40 pt-2 text-[10px] font-semibold text-muted-foreground">
-              <div className="flex gap-2 items-center">
-                <span>Reviews: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
+            <div className="mt-2 flex items-center justify-between border-t border-border/40 pt-1.5 text-[9px] sm:text-[10px] font-semibold text-muted-foreground">
+              <div className="flex gap-1 items-center">
+                <span className="text-[8.5px] sm:text-[9.5px]">Reviews: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
               </div>
-              <span className="px-3 py-1 text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
+              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
                 Reviews
-                <ChevronRight className="h-3 w-3 transform group-hover/btn:translate-x-1 transition-transform" />
+                <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </div>
           </CardContent>
@@ -977,9 +983,9 @@ export function Dashboard() {
           </div>
         </CardHeader>
 
-        {/* Table Sheet Content — Zero Scrollbar Layout */}
-        <CardContent className="p-0 overflow-hidden">
-          <table className="w-full table-fixed text-center border-collapse">
+        {/* Table Sheet Content — Forced Always-Visible Horizontal Scrollbar for Mobile View */}
+        <CardContent className="p-0 overflow-x-scroll md:overflow-x-visible overflow-y-hidden pb-3 md:pb-0 [scrollbar-width:auto] [scrollbar-color:#059669_#e2e8f0] dark:[scrollbar-color:#10b981_#1e293b] [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-600 dark:[&::-webkit-scrollbar-thumb]:bg-emerald-500 [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white dark:[&::-webkit-scrollbar-thumb]:border-slate-900 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-200 dark:[&::-webkit-scrollbar-track]:bg-slate-800">
+          <table className="w-full min-w-[780px] md:min-w-full md:table-fixed text-center border-collapse">
             <thead>
               <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground text-center">
                 <th className="w-[11%] px-1.5 py-2 text-center">Booking ID</th>

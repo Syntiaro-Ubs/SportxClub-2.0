@@ -120,7 +120,7 @@ export function AppDownloadCTA() {
   const details = getSportDetails();
 
   return (
-    <section className="py-12 md:py-20 bg-slate-50 dark:bg-[#050811] relative overflow-hidden transition-colors duration-300">
+    <section className="hidden md:block py-12 md:py-20 bg-slate-50 dark:bg-[#050811] relative overflow-hidden transition-colors duration-300">
       {/* Ambient glowing backdrop */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[180px] bg-emerald-500/[0.04] dark:bg-blue-500/[0.03] pointer-events-none" />
 

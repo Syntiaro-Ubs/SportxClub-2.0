@@ -669,13 +669,13 @@ export function Navbar() {
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
-              "fixed top-0 right-0 bottom-0 w-80 max-w-[85vw] z-[70] shadow-2xl px-6 py-6 flex flex-col gap-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-l",
+              "fixed top-0 right-0 bottom-0 w-[210px] max-w-[70vw] z-[70] shadow-2xl px-6 py-4 flex flex-col gap-2 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-l",
               isDark
                 ? "bg-[#0b0c0e] border-white/[0.08]"
                 : "bg-white border-slate-200",
             )}
           >
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <span
                 className={cn(
                   "text-lg font-semibold",
@@ -687,16 +687,10 @@ export function Navbar() {
               <button
                 onClick={() => setMenuOpen(false)}
                 className={cn(
-                  "p-2 rounded-full transition cursor-pointer",
-                  isDark ? "hover:bg-white/10" : "hover:bg-slate-100",
+                  "p-2 rounded-full transition cursor-pointer text-foreground hover:text-emerald-500 hover:bg-emerald-500/10",
                 )}
               >
-                <X
-                  className={cn(
-                    "h-5 w-5",
-                    isDark ? "text-white/80" : "text-slate-700",
-                  )}
-                />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -705,7 +699,7 @@ export function Navbar() {
             <div className="flex flex-col">
               {menuItems.map((item) => {
                 const itemContent = (
-                  <div className="flex items-center justify-between w-full py-4 px-3 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] group">
+                  <div className="flex items-center justify-between w-full py-3 px-3 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] group">
                     <div className="flex items-center gap-3">
                       <span
                         className={cn(
@@ -725,14 +719,7 @@ export function Navbar() {
 
                     <div className="flex items-center gap-2">
                       {item.badge !== undefined && (
-                        <span
-                          className={cn(
-                            "flex h-5 w-5 items-center justify-center rounded-full text-[10px] text-white",
-                            isDark
-                              ? "bg-emerald-600 text-black"
-                              : "bg-emerald-600",
-                          )}
-                        >
+                        <span className="text-xs font-bold text-black dark:text-white">
                           {item.badge}
                         </span>
                       )}
@@ -1144,7 +1131,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                 </span>
               </div>
               <h2 className={cn(
-                "text-xl sm:text-2xl font-extrabold tracking-tight mt-0.5",
+                "text-lg sm:text-xl font-extrabold tracking-tight mt-0.5",
                 isDark ? "text-white" : "text-slate-900"
               )}>
                 Recommended Venues
@@ -1215,7 +1202,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                     {/* Bottom Overlay & Text */}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-1.5 px-2.5 z-10 flex items-end justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="text-[11px] font-extrabold text-emerald-600 capitalize tracking-wider drop-shadow-sm mb-0.5">
+                        <p className="text-[11px] font-extrabold !text-white capitalize tracking-wider drop-shadow-sm mb-0.5">
                           {venue.sport.toLowerCase()}
                         </p>
                         <div className="flex flex-col gap-0.5 w-full">

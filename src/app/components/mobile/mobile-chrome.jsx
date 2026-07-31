@@ -24,6 +24,7 @@ import {
   Sparkles,
   Search,
   LocateFixed,
+  Building2,
 } from "lucide-react";
 
 import { Button } from "../ui/button";
@@ -138,6 +139,11 @@ export function MobileAppBar() {
       badge: 2,
       requiresAuth: true,
     },
+    {
+      label: currentUser?.role === "owner" ? "Owner Dashboard" : "Turf Owner Login",
+      to: currentUser?.role === "owner" ? "/owner-dashboard" : "/login?type=owner",
+      icon: Building2,
+    },
   ].filter((item) => {
     if (item.requiresAuth && !currentUser) {
       return false;
@@ -148,7 +154,7 @@ export function MobileAppBar() {
   return (
     <>
       <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 dark:bg-[#333333]/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
-        <div className="flex h-[60px] items-center justify-between px-4">
+        <div className="flex h-[46px] sm:h-[50px] items-center justify-between px-3.5">
           {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">
             {!isHomePage && (
@@ -222,9 +228,9 @@ export function MobileAppBar() {
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 0.25 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-black/25"
               onClick={() => setMenuOpen(false)}
             />
 
@@ -234,10 +240,10 @@ export function MobileAppBar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 z-55 w-[280px] max-w-[80vw] bg-[#f8faf9] dark:bg-[#020617] border-l border-border shadow-2xl flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+              className="fixed inset-y-0 right-0 z-55 w-[210px] max-w-[70vw] bg-[#f8faf9] dark:bg-[#020617] border-l border-border shadow-2xl flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
             >
               {/* Drawer Header */}
-              <div className="flex h-[76px] items-center justify-between px-5 border-b border-border/40">
+              <div className="flex h-[60px] items-center justify-between px-5 border-b border-border/40">
                 <Link to={logoTarget} onClick={() => setMenuOpen(false)} className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
                   <Logo />
                 </Link>
@@ -245,19 +251,19 @@ export function MobileAppBar() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setMenuOpen(false)}
-                  className="h-10 w-10 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs cursor-pointer"
+                  className="h-8 w-8 bg-transparent hover:bg-primary/10 border-0 shadow-none text-foreground hover:text-primary p-0 cursor-pointer flex items-center justify-center shrink-0 rounded-full transition-colors duration-200"
                   aria-label="Close Menu"
                 >
-                  <X className="h-4.5 w-4.5" />
+                  <X className="h-5 w-5" />
                 </Button>
               </div>
 
               {/* Menu list items */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col divide-y divide-border/30">
+              <div className="flex-1 overflow-y-auto px-5 pt-1 pb-4 flex flex-col divide-y divide-border/30">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
                   const itemContent = (
-                    <div className="flex items-center justify-between w-full py-4 px-1 group transition-colors duration-150">
+                    <div className="flex items-center justify-between w-full py-3 px-1 group transition-colors duration-150">
                       <div className="flex items-center gap-3">
                         {Icon && (
                           <Icon className="h-5 w-5 text-primary" />
@@ -271,7 +277,7 @@ export function MobileAppBar() {
 
                       <div className="flex items-center gap-2">
                         {item.badge !== undefined && (
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] bg-primary text-primary-foreground">
+                          <span className="text-xs font-bold text-black dark:text-white">
                             {item.badge}
                           </span>
                         )}

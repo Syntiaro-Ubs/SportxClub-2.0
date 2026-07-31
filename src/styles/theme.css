@@ -1,5 +1,22 @@
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: 'Poppins';
+  src: local('Inter'), local('Roboto'), local('Segoe UI'), local('Arial');
+  unicode-range: U+20B9;
+}
+
+body, button, input, select, textarea {
+  font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif !important;
+}
+
+.rupee-symbol, .font-rupee {
+  font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 700;
+  display: inline-block;
+  margin-right: 0.5px;
+}
+
 :root {
   --font-size: 16px;
   color-scheme: light;
@@ -269,12 +286,14 @@ body {
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb {
-  background: #10b981 !important; /* emerald green in light mode */
+  background: #10b981 !important;
+  /* emerald green in light mode */
   border-radius: 9999px !important;
 }
 
 .dark .scrollbar-visible::-webkit-scrollbar-thumb {
-  background: #059669 !important; /* neon green in dark mode */
+  background: #059669 !important;
+  /* neon green in dark mode */
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb:hover {

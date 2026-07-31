@@ -685,30 +685,30 @@ export function TimeSlots() {
           ------------------------------------------------------------- */}
       <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between py-1">
 
-        {/* Turf & Duration Selector Dropdowns */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shrink-0">
+        {/* Turf, Duration & Calendar Selector Row */}
+        <div className="flex flex-row items-center gap-2 w-full sm:w-auto shrink-0">
 
-          {/* Turf Selector Dropdown — Compact Half Width */}
-          <div className="w-full sm:w-[170px] max-w-[185px] shrink-0">
+          {/* Turf Selector Dropdown */}
+          <div className="flex-1 sm:flex-initial sm:w-[155px] min-w-0">
             <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
-              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full px-3.5 overflow-hidden">
-                <SelectValue placeholder="Select Turf" />
+              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
+                <SelectValue placeholder="Select Turf" className="truncate" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
                 <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
-                  ⚡ All Turfs <span className="text-[10px] text-muted-foreground ml-2 font-normal">(View All Grounds Stacked)</span>
+                  ⚡ All Turfs <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">(View All Grounds Stacked)</span>
                 </SelectItem>
                 {turfs.map(turf => (
                   <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                    {turf.name} <span className="text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location})</span>
+                    {turf.name} <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location})</span>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Duration Selector Dropdown — Compact Half Width */}
-          <div className="w-full sm:w-[170px] max-w-[185px] shrink-0">
+          {/* Duration Selector Dropdown */}
+          <div className="flex-1 sm:flex-initial sm:w-[145px] min-w-0">
             <Select
               value={selectedDurationOption}
               onValueChange={(val) => {
@@ -721,19 +721,21 @@ export function TimeSlots() {
                 }
               }}
             >
-              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center gap-1.5 px-3.5 overflow-hidden">
-                <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <SelectValue placeholder="Duration" />
+              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
+                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                  <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <SelectValue placeholder="Duration" className="truncate" />
+                </div>
               </SelectTrigger>
               <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
                 <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  1 Hour <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
+                  1 Hour <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
                 </SelectItem>
                 <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  2 Hours <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
+                  2 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
                 </SelectItem>
                 <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  3 Hours <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
+                  3 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
                 </SelectItem>
                 <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
                   ⚙️ Custom Duration... {selectedDurationOption === "custom" && `(${playHours} hrs)`}
@@ -742,85 +744,31 @@ export function TimeSlots() {
             </Select>
           </div>
 
+          {/* Date Selector Popover (Calendar) */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground hover:bg-muted/30 transition-all cursor-pointer shadow-2xs shrink-0 min-w-0 overflow-hidden"
+                title="Select specific date"
+              >
+                <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <span className="truncate">{format(selectedDate, 'MMM dd, yyyy')}</span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
+              <CustomCalendar
+                selectedDate={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                  }
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+
         </div>
-
-        {/* Dynamic Legend Filters */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 w-full lg:w-auto">
-
-          {/* Available Pill */}
-          <button
-            onClick={() => handleLegendClick("Available")}
-            className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${selectedLegendFilter === "Available"
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500 shadow-inner'
-              : 'border-border/30 text-muted-foreground hover:bg-muted/40'
-              }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full bg-emerald-500 ${selectedLegendFilter === "Available" ? 'animate-pulse' : ''}`}></span>
-            Available
-            <Badge variant="secondary" className="h-4 px-1 bg-emerald-500/10 border-0 text-[8.5px] text-emerald-500 font-bold shrink-0">{legendCounts.available}</Badge>
-          </button>
-
-          {/* Booked Pill */}
-          <button
-            onClick={() => handleLegendClick("Booked")}
-            className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${selectedLegendFilter === "Booked"
-              ? 'bg-rose-500/10 border-rose-500/30 text-rose-500 shadow-inner'
-              : 'border-border/30 text-muted-foreground hover:bg-muted/40'
-              }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full bg-rose-500 ${selectedLegendFilter === "Booked" ? 'animate-pulse' : ''}`}></span>
-            Booked
-            <Badge variant="secondary" className="h-4 px-1 bg-rose-500/10 border-0 text-[8.5px] text-rose-500 font-bold shrink-0">{legendCounts.booked}</Badge>
-          </button>
-
-          {/* Maintenance Pill */}
-          <button
-            onClick={() => handleLegendClick("Maintenance")}
-            className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${selectedLegendFilter === "Maintenance"
-              ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 shadow-inner'
-              : 'border-border/30 text-muted-foreground hover:bg-muted/40'
-              }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full bg-amber-500 ${selectedLegendFilter === "Maintenance" ? 'animate-pulse' : ''}`}></span>
-            Maintenance
-            <Badge variant="secondary" className="h-4 px-1 bg-amber-500/10 border-0 text-[8.5px] text-amber-500 font-bold shrink-0">{legendCounts.maintenance}</Badge>
-          </button>
-
-          {selectedLegendFilter !== "all" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelectedLegendFilter("all")}
-              className="text-[9px] text-muted-foreground hover:text-foreground h-7 shrink-0 px-2"
-            >
-              Reset Filters
-            </Button>
-          )}
-        </div>
-
-        {/* Date Selector Popover (Calendar Only — Navigation buttons removed) */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-4.5 py-1.5 h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground hover:bg-muted/30 transition-all cursor-pointer shadow-2xs shrink-0"
-              title="Select specific date"
-            >
-              <CalendarIcon className="w-4 h-4 text-emerald-500 shrink-0" />
-              <span>{format(selectedDate, 'MMM dd, yyyy')}</span>
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
-            <CustomCalendar
-              selectedDate={selectedDate}
-              onSelect={(date) => {
-                if (date) {
-                  setSelectedDate(date);
-                }
-              }}
-            />
-          </PopoverContent>
-        </Popover>
       </div>
 
       {/* -------------------------------------------------------------
@@ -837,44 +785,40 @@ export function TimeSlots() {
               >
                 {/* Card Header Section */}
                 <CardHeader className="border-b border-border/40 bg-muted/20 py-2.5 [.border-b]:pb-2.5 px-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 w-full">
-                    {/* Left Side: Turf Title + Badges & Action Buttons */}
-                    <div className="flex flex-col sm:flex-row sm:items-center flex-wrap gap-3.5">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <CardTitle className="text-xl font-black tracking-tight text-foreground">{turf.name}</CardTitle>
-                          {turf.status === 'Active' ? (
-                            <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2.5 py-0.5">
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2.5 py-0.5">
-                              Closed
-                            </Badge>
-                          )}
-                        </div>
-                        <CardDescription className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
-                          <span className="text-primary font-bold">{turf.sportType}</span>
-                          <span className="opacity-40">&bull;</span>
-                          <span>{typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}</span>
-                        </CardDescription>
+                  <div className="flex flex-col gap-2.5 w-full">
+                    {/* Top Row: Turf Title & Badges */}
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <CardTitle className="text-xl font-black tracking-tight text-foreground">{turf.name}</CardTitle>
+                        {turf.status === 'Active' ? (
+                          <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2.5 py-0.5">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] uppercase tracking-widest font-extrabold rounded-lg px-2.5 py-0.5">
+                            Closed
+                          </Badge>
+                        )}
                       </div>
-
-                      <div className="flex flex-wrap items-center gap-2.5">
-                        {/* Slots remaining badge */}
-                        <Badge variant="outline" className={`px-3 py-1.5 text-[10px] font-extrabold rounded-lg shadow-2xs ${availableSlots > 5
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                          : availableSlots > 0
-                            ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                            : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
-                          }`}>
-                          {availableSlots} Slots Left
-                        </Badge>
-                      </div>
+                      <CardDescription className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+                        <span className="text-primary font-bold">{turf.sportType}</span>
+                        <span className="opacity-40">&bull;</span>
+                        <span>{typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}</span>
+                      </CardDescription>
                     </div>
 
-                    {/* Far Right Side: Block Custom Time Button & Turf Open Toggle Switch */}
-                    <div className="flex flex-wrap items-center gap-2.5 sm:ml-auto shrink-0">
+                    {/* Bottom Row: Slots Left Badge + Block Custom Time + Turf Open Toggle Switch */}
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {/* Slots remaining badge */}
+                      <Badge variant="outline" className={`px-3 py-1.5 text-[10px] font-extrabold rounded-lg shadow-2xs shrink-0 ${availableSlots > 5
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                        : availableSlots > 0
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                        }`}>
+                        {availableSlots} Slots Left
+                      </Badge>
+
                       {/* Block Custom Time Button */}
                       <Button
                         type="button"
@@ -882,13 +826,13 @@ export function TimeSlots() {
                           setSelectedTurfForCustomBlock(turf);
                           setIsBlockModalOpen(true);
                         }}
-                        className="h-8 rounded-lg bg-background text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/50 hover:border-rose-600 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs"
+                        className="h-8 rounded-lg bg-background text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/50 hover:border-rose-600 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs shrink-0"
                       >
                         <Power className="w-3.5 h-3.5 text-rose-500" /> Block Custom Time
                       </Button>
 
                       {/* Turf Open Toggle Switch */}
-                      <div className="flex items-center gap-2 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs">
+                      <div className="flex items-center gap-2 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs shrink-0">
                         <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
                         <Switch
                           id={`turf-status-${turf.id}`}
