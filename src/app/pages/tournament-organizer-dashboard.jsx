@@ -193,7 +193,7 @@ export function TournamentOrganizerDashboard() {
             <span className="p-2 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <Trophy className="h-5 w-5" />
             </span>
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">
+            <h1 className="text-xl font-bold tracking-tight text-foreground">
               Tournament Organizer Dashboard
             </h1>
           </div>

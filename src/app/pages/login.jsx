@@ -110,9 +110,9 @@ export function LoginPage() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen flex items-center justify-center lg:justify-end p-4 sm:p-8 lg:pr-24 font-sans relative overflow-hidden">
-      {/* Right Aligned Login Form Card */}
-      <div className="w-full max-w-[440px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-slate-200/80 px-6 pb-6 pt-1 relative z-10">
+    <div className="bg-slate-50 min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
+      {/* Right Aligned Login Form Drawer */}
+      <div className="w-full sm:w-[440px] sm:max-w-none h-fit bg-white shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-slate-200/80 px-6 sm:px-10 pb-6 pt-6 relative z-10 flex flex-col justify-center">
 
         {/* Close Button */}
         <button
@@ -138,31 +138,33 @@ export function LoginPage() {
         {isSuccess ? (
           // Success Screen
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-12 space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center py-24"
           >
-            <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center relative">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                type: "spring",
+                stiffness: 100,
+                damping: 12,
+              }}
+              className="h-24 w-24 rounded-full bg-emerald-50 flex items-center justify-center"
+            >
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{
                   type: "spring",
-                  stiffness: 300,
-                  damping: 15,
-                  delay: 0.2,
+                  stiffness: 120,
+                  damping: 10,
+                  delay: 0.3,
                 }}
               >
-                <Check className="h-10 w-10 text-emerald-500" />
+                <Check className="h-12 w-12 text-emerald-500 stroke-[3]" />
               </motion.div>
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight text-slate-900">Login Successful</h1>
-              <p className="text-slate-500 text-sm">
-                Welcome back! Loading your profile dashboard...
-              </p>
-            </div>
+            </motion.div>
           </motion.div>
         ) : (
           // Sign In Form

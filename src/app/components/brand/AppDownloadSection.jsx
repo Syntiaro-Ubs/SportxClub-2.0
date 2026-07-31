@@ -67,7 +67,7 @@ export function AppDownloadSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`text-4xl sm:text-5xl font-black tracking-tight leading-tight transition-colors duration-300 ${
+            className={`text-2xl sm:text-3xl font-black tracking-tight leading-tight transition-colors duration-300 ${
               isDark ? "text-white !text-white" : "text-slate-900 !text-slate-900"
             }`}
           >

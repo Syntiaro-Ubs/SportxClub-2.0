@@ -292,10 +292,10 @@ export function Revenue() {
     const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
 
     return [
-      { name: "Football", value: Math.max(1, Math.round(54 * scale)), color: "#059669" },
-      { name: "Cricket", value: Math.max(1, Math.round(36 * scale)), color: "#3b82f6" },
-      { name: "Tennis", value: Math.max(1, Math.round(14 * scale)), color: "#f59e0b" },
-      { name: "Badminton", value: Math.max(1, Math.round(10 * scale)), color: "#ec4899" },
+      { name: "Football", value: Math.max(1, Math.round(54 * scale)), color: "#059669", count: Math.max(1, Math.round(54 * scale)) },
+      { name: "Cricket", value: Math.max(1, Math.round(36 * scale)), color: "#3b82f6", count: Math.max(1, Math.round(36 * scale)) },
+      { name: "Tennis", value: Math.max(1, Math.round(14 * scale)), color: "#f59e0b", count: Math.max(1, Math.round(14 * scale)) },
+      { name: "Badminton", value: Math.max(1, Math.round(10 * scale)), color: "#ec4899", count: Math.max(1, Math.round(10 * scale)) },
     ];
   }, [statusFilter, timeframe]);
 
@@ -727,16 +727,16 @@ export function Revenue() {
             <div className="min-h-[28px] flex flex-col justify-start mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
             </div>
-            <div className="flex flex-row items-center justify-between gap-2 w-full h-[210px] min-w-0">
-              <div className="relative h-[180px] w-[180px] shrink-0 flex items-center justify-center">
+            <div className="flex flex-row items-center justify-between gap-2 w-full h-[220px] min-w-0">
+              <div className="relative h-[200px] w-[200px] shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={sportPopularityData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
+                      innerRadius={50}
+                      outerRadius={95}
                       paddingAngle={0}
                       dataKey="value"
                       stroke="none"
@@ -1024,7 +1024,7 @@ export function Revenue() {
                   <p className="text-xs text-muted-foreground mt-0.5">Try widening your filters or queries.</p>
                 </div>
               ) : (
-                <div className="w-full overflow-x-scroll md:overflow-x-visible overflow-y-hidden pb-3 md:pb-0 [scrollbar-width:auto] [scrollbar-color:#059669_#e2e8f0] dark:[scrollbar-color:#10b981_#1e293b] [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-600 dark:[&::-webkit-scrollbar-thumb]:bg-emerald-500 [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white dark:[&::-webkit-scrollbar-thumb]:border-slate-900 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-200 dark:[&::-webkit-scrollbar-track]:bg-slate-800">
+                <div className="w-full overflow-x-auto scrollbar-visible pb-2">
                   <table className="w-full min-w-[650px] md:min-w-full text-xs text-center border-collapse">
                     <thead className="text-[11px] text-muted-foreground bg-transparent border-b border-border/40 font-black tracking-wider text-center">
                       <tr>

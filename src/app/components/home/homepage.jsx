@@ -302,7 +302,7 @@ function SectionHeading({ eyebrow, title, description, centered = false, titleCl
       )}
 
       {eyebrow && title && (
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/20 dark:border-emerald-400/20 text-emerald-700 dark:text-emerald-600 text-xs font-bold tracking-wider uppercase mb-2">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/20 dark:border-emerald-400/20 text-emerald-700 dark:text-white text-xs font-bold tracking-wider uppercase mb-2">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-600 animate-pulse" />
           {eyebrow}
         </div>
@@ -420,16 +420,16 @@ export function Navbar() {
         className={cn(
           "sticky top-0 z-50 border-b backdrop-blur-2xl transition-colors duration-200 shadow-sm dark:shadow-[0_4px_30px_rgba(0,0,0,0.6)]",
           isDark
-            ? "border-white/[0.08] bg-[#333333]/95 text-white"
+            ? "border-white/[0.08] bg-black/95 text-white"
             : "border-slate-200/80 bg-white/95 text-slate-900",
         )}
       >
         <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-6 lg:px-8">
           {/* Left Section: Logo */}
           <div className="flex flex-1 items-center justify-start">
-            <Link to="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
-              <Logo />
-            </Link>
+            <a href="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
+              <Logo className="h-[50px] md:h-[80px]" />
+            </a>
           </div>
           {/* Center Section: Sleek Separate Search & Location Bars */}
           <div className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-6 relative shrink-0">
@@ -438,14 +438,14 @@ export function Navbar() {
               className={cn(
                 "flex items-center w-full rounded-full border px-4 py-2.5 shadow-sm transition-all duration-200 focus-within:ring-2",
                 isDark
-                  ? "border-white/[0.08] bg-white/[0.03] focus-within:border-emerald-600/30 focus-within:ring-emerald-600/10"
+                  ? "border-white/30 bg-white/[0.03] focus-within:border-white focus-within:ring-white/20"
                   : "border-slate-200 bg-[#F1F3F6]/60 hover:bg-[#F1F3F6]/80 focus-within:bg-white focus-within:border-emerald-500/30 focus-within:ring-emerald-500/10",
               )}
             >
               <Search
                 className={cn(
                   "h-4 w-4 shrink-0 mr-2.5",
-                  isDark ? "text-emerald-600" : "text-emerald-600",
+                  isDark ? "text-white" : "text-emerald-600",
                 )}
               />
               <input
@@ -477,7 +477,7 @@ export function Navbar() {
                       "group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] lg:text-[14px] font-medium transition-all cursor-pointer bg-transparent text-black dark:text-white"
                     )}
                   >
-                    <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-emerald-600" />
+                    <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-emerald-600 dark:text-white" />
                     <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-black dark:text-white">
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
@@ -507,7 +507,7 @@ export function Navbar() {
                   className={cn(
                     "group relative flex h-10 items-center justify-center gap-2 transition px-2 lg:px-4 cursor-pointer rounded-md",
                     isDark
-                      ? "bg-transparent text-emerald-600"
+                      ? "bg-transparent text-white"
                       : "bg-transparent text-emerald-600",
                   )}
                 >
@@ -619,7 +619,7 @@ export function Navbar() {
             <Search
               className={cn(
                 "h-4 w-4 shrink-0 mr-2.5",
-                isDark ? "text-emerald-600" : "text-emerald-600",
+                isDark ? "text-white" : "text-emerald-600",
               )}
             />
             <input
@@ -648,7 +648,7 @@ export function Navbar() {
               trigger={
                 <button className="flex items-center gap-1 shrink-0 text-xs cursor-pointer text-black dark:text-white">
                   <MapPin
-                    className="h-3.5 w-3.5 shrink-0 text-emerald-600"
+                    className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-white"
                   />
                   <span className="truncate max-w-[120px] sm:max-w-[150px] text-black dark:text-white">{activeCity === "All" ? "Cities" : activeCity}</span>
                 </button>
@@ -706,10 +706,10 @@ export function Navbar() {
                           "text-sm tracking-wide transition-colors duration-150",
                           item.isGreen
                             ? isDark
-                              ? "text-emerald-600"
+                              ? "text-white"
                               : "text-emerald-600"
                             : isDark
-                              ? "text-white/90 group-hover:text-emerald-600"
+                              ? "text-white/90 group-hover:text-white"
                               : "text-slate-800 group-hover:text-emerald-600",
                         )}
                       >
@@ -728,7 +728,7 @@ export function Navbar() {
                           className={cn(
                             "h-4 w-4 transition-colors duration-150",
                             isDark
-                              ? "text-white/20 group-hover:text-emerald-600"
+                              ? "text-white/20 group-hover:text-white"
                               : "text-slate-300 group-hover:text-emerald-600",
                           )}
                         />
@@ -1125,7 +1125,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                 )} />
                 <span className={cn(
                   "text-xs font-bold uppercase tracking-widest",
-                  isDark ? "text-emerald-600" : "text-emerald-600"
+                  isDark ? "text-white" : "text-emerald-600"
                 )}>
                   Handpicked for you
                 </span>
@@ -1141,7 +1141,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
               to="/venues"
               className={cn(
                 "flex items-center gap-1 text-xs sm:text-sm font-semibold transition-colors group cursor-pointer",
-                isDark ? "text-emerald-600 hover:text-emerald-400" : "text-emerald-600 hover:text-emerald-700"
+                isDark ? "text-white hover:text-white/80" : "text-emerald-600 hover:text-emerald-700"
               )}
             >
               <span>See All</span>
@@ -1217,7 +1217,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                       <Button
                         size="sm"
                         onClick={(e) => e.preventDefault()}
-                        className="bg-transparent text-white border border-white/50 hover:bg-white/10 hover:border-white font-semibold rounded-lg h-7 px-3 text-[10px] transition-colors shadow-none shrink-0"
+                        className="bg-transparent text-white border border-white/50 hover:bg-white/10 hover:border-white hover:text-white font-semibold rounded-lg h-7 px-3 text-[10px] transition-colors shadow-none shrink-0"
                       >
                         Book Slot
                       </Button>
@@ -1675,7 +1675,7 @@ export function DiscoveryRails() {
             <CardContent className="space-y-5 p-6 md:p-8">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-emerald-600/85">
+                  <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-emerald-600/85 dark:text-white/85">
                     Offers
                   </p>
                   <h2 className="mt-3 text-2xl  tracking-tight text-white md:text-3xl">
@@ -1683,7 +1683,7 @@ export function DiscoveryRails() {
                   </h2>
                 </div>
                 <div className="flex h-14 w-14 items-center justify-center rounded-full border border-emerald-600/18 bg-emerald-600/10">
-                  <Zap className="h-6 w-6 text-emerald-600" />
+                  <Zap className="h-6 w-6 text-emerald-600 dark:text-white" />
                 </div>
               </div>
 
@@ -1697,7 +1697,7 @@ export function DiscoveryRails() {
                       {offer.tag}
                     </Badge>
                     <p className="mt-4 text-lg  text-white">{offer.title}</p>
-                    <p className="mt-2 text-sm  text-emerald-600">
+                    <p className="mt-2 text-sm  text-emerald-600 dark:text-white">
                       {offer.value}
                     </p>
                     <p className="mt-2 text-sm leading-7 text-white/60">
@@ -1718,7 +1718,7 @@ export function DiscoveryRails() {
               />
 
               <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.06),rgba(5,5,5,0.88))]" />
-              <div className="absolute left-5 top-5 rounded-full border border-emerald-600/20 bg-emerald-600/10 px-3 py-1 text-xs  uppercase tracking-[0.22em] text-emerald-600">
+              <div className="absolute left-5 top-5 rounded-full border border-emerald-600/20 bg-emerald-600/10 px-3 py-1 text-xs  uppercase tracking-[0.22em] text-emerald-600 dark:text-white">
                 Tournaments & events
               </div>
             </div>
@@ -1794,7 +1794,7 @@ export function WhySportXClub() {
               <Card className="h-full rounded-[22px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
                 <CardContent className="flex h-full flex-col gap-5 p-6">
                   <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-emerald-600/25 bg-emerald-600/10 shadow-[0_0_15px_rgba(109,255,59,0.15)]">
-                    <card.icon className="h-6 w-6 text-emerald-600 filter drop-shadow-[0_2px_8px_rgba(109,255,59,0.3)]" />
+                    <card.icon className="h-6 w-6 text-emerald-600 dark:text-white filter drop-shadow-[0_2px_8px_rgba(109,255,59,0.3)]" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg  text-white">{card.title}</h3>
@@ -1991,7 +1991,7 @@ export function StoreSection() {
       </div>
 
       {/* Infinite scrolling marquee slider track */}
-      <div className="relative overflow-hidden w-full mt-12 py-4">
+      <div className="relative overflow-hidden w-full py-4">
         {/* Gradient fade edge masks */}
         <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-[#050505] to-transparent z-10 pointer-events-none opacity-30" />
         <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-[#050505] to-transparent z-10 pointer-events-none opacity-30" />
@@ -2006,7 +2006,7 @@ export function StoreSection() {
           onWheel={handleWheel}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
-          className="flex gap-6 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab select-none w-full"
+          className="flex gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab select-none w-full"
         >
           {/* First list iteration */}
           {storeProducts.map((product) => (
@@ -2016,7 +2016,7 @@ export function StoreSection() {
             >
               <div
                 className={cn(
-                  "relative flex flex-col h-full overflow-hidden rounded-3xl border transition-all duration-300",
+                  "relative flex flex-col h-full overflow-hidden rounded-lg border transition-all duration-300",
                   isDark
                     ? "border-white/[0.08] bg-[#101216] hover:border-emerald-600/30 hover:shadow-[0_0_20px_rgba(109,255,59,0.05)]"
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
@@ -2034,7 +2034,7 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-2 py-1 flex items-center gap-1",
                         isDark
-                          ? "bg-[#050505]/80 text-emerald-600 border border-emerald-600/30"
+                          ? "bg-[#050505]/80 text-emerald-600 dark:text-white border border-emerald-600/30"
                           : "bg-white/90 text-emerald-700 border border-emerald-200",
                       )}
                     >
@@ -2066,7 +2066,7 @@ export function StoreSection() {
                     <span
                       className={cn(
                         "text-lg font-bold",
-                        isDark ? "text-emerald-600" : "text-emerald-600",
+                        isDark ? "text-white" : "text-emerald-600",
                       )}
                     >
                       {product.price}
@@ -2076,8 +2076,8 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-4 text-xs tracking-wide transition-all group",
                         isDark
-                          ? "border border-emerald-600 bg-transparent text-white hover:bg-emerald-600 hover:text-[#050505]"
-                          : "border border-emerald-600 bg-transparent text-slate-800 hover:bg-emerald-600 hover:text-[#050505]",
+                          ? "border border-white/20 bg-transparent text-white/80 hover:border-white hover:text-white"
+                          : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
                       )}
                     >
                       <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
@@ -2097,7 +2097,7 @@ export function StoreSection() {
             >
               <div
                 className={cn(
-                  "relative flex flex-col h-full overflow-hidden rounded-3xl border transition-all duration-300",
+                  "relative flex flex-col h-full overflow-hidden rounded-lg border transition-all duration-300",
                   isDark
                     ? "border-white/[0.08] bg-[#101216] hover:border-emerald-600/30 hover:shadow-[0_0_20px_rgba(109,255,59,0.05)]"
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
@@ -2115,7 +2115,7 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-2 py-1 flex items-center gap-1",
                         isDark
-                          ? "bg-[#050505]/80 text-emerald-600 border border-emerald-600/30"
+                          ? "bg-[#050505]/80 text-emerald-600 dark:text-white border border-emerald-600/30"
                           : "bg-white/90 text-emerald-700 border border-emerald-200",
                       )}
                     >
@@ -2147,7 +2147,7 @@ export function StoreSection() {
                     <span
                       className={cn(
                         "text-lg font-bold",
-                        isDark ? "text-emerald-600" : "text-emerald-600",
+                        isDark ? "text-white" : "text-emerald-600",
                       )}
                     >
                       {product.price}
@@ -2157,8 +2157,8 @@ export function StoreSection() {
                       className={cn(
                         "rounded-full px-4 text-xs tracking-wide transition-all group",
                         isDark
-                          ? "border border-emerald-600 bg-transparent text-white hover:bg-emerald-600 hover:text-[#050505]"
-                          : "border border-emerald-600 bg-transparent text-slate-800 hover:bg-emerald-600 hover:text-[#050505]",
+                          ? "border border-white/20 bg-transparent text-white/80 hover:border-white hover:text-white"
+                          : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
                       )}
                     >
                       <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
@@ -2269,7 +2269,7 @@ export function TurfGallery() {
               <div className="absolute top-4 right-4 z-10">
                 <div className="flex flex-col items-end">
                   <Badge
-                    className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-600 border-emerald-600/30"
+                    className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-600 dark:text-white border-emerald-600/30"
                   >
                     <Star className="h-3.5 w-3.5 fill-current" />
                     <span className="text-sm">{turf.rating}</span>
@@ -2282,7 +2282,7 @@ export function TurfGallery() {
 
               <div className="absolute bottom-0 left-0 w-full p-6 z-10 translate-y-2 transition-transform duration-300 group-hover:translate-y-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-emerald-600" />
+                  <MapPin className="h-4 w-4 text-emerald-600 dark:text-white" />
                   <span className="text-sm text-[#ffffff]/90 drop-shadow-md">
                     {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
                   </span>

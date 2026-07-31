@@ -664,7 +664,7 @@ export function VenueBooking() {
                 e.stopPropagation();
                 navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
               }}
-              className="bg-transparent text-white border border-white/40 hover:bg-white/10 hover:border-white font-bold rounded-lg h-7 px-2 text-[10px] sm:text-[11px] transition-colors shadow-none shrink-0"
+              className="bg-transparent text-white border border-white/40 hover:bg-white/10 hover:border-white hover:text-white font-bold rounded-lg h-7 px-2 text-[10px] sm:text-[11px] transition-colors shadow-none shrink-0"
             >
               Book Slot
             </Button>

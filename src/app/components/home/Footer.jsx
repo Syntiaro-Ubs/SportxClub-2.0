@@ -40,7 +40,9 @@ export function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.18fr_0.8fr_0.8fr_0.8fr]">
           <div className="max-w-md">
             <div className="flex items-center gap-3">
-              <Logo />
+              <a href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
+                <Logo className="h-[50px] md:h-[80px]" />
+              </a>
             </div>
             <p className={cn(
               "mt-5 text-sm leading-7",
@@ -74,6 +76,7 @@ export function Footer() {
               links: [
                 {
                   label: "LinkedIn",
+                  href: "https://www.linkedin.com/company/sportxclubs/",
                   brandColor: "#0A66C2",
                   icon: (
                     <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -83,6 +86,7 @@ export function Footer() {
                 },
                 {
                   label: "Instagram",
+                  href: "https://www.instagram.com/sportxclubs?igsh=cmEyaTlzODhjNzh6",
                   brandColor: "#E4405F",
                   icon: (
                     <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -120,13 +124,10 @@ export function Footer() {
               ],
             },
           ].map((column) => (
-            <div key={column.title}>
-              <p className={cn(
-                "text-sm uppercase tracking-[0.24em]",
-                isDark ? "text-white/55" : "text-slate-500 font-semibold"
-              )}>
+            <div key={column.title} className="col-span-1">
+              <h3 className={cn("font-bold text-sm tracking-wide", isDark ? "text-white" : "text-slate-900")}>
                 {column.title}
-              </p>
+              </h3>
               {column.title !== "Social" ? (
                 <ul className="mt-5 space-y-3">
                   {column.links.map((link) => (
@@ -148,7 +149,9 @@ export function Footer() {
                   {column.links.map((link) => (
                     <a
                       key={link.label}
-                      href={`#${link.label.toLowerCase()}`}
+                      href={link.href || `#${link.label.toLowerCase()}`}
+                      target={link.href ? "_blank" : "_self"}
+                      rel={link.href ? "noopener noreferrer" : ""}
                       className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-0 bg-transparent transition hover:-translate-y-1 hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
                       style={{ color: link.brandColor }}
                       aria-label={link.label}

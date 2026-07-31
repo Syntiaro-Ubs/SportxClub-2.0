@@ -214,27 +214,28 @@ export function StaffManagement() {
   return (
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto theme-adaptive pb-16">
       {/* Header Section */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
-        <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-foreground via-foreground/90 to-foreground/60 bg-clip-text text-transparent">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
+          <h1 className="text-xl font-bold tracking-tight text-foreground shrink-0">
             Staff & Job Roles
           </h1>
+          
+          {/* Search Toolbar */}
+          <div className="relative w-full sm:w-80 shrink-0">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600 dark:text-emerald-400" />
+            <Input
+              placeholder="Search staff by name, role, or turf..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-10 rounded-xl bg-background border-2 border-emerald-500/40 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm w-full shadow-xs"
+            />
+          </div>
         </div>
-        <Button onClick={() => handleOpenModal()} className="border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 rounded-xl font-bold px-4 h-10 transition-all flex items-center gap-2 cursor-pointer shadow-xs self-start sm:self-auto">
+
+        <Button onClick={() => handleOpenModal()} className="border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 rounded-xl font-bold px-4 h-10 transition-all flex items-center gap-2 cursor-pointer shadow-xs self-start md:self-auto shrink-0">
           <Plus className="w-4 h-4" />
           Add Staff
         </Button>
-      </div>
-
-      {/* Search Toolbar */}
-      <div className="relative w-full md:w-96 mt-2">
-        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600 dark:text-emerald-400" />
-        <Input
-          placeholder="Search staff by name, role, or turf..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-10 rounded-xl bg-background border-2 border-emerald-500/40 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-sm w-full shadow-xs"
-        />
       </div>
 
       {/* Staff Grid/List */}

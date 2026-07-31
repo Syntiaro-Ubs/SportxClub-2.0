@@ -37,9 +37,9 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
   return (
     <div className="space-y-2">
       {label && <Label className="text-sm font-semibold">{label}</Label>}
-      
+
       {!multiple && !file && (
-        <div 
+        <div
           className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center bg-background/30 hover:bg-background/80 transition-colors cursor-pointer group"
           onClick={() => onUpload({ name: `uploaded_file_${Date.now()}.png` })}
         >
@@ -70,7 +70,7 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
 
       {multiple && (
         <div className="space-y-3">
-          <div 
+          <div
             className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center bg-background/30 hover:bg-background/80 transition-colors cursor-pointer group"
             onClick={() => onUpload({ name: `gallery_image_${Date.now()}.png` })}
           >
@@ -103,10 +103,10 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
 export function OwnerSetupPage() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  
+
   const [currentStep, setCurrentStep] = useState(2);
   const [completedSteps, setCompletedSteps] = useState([1]);
-  
+
   const [status, setStatus] = useState("draft"); // draft, pending, approved, rejected, corrections
   const [adminFeedback, setAdminFeedback] = useState(null);
 
@@ -164,18 +164,18 @@ export function OwnerSetupPage() {
   const handleSubmit = async () => {
     setStatus("submitting");
     await new Promise(r => setTimeout(r, 2000));
-    
+
     // Save to pending approvals database
     const pendingTurfsStr = localStorage.getItem("pending_turf_approvals");
     const pendingTurfs = pendingTurfsStr ? JSON.parse(pendingTurfsStr) : [];
-    
+
     const newTurfData = {
       ...formData,
       id: "TURF" + Math.random().toString(36).substr(2, 6).toUpperCase(),
       createdAt: new Date().toISOString(),
       ownerId: currentUser?.id || "owner-123"
     };
-    
+
     pendingTurfs.push(newTurfData);
     localStorage.setItem("pending_turf_approvals", JSON.stringify(pendingTurfs));
 
@@ -278,8 +278,8 @@ export function OwnerSetupPage() {
             const StepIcon = step.icon;
 
             return (
-              <div 
-                key={step.id} 
+              <div
+                key={step.id}
                 className={cn(
                   "flex items-center gap-4 py-4 cursor-pointer group transition-opacity",
                   !isCompleted && !isCurrent && status !== "corrections" ? "opacity-50 pointer-events-none" : "opacity-100",
@@ -298,10 +298,10 @@ export function OwnerSetupPage() {
                   !isCompleted && !isCurrent && !isFlagged ? "border-border text-muted-foreground" : "",
                   isFlagged ? "border-rose-500 text-rose-500" : ""
                 )}>
-                  {isCompleted && !isCurrent && !isFlagged ? <Check className="h-5 w-5" /> : 
-                   isFlagged ? <AlertTriangle className="h-5 w-5" /> :
-                   <StepIcon className="h-5 w-5" />}
-                  
+                  {isCompleted && !isCurrent && !isFlagged ? <Check className="h-5 w-5" /> :
+                    isFlagged ? <AlertTriangle className="h-5 w-5" /> :
+                      <StepIcon className="h-5 w-5" />}
+
                   {isCurrent && <div className="absolute -inset-1 rounded-full border border-primary/30 animate-ping" />}
                 </div>
                 <div className="flex-1">
@@ -319,7 +319,7 @@ export function OwnerSetupPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative z-10 h-screen overflow-y-auto pb-24">
+      <div className="flex-1 flex flex-col min-w-0 relative z-10 h-screen overflow-y-auto pb-8">
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-20">
           <Logo />
@@ -329,7 +329,7 @@ export function OwnerSetupPage() {
         </div>
 
         <div className="flex-1 w-full max-w-3xl mx-auto p-4 sm:p-8 lg:p-12">
-          
+
           {status === "corrections" && adminFeedback && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex gap-4 items-start">
               <AlertTriangle className="h-5 w-5 text-rose-500 shrink-0 mt-0.5" />
@@ -345,7 +345,7 @@ export function OwnerSetupPage() {
             <p className="text-muted-foreground">Provide accurate details to ensure quick verification and listing.</p>
           </div>
 
-          <motion.div 
+          <motion.div
             key={currentStep}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -377,7 +377,7 @@ export function OwnerSetupPage() {
                   </div>
                 </div>
                 <FileUpload label="Profile Photo (Optional)" file={formData.personal.profilePhoto} onUpload={(f) => updateSection('personal', 'profilePhoto', f)} onRemove={() => updateSection('personal', 'profilePhoto', null)} />
-                
+
                 <div className="space-y-4 pt-4 border-t border-border/50">
                   <h3 className="font-semibold text-sm">Residential Address</h3>
                   <div className="space-y-1.5">
@@ -432,7 +432,7 @@ export function OwnerSetupPage() {
                   <Shield className="h-5 w-5 text-primary shrink-0" />
                   <p>Your documents are securely encrypted and only used for verification purposes to ensure a trusted marketplace.</p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FileUpload label="Aadhaar Card (Front) *" file={formData.identity.aadhaarFront} onUpload={(f) => updateSection('identity', 'aadhaarFront', f)} onRemove={() => updateSection('identity', 'aadhaarFront', null)} />
                   <FileUpload label="Aadhaar Card (Back) *" file={formData.identity.aadhaarBack} onUpload={(f) => updateSection('identity', 'aadhaarBack', f)} onRemove={() => updateSection('identity', 'aadhaarBack', null)} />
@@ -452,9 +452,9 @@ export function OwnerSetupPage() {
                   <Label>Sport Types</Label>
                   <div className="flex flex-wrap gap-2">
                     {SPORTS.map(sport => (
-                      <Badge 
-                        key={sport} 
-                        variant="outline" 
+                      <Badge
+                        key={sport}
+                        variant="outline"
                         className={cn(
                           "cursor-pointer px-3 py-1.5 text-sm transition-colors rounded-full",
                           formData.turf.sports.includes(sport) ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
@@ -503,7 +503,7 @@ export function OwnerSetupPage() {
                   <div className="absolute inset-0 opacity-20 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=20.5937,78.9629&zoom=5&size=600x300&sensor=false')] bg-cover bg-center"></div>
                   <Button variant="secondary" className="relative z-10 shadow-lg">Open Google Maps Picker</Button>
                 </div>
-                
+
                 <div className="space-y-1.5">
                   <Label>Full Address</Label>
                   <Textarea value={formData.location.address} onChange={(e) => updateSection('location', 'address', e.target.value)} className="rounded-xl" />
@@ -523,8 +523,8 @@ export function OwnerSetupPage() {
                     {FACILITIES.map(fac => {
                       const isSelected = formData.location.facilities.includes(fac);
                       return (
-                        <div 
-                          key={fac} 
+                        <div
+                          key={fac}
                           className={cn(
                             "border rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-colors",
                             isSelected ? "border-primary bg-primary/5 text-primary" : "border-border hover:bg-muted"
@@ -546,14 +546,14 @@ export function OwnerSetupPage() {
             {currentStep === 7 && (
               <div className="space-y-8">
                 <FileUpload label="Cover Image (High Resolution) *" hint="This is the first image users will see. Make it count." file={formData.images.cover} onUpload={(f) => updateSection('images', 'cover', f)} onRemove={() => updateSection('images', 'cover', null)} />
-                <FileUpload 
-                  label="Gallery Images (Minimum 5)" 
-                  hint="Add photos of the ground, seating, facilities, etc." 
-                  multiple 
-                  files={formData.images.gallery} 
+                <FileUpload
+                  label="Gallery Images (Minimum 5)"
+                  hint="Add photos of the ground, seating, facilities, etc."
+                  multiple
+                  files={formData.images.gallery}
                   onUpload={(f) => {
                     updateSection('images', 'gallery', [...formData.images.gallery, f]);
-                  }} 
+                  }}
                   onRemove={(idx) => {
                     const newArr = [...formData.images.gallery];
                     newArr.splice(idx, 1);
@@ -616,7 +616,7 @@ export function OwnerSetupPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-border/50">
                   <div className="space-y-1.5">
                     <Label>Advance Booking Limit (Days)</Label>
@@ -668,7 +668,7 @@ export function OwnerSetupPage() {
                     <Input type="text" value={formData.bank.confirmAccountNumber} onChange={(e) => updateSection('bank', 'confirmAccountNumber', e.target.value)} className="h-11 rounded-xl" />
                   </div>
                 </div>
-                
+
                 <div className="space-y-1.5">
                   <Label>UPI ID (Optional)</Label>
                   <Input value={formData.bank.upi} onChange={(e) => updateSection('bank', 'upi', e.target.value)} placeholder="e.g. business@ybl" className="h-11 rounded-xl" />
@@ -682,7 +682,7 @@ export function OwnerSetupPage() {
               <div className="space-y-6">
                 <div className="bg-muted/50 rounded-xl p-6 border border-border">
                   <h3 className="text-lg font-bold mb-4">Summary of Details</h3>
-                  
+
                   <div className="space-y-6">
                     <div>
                       <div className="flex justify-between border-b border-border/50 pb-2 mb-2">
@@ -718,35 +718,36 @@ export function OwnerSetupPage() {
                 </div>
               </div>
             )}
-          </motion.div>
 
-          {/* Bottom Fixed Navigation Bar */}
-          <div className="fixed bottom-0 left-0 right-0 md:left-72 lg:left-80 p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 flex justify-between items-center z-20">
-            <Button 
-              variant="outline" 
-              onClick={handleBack} 
-              disabled={currentStep === 2}
-              className="rounded-full px-6"
-            >
-              <ChevronLeft className="h-4 w-4 mr-2" /> Back
-            </Button>
-            
-            {currentStep < 10 ? (
-              <Button 
-                onClick={handleNext} 
-                className="rounded-full px-8 shadow-lg shadow-primary/20"
+            {/* Inline Navigation Bar inside the form card */}
+            <div className="flex justify-between items-center mt-10 pt-6 border-t border-border/20">
+              <Button
+                variant="outline"
+                onClick={handleBack}
+                disabled={currentStep === 2}
+                className="rounded-full px-6 bg-transparent border-border/40 hover:bg-muted/30"
               >
-                Next <ChevronRight className="h-4 w-4 ml-2" />
+                <ChevronLeft className="h-4 w-4 mr-2" /> Back
               </Button>
-            ) : (
-              <Button 
-                onClick={handleSubmit} 
-                className="rounded-full px-8 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-              >
-                Submit Profile <Check className="h-4 w-4 ml-2" />
-              </Button>
-            )}
-          </div>
+
+              {currentStep < 10 ? (
+                <Button
+                  variant="outline"
+                  onClick={handleNext}
+                  className="rounded-full px-8 bg-transparent border-border/40 hover:bg-muted/30"
+                >
+                  Next <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSubmit}
+                  className="rounded-full px-8 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                >
+                  Submit Profile <Check className="h-4 w-4 ml-2" />
+                </Button>
+              )}
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

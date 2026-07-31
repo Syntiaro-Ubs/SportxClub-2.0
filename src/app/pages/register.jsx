@@ -518,7 +518,7 @@ export function RegisterPage() {
                             type="button"
                             disabled={formData.otp.length !== 6}
                             onClick={verifyEmailOtp}
-                            className="h-10.5 px-4 rounded-xl bg-emerald-600 text-black hover:bg-[#5ce630] text-xs font-bold shrink-0"
+                            className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all text-xs font-bold shrink-0"
                           >
                             Verify Code
                           </Button>
@@ -593,7 +593,7 @@ export function RegisterPage() {
                             type="button"
                             disabled={phoneOtp.length !== 6}
                             onClick={verifyPhoneOtp}
-                            className="h-10.5 px-4 rounded-xl bg-emerald-600 text-black hover:bg-[#5ce630] text-xs font-bold shrink-0"
+                            className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all text-xs font-bold shrink-0"
                           >
                             Verify Code
                           </Button>
@@ -614,7 +614,7 @@ export function RegisterPage() {
                         type="button"
                         disabled={!isStep1Valid()}
                         onClick={handleNext}
-                        className="w-1/2 h-11 rounded-full bg-primary text-primary-foreground  hover:shadow-lg hover:shadow-primary/10 transition-all flex items-center justify-center gap-1.5 group"
+                        className="w-1/2 h-11 rounded-full border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-1.5 group"
                       >
                         Continue
                         <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -816,7 +816,7 @@ export function RegisterPage() {
                       <Button
                         type="submit"
                         disabled={!isStep2Valid() || isSubmitting}
-                        className="h-11 px-6 rounded-full bg-emerald-600 text-[#050505] hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-600/20 transition-all flex items-center justify-center gap-1.5"
+                        className="h-11 px-6 rounded-full border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-1.5"
                       >
                         {isSubmitting ? (
                           <span className="flex items-center gap-2">
