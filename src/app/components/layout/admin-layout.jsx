@@ -17,23 +17,23 @@ import {
 import { ThemeToggleButton } from "../ui/theme-toggle-button";
 
 const adminNavigation = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Home Management", href: "/admin/home-cms", icon: LayoutDashboard },
-  { name: "Users", href: "/admin/users", icon: Users },
-  { name: "Turf Owners", href: "/admin/turf-owners", icon: UserCircle },
-  { name: "Turfs", href: "/admin/turfs", icon: MapPin },
-  { name: "Bookings", href: "/admin/bookings", icon: CalendarDays },
-  { name: "Game Lobbies", href: "/admin/games", icon: Gamepad2 },
-  { name: "Payments", href: "/admin/payments", icon: CreditCard },
-  { name: "Game Passes", href: "/admin/passes", icon: Ticket },
-  { name: "Coupons", href: "/admin/coupons", icon: Tag },
-  { name: "Banners", href: "/admin/banners", icon: ImageIcon },
-  { name: "Reviews", href: "/admin/reviews", icon: Star },
-  { name: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { name: "Analytics", href: "/admin/analytics", icon: PieChart },
-  { name: "Notifications", href: "/admin/notifications", icon: Bell },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
-  { name: "Profile", href: "/admin/profile", icon: UserCircle },
+  { name: "Dashboard", href: "/site-maker", icon: LayoutDashboard },
+  { name: "Home Management", href: "/site-maker/home-cms", icon: LayoutDashboard },
+  { name: "Users", href: "/site-maker/users", icon: Users },
+  { name: "Turf Owners", href: "/site-maker/turf-owners", icon: UserCircle },
+  { name: "Turfs", href: "/site-maker/turfs", icon: MapPin },
+  { name: "Bookings", href: "/site-maker/bookings", icon: CalendarDays },
+  { name: "Game Lobbies", href: "/site-maker/games", icon: Gamepad2 },
+  { name: "Payments", href: "/site-maker/payments", icon: CreditCard },
+  { name: "Game Passes", href: "/site-maker/passes", icon: Ticket },
+  { name: "Coupons", href: "/site-maker/coupons", icon: Tag },
+  { name: "Banners", href: "/site-maker/banners", icon: ImageIcon },
+  { name: "Reviews", href: "/site-maker/reviews", icon: Star },
+  { name: "Reports", href: "/site-maker/reports", icon: BarChart3 },
+  { name: "Analytics", href: "/site-maker/analytics", icon: PieChart },
+  { name: "Notifications", href: "/site-maker/notifications", icon: Bell },
+  { name: "Settings", href: "/site-maker/settings", icon: Settings },
+  { name: "Profile", href: "/site-maker/profile", icon: UserCircle },
 ];
 
 export function AdminLayout() {
@@ -48,20 +48,20 @@ export function AdminLayout() {
   };
 
   const currentRouteName = adminNavigation.find(
-    (n) => location.pathname === n.href || (n.href !== "/admin" && location.pathname.startsWith(n.href))
+    (n) => location.pathname === n.href || (n.href !== "/site-maker" && location.pathname.startsWith(n.href))
   )?.name || "Admin Panel";
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex h-14 shrink-0 items-center px-6">
-        <a href="/admin" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
+        <a href="/site-maker" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
           <Logo className="h-[50px] md:h-[80px]" />
         </a>
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto px-4 py-4 space-y-1">
         {adminNavigation.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.href || (item.href !== "/admin" && location.pathname.startsWith(item.href));
+          const isActive = location.pathname === item.href || (item.href !== "/site-maker" && location.pathname.startsWith(item.href));
           return (
             <Link
               key={item.name}
@@ -118,12 +118,12 @@ export function AdminLayout() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2 rounded-full hover:bg-accent/50 p-1 pr-4 pl-1 transition-colors cursor-pointer border-0 bg-transparent">
                   <Avatar className="h-10 w-10 border-2 border-primary/10 transition-colors">
-                    <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center font-semibold">AD</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary flex items-center justify-center font-semibold">SM</AvatarFallback>
                   </Avatar>
-                  <span className="hidden lg:block text-sm font-medium">Super Admin</span>
+                  <span className="hidden lg:block text-sm font-medium">Site Maker</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuItem onClick={() => navigate("/admin/profile")} className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => navigate("/site-maker/profile")} className="cursor-pointer">
                     View Profile
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />

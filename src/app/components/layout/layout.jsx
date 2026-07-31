@@ -189,7 +189,7 @@ export function Layout() {
         <div className="flex items-center gap-3">
           <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
           {currentUser ? (
-            <Link to={currentUser.role === 'owner' ? '/owner-dashboard' : '/profile'}>
+            <Link to={currentUser.role === 'owner' ? '/admin-panel' : '/profile'}>
               <Button
                 variant="ghost"
                 className="group relative rounded-md gap-2.5 text-muted-foreground hover:text-primary hover:bg-transparent px-3 h-10 cursor-pointer focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"

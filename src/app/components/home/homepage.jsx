@@ -402,15 +402,14 @@ export function Navbar() {
   ];
 
   const menuItems = [
-    { label: "Turf", to: "/venues", hasChevron: true },
-    { label: "Cart", to: "/bookings", hasChevron: true },
-    { label: "Events", to: "/community", hasChevron: true },
-    { label: "Coaching", to: "/ai-assistant", hasChevron: true },
-    { label: "Tournaments", to: "/tournaments", hasChevron: true },
+    { label: "Turf", to: "/venues" },
+    { label: "Cart", to: "/bookings" },
+    { label: "Events", to: "/community" },
+    { label: "Coaching", to: "/ai-assistant" },
+    { label: "Tournaments", to: "/tournaments" },
     {
-      label: "Turf Owner Login",
-      to: "/login?type=owner",
-      hasChevron: true,
+      label: "Admin Login",
+      to: "/admin-login",
     },
   ];
 
@@ -527,7 +526,7 @@ export function Navbar() {
                   >
                     <div className="p-2 space-y-1">
                       <Link
-                        to={currentUser?.role === 'owner' ? '/owner-dashboard' : '/profile'}
+                        to={currentUser?.role === 'owner' ? '/admin-panel' : '/profile'}
                         onClick={() => setProfileOpen(false)}
                       >
                         <button

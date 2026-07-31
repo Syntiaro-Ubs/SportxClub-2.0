@@ -65,10 +65,10 @@ export function MobileAppBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const isHomePage = location.pathname === "/";
-  const logoTarget = location.pathname.startsWith("/owner-dashboard")
-    ? "/owner-dashboard"
-    : location.pathname.startsWith("/admin")
-      ? "/admin"
+  const logoTarget = location.pathname.startsWith("/admin-panel")
+    ? "/admin-panel"
+    : location.pathname.startsWith("/site-maker")
+      ? "/site-maker"
       : "/";
   const [locationQuery, setLocationQuery] = useState("");
 
@@ -140,8 +140,8 @@ export function MobileAppBar() {
       requiresAuth: true,
     },
     {
-      label: currentUser?.role === "owner" ? "Owner Dashboard" : "Turf Owner Login",
-      to: currentUser?.role === "owner" ? "/owner-dashboard" : "/login?type=owner",
+      label: currentUser?.role === "owner" ? "Admin Panel" : "Admin Login",
+      to: currentUser?.role === "owner" ? "/admin-panel" : "/admin-login",
       icon: Building2,
     },
   ].filter((item) => {
@@ -281,7 +281,6 @@ export function MobileAppBar() {
                             {item.badge}
                           </span>
                         )}
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 transition-colors duration-150 group-hover:text-primary" />
                       </div>
                     </div>
                   );
@@ -347,7 +346,7 @@ export function MobileBottomNav
                   className="relative"
                 >
                   <Link
-                    to={item.key === 'profile' && currentUser?.role === 'owner' ? '/owner-dashboard' : item.href}
+                    to={item.key === 'profile' && currentUser?.role === 'owner' ? '/admin-panel' : item.href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
                       "relative flex h-[50px] flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-[0.68rem] transition-colors",

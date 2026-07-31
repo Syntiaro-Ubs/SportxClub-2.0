@@ -209,7 +209,7 @@ export function RegisterPage() {
       setIsSuccess(true);
       setTimeout(() => {
         if (formData.role === "owner") navigate("/owner-setup");
-        else if (formData.role === "admin") navigate("/admin");
+        else if (formData.role === "admin") navigate("/site-maker");
         else navigate("/");
       }, 1500);
     } else {
