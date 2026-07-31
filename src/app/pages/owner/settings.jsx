@@ -35,6 +35,7 @@ import {
   TrendingUp,
   MessageSquare,
   Sparkles,
+  Plus,
 } from "lucide-react";
 import { settingsService } from "../../services/settings.service";
 import { toast } from "sonner";
@@ -69,6 +70,14 @@ export function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("general");
+  const [customColor, setCustomColor] = useState(() => localStorage.getItem("custom_theme_color") || "#059669");
+
+  const handleColorChange = (newColor) => {
+    setCustomColor(newColor);
+    localStorage.setItem("custom_theme_color", newColor);
+    document.documentElement.style.setProperty("--primary", newColor);
+    toast.success(`Custom color set to ${newColor}`);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -123,23 +132,18 @@ export function Settings() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-16">
-      
+    <div className="space-y-3 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-6xl mx-auto pb-16">
+
       {/* Top Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-5">
+      <div className="flex flex-row items-center justify-between gap-3 border-b border-border/40 pb-2 sm:pb-5">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Settings</h1>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5">
-              Live Production
-            </Badge>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Settings</h1>
         </div>
 
-        <Button 
-          onClick={handleSave} 
-          disabled={isSaving} 
-          className="bg-transparent hover:bg-emerald-500/10 border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl gap-2 px-5 h-10 transition-all cursor-pointer shrink-0"
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-1/2 min-w-[150px] max-w-[190px] bg-transparent hover:bg-emerald-500/10 border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl gap-1.5 px-2.5 h-10 transition-all cursor-pointer shrink-0 ml-auto"
         >
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin text-emerald-500" /> : <Save className="w-4 h-4 text-emerald-500 stroke-[2.5]" />}
           Save All Changes
@@ -148,27 +152,29 @@ export function Settings() {
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-muted/40 p-1 rounded-2xl border border-border/40 gap-1 mb-6">
-          <TabsTrigger value="general" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-            <Building2 className="w-4 h-4 text-emerald-500" /> General
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-            <Bell className="w-4 h-4 text-emerald-500" /> Notifications
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-            <Palette className="w-4 h-4 text-emerald-500" /> Appearance
-          </TabsTrigger>
-          <TabsTrigger value="billing" className="gap-2 rounded-xl py-2.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
-            <CreditCard className="w-4 h-4 text-emerald-500" /> Billing & Payouts
-          </TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden mb-1 sm:mb-3">
+          <TabsList className="flex sm:grid w-max sm:w-full grid-cols-2 sm:grid-cols-4 min-w-full h-auto p-1.5 bg-muted/40 rounded-2xl border border-border/40 gap-1.5 shadow-xs">
+            <TabsTrigger value="general" className="gap-2 rounded-xl py-2.5 px-3.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all shrink-0 whitespace-nowrap">
+              <Building2 className="w-4 h-4 text-emerald-500 shrink-0" /> General
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="gap-2 rounded-xl py-2.5 px-3.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all shrink-0 whitespace-nowrap">
+              <Bell className="w-4 h-4 text-emerald-500 shrink-0" /> Notifications
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="gap-2 rounded-xl py-2.5 px-3.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all shrink-0 whitespace-nowrap">
+              <Palette className="w-4 h-4 text-emerald-500 shrink-0" /> Appearance
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="gap-2 rounded-xl py-2.5 px-3.5 font-bold text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all shrink-0 whitespace-nowrap">
+              <CreditCard className="w-4 h-4 text-emerald-500 shrink-0" /> Billing & Payouts
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* -------------------------------------------------------------
             TAB 1: GENERAL / BUSINESS PROFILE (2-COLUMN GRID)
             ------------------------------------------------------------- */}
         <TabsContent value="general">
           <div className="grid lg:grid-cols-3 gap-6">
-            
+
             {/* Left Column (2 Cols): Business Form Fields */}
             <Card className="lg:col-span-2 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden">
               <CardHeader className="border-b border-border/40 pb-4">
@@ -178,15 +184,15 @@ export function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-5">
-                
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="businessName" className="text-xs font-bold text-foreground">Business Name</Label>
                     <div className="relative">
                       <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="businessName" 
-                        value={data.businessName} 
+                      <Input
+                        id="businessName"
+                        value={data.businessName}
                         onChange={(e) => handleChange("businessName", e.target.value)}
                         className="pl-9 rounded-xl border-border/60 text-sm font-medium"
                       />
@@ -197,9 +203,9 @@ export function Settings() {
                     <Label htmlFor="city" className="text-xs font-bold text-foreground">City / Region</Label>
                     <div className="relative">
                       <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="city" 
-                        value={data.city} 
+                      <Input
+                        id="city"
+                        value={data.city}
                         onChange={(e) => handleChange("city", e.target.value)}
                         className="pl-9 rounded-xl border-border/60 text-sm font-medium"
                       />
@@ -212,10 +218,10 @@ export function Settings() {
                     <Label htmlFor="contactEmail" className="text-xs font-bold text-foreground">Contact Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="contactEmail" 
+                      <Input
+                        id="contactEmail"
                         type="email"
-                        value={data.contactEmail} 
+                        value={data.contactEmail}
                         onChange={(e) => handleChange("contactEmail", e.target.value)}
                         className="pl-9 rounded-xl border-border/60 text-sm font-medium"
                       />
@@ -226,10 +232,10 @@ export function Settings() {
                     <Label htmlFor="contactPhone" className="text-xs font-bold text-foreground">Contact Phone</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="contactPhone" 
+                      <Input
+                        id="contactPhone"
                         type="tel"
-                        value={data.contactPhone} 
+                        value={data.contactPhone}
                         onChange={(e) => handleChange("contactPhone", e.target.value)}
                         className="pl-9 rounded-xl border-border/60 text-sm font-medium"
                       />
@@ -242,9 +248,9 @@ export function Settings() {
                     <Label htmlFor="website" className="text-xs font-bold text-foreground">Website URL</Label>
                     <div className="relative">
                       <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input 
-                        id="website" 
-                        value={data.website} 
+                      <Input
+                        id="website"
+                        value={data.website}
                         onChange={(e) => handleChange("website", e.target.value)}
                         className="pl-9 rounded-xl border-border/60 text-sm font-medium"
                       />
@@ -253,9 +259,9 @@ export function Settings() {
 
                   <div className="space-y-1.5">
                     <Label htmlFor="timezone" className="text-xs font-bold text-foreground">Timezone</Label>
-                    <Input 
-                      id="timezone" 
-                      value={data.timezone} 
+                    <Input
+                      id="timezone"
+                      value={data.timezone}
                       onChange={(e) => handleChange("timezone", e.target.value)}
                       className="rounded-xl border-border/60 text-sm font-medium"
                     />
@@ -295,7 +301,7 @@ export function Settings() {
                   </span>
                   <Badge variant="outline" className="text-[10px] bg-muted/40 font-bold">Active</Badge>
                 </div>
-                <Input 
+                <Input
                   value={data.gstin}
                   onChange={(e) => handleChange("gstin", e.target.value)}
                   className="rounded-xl border-border/60 text-xs font-mono font-bold"
@@ -318,7 +324,7 @@ export function Settings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-6 divide-y divide-border/40">
-              
+
               <div className="flex items-center justify-between pt-0">
                 <div className="flex items-start gap-3.5">
                   <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -329,9 +335,9 @@ export function Settings() {
                     <p className="text-xs text-muted-foreground mt-0.5">Receive instant pop-up alerts in browser when a customer books a slot.</p>
                   </div>
                 </div>
-                <Switch 
-                  checked={data.notifications} 
-                  onCheckedChange={(c) => handleChange("notifications", c)} 
+                <Switch
+                  checked={data.notifications}
+                  onCheckedChange={(c) => handleChange("notifications", c)}
                   className="data-[state=checked]:bg-emerald-600 cursor-pointer"
                 />
               </div>
@@ -346,9 +352,9 @@ export function Settings() {
                     <p className="text-xs text-muted-foreground mt-0.5">Send booking receipts and monthly summary reports directly to your email.</p>
                   </div>
                 </div>
-                <Switch 
-                  checked={data.emailAlerts} 
-                  onCheckedChange={(c) => handleChange("emailAlerts", c)} 
+                <Switch
+                  checked={data.emailAlerts}
+                  onCheckedChange={(c) => handleChange("emailAlerts", c)}
                   className="data-[state=checked]:bg-emerald-600 cursor-pointer"
                 />
               </div>
@@ -363,9 +369,9 @@ export function Settings() {
                     <p className="text-xs text-muted-foreground mt-0.5">Get direct SMS text messages on phone whenever an urgent slot cancellation occurs.</p>
                   </div>
                 </div>
-                <Switch 
-                  checked={data.smsAlerts} 
-                  onCheckedChange={(c) => handleChange("smsAlerts", c)} 
+                <Switch
+                  checked={data.smsAlerts}
+                  onCheckedChange={(c) => handleChange("smsAlerts", c)}
                   className="data-[state=checked]:bg-emerald-600 cursor-pointer"
                 />
               </div>
@@ -380,9 +386,9 @@ export function Settings() {
                     <p className="text-xs text-muted-foreground mt-0.5">Receive a daily 09:00 PM summary message with total daily collection & slot occupancy.</p>
                   </div>
                 </div>
-                <Switch 
-                  checked={data.dailySummary} 
-                  onCheckedChange={(c) => handleChange("dailySummary", c)} 
+                <Switch
+                  checked={data.dailySummary}
+                  onCheckedChange={(c) => handleChange("dailySummary", c)}
                   className="data-[state=checked]:bg-emerald-600 cursor-pointer"
                 />
               </div>
@@ -403,12 +409,12 @@ export function Settings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
-              
+
               <Label className="text-xs font-bold text-foreground uppercase tracking-wider">Choose Theme Mode</Label>
               <div className="grid sm:grid-cols-3 gap-4">
-                
+
                 {/* Light Theme Card */}
-                <div 
+                <div
                   onClick={() => { setTheme("light"); handleChange("theme", "light"); }}
                   className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${resolvedTheme === "light" && theme !== "system" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
                 >
@@ -422,7 +428,7 @@ export function Settings() {
                 </div>
 
                 {/* Dark Theme Card */}
-                <div 
+                <div
                   onClick={() => { setTheme("dark"); handleChange("theme", "dark"); }}
                   className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${resolvedTheme === "dark" && theme !== "system" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
                 >
@@ -435,20 +441,69 @@ export function Settings() {
                   </div>
                 </div>
 
-                {/* System Default Card */}
-                <div 
-                  onClick={() => { setTheme("system"); handleChange("theme", "system"); }}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${theme === "system" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
+                {/* Custom Theme Color Card */}
+                <div
+                  onClick={() => { setTheme("custom"); handleChange("theme", "custom"); }}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${theme === "custom" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
                 >
-                  <div className="h-14 w-full rounded-xl bg-gradient-to-r from-slate-100 to-slate-900 border border-border flex items-center justify-center">
-                    <Laptop className="h-6 w-6 text-emerald-500" />
+                  <div
+                    className="h-14 w-full rounded-xl border border-border flex items-center justify-center transition-all shadow-inner"
+                    style={{ backgroundColor: customColor }}
+                  >
+                    <Palette className="h-6 w-6 text-white drop-shadow-md" />
                   </div>
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-xs font-bold text-foreground">System Default</span>
-                    {theme === "system" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
+                    <span className="text-xs font-bold text-foreground">Custom Color</span>
+                    {theme === "custom" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
                   </div>
                 </div>
 
+              </div>
+
+              {/* Custom Accent Color Palette Picker */}
+              <div className="pt-4 border-t border-border/40 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-emerald-500" /> Custom Primary Accent Color
+                  </Label>
+                  <span className="text-xs font-mono font-bold text-muted-foreground uppercase bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
+                    {customColor}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Preset Swatches */}
+                  {[
+                    { name: "Emerald", hex: "#059669" },
+                    { name: "Electric Blue", hex: "#2563eb" },
+                    { name: "Neon Violet", hex: "#7c3aed" },
+                    { name: "Sunset Orange", hex: "#f97316" },
+                    { name: "Crimson Red", hex: "#e11d48" },
+                    { name: "Rose Pink", hex: "#ec4899" },
+                  ].map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => handleColorChange(c.hex)}
+                      style={{ backgroundColor: c.hex }}
+                      className={`w-9 h-9 rounded-xl transition-all cursor-pointer border-2 shadow-xs flex items-center justify-center ${customColor.toLowerCase() === c.hex.toLowerCase() ? "border-foreground scale-110 shadow-md ring-2 ring-emerald-500/40" : "border-transparent hover:scale-105"}`}
+                      title={c.name}
+                    >
+                      {customColor.toLowerCase() === c.hex.toLowerCase() && <CheckCircle2 className="w-4.5 h-4.5 text-white drop-shadow-md" />}
+                    </button>
+                  ))}
+
+                  {/* Native Custom Color Wheel Picker */}
+                  <label className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 via-green-500 to-blue-500 border-2 border-border cursor-pointer flex items-center justify-center shadow-xs hover:scale-105 transition-all overflow-hidden" title="Pick Any Custom Color">
+                    <input
+                      type="color"
+                      value={customColor}
+                      onChange={(e) => handleColorChange(e.target.value)}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                    <Plus className="w-4.5 h-4.5 text-white drop-shadow-md stroke-[3]" />
+                  </label>
+                </div>
               </div>
 
             </CardContent>
@@ -460,7 +515,7 @@ export function Settings() {
             ------------------------------------------------------------- */}
         <TabsContent value="billing">
           <div className="grid lg:grid-cols-3 gap-6">
-            
+
             {/* Left Column (2 Cols): Connected Payout Account */}
             <Card className="lg:col-span-2 border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden">
               <CardHeader className="border-b border-border/40 pb-4">
@@ -472,12 +527,12 @@ export function Settings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-5">
-                
+
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-foreground">Bank Name</Label>
-                    <Input 
-                      value={data.bankName} 
+                    <Input
+                      value={data.bankName}
                       onChange={(e) => handleChange("bankName", e.target.value)}
                       className="rounded-xl border-border/60 text-sm font-medium"
                     />
@@ -485,8 +540,8 @@ export function Settings() {
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-foreground">Account Number</Label>
-                    <Input 
-                      value={data.accountNumber} 
+                    <Input
+                      value={data.accountNumber}
                       onChange={(e) => handleChange("accountNumber", e.target.value)}
                       className="rounded-xl border-border/60 text-sm font-mono font-bold"
                     />
@@ -496,8 +551,8 @@ export function Settings() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-foreground">IFSC Code</Label>
-                    <Input 
-                      value={data.ifscCode} 
+                    <Input
+                      value={data.ifscCode}
                       onChange={(e) => handleChange("ifscCode", e.target.value)}
                       className="rounded-xl border-border/60 text-sm font-mono uppercase font-bold"
                     />
@@ -505,8 +560,8 @@ export function Settings() {
 
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-foreground">UPI ID (Instant Auto-Settle)</Label>
-                    <Input 
-                      value={data.upiId} 
+                    <Input
+                      value={data.upiId}
                       onChange={(e) => handleChange("upiId", e.target.value)}
                       className="rounded-xl border-border/60 text-sm font-medium"
                     />
@@ -523,7 +578,7 @@ export function Settings() {
                   <Label className="text-xs font-bold text-foreground">Default Currency</Label>
                   <p className="text-[11px] text-muted-foreground mt-0.5">Used for revenue calculations & reports</p>
                 </div>
-                <select 
+                <select
                   value={data.currency}
                   onChange={(e) => handleChange("currency", e.target.value)}
                   className="flex h-10 w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"
@@ -539,7 +594,7 @@ export function Settings() {
                   <Label className="text-xs font-bold text-foreground">Payout Schedule</Label>
                   <p className="text-[11px] text-muted-foreground mt-0.5">Automatic transfer cycle to bank</p>
                 </div>
-                <select 
+                <select
                   value={data.payoutCycle}
                   onChange={(e) => handleChange("payoutCycle", e.target.value)}
                   className="flex h-10 w-full rounded-xl border border-border/60 bg-background px-3 py-2 text-xs font-bold focus:outline-none focus:border-emerald-500 cursor-pointer"

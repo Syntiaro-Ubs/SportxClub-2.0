@@ -294,15 +294,15 @@ function SearchBar() {
         isListening ? "ring-4 ring-primary/10 rounded-[24px]" : "focus-within:ring-4 focus-within:ring-primary/10 rounded-[24px]"
       )}>
         <div className="flex items-center gap-2">
-          <div className="flex h-11 flex-1 items-center gap-3 rounded-[18px] border border-border/60 bg-transparent px-4">
-            <Search className="h-4.5 w-4.5 shrink-0 text-muted-foreground" />
+          <div className="flex h-9.5 flex-1 items-center gap-2.5 rounded-[16px] border border-border/60 bg-transparent px-3.5">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleSearch}
               placeholder={isListening ? "Listening..." : "Search venues, sports or tournaments"}
-              className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+              className="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
               disabled={isListening}
             />
           </div>
@@ -310,26 +310,26 @@ function SearchBar() {
             type="button"
             onClick={startVoiceSearch}
             className={cn(
-              "flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
+              "flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-[16px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
               isListening
                 ? "border-red-500 bg-red-500/20 text-red-500 animate-pulse"
                 : "border-border/60 bg-transparent hover:bg-muted"
             )}
             aria-label="Voice search"
           >
-            <Mic className={cn("h-4.5 w-4.5", isListening && "scale-110")} />
+            <Mic className={cn("h-4 w-4", isListening && "scale-110")} />
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
                 className={cn(
-                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-[18px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
+                  "flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-[16px] border text-foreground shadow-sm transition-all duration-300 cursor-pointer",
                   "border-border/60 bg-transparent hover:bg-muted"
                 )}
                 aria-label="Open filters"
               >
-                <SlidersHorizontal className="h-4.5 w-4.5" />
+                <SlidersHorizontal className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 rounded-xl">
@@ -542,11 +542,10 @@ export function MobileHomePage() {
                   animate={{ x: 0 }}
                   exit={{ x: "-100%" }}
                   transition={{ duration: 1.2, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-cover bg-no-repeat bg-center brightness-[0.75] saturate-[1.2]"
+                  className="absolute inset-0 bg-cover bg-no-repeat bg-center brightness-100 saturate-[1.1]"
                   style={{ backgroundImage: `url(${bgImages[currentBg]})` }}
                 />
               </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-black/30" />
             </div>
 
             <div className="relative z-10 mt-auto pb-1">
@@ -655,9 +654,9 @@ export function MobileHomePage() {
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                      <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-background/90 px-2 py-0.5 text-[0.65rem] font-bold text-foreground backdrop-blur-md shadow-sm border border-border/50">
-                        <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
-                        4.8
+                      <div className="absolute bottom-1.5 left-2 flex items-center gap-1 text-[0.7rem] font-extrabold !text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] z-10">
+                        <Star className="h-3 w-3 fill-emerald-500 text-emerald-500 shrink-0" />
+                        <span className="!text-white font-extrabold">4.8</span>
                       </div>
                     </div>
 
@@ -680,7 +679,7 @@ export function MobileHomePage() {
                           <MapPin className="h-3.5 w-3.5 text-primary/80" />
                           <span className="truncate">{venue.distance} away</span>
                         </div>
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                        <div className="flex h-7.5 w-7.5 items-center justify-center rounded-full border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400 bg-transparent hover:bg-emerald-600/10 transition-colors">
                           <ArrowRight className="h-3.5 w-3.5" />
                         </div>
                       </div>
@@ -728,8 +727,8 @@ export function MobileHomePage() {
                       <div className="flex items-center justify-between">
                         <p className="text-sm  text-primary">{item.prize}</p>
                         <Button
-                          variant="ghost"
-                          className="h-10 rounded-full px-4 text-sm  text-foreground"
+                          variant="outline"
+                          className="h-8 rounded-full px-4 text-xs font-bold border border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400 bg-transparent hover:bg-emerald-600/10 transition-colors shadow-none cursor-pointer"
                         >
                           Join
                         </Button>
@@ -757,22 +756,19 @@ export function MobileHomePage() {
                       decoding="async"
                       className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/60 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-                    <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col justify-end h-full z-10">
+                    <div className="absolute bottom-0 left-0 right-0 p-3.5 flex flex-col justify-end h-full z-10">
                       <div className="mb-auto self-end">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-background/50 backdrop-blur-md border border-border/50 shadow-sm">
-                          <Sparkles className="h-3 w-3 text-amber-500" />
+                        <div className="flex h-7 w-7 items-center justify-center">
+                          <Sparkles className="h-4.5 w-4.5 text-emerald-400 drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]" />
                         </div>
                       </div>
-                      <Badge className="w-fit mb-2 bg-primary/15 hover:bg-primary/25 text-primary border-primary/20 backdrop-blur-md transition-colors text-[0.65rem] px-2 py-0.5">
-                        Top Pick
-                      </Badge>
-                      <h3 className="text-lg font-bold text-foreground drop-shadow-sm leading-[1.15] mb-1 truncate">
+                      <h3 className="text-base font-extrabold !text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-[1.15] mb-0.5 truncate">
                         {item.name}
                       </h3>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium truncate">
-                        <Star className="h-3 w-3 fill-emerald-500 text-emerald-500" />
+                      <p className="text-xs !text-white flex items-center gap-1.5 font-semibold truncate drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+                        <Star className="h-3 w-3 fill-emerald-400 text-emerald-400" />
                         {item.detail}
                       </p>
                     </div>

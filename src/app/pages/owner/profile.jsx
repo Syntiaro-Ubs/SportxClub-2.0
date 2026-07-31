@@ -96,116 +96,126 @@ export function OwnerProfile() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
-      {/* Header Banner */}
-      <div className="relative rounded-2xl overflow-hidden bg-muted h-48 sm:h-64 shadow-xl">
-        <div className="absolute inset-0 bg-grid-white/10" />
-      </div>
-
-      <div className="px-4 sm:px-6 relative -mt-20 sm:-mt-24">
-        <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 sm:gap-8">
-          <div className="relative">
-            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-background shadow-2xl ring-2 ring-primary/20">
-              {activeProfile.profilePicture ? (
-                <AvatarImage src={activeProfile.profilePicture} className="object-cover" />
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto pb-16 px-1">
+      {/* 1. Avatar & Owner Title Header Section */}
+      <div className="px-1 sm:px-2">
+        <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4">
+          
+          {/* Left Block: Avatar + Name + Badges */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left w-full sm:w-auto">
+            <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-3xl border-2 border-border/60 shadow-lg ring-2 ring-emerald-500/20 bg-background shrink-0">
+              {activeProfile?.profilePicture ? (
+                <AvatarImage src={activeProfile.profilePicture} className="object-cover rounded-3xl" />
               ) : (
-                <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">
+                <AvatarFallback className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 text-2xl font-black rounded-3xl">
                   {getInitials(ownerName)}
                 </AvatarFallback>
               )}
             </Avatar>
-            <Button size="icon" variant="secondary" className="absolute bottom-2 right-2 rounded-full shadow-lg hover:shadow-xl transition-all">
-              <Camera className="h-4 w-4" />
+
+            <div className="space-y-1 mt-1 sm:mt-0 sm:pb-2">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">{ownerName}</h1>
+                <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-lg shrink-0">
+                  Verified Owner
+                </Badge>
+              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground font-semibold max-w-md">
+                {activeProfile?.bio || "Professional Turf Manager & Sports Enthusiast"}
+              </p>
+            </div>
+          </div>
+
+          {/* Right Block: Edit Profile CTA Button */}
+          <div className="w-full sm:w-auto flex justify-center sm:justify-end sm:pb-2">
+            <Button 
+              onClick={() => setIsEditProfileOpen(true)}
+              className="w-full sm:w-auto h-10 px-5 rounded-2xl bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-bold text-xs transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Edit2 className="h-4 w-4 text-emerald-500" />
+              Edit Profile
             </Button>
           </div>
-          
-          <div className="flex-1 text-center sm:text-left space-y-2 mb-4 sm:mb-6">
-            <div className="flex items-center justify-center sm:justify-start gap-3">
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{ownerName}</h1>
-              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 border-primary/20">
-                Verified Owner
-              </Badge>
-              <Button size="sm" variant="outline" className="ml-auto flex items-center gap-2" onClick={() => setIsEditProfileOpen(true)}>
-                <Edit2 className="h-4 w-4" />
-                Edit Profile
-              </Button>
-            </div>
-            <p className="text-muted-foreground text-lg">{activeProfile?.bio || "Professional Turf Manager & Sports Enthusiast"}</p>
-          </div>
+
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Personal Details */}
-        <Card className="md:col-span-1 border-border/50 bg-card/40 backdrop-blur-xl shadow-lg">
-          <CardHeader>
-            <CardTitle>Personal Details</CardTitle>
-            <CardDescription>Your contact information</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Mail className="h-5 w-5 text-primary" />
+      {/* 3. Personal & Business Information Grid */}
+      <div className="grid gap-5 md:grid-cols-3 pt-2">
+        
+        {/* Card 1: Personal Details */}
+        <Card className="md:col-span-1 border border-border/40 bg-card/60 backdrop-blur-xl shadow-lg rounded-3xl p-5 space-y-4">
+          <div className="border-b border-border/40 pb-3">
+            <h3 className="text-base font-bold text-foreground">Personal Details</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Contact credentials & location</p>
+          </div>
+
+          <div className="space-y-4 pt-1">
+            <div className="flex items-center gap-3.5 p-2.5 rounded-2xl bg-muted/20 border border-border/30">
+              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <Mail className="h-4.5 w-4.5" />
               </div>
               <div className="overflow-hidden">
-                <p className="text-sm font-medium text-muted-foreground">Email</p>
-                <p className="font-semibold truncate">{ownerEmail}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Email Address</p>
+                <p className="text-xs font-bold text-foreground truncate">{ownerEmail}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <Phone className="h-5 w-5 text-emerald-500" />
+
+            <div className="flex items-center gap-3.5 p-2.5 rounded-2xl bg-muted/20 border border-border/30">
+              <div className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                <Phone className="h-4.5 w-4.5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                <p className="font-semibold">{activeProfile?.phone || "+91 98765 43210"}</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Phone Number</p>
+                <p className="text-xs font-bold text-foreground">{activeProfile?.phone || "+91 98765 43210"}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                <MapPin className="h-5 w-5 text-blue-500" />
+
+            <div className="flex items-center gap-3.5 p-2.5 rounded-2xl bg-muted/20 border border-border/30">
+              <div className="h-9 w-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                <MapPin className="h-4.5 w-4.5" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Location</p>
-                <p className="font-semibold">Mumbai, India</p>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">City / Location</p>
+                <p className="text-xs font-bold text-foreground">Mumbai, India</p>
               </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
-        {/* Business Profile */}
-        <Card className="md:col-span-2 border-border/50 bg-card/40 backdrop-blur-xl shadow-lg">
-          <CardHeader>
-            <CardTitle>Business Profile</CardTitle>
-            <CardDescription>Manage your business presence</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-8">
-            <div className="grid sm:grid-cols-2 gap-6">
-              <div className="space-y-2 p-4 rounded-xl border border-border/50 bg-muted/20">
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <Building2 className="h-4 w-4" />
-                  <span className="font-medium text-sm">Company Name</span>
+        {/* Card 2: Business Profile */}
+        <Card className="md:col-span-2 border border-border/40 bg-card/60 backdrop-blur-xl shadow-lg rounded-3xl p-5 space-y-4">
+          <div className="border-b border-border/40 pb-3">
+            <h3 className="text-base font-bold text-foreground">Business Profile</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage your registered sports venue entity</p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="p-3.5 rounded-2xl border border-border/40 bg-muted/20 space-y-1">
+                <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
+                  <Building2 className="h-4 w-4" /> Company Name
                 </div>
-                <p className="text-lg font-semibold">{ownerName} Sports Pvt. Ltd.</p>
+                <p className="text-sm font-extrabold text-foreground">{ownerName} Sports Pvt. Ltd.</p>
               </div>
-              <div className="space-y-2 p-4 rounded-xl border border-border/50 bg-muted/20">
-                <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                  <Briefcase className="h-4 w-4" />
-                  <span className="font-medium text-sm">Business Registration No.</span>
+
+              <div className="p-3.5 rounded-2xl border border-border/40 bg-muted/20 space-y-1">
+                <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs">
+                  <Briefcase className="h-4 w-4" /> Business Registration
                 </div>
-                <p className="text-lg font-semibold font-mono">SPORTX-2026-98X2</p>
+                <p className="text-sm font-extrabold font-mono text-foreground">SPORTX-2026-98X2</p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg border-b pb-2">About the Business</h3>
-              <p className="text-muted-foreground leading-relaxed">
+            <div className="space-y-2 pt-2 border-t border-border/40">
+              <h4 className="font-bold text-xs text-foreground uppercase tracking-wider">About the Venue Brand</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed font-medium">
                 Dedicated to providing premium quality sports infrastructure to local communities. 
                 We manage highly rated multi-sport arenas with professional-grade synthetic turf, 
                 floodlights, and top-tier amenities.
               </p>
             </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
 

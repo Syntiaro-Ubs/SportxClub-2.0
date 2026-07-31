@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "../providers/auth-provider";
 import { useTheme } from "next-themes";
 import {
@@ -36,34 +36,6 @@ import { cn } from "../components/ui/utils";
 
 const asset = (path) => `/assets${path}`;
 
-const getBookingData = () => {
-  try {
-    const saved = sessionStorage.getItem("sportxclub_booking");
-    if (saved) {
-      const data = JSON.parse(saved);
-      return {
-        venue: data.venue,
-        image: data.image,
-        location: "Powai, Mumbai",
-        sport: data.sport,
-        date: data.date,
-        time: data.time,
-        price: data.price,
-      };
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  return {
-    venue: "Elite Turf Arena",
-    location: "Powai, Mumbai",
-    sport: "Football",
-    date: "June 18, 2026",
-    time: "7:00 PM - 8:00 PM",
-    price: 1200,
-  };
-};
-
 const methods = [
   {
     id: "upi",
@@ -97,6 +69,8 @@ export function Payment() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [upiOption, setUpiOption] = useState("qr");
   const [timeLeft, setTimeLeft] = useState(300);
@@ -104,7 +78,47 @@ export function Payment() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [teammates, setTeammates] = useState([]);
   const [teammateInput, setTeammateInput] = useState("");
-  const booking = useMemo(() => getBookingData(), []);
+
+  const booking = useMemo(() => {
+    try {
+      const stateData = location.state;
+      if (stateData?.venue) {
+        return {
+          venue: stateData.venue.name || stateData.venue.title || "Elite Turf Arena",
+          image: stateData.venue.image || asset("/venues/turf-1.webp"),
+          location: typeof stateData.venue.location === 'object' ? (stateData.venue.location?.city || stateData.venue.location?.address || 'Powai, Mumbai') : (stateData.venue.location || 'Powai, Mumbai'),
+          sport: stateData.sport || stateData.venue.sport || "Football",
+          date: stateData.date || "June 18, 2026",
+          time: stateData.time || "7:00 PM - 8:00 PM",
+          price: Number(stateData.price) || 1200,
+        };
+      }
+      const saved = sessionStorage.getItem("sportxclub_booking");
+      if (saved) {
+        const data = JSON.parse(saved);
+        return {
+          venue: data.venue || "Elite Turf Arena",
+          image: data.image || asset("/venues/turf-1.webp"),
+          location: data.location || "Powai, Mumbai",
+          sport: data.sport || "Football",
+          date: data.date || "June 18, 2026",
+          time: data.time || "7:00 PM - 8:00 PM",
+          price: Number(data.price) || 1200,
+        };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return {
+      venue: "Elite Turf Arena",
+      image: asset("/venues/turf-1.webp"),
+      location: "Powai, Mumbai",
+      sport: "Football",
+      date: "June 18, 2026",
+      time: "7:00 PM - 8:00 PM",
+      price: 1200,
+    };
+  }, [location.state]);
 
   const subtotal = booking.price;
   const convenienceFee = 45;
@@ -221,19 +235,6 @@ export function Payment() {
     )}>
       <div className="mx-auto max-w-6xl px-0 md:px-6 py-6 pb-6 md:py-8 md:pb-8">
         <div className="px-4 md:px-0">
-          <Button
-            variant="ghost"
-            className={cn(
-              "mb-6 -ml-2 inline-flex gap-2 rounded-full border px-4 py-2 cursor-pointer transition-all",
-              isDark
-                ? "border-white/[0.08] bg-white/[0.03] text-white/80 hover:bg-white/[0.06] hover:text-white"
-                : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900"
-            )}
-            onClick={() => navigate(-1)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            <span>Back to venue</span>
-          </Button>
 
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>

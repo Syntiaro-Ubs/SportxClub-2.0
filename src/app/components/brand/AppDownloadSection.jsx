@@ -15,7 +15,7 @@ export function AppDownloadSection() {
   const isDark = !mounted || resolvedTheme !== "light";
 
   return (
-    <section className={`w-full py-16 px-6 md:px-12 relative overflow-hidden rounded-[32px] border transition-all duration-300 text-left ${
+    <section className={`hidden md:block w-full py-16 px-6 md:px-12 relative overflow-hidden rounded-[32px] border transition-all duration-300 text-left ${
       isDark 
         ? "dark bg-[#090D16] border-white/[0.05] text-white" 
         : "bg-slate-50 border-slate-200/60 text-slate-900"

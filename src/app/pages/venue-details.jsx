@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "../providers/auth-provider";
@@ -203,6 +203,25 @@ export function VenueDetails() {
   );
   const [startTime, setStartTime] = useState("18:00");
   const [playHours, setPlayHours] = useState(1);
+  const [tempDuration, setTempDuration] = useState("1");
+
+  useEffect(() => {
+    setTempDuration(String(playHours));
+  }, [playHours]);
+
+  const commitDuration = () => {
+    const parsed = parseInt(tempDuration, 10);
+    if (isNaN(parsed) || parsed < 1) {
+      setPlayHours(1);
+      setTempDuration("1");
+    } else if (parsed > 12) {
+      setPlayHours(12);
+      setTempDuration("12");
+    } else {
+      setPlayHours(parsed);
+      setTempDuration(String(parsed));
+    }
+  };
   const [showCustomHours, setShowCustomHours] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -212,33 +231,43 @@ export function VenueDetails() {
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
 
   const isToday = selectedDate === new Date().toISOString().split("T")[0];
+  const venueOpeningHour = venue.openingHour || 6;
+  const venueClosingHour = venue.closingHour || 23;
 
-  const baseTimeSlots = [
-    { startHour: 11, label: "11:00 AM", endLabel: "12:00 PM" },
-    { startHour: 12, label: "12:00 PM", endLabel: "01:00 PM" },
-    { startHour: 13, label: "01:00 PM", endLabel: "02:00 PM" },
-    { startHour: 14, label: "02:00 PM", endLabel: "03:00 PM" },
-    { startHour: 15, label: "03:00 PM", endLabel: "04:00 PM" },
-    { startHour: 16, label: "04:00 PM", endLabel: "05:00 PM" },
-    {
-      startHour: 17,
-      label: "05:00 PM",
-      endLabel: "06:00 PM",
-      bookedBy: "Squad Alpha",
-    },
-    { startHour: 18, label: "06:00 PM", endLabel: "07:00 PM" },
-    { startHour: 19, label: "07:00 PM", endLabel: "08:00 PM" },
-    { startHour: 20, label: "08:00 PM", endLabel: "09:00 PM" },
-    { startHour: 21, label: "09:00 PM", endLabel: "10:00 PM" },
-    {
-      startHour: 22,
-      label: "10:00 PM",
-      endLabel: "11:00 PM",
-      bookedBy: "Night League",
-    },
-  ];
+  const baseTimeSlots = useMemo(() => {
+    const slots = [];
+    for (let h = venueOpeningHour; h < venueClosingHour; h++) {
+      const formatHour = (hourNum) => {
+        let h12 = hourNum % 12;
+        if (h12 === 0) h12 = 12;
+        const ampm = hourNum >= 12 && hourNum < 24 ? "PM" : "AM";
+        return `${String(h12).padStart(2, "0")}:00 ${ampm}`;
+      };
+      let bookedBy = undefined;
+      if (h === 17) bookedBy = "Squad Alpha";
+      if (h === 22) bookedBy = "Night League";
 
-  const timeSlots = isToday ? baseTimeSlots.filter(slot => slot.startHour >= 15) : baseTimeSlots;
+      slots.push({
+        startHour: h,
+        label: formatHour(h),
+        endLabel: formatHour(h + 1),
+        bookedBy,
+      });
+    }
+    return slots;
+  }, [venueOpeningHour, venueClosingHour]);
+
+  const currentDate = new Date();
+  const currentLiveHour = currentDate.getHours();
+  // If current minutes > 0 (e.g. 9:08 AM), the 9 AM slot is in progress, so next full hour slot starts at 10 AM
+  const nextFullHour = currentDate.getMinutes() > 0 ? currentLiveHour + 1 : currentLiveHour;
+  const effectiveStartHour = isToday
+    ? Math.max(nextFullHour, venueOpeningHour)
+    : venueOpeningHour;
+
+  const timeSlots = useMemo(() => {
+    return baseTimeSlots.filter((slot) => slot.startHour >= effectiveStartHour);
+  }, [baseTimeSlots, isToday, effectiveStartHour]);
 
   const formatSlotRange = (startHour, hours) => {
     const formatHour = (h) => {
@@ -452,24 +481,7 @@ export function VenueDetails() {
             : "border-slate-200 bg-white/90 text-slate-800 shadow-sm",
         )}
       >
-        <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link
-            to="/venues"
-            className={cn(
-              "flex items-center gap-2 text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer",
-              isDark
-                ? "text-white/70 hover:text-emerald-600"
-                : "text-slate-600 hover:text-emerald-600",
-            )}
-          >
-            <ArrowRight
-              className={cn(
-                "h-4 w-4 rotate-180",
-                isDark ? "text-emerald-600" : "text-emerald-600",
-              )}
-            />
-            <span>Back to Venues</span>
-          </Link>
+        <div className="mx-auto flex h-9 sm:h-10 max-w-[1440px] items-center justify-end px-4 sm:px-6 lg:px-8">
 
           <div className="flex items-center gap-3">
             <Badge
@@ -1012,12 +1024,12 @@ export function VenueDetails() {
                 </div>
 
                 {/* Single Row 3 Dropdown Controls (Sport, Date, Duration) */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
                   {/* 1. Sport Select */}
                   <div className="space-y-1">
                     <label
                       className={cn(
-                        "text-[10px] font-extrabold uppercase tracking-wider block",
+                        "text-[10px] font-extrabold tracking-wider block truncate",
                         isDark ? "text-white/70" : "text-slate-700"
                       )}
                     >
@@ -1026,7 +1038,7 @@ export function VenueDetails() {
                     <Select value={selectedSport} onValueChange={setSelectedSport}>
                       <SelectTrigger
                         className={cn(
-                          "h-10 rounded-xl border text-xs font-bold w-full transition-all cursor-pointer shadow-xs",
+                          "h-10 rounded-xl border text-[11px] sm:text-xs font-bold w-full transition-all cursor-pointer shadow-xs px-1.5 sm:px-3",
                           isDark
                             ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
                             : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
@@ -1046,7 +1058,7 @@ export function VenueDetails() {
                   <div className="space-y-1 relative">
                     <label
                       className={cn(
-                        "text-[10px] font-extrabold uppercase tracking-wider block",
+                        "text-[10px] font-extrabold tracking-wider block truncate",
                         isDark ? "text-white/70" : "text-slate-700"
                       )}
                     >
@@ -1066,24 +1078,32 @@ export function VenueDetails() {
                     >
                       <SelectTrigger
                         className={cn(
-                          "h-10 rounded-xl border text-xs font-bold w-full transition-all cursor-pointer shadow-xs",
+                          "h-10 rounded-xl border text-[11px] sm:text-xs font-bold w-full transition-all cursor-pointer shadow-xs px-1.5 sm:px-3",
                           isDark
                             ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
                             : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
                         )}
                       >
                         <SelectValue placeholder="Select Date">
-                          📅 {formatDateLabel(selectedDate)}
+                          <span className="truncate block">
+                            📅 {
+                              selectedDate === dateOptions[0]?.iso
+                                ? "Today"
+                                : selectedDate === dateOptions[1]?.iso
+                                  ? "Tomorrow"
+                                  : formatDateLabel(selectedDate)
+                            }
+                          </span>
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 z-50">
                         {dateOptions.map((opt) => (
                           <SelectItem key={opt.iso} value={opt.iso} className="text-xs font-bold py-2 cursor-pointer">
-                            📅 {opt.label} ({formatDateLabel(opt.iso)})
+                            📅 {opt.label}
                           </SelectItem>
                         ))}
                         <SelectItem value="custom" className="text-xs font-bold py-2 cursor-pointer">
-                          📆 Pick Custom Date (Open Calendar)...
+                          📅 Custom Date
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -1098,10 +1118,10 @@ export function VenueDetails() {
                         />
                         <div
                           className={cn(
-                            "absolute left-0 top-16 z-50 w-72 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95",
+                            "absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-12 z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border p-3.5 sm:p-4 shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95",
                             isDark
-                              ? "bg-[#0d0f15]/95 border-emerald-600/30 text-white"
-                              : "bg-white/95 border-slate-300 text-slate-800 shadow-emerald-500/10"
+                              ? "bg-[#0d0f15]/98 border-emerald-600/30 text-white"
+                              : "bg-white border-slate-300 text-slate-800 shadow-emerald-500/10"
                           )}
                         >
                           {/* Calendar Header */}
@@ -1192,38 +1212,72 @@ export function VenueDetails() {
                     )}
                   </div>
 
-                  {/* 3. Duration Select */}
+                  {/* 3. Duration Select & Direct Manual Input */}
                   <div className="space-y-1">
                     <label
                       className={cn(
-                        "text-[10px] font-extrabold uppercase tracking-wider block",
+                        "text-[10px] font-extrabold tracking-wider block truncate",
                         isDark ? "text-white/70" : "text-slate-700"
                       )}
                     >
                       3. Duration
                     </label>
-                    <Select
-                      value={String(playHours)}
-                      onValueChange={(val) => setPlayHours(Number(val))}
+                    <div
+                      className={cn(
+                        "h-10 rounded-xl border text-[11px] sm:text-xs font-bold w-full transition-all flex items-center justify-between px-1.5 sm:px-2.5 shadow-xs relative",
+                        isDark
+                          ? "bg-slate-900/60 border-slate-700 text-white focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
+                          : "bg-white border-slate-300 text-slate-900 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
+                      )}
                     >
-                      <SelectTrigger
-                        className={cn(
-                          "h-10 rounded-xl border text-xs font-bold w-full transition-all cursor-pointer shadow-xs",
-                          isDark
-                            ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
-                            : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
-                        )}
+                      <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 flex-1">
+                        <span className="shrink-0 text-xs">⏱️</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          value={tempDuration}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || /^[0-9]+$/.test(val)) {
+                              setTempDuration(val);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              commitDuration();
+                              e.target.blur();
+                            }
+                          }}
+                          onBlur={commitDuration}
+                          className="w-5 sm:w-6 bg-transparent text-center font-extrabold focus:outline-none text-xs p-0 m-0 border-0 focus:ring-0 text-foreground cursor-text"
+                          aria-label="Custom Duration in Hours"
+                        />
+                        <span className="text-[11px] sm:text-xs font-bold shrink-0">{playHours === 1 ? "Hr" : "Hrs"}</span>
+                      </div>
+
+                      {/* Dropdown for quick presets */}
+                      <Select
+                        value={String(playHours)}
+                        onValueChange={(val) => setPlayHours(Number(val))}
                       >
-                        <SelectValue placeholder="Select Duration" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
-                        <SelectItem value="1" className="text-xs font-bold py-2">⏱️ 1 Hr</SelectItem>
-                        <SelectItem value="2" className="text-xs font-bold py-2">⏱️ 2 Hrs</SelectItem>
-                        <SelectItem value="3" className="text-xs font-bold py-2">⏱️ 3 Hrs</SelectItem>
-                        <SelectItem value="4" className="text-xs font-bold py-2">⏱️ 4 Hrs</SelectItem>
-                        <SelectItem value="5" className="text-xs font-bold py-2">⏱️ 5 Hrs</SelectItem>
-                      </SelectContent>
-                    </Select>
+                        <SelectTrigger
+                          className="h-full w-5 p-0 border-0 shadow-none bg-transparent hover:bg-transparent focus:ring-0 focus:outline-none cursor-pointer flex items-center justify-center shrink-0"
+                          aria-label="Preset Duration Options"
+                        >
+                          <SelectValue placeholder="" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 z-50">
+                          <SelectItem value="1" className="text-xs font-bold py-2">⏱️ 1 Hr</SelectItem>
+                          <SelectItem value="2" className="text-xs font-bold py-2">⏱️ 2 Hrs</SelectItem>
+                          <SelectItem value="3" className="text-xs font-bold py-2">⏱️ 3 Hrs</SelectItem>
+                          <SelectItem value="4" className="text-xs font-bold py-2">⏱️ 4 Hrs</SelectItem>
+                          <SelectItem value="5" className="text-xs font-bold py-2">⏱️ 5 Hrs</SelectItem>
+                          <SelectItem value="6" className="text-xs font-bold py-2">⏱️ 6 Hrs</SelectItem>
+                          <SelectItem value="8" className="text-xs font-bold py-2">⏱️ 8 Hrs</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
@@ -1232,7 +1286,7 @@ export function VenueDetails() {
                   <div className="flex items-center justify-between">
                     <label
                       className={cn(
-                        "text-xs font-bold uppercase tracking-wider",
+                        "text-xs font-bold tracking-wider",
                         isDark ? "text-white/70" : "text-slate-700",
                       )}
                     >
@@ -1249,109 +1303,116 @@ export function VenueDetails() {
                   </div>
 
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-                    {timeSlots.map((slot) => {
-                      const slotHour = slot.startHour;
-                      const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
-                      const overlaps = isOverlapping(slotHour);
-                      const outOfBounds = isOutOfBounds(slotHour);
-                      const cannotSelect = isBooked || overlaps || outOfBounds;
-                      const selectedStartHour = getStartHour(startTime);
-                      const isSelected = selectedStartHour !== null && slotHour >= selectedStartHour && slotHour < selectedStartHour + playHours;
-                      const slotPrice = getSlotPrice(slotHour, playHours);
+                    {timeSlots.length === 0 ? (
+                      <div className="col-span-full py-8 text-center px-4 rounded-2xl border border-dashed border-border bg-muted/20">
+                        <p className="text-xs font-bold text-muted-foreground">
+                          ⏰ All time slots for today have passed. Please select Tomorrow or pick a custom date.
+                        </p>
+                      </div>
+                    ) : (
+                      timeSlots.map((slot) => {
+                        const slotHour = slot.startHour;
+                        const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
+                        const overlaps = isOverlapping(slotHour);
+                        const outOfBounds = isOutOfBounds(slotHour);
+                        const cannotSelect = isBooked || overlaps || outOfBounds;
+                        const selectedStartHour = getStartHour(startTime);
+                        const isSelected = selectedStartHour !== null && slotHour === selectedStartHour;
+                        const slotPrice = getSlotPrice(slotHour, playHours);
 
-                      return (
-                        <button
-                          key={slotHour}
-                          type="button"
-                          disabled={overlaps || outOfBounds}
-                          onClick={() => !cannotSelect && setStartTime(hourToTimeStr(slotHour))}
-                          className={cn(
-                            "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative",
-                            !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
-                            isSelected
-                              ? isDark
-                                ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
-                                : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
-                              : cannotSelect
-                                ? isDark
-                                  ? "border-red-500/20 bg-red-500/10 opacity-50"
-                                  : "border-red-200 bg-red-50 text-red-700 opacity-60"
-                                : isDark
-                                  ? "border-white/10 bg-white/[0.03] text-white hover:border-emerald-600/50 hover:bg-white/[0.08]"
-                                  : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
-                          )}
-                        >
-                          <span
+                        return (
+                          <button
+                            key={slotHour}
+                            type="button"
+                            disabled={overlaps || outOfBounds}
+                            onClick={() => !cannotSelect && setStartTime(hourToTimeStr(slotHour))}
                             className={cn(
-                              "text-xs font-bold",
-                              cannotSelect
-                                ? isDark
-                                  ? "text-white/40"
-                                  : "text-red-400"
-                                : isDark
-                                  ? "text-white"
-                                  : "text-slate-800",
-                            )}
-                          >
-                            {formatSlotRange(slotHour, 1).replace(/ PM -| AM -/g, " -")}
-                          </span>
-
-                          {!cannotSelect && (
-                            <span
-                              className={cn(
-                                "text-[11px] font-black mt-0.5",
-                                isDark
-                                  ? "text-emerald-600"
-                                  : "text-emerald-700",
-                              )}
-                            >
-                              ₹{slotPrice}
-                            </span>
-                          )}
-
-                          <span
-                            className={cn(
-                              "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
+                              "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative",
+                              !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
                               isSelected
                                 ? isDark
-                                  ? "text-emerald-600"
-                                  : "text-emerald-600"
+                                  ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                                  : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
                                 : cannotSelect
-                                  ? "text-red-500"
+                                  ? isDark
+                                    ? "border-red-500/20 bg-red-500/10 opacity-50"
+                                    : "border-red-200 bg-red-50 text-red-700 opacity-60"
                                   : isDark
-                                    ? "text-emerald-600/70"
-                                    : "text-emerald-600/70",
+                                    ? "border-white/10 bg-white/[0.03] text-white hover:border-emerald-600/50 hover:bg-white/[0.08]"
+                                    : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
                             )}
                           >
-                            {cannotSelect ? (
-                              <div className="flex flex-col items-center w-full">
-                                <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
-                                {isBooked && (
-                                  <div className="flex flex-col items-center mt-1 w-full gap-0.5">
-                                    <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white/50 leading-none">
-                                      Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
-                                    </span>
-                                    <div
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setCancelledSlots([...cancelledSlots, slotHour]);
-                                      }}
-                                      className="px-1.5 py-0.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm mt-0.5"
-                                    >
-                                      CANCEL
-                                    </div>
-                                  </div>
+                            <span
+                              className={cn(
+                                "text-xs font-bold",
+                                cannotSelect
+                                  ? isDark
+                                    ? "text-white/40"
+                                    : "text-red-400"
+                                  : isDark
+                                    ? "text-white"
+                                    : "text-slate-800",
+                              )}
+                            >
+                              {formatSlotRange(slotHour, playHours).replace(/ PM -| AM -/g, " -")}
+                            </span>
+
+                            {!cannotSelect && (
+                              <span
+                                className={cn(
+                                  "text-[11px] font-black mt-0.5",
+                                  isDark
+                                    ? "text-emerald-600"
+                                    : "text-emerald-700",
                                 )}
-                              </div>
-                            ) : isSelected ? (
-                              "Selected ✓"
-                            ) : (
-                              "Available"
+                              >
+                                <span className="rupee-symbol">₹</span>{slotPrice}
+                              </span>
                             )}
-                          </span>
-                        </button>
-                      );
-                    })}
+
+                            <span
+                              className={cn(
+                                "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
+                                isSelected
+                                  ? isDark
+                                    ? "text-emerald-600"
+                                    : "text-emerald-600"
+                                  : cannotSelect
+                                    ? "text-red-500"
+                                    : isDark
+                                      ? "text-emerald-600/70"
+                                      : "text-emerald-600/70",
+                              )}
+                            >
+                              {cannotSelect ? (
+                                <div className="flex flex-col items-center w-full">
+                                  <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
+                                  {isBooked && (
+                                    <div className="flex flex-col items-center mt-1 w-full gap-0.5">
+                                      <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white/50 leading-none">
+                                        Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
+                                      </span>
+                                      <div
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCancelledSlots([...cancelledSlots, slotHour]);
+                                        }}
+                                        className="px-1.5 py-0.5 bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm mt-0.5"
+                                      >
+                                        CANCEL
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : isSelected ? (
+                                "Selected ✓"
+                              ) : (
+                                "Available"
+                              )}
+                            </span>
+                          </button>
+                        );
+                      }))}
                   </div>
                 </div>
 
@@ -1384,7 +1445,7 @@ export function VenueDetails() {
                         isDark ? "text-emerald-600" : "text-emerald-600",
                       )}
                     >
-                      ₹{getSlotPrice(getStartHour(startTime), playHours)}
+                      <span className="rupee-symbol">₹</span>{getSlotPrice(getStartHour(startTime), playHours)}
                     </span>
                   </div>
                 </div>

@@ -641,7 +641,7 @@ export function VenueBooking() {
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-2.5 px-2.5 z-10 flex items-end justify-between gap-1">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2.5 mb-1.5 w-full whitespace-nowrap text-[9px] sm:text-[10px] leading-none">
-                <span className="text-emerald-600 font-extrabold tracking-wider uppercase drop-shadow-sm shrink-0">
+                <span className="!text-white font-extrabold tracking-wider uppercase drop-shadow-sm shrink-0">
                   {venue.sports}
                 </span>
                 <div className="flex items-center gap-0.5 text-white font-semibold shrink-0">
@@ -760,7 +760,7 @@ export function VenueBooking() {
           {/* Header Section */}
           <div className="flex items-end justify-between mb-3">
             <div>
-              <h2 className="text-2xl md:text-[28px] font-semibold text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-xl md:text-[25px] font-semibold text-slate-900 dark:text-white tracking-tight">
                 Recommended Venues
               </h2>
             </div>
@@ -809,7 +809,7 @@ export function VenueBooking() {
           {/* Explore Other Venues Header */}
           <div className="flex items-end justify-between mt-2 mb-3">
             <div>
-              <h2 className="text-2xl md:text-[28px] font-semibold text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-xl md:text-[25px] font-semibold text-slate-900 dark:text-white tracking-tight">
                 All Venues
               </h2>
             </div>

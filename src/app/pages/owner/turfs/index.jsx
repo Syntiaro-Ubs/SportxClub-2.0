@@ -67,6 +67,39 @@ export function TurfList() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const handleToggleStatus = (turfId) => {
+    const updatedData = data.map(item => {
+      if (String(item.id) === String(turfId)) {
+        const newStatus = item.status === "Active" ? "Disabled" : "Active";
+        return { ...item, status: newStatus };
+      }
+      return item;
+    });
+    setData(updatedData);
+
+    const savedMockTurfs = JSON.parse(localStorage.getItem("mock_turfs") || "[]");
+    const updatedSaved = savedMockTurfs.map(item => {
+      if (String(item.id) === String(turfId)) {
+        return { ...item, status: item.status === "Active" ? "Disabled" : "Active" };
+      }
+      return item;
+    });
+    localStorage.setItem("mock_turfs", JSON.stringify(updatedSaved));
+    window.dispatchEvent(new Event("turf_updated"));
+  };
+
+  const handleDeleteTurf = (turfId) => {
+    if (window.confirm("Are you sure you want to delete this turf venue?")) {
+      const updatedData = data.filter(item => String(item.id) !== String(turfId));
+      setData(updatedData);
+
+      const savedMockTurfs = JSON.parse(localStorage.getItem("mock_turfs") || "[]");
+      const updatedSaved = savedMockTurfs.filter(item => String(item.id) !== String(turfId));
+      localStorage.setItem("mock_turfs", JSON.stringify(updatedSaved));
+      window.dispatchEvent(new Event("turf_updated"));
+    }
+  };
+
   useEffect(() => {
     const fetchTurfs = async () => {
       try {
@@ -217,9 +250,17 @@ export function TurfList() {
               <CardContent className="p-5">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h3 className=" text-lg line-clamp-1">{turf.name}</h3>
-                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                      <MapPin className="h-3.5 w-3.5" />
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-extrabold line-clamp-1 text-foreground">{turf.name}</h3>
+                      <Badge className={`text-[9px] uppercase tracking-wider font-extrabold rounded-md px-2 py-0.5 ${turf.status === 'Active'
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                        }`}>
+                        {turf.status || 'Active'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1 font-medium">
+                      <MapPin className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                       {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
                     </p>
                   </div>
@@ -228,25 +269,25 @@ export function TurfList() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 -mr-2"
+                        className="h-8 w-8 -mr-2 rounded-xl cursor-pointer hover:bg-muted"
                       >
-                        <MoreVertical className="h-4 w-4" />
+                        <MoreVertical className="h-4 w-4 text-foreground" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="gap-2">
-                        <Eye className="h-4 w-4" /> View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2" asChild>
-                        <Link to={`/owner-dashboard/turfs/${turf.id}/edit`}>
-                          <Edit className="h-4 w-4" /> Edit Turf
+                    <DropdownMenuContent align="end" className="w-40 rounded-2xl p-1.5 shadow-xl border-slate-300 dark:border-slate-700">
+                      {/* 1. View Details */}
+                      <DropdownMenuItem className="gap-2 cursor-pointer font-semibold rounded-xl" asChild>
+                        <Link to={`/venue/${turf.id || 'turf-1'}`}>
+                          <Eye className="h-4 w-4 text-emerald-500" /> View Details
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2">
-                        <PowerOff className="h-4 w-4" /> Disable
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="gap-2 text-destructive">
-                        <Trash2 className="h-4 w-4" /> Delete
+
+                      {/* 2. Delete */}
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteTurf(turf.id)}
+                        className="gap-2 cursor-pointer font-semibold rounded-xl text-rose-500 focus:text-rose-500 hover:bg-rose-500/10"
+                      >
+                        <Trash2 className="h-4 w-4 text-rose-500" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

@@ -202,7 +202,7 @@ export function TournamentOrganizerDashboard() {
         {/* Create Tournament CTA */}
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
           <DialogTrigger asChild>
-            <Button className="h-10 px-4 rounded-xl bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-extrabold text-xs shadow-none cursor-pointer flex items-center gap-2 transition-all shrink-0">
+            <Button className="w-1/2 min-w-[170px] max-w-[220px] h-10 px-3 rounded-xl bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-extrabold text-xs shadow-none cursor-pointer flex items-center justify-center gap-2 transition-all shrink-0">
               <Plus className="h-4 w-4 stroke-[2.5]" />
               Create New Tournament
             </Button>
@@ -305,7 +305,8 @@ export function TournamentOrganizerDashboard() {
         </Dialog>
       </div>
 
-      <div className="grid gap-3.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 w-full">
+      {/* Summary Stat Cards (2 Cards per row on Mobile) */}
+      <div className="grid gap-2.5 sm:gap-3.5 grid-cols-2 lg:grid-cols-4 w-full">
         {[
           {
             label: "Active Tournaments",
@@ -336,17 +337,17 @@ export function TournamentOrganizerDashboard() {
           return (
             <Card
               key={stat.label}
-              className="gap-0 bg-slate-50/80 dark:bg-slate-900/60 border-2 border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 min-h-[90px] text-foreground shadow-2xs hover:shadow-xs"
+              className="gap-0 bg-slate-50/80 dark:bg-slate-900/60 border-2 border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition-all duration-300 rounded-2xl flex flex-col justify-between p-3 sm:p-3.5 pb-2 sm:pb-2.5 min-h-[85px] text-foreground shadow-2xs hover:shadow-xs"
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
-                  <h3 className="text-2xl font-black tracking-tight mt-0.5 text-foreground">{stat.value}</h3>
+                  <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{stat.label}</p>
+                  <h3 className="text-xl sm:text-2xl font-black tracking-tight mt-0.5 text-foreground">{stat.value}</h3>
                 </div>
-                <Icon className="h-5 w-5 text-emerald-600 dark:text-emerald-400 stroke-[2.2] shrink-0" />
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400 stroke-[2.2] shrink-0" />
               </div>
-              <div className="mt-2 text-[10px] font-extrabold flex items-center gap-1 text-muted-foreground">
-                <Sparkles className="h-3 w-3 text-foreground" /> {stat.badge}
+              <div className="mt-1.5 text-[9px] sm:text-[10px] font-extrabold flex items-center gap-1 text-muted-foreground">
+                <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-foreground" /> {stat.badge}
               </div>
             </Card>
           );
@@ -361,11 +362,8 @@ export function TournamentOrganizerDashboard() {
               <Trophy className="h-4.5 w-4.5 text-amber-500" />
               My Organized Tournaments
             </h2>
-            <p className="text-xs text-muted-foreground">Active leagues, slot fixtures and registration status</p>
+            <p className="text-xs text-muted-foreground hidden sm:block">Active leagues, slot fixtures and registration status</p>
           </div>
-          <span className="px-3 py-1 rounded-xl text-[10px] font-extrabold border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent">
-            {tournamentsList.length} Total Hosted
-          </span>
         </div>
 
         <div className="space-y-3">
