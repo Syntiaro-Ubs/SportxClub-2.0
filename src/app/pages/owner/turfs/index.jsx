@@ -199,7 +199,7 @@ export function TurfList() {
           <Button variant="outline" className="rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold px-5 cursor-pointer transition-all shrink-0">Filter</Button>
         </div>
 
-        <Link to="/owner-dashboard/turfs/add" className="shrink-0">
+        <Link to="/admin-panel/turfs/add" className="shrink-0">
           <Button
             variant="outline"
             className="gap-2 border border-slate-300 dark:border-slate-700 text-foreground hover:bg-transparent hover:border-emerald-500 transition-colors font-bold cursor-pointer rounded-full px-5 w-full sm:w-auto"
@@ -221,7 +221,7 @@ export function TurfList() {
                 : "You haven't added any turfs yet."}
             </p>
             {!searchQuery && (
-              <Link to="/owner-dashboard/turfs/add">
+              <Link to="/admin-panel/turfs/add">
                 <Button variant="outline">Add Your First Turf</Button>
               </Link>
             )}
@@ -312,7 +312,7 @@ export function TurfList() {
                       /hr
                     </span>
                   </span>
-                  <Link to={`/owner-dashboard/turfs/${turf.id}/edit`}>
+                  <Link to={`/admin-panel/turfs/${turf.id}/edit`}>
                     <Button
                       variant="outline"
                       size="sm"

@@ -47,17 +47,17 @@ import { Label } from "../ui/label";
 import { toast } from "sonner";
 
 const ownerNavigation = [
-  { name: "Dashboard", href: "/owner-dashboard", icon: LayoutDashboard },
-  { name: "Revenue", href: "/owner-dashboard/revenue", icon: IndianRupee },
-  { name: "Bookings", href: "/owner-dashboard/bookings", icon: CalendarDays, badge: "18" },
-  { name: "My Turfs", href: "/owner-dashboard/turfs", icon: MapPin, badge: "4" },
-  { name: "Report", href: "/owner-dashboard/report", icon: FileText },
-  { name: "Roles", href: "/owner-dashboard/staff", icon: User },
-  { name: "Events", href: "/owner-dashboard/tournaments", icon: Trophy, badge: "2" },
-  { name: "Calendar", href: "/owner-dashboard/calendar", icon: Calendar },
-  { name: "Reviews", href: "/owner-dashboard/reviews", icon: Star, badge: "4.8★" },
-  { name: "Promotions", href: "/owner-dashboard/promotions", icon: Tag },
-  { name: "Settings", href: "/owner-dashboard/settings", icon: Settings },
+  { name: "Dashboard", href: "/admin-panel", icon: LayoutDashboard },
+  { name: "Revenue", href: "/admin-panel/revenue", icon: IndianRupee },
+  { name: "Bookings", href: "/admin-panel/bookings", icon: CalendarDays, badge: "18" },
+  { name: "My Turfs", href: "/admin-panel/turfs", icon: MapPin, badge: "4" },
+  { name: "Report", href: "/admin-panel/report", icon: FileText },
+  { name: "Roles", href: "/admin-panel/staff", icon: User },
+  { name: "Events", href: "/admin-panel/tournaments", icon: Trophy, badge: "2" },
+  { name: "Calendar", href: "/admin-panel/calendar", icon: Calendar },
+  { name: "Reviews", href: "/admin-panel/reviews", icon: Star, badge: "4.8★" },
+  { name: "Promotions", href: "/admin-panel/promotions", icon: Tag },
+  { name: "Settings", href: "/admin-panel/settings", icon: Settings },
 ];
 
 export function OwnerLayout() {
@@ -138,7 +138,7 @@ export function OwnerLayout() {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <a href="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+        <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
           <Logo className="h-[50px] md:h-[80px]" />
         </a>
       </div>
@@ -148,7 +148,7 @@ export function OwnerLayout() {
           const Icon = item.icon;
           const isActive =
             location.pathname === item.href ||
-            (item.href !== "/owner-dashboard" &&
+            (item.href !== "/admin-panel" &&
               location.pathname.startsWith(item.href));
           return (
             <Link
@@ -201,7 +201,7 @@ export function OwnerLayout() {
               <span className="sr-only">Open sidebar</span>
               <Menu className="h-6 w-6" aria-hidden="true" />
             </button>
-            <a href="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+            <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
               <Logo className="h-[50px] md:h-[80px]" />
             </a>
           </div>
@@ -220,7 +220,7 @@ export function OwnerLayout() {
                   >
                     <Menu className="h-5 w-5" />
                   </button>
-                  <a href="/owner-dashboard" className="flex items-center shrink-0 translate-y-[6px]">
+                  <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
                     <Logo className="h-[50px] md:h-[80px]" />
                   </a>
                 </div>
@@ -268,7 +268,7 @@ export function OwnerLayout() {
                     <p className="text-[10px] text-muted-foreground truncate">{ownerEmail}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/owner-dashboard/profile")} className="cursor-pointer rounded-xl text-xs font-medium py-2">
+                  <DropdownMenuItem onClick={() => navigate("/admin-panel/profile")} className="cursor-pointer rounded-xl text-xs font-medium py-2">
                     <User className="mr-2 h-4 w-4 text-emerald-500" />
                     View Profile
                   </DropdownMenuItem>

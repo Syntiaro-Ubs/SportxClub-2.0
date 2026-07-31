@@ -209,7 +209,7 @@ export function EditTurf() {
       }
 
       toast.success("Turf updated successfully! Changes saved across all pages.");
-      navigate("/owner-dashboard/turfs");
+      navigate("/admin-panel/turfs");
     } catch (err) {
       toast.error("Failed to save changes");
     } finally {
@@ -242,7 +242,7 @@ export function EditTurf() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-3">
         <div className="flex items-center gap-3">
-          <Link to="/owner-dashboard/turfs">
+          <Link to="/admin-panel/turfs">
             <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl border-slate-300 dark:border-slate-700/80 hover:bg-accent cursor-pointer">
               <ArrowLeft className="h-4 w-4" />
             </Button>

@@ -588,7 +588,7 @@ export function Dashboard() {
 
         {/* Card 1: Gross Revenue */}
         <Card
-          onClick={() => navigate("/owner-dashboard/revenue")}
+          onClick={() => navigate("/admin-panel/revenue")}
           className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
           <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
@@ -623,7 +623,7 @@ export function Dashboard() {
 
         {/* Card 2: Today's Bookings */}
         <Card
-          onClick={() => navigate("/owner-dashboard/bookings")}
+          onClick={() => navigate("/admin-panel/bookings")}
           className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
           <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
@@ -690,7 +690,7 @@ export function Dashboard() {
 
         {/* Card 3: Active Turfs */}
         <Card
-          onClick={() => navigate("/owner-dashboard/turfs")}
+          onClick={() => navigate("/admin-panel/turfs")}
           className="relative overflow-hidden border border-emerald-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
           <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
@@ -723,7 +723,7 @@ export function Dashboard() {
 
         {/* Card 4: Quality Feedback */}
         <Card
-          onClick={() => navigate("/owner-dashboard/reviews")}
+          onClick={() => navigate("/admin-panel/reviews")}
           className="relative overflow-hidden border border-amber-500/20 bg-card/60 backdrop-blur-2xl shadow-xl hover:shadow-2xl hover:border-amber-500/40 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer rounded-2xl group flex flex-col justify-between"
         >
           <CardContent className="p-3 sm:p-3.5 pb-2 sm:pb-2.5 [&:last-child]:pb-2 sm:[&:last-child]:pb-2.5 relative z-10 flex flex-col justify-between h-full flex-1">
@@ -824,8 +824,8 @@ export function Dashboard() {
             <div className="min-h-[28px] flex flex-col justify-start mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
             </div>
-            <div className="flex flex-row items-center justify-between gap-4 w-full h-[210px] min-w-0">
-              <div className="relative h-[180px] w-[180px] shrink-0 flex items-center justify-center">
+            <div className="flex flex-row items-center justify-between md:justify-center lg:justify-between gap-4 md:gap-16 lg:gap-4 w-full h-[210px] min-w-0">
+              <div className="relative h-[180px] w-[180px] md:h-[200px] md:w-[200px] lg:h-[180px] lg:w-[180px] shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -990,12 +990,12 @@ export function Dashboard() {
             <thead>
               <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground text-center">
                 <th className="w-[11%] px-1.5 py-2 text-center">Booking ID</th>
-                <th className="w-[19%] px-1.5 py-2 text-center">Customer Details</th>
-                <th className="w-[22%] px-1.5 py-2 text-center">Turf & Sport</th>
-                <th className="w-[20%] px-1.5 py-2 text-center">Slot Time & Date</th>
-                <th className="w-[12%] px-1.5 py-2 text-center">Amount Paid</th>
-                <th className="w-[10%] px-1.5 py-2 text-center">Status</th>
-                <th className="w-[6%] px-1.5 py-2 text-center">Actions</th>
+                <th className="w-[18%] px-1.5 py-2 text-center">Customer Details</th>
+                <th className="w-[19%] px-1.5 py-2 text-center">Turf & Sport</th>
+                <th className="w-[18%] px-1.5 py-2 text-center">Slot Time & Date</th>
+                <th className="w-[10%] px-1.5 py-2 text-center">Amount Paid</th>
+                <th className="w-[12%] px-1.5 py-2 text-center">Status</th>
+                <th className="w-[12%] px-1.5 py-2 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/30 text-xs">

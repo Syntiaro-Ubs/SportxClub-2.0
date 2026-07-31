@@ -32,7 +32,8 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const initialType = searchParams.get("type") || "player";
+  const isOwnerRoute = location.pathname === "/admin-login";
+  const initialType = isOwnerRoute ? "owner" : (searchParams.get("type") || "player");
 
   const { login, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -59,9 +60,9 @@ export function LoginPage() {
 
     setTimeout(() => {
       if (result.user.role === "owner" || loginType === "owner") {
-        navigate("/owner-dashboard");
+        navigate("/admin-panel");
       } else if (result.user.role === "admin") {
-        navigate("/admin");
+        navigate("/site-maker");
       } else {
         navigate("/");
       }
@@ -100,8 +101,8 @@ export function LoginPage() {
       localStorage.setItem("userName", result.user.fullName.split(" ")[0]);
       setIsSuccess(true);
       setTimeout(() => {
-        if (result.user.role === "owner" || loginType === "owner") navigate("/owner-dashboard");
-        else if (result.user.role === "admin") navigate("/admin");
+        if (result.user.role === "owner" || loginType === "owner") navigate("/admin-panel");
+        else if (result.user.role === "admin") navigate("/site-maker");
         else navigate("/");
       }, 1500);
     } else {
@@ -171,7 +172,7 @@ export function LoginPage() {
           <div className="space-y-3">
             <div className="space-y-0.5 mb-2">
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-tight">
-                {loginType === "owner" ? "Turf Owner Login" : "Login"}
+                {loginType === "owner" ? "Admin Login" : "Login"}
               </h1>
               <p className="text-xs text-slate-600 pt-1">
                 Enter your credentials below to access<br className="hidden sm:block" /> your account.

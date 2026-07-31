@@ -12,10 +12,17 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <Navigate to="/owner-dashboard" replace />,
+    element: <Navigate to="/admin-panel" replace />,
   },
   {
     path: "/login",
+    lazy: async () => {
+      const { LoginPage } = await import("./app/pages/login");
+      return { Component: LoginPage };
+    },
+  },
+  {
+    path: "/admin-login",
     lazy: async () => {
       const { LoginPage } = await import("./app/pages/login");
       return { Component: LoginPage };
@@ -43,7 +50,7 @@ export const router = createBrowserRouter([
     },
   },
   {
-    path: "/admin",
+    path: "/site-maker",
     element: <AdminLayout />,
     children: [
       {
@@ -175,7 +182,7 @@ export const router = createBrowserRouter([
     ]
   },
   {
-    path: "/owner-dashboard",
+    path: "/admin-panel",
     element: <OwnerLayout />,
     children: [
       {
