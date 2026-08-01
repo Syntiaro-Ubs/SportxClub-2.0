@@ -268,7 +268,7 @@ export function OwnerLayout() {
                     <p className="text-[10px] text-muted-foreground truncate">{ownerEmail}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/admin-panel/profile")} className="cursor-pointer rounded-xl text-xs font-medium py-2">
+                  <DropdownMenuItem onClick={() => navigate("/admin-panel/profile")} className="cursor-pointer rounded-xl text-xs font-medium py-2 focus:text-emerald-600 dark:focus:text-emerald-400 focus:bg-emerald-500/10">
                     <User className="mr-2 h-4 w-4 text-emerald-500" />
                     View Profile
                   </DropdownMenuItem>

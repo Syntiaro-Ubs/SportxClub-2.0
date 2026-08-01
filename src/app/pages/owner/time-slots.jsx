@@ -663,7 +663,7 @@ export function TimeSlots() {
           Header Title & Details Row
           ------------------------------------------------------------- */}
       <div className="flex flex-col xl:flex-row xl:items-center gap-4 xl:gap-6 py-2">
-        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 flex-1 min-w-0">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 flex-1 min-w-0">
           <h1 className="text-xl font-bold tracking-tight text-foreground shrink-0">
             Turf Slot Management
           </h1>
@@ -671,85 +671,85 @@ export function TimeSlots() {
           {/* Turf, Duration & Calendar Selector Row */}
           <div className="flex flex-row flex-wrap items-center gap-2 shrink-0">
 
-          {/* Turf Selector Dropdown */}
-          <div className="flex-1 sm:flex-initial sm:w-[155px] min-w-0">
-            <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
-              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
-                <SelectValue placeholder="Select Turf" className="truncate" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
-                <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
-                  ⚡ All Turfs <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">(View All Grounds Stacked)</span>
-                </SelectItem>
-                {turfs.map(turf => (
-                  <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                    {turf.name} <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location})</span>
+            {/* Turf Selector Dropdown */}
+            <div className="flex-1 sm:flex-initial sm:w-[200px] min-w-0">
+              <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
+                <SelectTrigger className="h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
+                  <SelectValue placeholder="Select Turf" className="truncate" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
+                  <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
+                    ⚡ All Turfs <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">(View All Grounds Stacked)</span>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                  {turfs.map(turf => (
+                    <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                      {turf.name} <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Duration Selector Dropdown */}
-          <div className="flex-1 sm:flex-initial sm:w-[145px] min-w-0">
-            <Select
-              value={selectedDurationOption}
-              onValueChange={(val) => {
-                setSelectedDurationOption(val);
-                if (val === "1") setPlayHours(1);
-                else if (val === "2") setPlayHours(2);
-                else if (val === "3") setPlayHours(3);
-                else if (val === "custom") {
-                  setIsCustomDurationDialogOpen(true);
-                }
-              }}
-            >
-              <SelectTrigger className="h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
-                <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
-                  <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                  <SelectValue placeholder="Duration" className="truncate" />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
-                <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  1 Hour <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
-                </SelectItem>
-                <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  2 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
-                </SelectItem>
-                <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  3 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
-                </SelectItem>
-                <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
-                  ⚙️ Custom Duration... {selectedDurationOption === "custom" && `(${playHours} hrs)`}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Date Selector Popover (Calendar) */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 h-10 rounded-full bg-background/50 border border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground hover:bg-muted/30 transition-all cursor-pointer shadow-2xs shrink-0 min-w-0 overflow-hidden"
-                title="Select specific date"
-              >
-                <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span className="truncate">{format(selectedDate, 'MMM dd, yyyy')}</span>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
-              <CustomCalendar
-                selectedDate={selectedDate}
-                onSelect={(date) => {
-                  if (date) {
-                    setSelectedDate(date);
+            {/* Duration Selector Dropdown */}
+            <div className="flex-1 sm:flex-initial sm:w-[180px] min-w-0">
+              <Select
+                value={selectedDurationOption}
+                onValueChange={(val) => {
+                  setSelectedDurationOption(val);
+                  if (val === "1") setPlayHours(1);
+                  else if (val === "2") setPlayHours(2);
+                  else if (val === "3") setPlayHours(3);
+                  else if (val === "custom") {
+                    setIsCustomDurationDialogOpen(true);
                   }
                 }}
-              />
-            </PopoverContent>
-          </Popover>
+              >
+                <SelectTrigger className="h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
+                  <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+                    <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <SelectValue placeholder="Duration" className="truncate" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
+                  <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                    1 Hour <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
+                  </SelectItem>
+                  <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                    2 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
+                  </SelectItem>
+                  <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                    3 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
+                  </SelectItem>
+                  <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                    ⚙️ Custom Duration... {selectedDurationOption === "custom" && `(${playHours} hrs)`}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Date Selector Popover (Calendar) */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground hover:bg-muted/30 transition-all cursor-pointer shadow-2xs shrink-0 min-w-0 overflow-hidden"
+                  title="Select specific date"
+                >
+                  <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span className="truncate">{format(selectedDate, 'MMM dd, yyyy')}</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
+                <CustomCalendar
+                  selectedDate={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setSelectedDate(date);
+                    }
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
 
@@ -780,8 +780,8 @@ export function TimeSlots() {
               >
                 {/* Card Header Section */}
                 <CardHeader className="border-b border-border/40 bg-muted/20 py-2.5 [.border-b]:pb-2.5 px-4">
-                  <div className="flex flex-col gap-2.5 w-full">
-                    {/* Top Row: Turf Title & Badges */}
+                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 lg:gap-4 w-full">
+                    {/* Left Side: Turf Title & Badges */}
                     <div>
                       <div className="flex items-center gap-3">
                         <CardTitle className="text-xl font-black tracking-tight text-foreground">{turf.name}</CardTitle>
@@ -802,8 +802,16 @@ export function TimeSlots() {
                       </CardDescription>
                     </div>
 
-                    {/* Bottom Row: Slots Left Badge + Block Custom Time + Turf Open Toggle Switch */}
+                    {/* Bottom Row: Date + Slots Left Badge + Block Custom Time */}
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {/* Date Display */}
+                      <div className="flex items-center gap-1.5 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs shrink-0">
+                        <CalendarIcon className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-xs font-extrabold text-foreground uppercase tracking-wider">
+                          {format(selectedDate, 'EEEE, MMM dd')}
+                        </span>
+                      </div>
+
                       {/* Slots remaining badge */}
                       <Badge variant="outline" className={`px-3 py-1.5 text-[10px] font-extrabold rounded-lg shadow-2xs shrink-0 ${availableSlots > 5
                         ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
@@ -825,16 +833,6 @@ export function TimeSlots() {
                       >
                         <Power className="w-3.5 h-3.5 text-rose-500" /> Block Custom Time
                       </Button>
-
-                      {/* Turf Open Toggle Switch */}
-                      <div className="flex items-center gap-2 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs shrink-0">
-                        <Label htmlFor={`turf-status-${turf.id}`} className="text-[10px] font-bold cursor-pointer text-muted-foreground uppercase tracking-wider">Turf Open</Label>
-                        <Switch
-                          id={`turf-status-${turf.id}`}
-                          checked={turf.status === 'Active'}
-                          onCheckedChange={() => toggleTurfStatus(turf.id)}
-                        />
-                      </div>
                     </div>
                   </div>
                 </CardHeader>
@@ -852,6 +850,8 @@ export function TimeSlots() {
                       <p className="text-xs text-muted-foreground mt-0.5 font-medium">Re-enable Turf Open toggle to accept bookings.</p>
                     </div>
                   )}
+
+
 
                   {/* Grid Slots - Dynamically Grouped by Selected Duration */}
                   <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
@@ -1013,7 +1013,7 @@ export function TimeSlots() {
                   <Label htmlFor="cust-name" className="text-xs font-semibold">Customer Full Name</Label>
                   <Input
                     id="cust-name"
-                    placeholder="e.g. John Doe"
+                    placeholder="Enter Name"
                     value={bookingDetails.customerName}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, customerName: e.target.value })}
                     className="h-10 rounded-lg text-sm"
@@ -1024,7 +1024,7 @@ export function TimeSlots() {
                   <Label htmlFor="cust-phone" className="text-xs font-semibold">Phone Number</Label>
                   <Input
                     id="cust-phone"
-                    placeholder="e.g. +91 9876543210"
+                    placeholder="Enter Mobile No"
                     value={bookingDetails.customerPhone}
                     onChange={(e) => setBookingDetails({ ...bookingDetails, customerPhone: e.target.value })}
                     className="h-10 rounded-lg text-sm"
@@ -1032,13 +1032,13 @@ export function TimeSlots() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="cust-payment" className="text-xs font-semibold">Payment Channel</Label>
+                  <Label htmlFor="cust-payment" className="text-xs font-semibold">Payment Mode</Label>
                   <Select
                     value={bookingDetails.paymentMethod}
                     onValueChange={(val) => setBookingDetails({ ...bookingDetails, paymentMethod: val })}
                   >
                     <SelectTrigger id="cust-payment" className="h-10 rounded-lg text-sm">
-                      <SelectValue placeholder="Select payment channel" />
+                      <SelectValue placeholder="Payment Mode" />
                     </SelectTrigger>
                     <SelectContent className="rounded-lg">
                       <SelectItem value="cash">Cash Payment</SelectItem>

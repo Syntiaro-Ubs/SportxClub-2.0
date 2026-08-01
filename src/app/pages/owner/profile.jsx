@@ -103,11 +103,11 @@ export function OwnerProfile() {
           
           {/* Left Block: Avatar + Name + Badges */}
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left w-full sm:w-auto">
-            <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-3xl border-2 border-border/60 shadow-lg ring-2 ring-emerald-500/20 bg-background shrink-0">
+            <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-2 border-border/60 shadow-lg ring-2 ring-emerald-500/20 bg-background shrink-0">
               {activeProfile?.profilePicture ? (
-                <AvatarImage src={activeProfile.profilePicture} className="object-cover rounded-3xl" />
+                <AvatarImage src={activeProfile.profilePicture} className="object-cover rounded-full" />
               ) : (
-                <AvatarFallback className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 text-2xl font-black rounded-3xl">
+                <AvatarFallback className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 text-2xl font-black rounded-full">
                   {getInitials(ownerName)}
                 </AvatarFallback>
               )}

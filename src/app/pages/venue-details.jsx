@@ -472,72 +472,15 @@ export function VenueDetails() {
         isDark ? "bg-[#060813] text-white" : "bg-slate-50 text-slate-900",
       )}
     >
-      {/* Top Header & Breadcrumb Bar */}
-      <div
-        className={cn(
-          "border-b backdrop-blur-xl sticky top-0 z-30 transition-colors duration-300",
-          isDark
-            ? "border-white/[0.08] bg-[#050505]/80 text-white"
-            : "border-slate-200 bg-white/90 text-slate-800 shadow-sm",
-        )}
-      >
-        <div className="mx-auto flex h-9 sm:h-10 max-w-[1440px] items-center justify-end px-4 sm:px-6 lg:px-8">
 
-          <div className="flex items-center gap-3">
-            <Badge
-              className={cn(
-                "rounded-full border px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider",
-                isDark
-                  ? "bg-emerald-600/10 text-white border-emerald-600/30"
-                  : "bg-emerald-50 text-emerald-700 border-emerald-300",
-              )}
-            >
-              🟢 Verified Arena
-            </Badge>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={handleFavoriteClick}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border transition-all cursor-pointer",
-                  isDark
-                    ? "border-white/10 bg-white/5 hover:bg-white/10 text-white"
-                    : "border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700",
-                )}
-              >
-                <Heart
-                  className={cn(
-                    "h-4 w-4",
-                    isFavorite
-                      ? "fill-rose-500 text-rose-500"
-                      : isDark
-                        ? "text-white"
-                        : "text-slate-700",
-                  )}
-                />
-              </button>
-              <button
-                onClick={handleShareClick}
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-full border transition-all cursor-pointer",
-                  isDark
-                    ? "border-white/10 bg-white/5 hover:bg-white/10 text-white"
-                    : "border-slate-200 bg-slate-100 hover:bg-slate-200 text-slate-700",
-                )}
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <style>{marqueeHorizontalStyle}</style>
 
-      <div className="mx-auto max-w-[1440px] px-4 pt-1 pb-2 sm:px-6 lg:px-8 lg:pt-1 lg:pb-6">
+      <div className="mx-auto max-w-[1440px] px-4 pt-0 pb-2 sm:px-6 lg:px-8 lg:pt-4 lg:pb-0 lg:h-[calc(100vh-56px)]">
         {/* Main 12-Column Layout Section */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start lg:h-full">
           {/* Left Column: Hero Photo, Venue Overview, Amenities, Map, Reviews */}
-          <div className="contents lg:block lg:col-span-6 xl:col-span-7 lg:space-y-8">
+          <div className="contents lg:block lg:col-span-6 xl:col-span-7 lg:space-y-8 lg:h-full lg:overflow-y-auto lg:pr-2 lg:pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {/* Unified Photo Gallery Container */}
             <div className="flex flex-col gap-3 w-full order-1 lg:order-none">
               {/* Main Hero Photo (Spans 1 column on desktop) */}
@@ -985,10 +928,10 @@ export function VenueDetails() {
           </div>
 
           {/* Right Column: High-Converting Interactive Slot Booking Widget */}
-          <div className="w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 lg:sticky lg:top-20 space-y-6">
+          <div className="w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 lg:h-full lg:overflow-y-auto lg:pl-1 lg:pb-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <Card
               className={cn(
-                "rounded-[28px] border shadow-2xl overflow-hidden relative isolate transition-colors duration-300",
+                "rounded-xl border shadow-2xl overflow-hidden relative isolate transition-colors duration-300",
                 isDark
                   ? "border-emerald-600/30 bg-[#0d0f15] text-white"
                   : "border-slate-200 bg-white text-slate-900",
@@ -1003,17 +946,17 @@ export function VenueDetails() {
               />
 
               <CardContent className="p-4 sm:p-5 space-y-4 relative z-10">
-                {/* Header */}
+                {/* Header & Controls */}
                 <div
                   className={cn(
-                    "flex items-center justify-between border-b pb-3",
+                    "flex flex-col xl:flex-row xl:items-center justify-between border-b pb-4 gap-4",
                     isDark ? "border-white/10" : "border-slate-200",
                   )}
                 >
-                  <div>
+                  <div className="xl:pb-0">
                     <h3
                       className={cn(
-                        "text-xl font-extrabold tracking-tight",
+                        "text-xl font-extrabold tracking-tight whitespace-nowrap",
                         isDark ? "text-white" : "text-slate-900",
                       )}
                     >
@@ -1021,15 +964,13 @@ export function VenueDetails() {
                     </h3>
                   </div>
 
-                </div>
-
-                {/* Single Row 3 Dropdown Controls (Sport, Date, Duration) */}
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+                  {/* Single Row 3 Dropdown Controls (Sport, Date, Duration) */}
+                  <div className="grid grid-cols-[1.2fr_1.4fr_0.8fr] gap-1.5 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[550px]">
                   {/* 1. Sport Select */}
                   <div className="space-y-1">
                     <label
                       className={cn(
-                        "text-[10px] font-extrabold tracking-wider block truncate",
+                        "text-xs font-semibold tracking-wide block truncate",
                         isDark ? "text-white/70" : "text-slate-700"
                       )}
                     >
@@ -1038,7 +979,7 @@ export function VenueDetails() {
                     <Select value={selectedSport} onValueChange={setSelectedSport}>
                       <SelectTrigger
                         className={cn(
-                          "h-10 rounded-xl border text-[11px] sm:text-xs font-bold w-full transition-all cursor-pointer shadow-xs px-1.5 sm:px-3",
+                          "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-3",
                           isDark
                             ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
                             : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
@@ -1046,10 +987,10 @@ export function VenueDetails() {
                       >
                         <SelectValue placeholder="Select Sport" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
-                        <SelectItem value="Football" className="text-xs font-bold py-2">⚽ Football</SelectItem>
-                        <SelectItem value="Cricket" className="text-xs font-bold py-2">🏏 Cricket</SelectItem>
-                        <SelectItem value="Basketball" className="text-xs font-bold py-2">🏀 Basketball</SelectItem>
+                      <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700">
+                        <SelectItem value="Football" className="text-sm font-medium py-2">⚽ Football</SelectItem>
+                        <SelectItem value="Cricket" className="text-sm font-medium py-2">🏏 Cricket</SelectItem>
+                        <SelectItem value="Basketball" className="text-sm font-medium py-2">🏀 Basketball</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1058,7 +999,7 @@ export function VenueDetails() {
                   <div className="space-y-1 relative">
                     <label
                       className={cn(
-                        "text-[10px] font-extrabold tracking-wider block truncate",
+                        "text-xs font-semibold tracking-wide block truncate",
                         isDark ? "text-white/70" : "text-slate-700"
                       )}
                     >
@@ -1078,7 +1019,7 @@ export function VenueDetails() {
                     >
                       <SelectTrigger
                         className={cn(
-                          "h-10 rounded-xl border text-[11px] sm:text-xs font-bold w-full transition-all cursor-pointer shadow-xs px-1.5 sm:px-3",
+                          "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-3",
                           isDark
                             ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
                             : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
@@ -1096,13 +1037,13 @@ export function VenueDetails() {
                           </span>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 z-50">
+                      <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
                         {dateOptions.map((opt) => (
-                          <SelectItem key={opt.iso} value={opt.iso} className="text-xs font-bold py-2 cursor-pointer">
+                          <SelectItem key={opt.iso} value={opt.iso} className="text-sm font-medium py-2 cursor-pointer">
                             📅 {opt.label}
                           </SelectItem>
                         ))}
-                        <SelectItem value="custom" className="text-xs font-bold py-2 cursor-pointer">
+                        <SelectItem value="custom" className="text-sm font-medium py-2 cursor-pointer">
                           📅 Custom Date
                         </SelectItem>
                       </SelectContent>
@@ -1216,7 +1157,7 @@ export function VenueDetails() {
                   <div className="space-y-1">
                     <label
                       className={cn(
-                        "text-[10px] font-extrabold tracking-wider block truncate",
+                        "text-xs font-semibold tracking-wide block truncate",
                         isDark ? "text-white/70" : "text-slate-700"
                       )}
                     >
@@ -1224,14 +1165,14 @@ export function VenueDetails() {
                     </label>
                     <div
                       className={cn(
-                        "h-10 rounded-xl border text-[11px] sm:text-xs font-bold w-full transition-all flex items-center justify-between px-1.5 sm:px-2.5 shadow-xs relative",
+                        "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all flex items-center justify-between px-2 sm:px-3 shadow-xs relative",
                         isDark
                           ? "bg-slate-900/60 border-slate-700 text-white focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
                           : "bg-white border-slate-300 text-slate-900 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
                       )}
                     >
                       <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 flex-1">
-                        <span className="shrink-0 text-xs">⏱️</span>
+                        <span className="shrink-0 text-sm">⏱️</span>
                         <input
                           type="text"
                           inputMode="numeric"
@@ -1250,10 +1191,10 @@ export function VenueDetails() {
                             }
                           }}
                           onBlur={commitDuration}
-                          className="w-5 sm:w-6 bg-transparent text-center font-extrabold focus:outline-none text-xs p-0 m-0 border-0 focus:ring-0 text-foreground cursor-text"
+                          className="w-5 sm:w-6 bg-transparent text-center font-semibold focus:outline-none text-sm p-0 m-0 border-0 focus:ring-0 text-foreground cursor-text"
                           aria-label="Custom Duration in Hours"
                         />
-                        <span className="text-[11px] sm:text-xs font-bold shrink-0">{playHours === 1 ? "Hr" : "Hrs"}</span>
+                        <span className="text-xs sm:text-sm font-semibold shrink-0">{playHours === 1 ? "Hr" : "Hrs"}</span>
                       </div>
 
                       {/* Dropdown for quick presets */}
@@ -1267,18 +1208,19 @@ export function VenueDetails() {
                         >
                           <SelectValue placeholder="" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 z-50">
-                          <SelectItem value="1" className="text-xs font-bold py-2">⏱️ 1 Hr</SelectItem>
-                          <SelectItem value="2" className="text-xs font-bold py-2">⏱️ 2 Hrs</SelectItem>
-                          <SelectItem value="3" className="text-xs font-bold py-2">⏱️ 3 Hrs</SelectItem>
-                          <SelectItem value="4" className="text-xs font-bold py-2">⏱️ 4 Hrs</SelectItem>
-                          <SelectItem value="5" className="text-xs font-bold py-2">⏱️ 5 Hrs</SelectItem>
-                          <SelectItem value="6" className="text-xs font-bold py-2">⏱️ 6 Hrs</SelectItem>
-                          <SelectItem value="8" className="text-xs font-bold py-2">⏱️ 8 Hrs</SelectItem>
+                        <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
+                          <SelectItem value="1" className="text-sm font-medium py-2">⏱️ 1 Hr</SelectItem>
+                          <SelectItem value="2" className="text-sm font-medium py-2">⏱️ 2 Hrs</SelectItem>
+                          <SelectItem value="3" className="text-sm font-medium py-2">⏱️ 3 Hrs</SelectItem>
+                          <SelectItem value="4" className="text-sm font-medium py-2">⏱️ 4 Hrs</SelectItem>
+                          <SelectItem value="5" className="text-sm font-medium py-2">⏱️ 5 Hrs</SelectItem>
+                          <SelectItem value="6" className="text-sm font-medium py-2">⏱️ 6 Hrs</SelectItem>
+                          <SelectItem value="8" className="text-sm font-medium py-2">⏱️ 8 Hrs</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
+                </div>
                 </div>
 
                 {/* Step 4: Time Slot Matrix */}

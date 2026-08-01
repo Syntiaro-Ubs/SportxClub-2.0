@@ -65,7 +65,6 @@ export function TurfList() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const handleToggleStatus = (turfId) => {
     const updatedData = data.map(item => {
@@ -172,33 +171,9 @@ export function TurfList() {
     );
   }
 
-  const filteredData = data.filter(
-    (turf) => {
-      const loc = turf.location;
-      const locStr = typeof loc === 'object' ? (loc?.address || loc?.city || loc?.landmark || '') : (loc || '');
-      const nameStr = turf.name || '';
-      const queryStr = searchQuery || '';
-      return nameStr.toLowerCase().includes(queryStr.toLowerCase()) ||
-        locStr.toLowerCase().includes(queryStr.toLowerCase());
-    }
-  );
-
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 flex-1">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />
-            <Input
-              placeholder="Search by name or location..."
-              className="pl-9 rounded-full border border-slate-300 dark:border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 text-xs transition-all bg-background/60"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button variant="outline" className="rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold px-5 cursor-pointer transition-all shrink-0">Filter</Button>
-        </div>
-
+      <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-4">
         <Link to="/admin-panel/turfs/add" className="shrink-0">
           <Button
             variant="outline"
@@ -210,26 +185,22 @@ export function TurfList() {
         </Link>
       </div>
 
-      {filteredData.length === 0 ? (
+      {data.length === 0 ? (
         <Card className="border-border/50 bg-card/50 border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg">No turfs found</h3>
+            <h3 className="text-lg font-bold">No turfs found</h3>
             <p className="text-muted-foreground mt-2 mb-4">
-              {searchQuery
-                ? "No turfs match your search criteria."
-                : "You haven't added any turfs yet."}
+              You haven't added any turfs yet.
             </p>
-            {!searchQuery && (
-              <Link to="/admin-panel/turfs/add">
-                <Button variant="outline">Add Your First Turf</Button>
-              </Link>
-            )}
+            <Link to="/admin-panel/turfs/add">
+              <Button variant="outline" className="cursor-pointer">Add Your First Turf</Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredData.map((turf) => (
+          {data.map((turf) => (
             <Card
               key={turf.id}
               className="overflow-hidden border-border/50 bg-card/50 backdrop-blur-sm group hover:border-primary/50 transition-colors"

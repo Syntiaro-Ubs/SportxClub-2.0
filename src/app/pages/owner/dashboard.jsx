@@ -775,14 +775,11 @@ export function Dashboard() {
 
         {/* Timeframe Filter Pills */}
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Main Timeframe Pills */}
           {[
             { key: "today", label: "Today" },
             { key: "tomorrow", label: "Tomorrow" },
             { key: "week", label: "Week" },
-            { key: "month", label: "Month" },
-            { key: "6month", label: "6 Months" },
-            { key: "year", label: "Year" },
-            { key: "custom", label: "📅 Custom" },
           ].map((tf) => (
             <button
               key={tf.key}
@@ -795,6 +792,28 @@ export function Dashboard() {
               {tf.label}
             </button>
           ))}
+
+          {/* More Options Dropdown */}
+          <Select value={timeframe} onValueChange={setTimeframe}>
+            <SelectTrigger
+              className={`w-auto px-4 py-1.5 h-auto min-h-[30px] rounded-md text-xs font-extrabold tracking-wider transition-all duration-200 cursor-pointer border-2 shadow-none focus:ring-0 [&>svg]:ml-2 ${
+                ["month", "6month", "year", "custom"].includes(timeframe)
+                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent"
+                  : "bg-transparent text-muted-foreground border-border/40 hover:border-emerald-500/70"
+              }`}
+            >
+              {["month", "6month", "year", "custom"].includes(timeframe) ? <SelectValue /> : <span>More Options</span>}
+            </SelectTrigger>
+            <SelectContent className="rounded-lg border-slate-300 dark:border-slate-700">
+              {["today", "tomorrow", "week"].includes(timeframe) && (
+                <SelectItem value={timeframe} className="hidden" style={{ display: "none" }}>Hidden</SelectItem>
+              )}
+              <SelectItem value="month" className="text-xs font-extrabold py-2 cursor-pointer">Month</SelectItem>
+              <SelectItem value="6month" className="text-xs font-extrabold py-2 cursor-pointer">6 Months</SelectItem>
+              <SelectItem value="year" className="text-xs font-extrabold py-2 cursor-pointer">Year</SelectItem>
+              <SelectItem value="custom" className="text-xs font-extrabold py-2 cursor-pointer">📅 Custom</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Custom Date Range — shown only when custom is active */}
           {timeframe === "custom" && (
