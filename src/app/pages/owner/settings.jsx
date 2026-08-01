@@ -137,7 +137,7 @@ export function Settings() {
       {/* Top Page Header */}
       <div className="flex flex-row items-center justify-between gap-3 border-b border-border/40 pb-2 sm:pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">Settings</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Settings</h1>
         </div>
 
         <Button

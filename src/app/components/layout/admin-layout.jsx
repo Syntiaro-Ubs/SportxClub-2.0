@@ -104,7 +104,7 @@ export function AdminLayout() {
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1 items-center">
-              <h1 className="text-lg capitalize">
+              <h1 className="text-2xl font-bold tracking-tight capitalize">
                 {currentRouteName}
               </h1>
             </div>
@@ -123,7 +123,7 @@ export function AdminLayout() {
                   <span className="hidden lg:block text-sm font-medium">Site Maker</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuItem onClick={() => navigate("/site-maker/profile")} className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => navigate("/site-maker/profile")} className="cursor-pointer focus:text-emerald-600 focus:bg-emerald-500/10">
                     View Profile
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
