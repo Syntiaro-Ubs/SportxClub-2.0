@@ -496,24 +496,34 @@ function CustomSelect({ value, onChange, options }) {
   }, []);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative w-full" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 px-4 py-2.5 text-left text-sm font-semibold text-slate-700 dark:text-slate-300 shadow-xs hover:bg-slate-100/50 dark:hover:bg-slate-900/80 hover:border-slate-300 dark:hover:border-slate-700 transition duration-200 cursor-pointer"
+        className={cn(
+          "flex w-full items-center justify-between rounded-xl border px-2.5 py-1 h-7.5 text-left text-[11px] font-semibold transition-all duration-200 cursor-pointer shadow-2xs",
+          isOpen
+            ? "border-emerald-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            : "border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600"
+        )}
       >
         <span className="truncate">{value}</span>
-        <ChevronDown className={cn("h-4 w-4 text-slate-400 transition-transform duration-200", isOpen ? "rotate-180 text-[#059669]" : "")} />
+        <ChevronDown
+          className={cn(
+            "h-3 w-3 text-slate-400 transition-transform duration-200 shrink-0 ml-1",
+            isOpen ? "rotate-180 text-emerald-600 dark:text-emerald-400" : ""
+          )}
+        />
       </button>
 
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 5 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
-            transition={{ duration: 0.1 }}
-            className="absolute left-0 right-0 mt-2 z-30 max-h-60 overflow-y-auto rounded-xl border border-slate-200/60 dark:border-slate-800/80 bg-white/95 dark:bg-[#0f172a]/95 p-1.5 shadow-[0_10px_25px_rgba(0,0,0,0.08)] backdrop-blur-md"
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.12 }}
+            className="absolute left-0 right-0 mt-1 z-50 max-h-44 overflow-y-auto rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white/98 dark:bg-[#0f172a]/98 p-1 shadow-md backdrop-blur-xl [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full"
           >
             {options.map((opt) => {
               const isSelected = value === opt;
@@ -526,14 +536,14 @@ function CustomSelect({ value, onChange, options }) {
                     setIsOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-all duration-150 cursor-pointer",
+                    "flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-[11px] font-medium transition-colors cursor-pointer my-0.5",
                     isSelected
-                      ? "bg-[#059669]/10 text-[#059669] font-bold"
-                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white"
                   )}
                 >
-                  <span>{opt}</span>
-                  {isSelected && <Check className="h-4 w-4 stroke-[3] text-[#059669]" />}
+                  <span className="truncate">{opt}</span>
+                  {isSelected && <Check className="h-3 w-3 stroke-[2.5] text-emerald-600 dark:text-emerald-400 shrink-0 ml-1" />}
                 </button>
               );
             })}
@@ -549,6 +559,7 @@ export function VenueBooking() {
   const location = useLocation();
   const scrollRef1 = useRef(null);
   const scrollRef2 = useRef(null);
+  const filterContainerRef = useRef(null);
 
   const [selectedSport, setSelectedSport] = useState(location.state?.sport || "All Sports");
   const [selectedLocation, setSelectedLocation] = useState(
@@ -558,6 +569,21 @@ export function VenueBooking() {
   const [sortByRating, setSortByRating] = useState("High to Low");
   const [sortField, setSortField] = useState("Price"); // "Price" or "Rating"
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Close Quick Filters popover when clicking anywhere outside
+  useEffect(() => {
+    function handleClickOutsideFilter(event) {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(event.target)) {
+        setIsMobileFilterOpen(false);
+      }
+    }
+    if (isMobileFilterOpen) {
+      document.addEventListener("mousedown", handleClickOutsideFilter);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideFilter);
+    };
+  }, [isMobileFilterOpen]);
 
   useEffect(() => {
     const handleCityChange = (e) => {
@@ -747,7 +773,7 @@ export function VenueBooking() {
                   e.stopPropagation();
                   navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-colors shadow-sm"
+                className="bg-transparent text-black dark:text-white border border-emerald-600 hover:border-slate-900 dark:border-emerald-500 dark:hover:border-emerald-300 font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-colors shadow-none"
               >
                 Book Slot
               </Button>
@@ -771,32 +797,32 @@ export function VenueBooking() {
                 Recommended Venues
               </h2>
               {/* Quick Filters Toggle Button & Dropdown */}
-              <div className="relative z-40">
+              <div className="relative z-40" ref={filterContainerRef}>
                 <Button
                   onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-                  className="w-fit bg-white/80 dark:bg-[#0f172a]/70 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-800/60 rounded-xl h-11 font-bold shadow-xs flex items-center justify-between px-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors backdrop-blur-md"
+                  className="w-fit bg-white/90 dark:bg-[#0f172a]/80 text-slate-800 dark:text-white border border-slate-200/80 dark:border-slate-800 rounded-2xl h-10 font-bold shadow-2xs flex items-center justify-between px-4 hover:bg-white dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 backdrop-blur-xl cursor-pointer text-xs sm:text-sm"
                 >
                   <div className="flex items-center gap-2 mr-2">
-                    <Filter className="w-4 h-4 text-[#059669]" />
+                    <Filter className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <span>Quick Filters</span>
                   </div>
-                  <ChevronDown className={cn("w-4 h-4 transition-transform", isMobileFilterOpen ? "rotate-180" : "")} />
+                  <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200", isMobileFilterOpen ? "rotate-180 text-emerald-600" : "")} />
                 </Button>
 
                 <AnimatePresence>
                   {isMobileFilterOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      initial={{ opacity: 0, y: -6, scale: 0.97 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 md:left-0 md:right-auto top-full mt-3 w-[280px] z-50 origin-top-right md:origin-top-left"
+                      className="absolute right-0 md:left-0 md:right-auto top-full mt-1.5 w-[160px] sm:w-[170px] z-50 origin-top-right md:origin-top-left"
                     >
-                      <div className="w-full bg-white/95 dark:bg-[#0f172a]/95 rounded-[24px] border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-[0_20px_60px_rgb(0,0,0,0.15)] backdrop-blur-2xl">
-                        <div className="flex flex-col gap-5 w-full">
+                      <div className="w-full bg-[#f4f5f7] dark:bg-[#0f172a] rounded-[20px] border border-slate-200/80 dark:border-slate-800 p-3 shadow-lg backdrop-blur-xl">
+                        <div className="flex flex-col gap-2 w-full">
 
                           <div className="w-full">
-                            <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Sport</h4>
+                            <h4 className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-[2px] ml-0.5">SPORT</h4>
                             <CustomSelect
                               value={selectedSport}
                               onChange={(val) => setSelectedSport(val)}
@@ -804,7 +830,7 @@ export function VenueBooking() {
                             />
                           </div>
                           <div className="w-full">
-                            <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Price</h4>
+                            <h4 className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-[2px] ml-0.5">PRICE</h4>
                             <CustomSelect
                               value={sortByPrice}
                               onChange={(val) => {
@@ -815,7 +841,7 @@ export function VenueBooking() {
                             />
                           </div>
                           <div className="w-full">
-                            <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Rating</h4>
+                            <h4 className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-[2px] ml-0.5">RATING</h4>
                             <CustomSelect
                               value={sortByRating}
                               onChange={(val) => {
@@ -836,9 +862,9 @@ export function VenueBooking() {
                               localStorage.setItem("preferred-city", "All Cities");
                               window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
                             }}
-                            className="w-full bg-slate-100 hover:bg-slate-200/80 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-slate-300 border border-slate-200/60 dark:border-white/[0.05] rounded-xl h-[42px] font-bold shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs"
+                            className="w-full group bg-[#eaedf2] hover:bg-[#e2e6ec] text-slate-700 hover:text-slate-900 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] dark:text-slate-300 border border-slate-200/90 dark:border-white/[0.08] rounded-xl h-8 font-bold shadow-none transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer text-[11px] mt-0.5"
                           >
-                            <RotateCcw className="w-3.5 h-3.5 opacity-80" />
+                            <RotateCcw className="w-3 h-3 opacity-70 group-hover:-rotate-90 transition-transform duration-300" />
                             Reset Filters
                           </Button>
                         </div>

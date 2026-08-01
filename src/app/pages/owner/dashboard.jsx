@@ -347,14 +347,10 @@ export function Dashboard() {
       });
       setData(result);
       setIsDemoMode(false);
-      toast.success("Connected to Live API!");
     } catch (err) {
       console.warn("Backend API not found. Falling back to Demo Mode.");
       setData(fallbackData);
       setIsDemoMode(true);
-      if (showRetrying) {
-        toast.error("API offline. Remaining in Demo Mode.");
-      }
     } finally {
       setIsLoading(false);
       setIsRetrying(false);
@@ -373,7 +369,6 @@ export function Dashboard() {
     if (mode === "demo") {
       setData(fallbackData);
       setIsDemoMode(true);
-      toast.info("Switched to Demo Mode (Mock data)");
     } else {
       fetchDashboardData(true);
     }
@@ -406,56 +401,156 @@ export function Dashboard() {
   const totalBookings = useMemo(() => sportPopularityData.reduce((acc, curr) => acc + curr.count, 0), [sportPopularityData]);
 
   const bookingsFilledData = useMemo(() => {
-    if (isTestMode) {
+    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
+    const statusMult = statusScaleMap[statusFilter] || 1;
+
+    if (timeframe === "today") {
       return [
-        { name: "Mon", bookings: 0 },
-        { name: "Tue", bookings: 0 },
-        { name: "Wed", bookings: 0 },
-        { name: "Thu", bookings: 0 },
-        { name: "Fri", bookings: 0 },
-        { name: "Sat", bookings: 0 },
-        { name: "Sun", bookings: 0 },
+        { name: "6 AM", bookings: isTestMode ? 0 : Math.round(2 * statusMult) },
+        { name: "9 AM", bookings: isTestMode ? 0 : Math.round(1 * statusMult) },
+        { name: "12 PM", bookings: isTestMode ? 0 : Math.round(2 * statusMult) },
+        { name: "3 PM", bookings: isTestMode ? 0 : Math.round(1 * statusMult) },
+        { name: "6 PM", bookings: isTestMode ? 0 : Math.round(3 * statusMult) },
+        { name: "9 PM", bookings: isTestMode ? 0 : Math.round(4 * statusMult) },
+        { name: "11 PM", bookings: isTestMode ? 0 : Math.round(5 * statusMult) },
       ];
     }
-    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
-    const timeScaleMap = { today: 0.15, tomorrow: 0.18, week: 1, monthly: 4, month: 4, "6month": 24, yearly: 48, year: 48, custom: 1, weekly: 1 };
-    const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
 
+    if (timeframe === "tomorrow") {
+      return [
+        { name: "6 AM", bookings: isTestMode ? 0 : Math.round(1 * statusMult) },
+        { name: "9 AM", bookings: isTestMode ? 0 : Math.round(2 * statusMult) },
+        { name: "12 PM", bookings: isTestMode ? 0 : Math.round(1 * statusMult) },
+        { name: "3 PM", bookings: isTestMode ? 0 : Math.round(2 * statusMult) },
+        { name: "6 PM", bookings: isTestMode ? 0 : Math.round(4 * statusMult) },
+        { name: "9 PM", bookings: isTestMode ? 0 : Math.round(3 * statusMult) },
+        { name: "11 PM", bookings: isTestMode ? 0 : Math.round(2 * statusMult) },
+      ];
+    }
+
+    if (timeframe === "month" || timeframe === "monthly") {
+      return [
+        { name: "Week 1", bookings: isTestMode ? 0 : Math.round(42 * statusMult) },
+        { name: "Week 2", bookings: isTestMode ? 0 : Math.round(55 * statusMult) },
+        { name: "Week 3", bookings: isTestMode ? 0 : Math.round(68 * statusMult) },
+        { name: "Week 4", bookings: isTestMode ? 0 : Math.round(79 * statusMult) },
+      ];
+    }
+
+    if (timeframe === "6month") {
+      return [
+        { name: "Jan", bookings: isTestMode ? 0 : Math.round(120 * statusMult) },
+        { name: "Feb", bookings: isTestMode ? 0 : Math.round(150 * statusMult) },
+        { name: "Mar", bookings: isTestMode ? 0 : Math.round(180 * statusMult) },
+        { name: "Apr", bookings: isTestMode ? 0 : Math.round(220 * statusMult) },
+        { name: "May", bookings: isTestMode ? 0 : Math.round(260 * statusMult) },
+        { name: "Jun", bookings: isTestMode ? 0 : Math.round(310 * statusMult) },
+      ];
+    }
+
+    if (timeframe === "year" || timeframe === "yearly") {
+      return [
+        { name: "Jan", bookings: isTestMode ? 0 : Math.round(120 * statusMult) },
+        { name: "Feb", bookings: isTestMode ? 0 : Math.round(145 * statusMult) },
+        { name: "Mar", bookings: isTestMode ? 0 : Math.round(170 * statusMult) },
+        { name: "Apr", bookings: isTestMode ? 0 : Math.round(210 * statusMult) },
+        { name: "May", bookings: isTestMode ? 0 : Math.round(250 * statusMult) },
+        { name: "Jun", bookings: isTestMode ? 0 : Math.round(290 * statusMult) },
+        { name: "Jul", bookings: isTestMode ? 0 : Math.round(320 * statusMult) },
+        { name: "Aug", bookings: isTestMode ? 0 : Math.round(340 * statusMult) },
+        { name: "Sep", bookings: isTestMode ? 0 : Math.round(310 * statusMult) },
+        { name: "Oct", bookings: isTestMode ? 0 : Math.round(360 * statusMult) },
+        { name: "Nov", bookings: isTestMode ? 0 : Math.round(410 * statusMult) },
+        { name: "Dec", bookings: isTestMode ? 0 : Math.round(480 * statusMult) },
+      ];
+    }
+
+    // Default (Week)
     return [
-      { name: "Mon", bookings: Math.round(12 * scale) },
-      { name: "Tue", bookings: Math.round(9 * scale) },
-      { name: "Wed", bookings: Math.round(16 * scale) },
-      { name: "Thu", bookings: Math.round(8 * scale) },
-      { name: "Fri", bookings: Math.round(21 * scale) },
-      { name: "Sat", bookings: Math.round(29 * scale) },
-      { name: "Sun", bookings: Math.round(24 * scale) },
+      { name: "Mon", bookings: isTestMode ? 0 : Math.round(12 * statusMult) },
+      { name: "Tue", bookings: isTestMode ? 0 : Math.round(9 * statusMult) },
+      { name: "Wed", bookings: isTestMode ? 0 : Math.round(16 * statusMult) },
+      { name: "Thu", bookings: isTestMode ? 0 : Math.round(8 * statusMult) },
+      { name: "Fri", bookings: isTestMode ? 0 : Math.round(21 * statusMult) },
+      { name: "Sat", bookings: isTestMode ? 0 : Math.round(29 * statusMult) },
+      { name: "Sun", bookings: isTestMode ? 0 : Math.round(24 * statusMult) },
     ];
   }, [statusFilter, timeframe, isTestMode]);
 
   const revenueTrendData = useMemo(() => {
-    if (isTestMode) {
+    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
+    const statusMult = statusScaleMap[statusFilter] || 1;
+
+    if (timeframe === "today") {
       return [
-        { name: "Mon", revenue: 0 },
-        { name: "Tue", revenue: 0 },
-        { name: "Wed", revenue: 0 },
-        { name: "Thu", revenue: 0 },
-        { name: "Fri", revenue: 0 },
-        { name: "Sat", revenue: 0 },
-        { name: "Sun", revenue: 0 },
+        { name: "6 AM", revenue: isTestMode ? 0 : Math.round(3200 * statusMult) },
+        { name: "9 AM", revenue: isTestMode ? 0 : Math.round(2500 * statusMult) },
+        { name: "12 PM", revenue: isTestMode ? 0 : Math.round(4800 * statusMult) },
+        { name: "3 PM", revenue: isTestMode ? 0 : Math.round(2200 * statusMult) },
+        { name: "6 PM", revenue: isTestMode ? 0 : Math.round(7500 * statusMult) },
+        { name: "9 PM", revenue: isTestMode ? 0 : Math.round(9200 * statusMult) },
+        { name: "11 PM", revenue: isTestMode ? 0 : Math.round(7800 * statusMult) },
       ];
     }
-    const statusScaleMap = { all: 1, completed: 0.82, pending: 0.12, failed: 0.06 };
-    const timeScaleMap = { today: 0.15, tomorrow: 0.18, week: 1, monthly: 4, month: 4, "6month": 24, yearly: 48, year: 48, custom: 1, weekly: 1 };
-    const scale = (statusScaleMap[statusFilter] || 1) * (timeScaleMap[timeframe] || 1);
 
+    if (timeframe === "tomorrow") {
+      return [
+        { name: "6 AM", revenue: isTestMode ? 0 : Math.round(1500 * statusMult) },
+        { name: "9 AM", revenue: isTestMode ? 0 : Math.round(3200 * statusMult) },
+        { name: "12 PM", revenue: isTestMode ? 0 : Math.round(2400 * statusMult) },
+        { name: "3 PM", revenue: isTestMode ? 0 : Math.round(3600 * statusMult) },
+        { name: "6 PM", revenue: isTestMode ? 0 : Math.round(8900 * statusMult) },
+        { name: "9 PM", revenue: isTestMode ? 0 : Math.round(7100 * statusMult) },
+        { name: "11 PM", revenue: isTestMode ? 0 : Math.round(4500 * statusMult) },
+      ];
+    }
+
+    if (timeframe === "month" || timeframe === "monthly") {
+      return [
+        { name: "Week 1", revenue: isTestMode ? 0 : Math.round(110000 * statusMult) },
+        { name: "Week 2", revenue: isTestMode ? 0 : Math.round(135000 * statusMult) },
+        { name: "Week 3", revenue: isTestMode ? 0 : Math.round(168000 * statusMult) },
+        { name: "Week 4", revenue: isTestMode ? 0 : Math.round(195000 * statusMult) },
+      ];
+    }
+
+    if (timeframe === "6month") {
+      return [
+        { name: "Jan", revenue: isTestMode ? 0 : Math.round(320000 * statusMult) },
+        { name: "Feb", revenue: isTestMode ? 0 : Math.round(380000 * statusMult) },
+        { name: "Mar", revenue: isTestMode ? 0 : Math.round(450000 * statusMult) },
+        { name: "Apr", revenue: isTestMode ? 0 : Math.round(520000 * statusMult) },
+        { name: "May", revenue: isTestMode ? 0 : Math.round(610000 * statusMult) },
+        { name: "Jun", revenue: isTestMode ? 0 : Math.round(740000 * statusMult) },
+      ];
+    }
+
+    if (timeframe === "year" || timeframe === "yearly") {
+      return [
+        { name: "Jan", revenue: isTestMode ? 0 : Math.round(310000 * statusMult) },
+        { name: "Feb", revenue: isTestMode ? 0 : Math.round(360000 * statusMult) },
+        { name: "Mar", revenue: isTestMode ? 0 : Math.round(420000 * statusMult) },
+        { name: "Apr", revenue: isTestMode ? 0 : Math.round(490000 * statusMult) },
+        { name: "May", revenue: isTestMode ? 0 : Math.round(580000 * statusMult) },
+        { name: "Jun", revenue: isTestMode ? 0 : Math.round(670000 * statusMult) },
+        { name: "Jul", revenue: isTestMode ? 0 : Math.round(730000 * statusMult) },
+        { name: "Aug", revenue: isTestMode ? 0 : Math.round(790000 * statusMult) },
+        { name: "Sep", revenue: isTestMode ? 0 : Math.round(740000 * statusMult) },
+        { name: "Oct", revenue: isTestMode ? 0 : Math.round(850000 * statusMult) },
+        { name: "Nov", revenue: isTestMode ? 0 : Math.round(960000 * statusMult) },
+        { name: "Dec", revenue: isTestMode ? 0 : Math.round(1120000 * statusMult) },
+      ];
+    }
+
+    // Default (Week)
     return [
-      { name: "Mon", revenue: Math.round(24000 * scale) },
-      { name: "Tue", revenue: Math.round(18000 * scale) },
-      { name: "Wed", revenue: Math.round(32000 * scale) },
-      { name: "Thu", revenue: Math.round(15000 * scale) },
-      { name: "Fri", revenue: Math.round(42000 * scale) },
-      { name: "Sat", revenue: Math.round(58000 * scale) },
-      { name: "Sun", revenue: Math.round(49000 * scale) },
+      { name: "Mon", revenue: isTestMode ? 0 : Math.round(24000 * statusMult) },
+      { name: "Tue", revenue: isTestMode ? 0 : Math.round(18000 * statusMult) },
+      { name: "Wed", revenue: isTestMode ? 0 : Math.round(32000 * statusMult) },
+      { name: "Thu", revenue: isTestMode ? 0 : Math.round(15000 * statusMult) },
+      { name: "Fri", revenue: isTestMode ? 0 : Math.round(42000 * statusMult) },
+      { name: "Sat", revenue: isTestMode ? 0 : Math.round(58000 * statusMult) },
+      { name: "Sun", revenue: isTestMode ? 0 : Math.round(49000 * statusMult) },
     ];
   }, [statusFilter, timeframe, isTestMode]);
 
@@ -613,7 +708,7 @@ export function Dashboard() {
                 <span className="opacity-30">|</span>
                 <span>Cash: <strong className="text-foreground font-bold ml-0.5">₹{isTestMode ? "0" : "45K"}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0 ml-auto">
+              <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold tracking-wider transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-transparent border-0 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-none cursor-pointer shrink-0 ml-auto">
                 Revenue
                 <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -680,7 +775,7 @@ export function Dashboard() {
                 <span className="opacity-30">·</span>
                 <span>Pending: <strong className="text-amber-500 font-bold ml-0.5">{isTestMode ? 0 : 4}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0 ml-auto">
+              <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold tracking-wider transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-transparent border-0 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-none cursor-pointer shrink-0 ml-auto">
                 Details
                 <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -697,9 +792,15 @@ export function Dashboard() {
             <div className="flex items-start justify-between">
               <div className="space-y-0.5">
                 <p className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground tracking-widest">Active Turfs</p>
-                <h3 className="text-lg sm:text-xl font-black tracking-tight text-foreground mt-0.5 sm:mt-1">
-                  <span className="text-emerald-600 dark:text-emerald-400">{isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}</span>/{isTestMode ? "0" : (data?.stats?.totalTurfs || 5)}
-                </h3>
+                <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight text-foreground">
+                    <span className="text-emerald-600 dark:text-emerald-400">{isTestMode ? "0" : (data?.stats?.activeTurfs || 3)}</span>/{isTestMode ? "0" : (data?.stats?.totalTurfs || 4)}
+                  </h3>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold text-[9px] sm:text-[10px]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                    {isTestMode ? "0" : ((data?.stats?.totalTurfs || 4) - (data?.stats?.activeTurfs || 3))} Closed
+                  </span>
+                </div>
               </div>
               <div className="flex items-center justify-center">
                 <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
@@ -710,14 +811,10 @@ export function Dashboard() {
               <div className="flex gap-1.5 items-center">
                 <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[8px] sm:text-[9px]">
                   <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)} Active
-                </span>
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold text-[8px] sm:text-[9px]">
-                  <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-rose-500"></span>
-                  {isTestMode ? "0" : ((data?.stats?.totalTurfs || 5) - (data?.stats?.activeTurfs || 4))} Closed
+                  {isTestMode ? "0" : (data?.stats?.activeTurfs || 3)} Active
                 </span>
               </div>
-              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
+              <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold tracking-wider transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-transparent border-0 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-none cursor-pointer shrink-0">
                 Manage
                 <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -760,7 +857,7 @@ export function Dashboard() {
               <div className="flex gap-1 items-center">
                 <span className="text-[8.5px] sm:text-[9.5px]">Reviews: <strong className="text-foreground font-bold ml-0.5">{isTestMode ? 0 : (data?.stats?.reviewsCount || 128)}</strong></span>
               </div>
-              <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
+              <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold tracking-wider transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-transparent border-0 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-none cursor-pointer shrink-0">
                 Reviews
                 <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 transform group-hover/btn:translate-x-1 transition-transform" />
               </span>
@@ -800,11 +897,10 @@ export function Dashboard() {
           {/* More Options Dropdown */}
           <Select value={timeframe} onValueChange={setTimeframe}>
             <SelectTrigger
-              className={`w-auto px-4 py-1.5 h-auto min-h-[30px] rounded-md text-xs font-extrabold tracking-wider transition-all duration-200 cursor-pointer border-2 shadow-none focus:ring-0 [&>svg]:ml-2 ${
-                ["month", "6month", "year", "custom"].includes(timeframe)
-                  ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent"
-                  : "bg-transparent text-muted-foreground border-border/40 hover:border-emerald-500/70"
-              }`}
+              className={`w-auto px-4 py-1.5 h-auto min-h-[30px] rounded-md text-xs font-extrabold tracking-wider transition-all duration-200 cursor-pointer border-2 shadow-none focus:ring-0 [&>svg]:ml-2 ${["month", "6month", "year", "custom"].includes(timeframe)
+                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent"
+                : "bg-transparent text-muted-foreground border-border/40 hover:border-emerald-500/70"
+                }`}
             >
               {["month", "6month", "year", "custom"].includes(timeframe) ? <SelectValue /> : <span>More Options</span>}
             </SelectTrigger>
@@ -814,7 +910,7 @@ export function Dashboard() {
               )}
               <SelectItem value="month" className="text-xs font-extrabold py-2 cursor-pointer">Month</SelectItem>
               <SelectItem value="6month" className="text-xs font-extrabold py-2 cursor-pointer">6 Months</SelectItem>
-              <SelectItem value="year" className="text-xs font-extrabold py-2 cursor-pointer">Year</SelectItem>
+              <SelectItem value="year" className="text-xs font-extrabold py-2 cursor-pointer">Yearly</SelectItem>
               <SelectItem value="custom" className="text-xs font-extrabold py-2 cursor-pointer">📅 Custom</SelectItem>
             </SelectContent>
           </Select>
@@ -847,7 +943,18 @@ export function Dashboard() {
             <div className="min-h-[28px] flex flex-col justify-start mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
             </div>
-            <div className="flex flex-row items-center justify-between md:justify-center lg:justify-between gap-4 md:gap-16 lg:gap-4 w-full h-[210px] min-w-0">
+            <div className="flex flex-row items-center justify-start gap-4 sm:gap-6 w-full h-[210px] min-w-0">
+              <div className="flex flex-col items-start justify-end gap-y-1 text-xs h-full shrink-0 pb-3">
+                {sportPopularityData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-1.5 px-1 py-[1px] rounded-md hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="font-bold text-foreground text-[11px]">{item.name}</span>
+                      <span className="text-[11px] text-muted-foreground font-semibold">({item.count})</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <div className="relative h-[180px] w-[180px] md:h-[200px] md:w-[200px] lg:h-[180px] lg:w-[180px] shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -876,17 +983,6 @@ export function Dashboard() {
                   <span className="text-lg font-black tracking-tight text-foreground">{isTestMode ? 0 : totalBookings}</span>
                   <span className="text-[9px] font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
-              </div>
-              <div className="flex flex-col items-start justify-center gap-y-1 text-xs h-full shrink-0">
-                {sportPopularityData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-1.5 px-1 py-[1px] rounded-md hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
-                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <div className="flex items-center gap-1.5 whitespace-nowrap">
-                      <span className="font-bold text-foreground text-[11px]">{item.name}</span>
-                      <span className="text-[11px] text-muted-foreground font-semibold">({item.count})</span>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
@@ -960,7 +1056,7 @@ export function Dashboard() {
         {/* Table Toolbar / Controls */}
         <CardHeader className="flex flex-col gap-3 border-b border-border/40 p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-base font-bold tracking-tight">Active Bookings Directory</CardTitle>
+            <CardTitle className="text-base font-bold tracking-tight">Active Bookings</CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">Filter, search, approve or decline real-time bookings.</p>
           </div>
 
@@ -1010,131 +1106,131 @@ export function Dashboard() {
         <CardContent className="p-0">
           <div className="w-full overflow-x-auto scrollbar-visible pb-2">
             <table className="w-full min-w-[780px] md:min-w-full md:table-fixed text-center border-collapse">
-            <thead>
-              <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground text-center">
-                <th className="w-[11%] px-1.5 py-2 text-center">Booking ID</th>
-                <th className="w-[18%] px-1.5 py-2 text-center">Customer Details</th>
-                <th className="w-[19%] px-1.5 py-2 text-center">Turf & Sport</th>
-                <th className="w-[18%] px-1.5 py-2 text-center">Slot Time & Date</th>
-                <th className="w-[10%] px-1.5 py-2 text-center">Amount Paid</th>
-                <th className="w-[12%] px-1.5 py-2 text-center">Status</th>
-                <th className="w-[12%] px-1.5 py-2 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/30 text-xs">
-              {filteredBookings.length > 0 ? (
-                filteredBookings.map((booking) => (
-                  <tr
-                    key={booking.id}
-                    className="hover:bg-muted/10 transition-colors group"
-                  >
-                    <td className="px-1.5 py-2 font-mono text-[11px] font-bold text-foreground text-center truncate">
-                      {booking.id}
-                    </td>
-                    <td className="px-1.5 py-2 text-center truncate">
-                      <div className="flex flex-col items-center justify-center text-center truncate">
-                        <p className="font-bold text-foreground group-hover:text-primary transition-colors text-xs truncate">{booking.customerName}</p>
-                        <p className="text-[10px] text-muted-foreground font-medium truncate">{booking.phone}</p>
-                      </div>
-                    </td>
-                    <td className="px-1.5 py-2 text-center truncate">
-                      <div className="flex items-center justify-center gap-1 text-center truncate">
-                        <Badge variant="outline" className="text-[9px] px-1 py-0 bg-accent/10 border-accent/20 text-accent font-bold shrink-0">
-                          {booking.sport}
-                        </Badge>
-                        <span className="text-xs font-semibold text-foreground truncate">{booking.turfName}</span>
-                      </div>
-                    </td>
-                    <td className="px-1.5 py-2 text-center truncate">
-                      <div className="flex flex-col items-center justify-center text-center truncate">
-                        <p className="text-[11px] font-bold text-foreground flex items-center justify-center gap-1 truncate">
-                          <Clock className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
-                          {booking.slotTime}
-                        </p>
-                        <p className="text-[9px] text-muted-foreground font-semibold truncate">
-                          {booking.date} · <span className="italic">{booking.timeAgo}</span>
-                        </p>
-                      </div>
-                    </td>
-                    <td className="px-1.5 py-2 text-center truncate">
-                      <div className="flex flex-col items-center justify-center text-center truncate">
-                        <p className="font-bold text-foreground text-xs flex items-center justify-center truncate">
-                          <IndianRupee className="h-3 w-3 mr-0.5 inline-block shrink-0 stroke-[2.5]" />
-                          {booking.amount.toLocaleString()}
-                        </p>
-                        <span className="text-[9px] text-muted-foreground font-medium uppercase truncate">{booking.paymentType}</span>
-                      </div>
-                    </td>
-                    <td className="px-1.5 py-2 text-center truncate">
-                      <div className="flex justify-center text-center">
-                        {booking.status === "Confirmed" && (
-                          <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
-                            Confirmed
+              <thead>
+                <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground text-center">
+                  <th className="w-[11%] px-1.5 py-2 text-center">Booking ID</th>
+                  <th className="w-[18%] px-1.5 py-2 text-center">Customer Details</th>
+                  <th className="w-[19%] px-1.5 py-2 text-center">Turf & Sport</th>
+                  <th className="w-[18%] px-1.5 py-2 text-center">Slot Time & Date</th>
+                  <th className="w-[10%] px-1.5 py-2 text-center">Amount Paid</th>
+                  <th className="w-[12%] px-1.5 py-2 text-center">Status</th>
+                  <th className="w-[12%] px-1.5 py-2 text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/30 text-xs">
+                {filteredBookings.length > 0 ? (
+                  filteredBookings.map((booking) => (
+                    <tr
+                      key={booking.id}
+                      className="hover:bg-muted/10 transition-colors group"
+                    >
+                      <td className="px-1.5 py-2 font-mono text-[11px] font-bold text-foreground text-center truncate">
+                        {booking.id}
+                      </td>
+                      <td className="px-1.5 py-2 text-center truncate">
+                        <div className="flex flex-col items-center justify-center text-center truncate">
+                          <p className="font-bold text-foreground group-hover:text-primary transition-colors text-xs truncate">{booking.customerName}</p>
+                          <p className="text-[10px] text-muted-foreground font-medium truncate">{booking.phone}</p>
+                        </div>
+                      </td>
+                      <td className="px-1.5 py-2 text-center truncate">
+                        <div className="flex items-center justify-center gap-1 text-center truncate">
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 bg-accent/10 border-accent/20 text-accent font-bold shrink-0">
+                            {booking.sport}
                           </Badge>
-                        )}
-                        {booking.status === "Pending" && (
-                          <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
-                            Pending
-                          </Badge>
-                        )}
-                        {booking.status === "Cancelled" && (
-                          <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
-                            Cancelled
-                          </Badge>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-1.5 py-2 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        {booking.status === "Pending" ? (
-                          <>
+                          <span className="text-xs font-semibold text-foreground truncate">{booking.turfName}</span>
+                        </div>
+                      </td>
+                      <td className="px-1.5 py-2 text-center truncate">
+                        <div className="flex flex-col items-center justify-center text-center truncate">
+                          <p className="text-[11px] font-bold text-foreground flex items-center justify-center gap-1 truncate">
+                            <Clock className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
+                            {booking.slotTime}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground font-semibold truncate">
+                            {booking.date} · <span className="italic">{booking.timeAgo}</span>
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-1.5 py-2 text-center truncate">
+                        <div className="flex flex-col items-center justify-center text-center truncate">
+                          <p className="font-bold text-foreground text-xs flex items-center justify-center truncate">
+                            <IndianRupee className="h-3 w-3 mr-0.5 inline-block shrink-0 stroke-[2.5]" />
+                            {booking.amount.toLocaleString()}
+                          </p>
+                          <span className="text-[9px] text-muted-foreground font-medium uppercase truncate">{booking.paymentType}</span>
+                        </div>
+                      </td>
+                      <td className="px-1.5 py-2 text-center truncate">
+                        <div className="flex justify-center text-center">
+                          {booking.status === "Confirmed" && (
+                            <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
+                              Confirmed
+                            </Badge>
+                          )}
+                          {booking.status === "Pending" && (
+                            <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
+                              Pending
+                            </Badge>
+                          )}
+                          {booking.status === "Cancelled" && (
+                            <Badge className="bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5">
+                              Cancelled
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-1.5 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {booking.status === "Pending" ? (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleConfirmBooking(booking.id, booking.customerName)}
+                                className="h-6 w-6 p-0 rounded-md bg-emerald-500/5 hover:bg-emerald-500 border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white transition-all shadow-xs"
+                                title="Approve Booking"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCancelBooking(booking.id, booking.customerName)}
+                                className="h-6 w-6 p-0 rounded-md bg-rose-500/5 hover:bg-rose-500 border-rose-500/20 hover:border-rose-500 text-rose-500 hover:text-white transition-all shadow-xs"
+                                title="Decline Booking"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </>
+                          ) : booking.status === "Confirmed" ? (
                             <Button
                               size="sm"
-                              variant="outline"
-                              onClick={() => handleConfirmBooking(booking.id, booking.customerName)}
-                              className="h-6 w-6 p-0 rounded-md bg-emerald-500/5 hover:bg-emerald-500 border-emerald-500/20 hover:border-emerald-500 text-emerald-500 hover:text-white transition-all shadow-xs"
-                              title="Approve Booking"
-                            >
-                              <Check className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
+                              variant="ghost"
                               onClick={() => handleCancelBooking(booking.id, booking.customerName)}
-                              className="h-6 w-6 p-0 rounded-md bg-rose-500/5 hover:bg-rose-500 border-rose-500/20 hover:border-rose-500 text-rose-500 hover:text-white transition-all shadow-xs"
-                              title="Decline Booking"
+                              className="h-6 text-[10px] px-1.5 rounded-md border border-border/50 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/5 transition-all"
                             >
-                              <X className="h-3 w-3" />
+                              Decline
                             </Button>
-                          </>
-                        ) : booking.status === "Confirmed" ? (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleCancelBooking(booking.id, booking.customerName)}
-                            className="h-6 text-[10px] px-1.5 rounded-md border border-border/50 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/5 transition-all"
-                          >
-                            Decline
-                          </Button>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground font-semibold italic">N/A</span>
-                        )}
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground font-semibold italic">N/A</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="py-12 text-center text-muted-foreground text-xs">
+                      <div className="flex flex-col items-center gap-2">
+                        <Search className="h-8 w-8 opacity-20" />
+                        No matching bookings found
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="py-12 text-center text-muted-foreground text-xs">
-                    <div className="flex flex-col items-center gap-2">
-                      <Search className="h-8 w-8 opacity-20" />
-                      No matching bookings found
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>

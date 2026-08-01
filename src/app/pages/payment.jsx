@@ -330,8 +330,8 @@ export function Payment() {
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_390px]">
-          <div className="space-y-6 order-2 lg:order-1">
+        <div className="mt-8 grid gap-4 md:gap-8 grid-cols-1 lg:grid-cols-[minmax(0,1.45fr)_390px] lg:h-[calc(100vh-180px)] lg:items-start">
+          <div className="space-y-6 order-2 lg:order-1 lg:h-full lg:overflow-y-auto lg:pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <Card className={cn(
               "rounded-none border-x-0 md:rounded-[28px] md:border overflow-hidden backdrop-blur-xl transition-all duration-300 shadow-none md:shadow-md",
               isDark ? "border-y-white/10 bg-[#101216]/60 md:shadow-2xl" : "border-y-slate-200 bg-white"
@@ -744,7 +744,7 @@ export function Payment() {
             </Card>
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start order-1 lg:order-2">
+          <aside className="space-y-4 order-1 lg:order-2 lg:h-full lg:overflow-y-auto lg:pr-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <Card className={cn(
               "overflow-hidden rounded-none border-x-0 md:rounded-[28px] md:border shadow-none md:shadow-2xl transition-colors duration-300",
               isDark ? "border-y-white/10 bg-[#101216]/60" : "border-y-slate-200 bg-white"

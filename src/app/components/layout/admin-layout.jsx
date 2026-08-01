@@ -104,9 +104,6 @@ export function AdminLayout() {
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1 items-center">
-              <h1 className="text-2xl font-bold tracking-tight capitalize">
-                {currentRouteName}
-              </h1>
             </div>
 
             <div className="flex items-center gap-x-4 lg:gap-x-6">

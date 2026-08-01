@@ -42,7 +42,7 @@ export function RegisterPage() {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const initialType = searchParams.get("type") || "athlete";
-  
+
   const { register } = useAuth();
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
@@ -131,7 +131,7 @@ export function RegisterPage() {
     const isPasswordValid =
       formData.password.length >= 6 &&
       formData.password === formData.confirmPassword;
-      
+
     if (formData.role === "athlete") {
       return formData.selectedSports.length > 0 && isPasswordValid;
     }
@@ -186,7 +186,7 @@ export function RegisterPage() {
     }
 
     setIsSubmitting(true);
-    
+
     const result = register({
       fullName: formData.fullName,
       email: formData.email,
@@ -200,12 +200,12 @@ export function RegisterPage() {
 
     await new Promise((resolve) => setTimeout(resolve, 1500));
     setIsSubmitting(false);
-    
+
     if (result.success) {
       // Ensure isLoggedIn and userName are explicitly set for homepage/mobile-home
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userName", formData.fullName.split(" ")[0]);
-      
+
       setIsSuccess(true);
       setTimeout(() => {
         if (formData.role === "owner") navigate("/owner-setup");
@@ -645,11 +645,10 @@ export function RegisterPage() {
                                   key={sport.id}
                                   type="button"
                                   onClick={() => toggleSport(sport.id)}
-                                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left text-sm transition-all ${
-                                    isSelected
+                                  className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left text-sm transition-all ${isSelected
                                       ? "border-primary bg-primary/10  text-foreground"
                                       : "border-border bg-background/30 text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                                  }`}
+                                    }`}
                                 >
                                   <span className="text-lg leading-none">
                                     {sport.emoji}
@@ -686,11 +685,10 @@ export function RegisterPage() {
                                     key={level}
                                     type="button"
                                     onClick={() => selectSkill(level)}
-                                    className={`py-2 px-3 rounded-xl border text-xs  text-center transition-all ${
-                                      isSelected
+                                    className={`py-2 px-3 rounded-xl border text-xs  text-center transition-all ${isSelected
                                         ? "border-amber-500/50 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                         : "border-border bg-background/30 text-muted-foreground hover:bg-muted/30"
-                                    }`}
+                                      }`}
                                   >
                                     {level}
                                   </button>
@@ -709,13 +707,12 @@ export function RegisterPage() {
                         <Label htmlFor="password">Password</Label>
                         {formData.password && (
                           <span
-                            className={`text-xs  ${
-                              passwordStrength >= 3
+                            className={`text-xs  ${passwordStrength >= 3
                                 ? "text-emerald-500"
                                 : passwordStrength === 2
                                   ? "text-amber-500"
                                   : "text-rose-500"
-                            }`}
+                              }`}
                           >
                             {strengthLabels[passwordStrength]}
                           </span>
@@ -755,11 +752,10 @@ export function RegisterPage() {
                           {[1, 2, 3, 4].map((index) => (
                             <div
                               key={index}
-                              className={`h-1 rounded-full transition-all duration-300 ${
-                                index <= passwordStrength
+                              className={`h-1 rounded-full transition-all duration-300 ${index <= passwordStrength
                                   ? strengthColors[passwordStrength]
                                   : "bg-muted"
-                              }`}
+                                }`}
                             />
                           ))}
                         </div>

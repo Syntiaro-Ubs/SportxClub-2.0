@@ -17,10 +17,17 @@ export function ThemeToggleButton({
       variant={variant}
       size={size}
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className={cn("shrink-0 rounded-full transition-all duration-300 hover:text-emerald-600 hover:bg-emerald-50 hover:shadow-[0_0_10px_rgba(16,185,129,0.2)] dark:hover:bg-emerald-900/20 dark:hover:shadow-[0_0_10px_rgba(16,185,129,0.4)] cursor-pointer", className)}
+      className={cn(
+        "shrink-0 rounded-full border-0 bg-transparent hover:bg-transparent shadow-none hover:shadow-none focus:ring-0 focus-visible:ring-0 cursor-pointer group p-0 transition-colors",
+        className
+      )}
       aria-label={`Switch to ${isDark ? "light" : "dark"} theme`}
     >
-      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      {isDark ? (
+        <Sun className="h-5 w-5 transition-transform duration-300 ease-out group-hover:scale-125 group-hover:rotate-12 text-foreground group-hover:text-amber-500" />
+      ) : (
+        <Moon className="h-5 w-5 transition-transform duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 text-foreground group-hover:text-emerald-500" />
+      )}
     </Button>
   );
 }

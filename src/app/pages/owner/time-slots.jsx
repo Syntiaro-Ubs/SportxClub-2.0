@@ -807,7 +807,7 @@ export function TimeSlots() {
                       {/* Date Display */}
                       <div className="flex items-center gap-1.5 bg-background/60 px-3 py-1.5 rounded-lg border border-border/40 shadow-2xs shrink-0">
                         <CalendarIcon className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="text-xs font-extrabold text-foreground uppercase tracking-wider">
+                        <span className="text-xs font-bold text-foreground tracking-wide">
                           {format(selectedDate, 'EEEE, MMM dd')}
                         </span>
                       </div>

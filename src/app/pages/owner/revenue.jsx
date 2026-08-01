@@ -727,7 +727,7 @@ export function Revenue() {
             <div className="min-h-[28px] flex flex-col justify-start mb-4">
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
             </div>
-            <div className="flex flex-row items-center justify-between gap-2 w-full h-[220px] min-w-0">
+            <div className="flex flex-row items-center justify-start gap-4 sm:gap-6 w-full h-[220px] min-w-0">
               <div className="relative h-[200px] w-[200px] shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -757,7 +757,7 @@ export function Revenue() {
                   <span className="text-[9px] font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
               </div>
-              <div className="flex flex-col items-start justify-center gap-y-1 text-xs h-full shrink-0">
+              <div className="flex flex-col items-start justify-end gap-y-1 text-xs h-full shrink-0 pb-3">
                 {sportPopularityData.map((item) => (
                   <div key={item.name} className="flex items-center gap-1.5 px-1 py-[1px] rounded-md hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
                     <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
