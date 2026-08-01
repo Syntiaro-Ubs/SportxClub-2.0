@@ -293,10 +293,9 @@ function SectionHeading({ eyebrow, title, description, centered = false, titleCl
     <div className={cn("max-w-3xl", centered && "mx-auto text-center")}>
       {eyebrow && !title && (
         <h2 className={cn(
-          "text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5",
+          "text-base sm:text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center",
           centered && "justify-center"
         )}>
-          <span className="h-5 sm:h-6 w-1 rounded-full bg-emerald-500 dark:bg-emerald-600 shrink-0" />
           <span>{eyebrow}</span>
         </h2>
       )}
@@ -1277,21 +1276,16 @@ function SportCard({ name, count, image, index }) {
 
           <div className="absolute inset-x-0 bottom-0 z-20 p-6 sm:p-7">
             <p
-              className="text-lg sm:text-xl !text-white drop-shadow-md font-medium transition-colors duration-300"
+              className="text-lg sm:text-xl leading-tight !text-white drop-shadow-md font-medium transition-colors duration-300"
             >
               {name}
             </p>
-            <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-3">
               <p
-                className="text-sm !text-white/80 drop-shadow-sm transition-colors duration-300"
+                className="text-sm leading-tight !text-white/80 drop-shadow-sm transition-colors duration-300"
               >
                 {count}
               </p>
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.08] text-emerald-600 group-hover:bg-emerald-600 group-hover:text-[#050505] transition-all duration-300 ease-out"
-              >
-                <ArrowRight className="h-4 w-4" />
-              </div>
             </div>
           </div>
         </div>
@@ -1677,7 +1671,7 @@ export function DiscoveryRails() {
                   <p className="text-[0.72rem]  uppercase tracking-[0.36em] text-emerald-600/85 dark:text-white/85">
                     Offers
                   </p>
-                  <h2 className="mt-3 text-2xl  tracking-tight text-white md:text-3xl">
+                  <h2 className="mt-3 text-base sm:text-lg md:text-xl font-bold tracking-tight text-white">
                     Offers that feel clear, useful, and safe.
                   </h2>
                 </div>
@@ -1985,7 +1979,7 @@ export function StoreSection() {
         <SectionHeading
           eyebrow="Pro Store"
           title="Sport Related Facilities & Equipment"
-          titleClassName="!text-xl md:!text-2xl lg:!text-3xl"
+          titleClassName="!text-base sm:!text-lg md:!text-xl lg:!text-2xl"
         />
       </div>
 
@@ -2241,7 +2235,7 @@ export function TurfGallery() {
         <SectionHeading
           eyebrow="Gallery"
           title="Immersive Turf Experiences"
-          titleClassName="!text-xl md:!text-2xl lg:!text-3xl"
+          titleClassName="!text-base sm:!text-lg md:!text-xl lg:!text-2xl"
         />
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">

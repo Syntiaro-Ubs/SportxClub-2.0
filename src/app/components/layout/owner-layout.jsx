@@ -143,7 +143,7 @@ export function OwnerLayout() {
         </a>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-y-auto px-3 pt-1 md:pt-4 pb-4 scrollbar-visible">
+      <div className="flex flex-1 flex-col overflow-y-auto px-3 pt-0 pb-4 scrollbar-visible">
         {ownerNavigation.map((item) => {
           const Icon = item.icon;
           const isActive =

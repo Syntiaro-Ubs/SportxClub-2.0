@@ -7,21 +7,21 @@ import { Button } from "../components/ui/button";
 
 const getArrowClass = (items, side) => {
   if (items.length <= 2) return "hidden";
-  
+
   let responsiveClass = "absolute top-[40%] z-20 h-10 w-8 md:h-12 md:w-10 flex items-center justify-center active:scale-75 transition-all opacity-100 cursor-pointer";
-  
+
   if (side === "left") {
     responsiveClass += " left-1 md:-left-12 lg:-left-16";
   } else {
     responsiveClass += " right-1 md:-right-12 lg:-right-16";
   }
-  
+
   if (items.length === 3) {
     responsiveClass += " lg:hidden";
   } else if (items.length === 4) {
     responsiveClass += " xl:hidden";
   }
-  
+
   return responsiveClass;
 };
 
@@ -674,95 +674,179 @@ export function VenueBooking() {
     );
   };
 
+  const renderHorizontalVenueCard = (venue) => {
+    const venuePrice = venue.price || (800 + (venue.id * 130) % 1000);
+    return (
+      <div
+        key={venue.id}
+        className="relative w-full flex flex-col md:flex-row bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-200 dark:border-slate-800 group cursor-pointer"
+        onClick={() => navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } })}
+      >
+        {/* Left Side: Main Image */}
+        <div className="relative w-full md:w-[55%] lg:w-[60%] h-[180px] sm:h-[220px] md:h-[280px] lg:h-[320px]">
+          <img
+            src={venue.image}
+            alt={venue.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = "/assets/venues/turf-1.webp"; // Fallback image
+            }}
+          />
+          {/* Overlay for Name text at the bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3 sm:p-4 md:p-5">
+            <h3 className="text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl leading-tight line-clamp-1 drop-shadow-lg">
+              {venue.name}
+            </h3>
+          </div>
+        </div>
+
+        {/* Right Side: Details & Sub-images */}
+        <div className="flex flex-1 flex-row w-full md:w-[45%] lg:w-[40%] gap-3 sm:gap-4">
+
+          {/* Left Column in Right Side: 3 Sub-images */}
+          <div className="flex flex-col w-[50%] sm:w-[240px] lg:w-[320px] shrink-0">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex-1 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 relative">
+                <img
+                  src={venue.image} // Using main image as placeholder since API doesn't provide gallery yet
+                  alt="Sub image placeholder"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Right Column in Right Side: Info & Button */}
+          <div className="flex flex-col flex-1 justify-between py-3 sm:py-4 pr-3 sm:pr-4 min-w-0">
+            {/* Top: Stars & Sport */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-end gap-1.5 w-full">
+                <span className="text-foreground/60 font-extrabold tracking-wider uppercase text-[9px] sm:text-[10px]">
+                  {venue.sports}
+                </span>
+              </div>
+              <div className="flex items-center justify-end gap-1 text-slate-800 dark:text-slate-200 font-semibold text-[10px] sm:text-xs">
+                <span>{venue.rating.toFixed(1)}</span>
+                <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500 text-emerald-500 shrink-0" />
+                <span className="text-slate-500 font-medium">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)})</span>
+              </div>
+            </div>
+
+            {/* Middle: Address */}
+            <div className="flex flex-col items-end text-right my-2">
+              <div className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-xs font-medium line-clamp-2 flex items-start justify-end gap-1 w-full max-w-[200px]">
+                {typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}
+                <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 mt-0.5 text-slate-400" />
+              </div>
+            </div>
+
+            {/* Bottom: Button */}
+            <div className="flex justify-end mt-auto">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-colors shadow-sm"
+              >
+                Book Slot
+              </Button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full bg-[#f8faf9] dark:bg-[#020617] min-h-screen pb-10 pt-2 px-4 md:px-8">
       <div className="max-w-[1440px] mx-auto flex flex-col gap-4">
-        {/* Toggle Button & Absolute Dropdown */}
-        <div className="relative z-40 flex justify-end md:justify-start">
-          <Button
-            onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-            className="w-fit bg-white/80 dark:bg-[#0f172a]/70 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-800/60 rounded-xl h-11 font-bold shadow-xs flex items-center justify-between px-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors backdrop-blur-md"
-          >
-            <div className="flex items-center gap-2 mr-2">
-              <Filter className="w-4 h-4 text-[#059669]" />
-              <span>Quick Filters</span>
-            </div>
-            <ChevronDown className={cn("w-4 h-4 transition-transform", isMobileFilterOpen ? "rotate-180" : "")} />
-          </Button>
-
-          <AnimatePresence>
-            {isMobileFilterOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 md:left-0 md:right-auto top-full mt-3 w-[280px] z-50 origin-top-right md:origin-top-left"
-              >
-                <div className="w-full bg-white/95 dark:bg-[#0f172a]/95 rounded-[24px] border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-[0_20px_60px_rgb(0,0,0,0.15)] backdrop-blur-2xl">
-                  <div className="flex flex-col gap-5 w-full">
-
-                    <div className="w-full">
-                      <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Sport</h4>
-                      <CustomSelect
-                        value={selectedSport}
-                        onChange={(val) => setSelectedSport(val)}
-                        options={sportsList}
-                      />
-                    </div>
-                    <div className="w-full">
-                      <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Price</h4>
-                      <CustomSelect
-                        value={sortByPrice}
-                        onChange={(val) => {
-                          setSortByPrice(val);
-                          setSortField("Price");
-                        }}
-                        options={["Low to High", "High to Low"]}
-                      />
-                    </div>
-                    <div className="w-full">
-                      <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Rating</h4>
-                      <CustomSelect
-                        value={sortByRating}
-                        onChange={(val) => {
-                          setSortByRating(val);
-                          setSortField("Rating");
-                        }}
-                        options={["High to Low", "Low to High"]}
-                      />
-                    </div>
-
-                    <Button
-                      onClick={() => {
-                        setSelectedSport("All Sports");
-                        setSelectedLocation("All Cities");
-                        setSortByPrice("Low to High");
-                        setSortByRating("High to Low");
-                        setSortField("Price");
-                        localStorage.setItem("preferred-city", "All Cities");
-                        window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
-                      }}
-                      className="w-full bg-slate-100 hover:bg-slate-200/80 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-slate-300 border border-slate-200/60 dark:border-white/[0.05] rounded-xl h-[42px] font-bold shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5 opacity-80" />
-                      Reset Filters
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Header Section */}
           <div className="flex items-end justify-between mb-3">
-            <div>
-              <h2 className="text-xl md:text-[25px] font-semibold text-slate-900 dark:text-white tracking-tight">
+            <div className="flex items-center gap-4">
+              <h2 className="text-base sm:text-lg md:text-[25px] font-semibold text-slate-900 dark:text-white tracking-tight">
                 Recommended Venues
               </h2>
+              {/* Quick Filters Toggle Button & Dropdown */}
+              <div className="relative z-40">
+                <Button
+                  onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+                  className="w-fit bg-white/80 dark:bg-[#0f172a]/70 text-slate-900 dark:text-white border border-slate-200/60 dark:border-slate-800/60 rounded-xl h-11 font-bold shadow-xs flex items-center justify-between px-5 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors backdrop-blur-md"
+                >
+                  <div className="flex items-center gap-2 mr-2">
+                    <Filter className="w-4 h-4 text-[#059669]" />
+                    <span>Quick Filters</span>
+                  </div>
+                  <ChevronDown className={cn("w-4 h-4 transition-transform", isMobileFilterOpen ? "rotate-180" : "")} />
+                </Button>
+
+                <AnimatePresence>
+                  {isMobileFilterOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 md:left-0 md:right-auto top-full mt-3 w-[280px] z-50 origin-top-right md:origin-top-left"
+                    >
+                      <div className="w-full bg-white/95 dark:bg-[#0f172a]/95 rounded-[24px] border border-slate-200/80 dark:border-slate-700/80 p-5 shadow-[0_20px_60px_rgb(0,0,0,0.15)] backdrop-blur-2xl">
+                        <div className="flex flex-col gap-5 w-full">
+
+                          <div className="w-full">
+                            <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Sport</h4>
+                            <CustomSelect
+                              value={selectedSport}
+                              onChange={(val) => setSelectedSport(val)}
+                              options={sportsList}
+                            />
+                          </div>
+                          <div className="w-full">
+                            <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Price</h4>
+                            <CustomSelect
+                              value={sortByPrice}
+                              onChange={(val) => {
+                                setSortByPrice(val);
+                                setSortField("Price");
+                              }}
+                              options={["Low to High", "High to Low"]}
+                            />
+                          </div>
+                          <div className="w-full">
+                            <h4 className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500 mb-1.5 ml-1">Rating</h4>
+                            <CustomSelect
+                              value={sortByRating}
+                              onChange={(val) => {
+                                setSortByRating(val);
+                                setSortField("Rating");
+                              }}
+                              options={["High to Low", "Low to High"]}
+                            />
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              setSelectedSport("All Sports");
+                              setSelectedLocation("All Cities");
+                              setSortByPrice("Low to High");
+                              setSortByRating("High to Low");
+                              setSortField("Price");
+                              localStorage.setItem("preferred-city", "All Cities");
+                              window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
+                            }}
+                            className="w-full bg-slate-100 hover:bg-slate-200/80 text-slate-800 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] dark:text-slate-300 border border-slate-200/60 dark:border-white/[0.05] rounded-xl h-[42px] font-bold shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer text-xs"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 opacity-80" />
+                            Reset Filters
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
             <Link
               to="/venues"
@@ -815,53 +899,30 @@ export function VenueBooking() {
             </div>
           </div>
 
-          {/* Explore Other Venues Slider */}
-          <div className="relative group/section">
-            {otherVenues.length > 2 && (
-              <button
-                onClick={scrollLeft2}
-                className={getArrowClass(otherVenues, "left")}
-              >
-                <ChevronLeft strokeWidth={4} className="h-7 w-7 md:h-9 md:w-9 text-white drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.85)]" />
-              </button>
-            )}
-
-            <div
-              ref={scrollRef2}
-              className="flex snap-x snap-mandatory overflow-x-auto gap-3 pb-8 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {otherVenues.length > 0 ? (
-                otherVenues.map(renderVenueCard)
-              ) : (
-                <div className="w-full py-16 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                    <MapPin className="w-8 h-8 text-slate-400 dark:text-slate-500" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No venues found</h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[260px]">
-                    We couldn't find any {selectedSport !== "All Sports" ? selectedSport : "sports"} venues in {selectedLocation}. Try adjusting your filters.
-                  </p>
-                  <Button
-                    onClick={() => {
-                      setSelectedSport("All Sports");
-                      setSelectedLocation("All Cities");
-                    }}
-                    variant="outline"
-                    className="mt-6 border-slate-200 dark:border-slate-800 dark:text-white bg-transparent"
-                  >
-                    Clear Filters
-                  </Button>
+          {/* Explore Other Venues List */}
+          <div className="flex flex-col gap-4 pb-8">
+            {otherVenues.length > 0 ? (
+              otherVenues.map(renderHorizontalVenueCard)
+            ) : (
+              <div className="w-full py-16 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                  <MapPin className="w-8 h-8 text-slate-400 dark:text-slate-500" />
                 </div>
-              )}
-            </div>
-
-            {otherVenues.length > 2 && (
-              <button
-                onClick={scrollRight2}
-                className={getArrowClass(otherVenues, "right")}
-              >
-                <ChevronRight strokeWidth={4} className="h-7 w-7 md:h-9 md:w-9 text-white drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.85)]" />
-              </button>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No venues found</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[260px]">
+                  We couldn't find any {selectedSport !== "All Sports" ? selectedSport : "sports"} venues in {selectedLocation}. Try adjusting your filters.
+                </p>
+                <Button
+                  onClick={() => {
+                    setSelectedSport("All Sports");
+                    setSelectedLocation("All Cities");
+                  }}
+                  variant="outline"
+                  className="mt-6 border-slate-200 dark:border-slate-800 dark:text-white bg-transparent"
+                >
+                  Clear Filters
+                </Button>
+              </div>
             )}
           </div>
         </div>
