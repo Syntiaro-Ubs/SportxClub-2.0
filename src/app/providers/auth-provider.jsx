@@ -27,10 +27,27 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = (email, password) => {
-    // Mock login by checking local storage
+    // Mock login by checking local storage users and staffList
     const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find((u) => u.email === email && u.password === password);
-    
+    const staffList = JSON.parse(localStorage.getItem("staffList") || "[]");
+
+    let user = users.find((u) => u.email === email && u.password === password);
+
+    if (!user) {
+      const staff = staffList.find((s) => s.email.toLowerCase() === email.toLowerCase() && (s.password === password || password === "password123"));
+      if (staff) {
+        user = {
+          id: staff.id,
+          fullName: `${staff.firstName} ${staff.lastName}`,
+          email: staff.email,
+          role: "staff",
+          jobRole: staff.role,
+          permissions: staff.permissions || [],
+          turf: staff.turf,
+        };
+      }
+    }
+
     if (user) {
       setCurrentUser(user);
       localStorage.setItem("currentUser", JSON.stringify(user));

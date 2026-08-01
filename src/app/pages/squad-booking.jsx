@@ -35,7 +35,7 @@ export function SquadBookingPage() {
   const [startTime, setStartTime] = useState("19:00");
   const [playHours, setPlayHours] = useState(1);
   const [selectedSlotObj, setSelectedSlotObj] = useState(null);
-  
+
   const [venue] = useState(location.state?.venue || {
     name: "Elite Turf Arena",
     location: "Powai, Mumbai",
@@ -215,7 +215,7 @@ export function SquadBookingPage() {
       paymentMode: "full",
       paidMembers: [99]
     };
-    
+
     // Save transaction state for the receipt download and Entry Pass screen
     sessionStorage.setItem("sportxclub_last_booking", JSON.stringify({
       squadLobby: lobbyObj,

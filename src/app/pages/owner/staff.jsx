@@ -39,7 +39,8 @@ import {
   ShieldCheck,
   Key,
   Lock,
-  Check
+  Check,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -53,19 +54,27 @@ const JOB_ROLES = ["Manager", "Receptionist", "Maintenance", "Security", "Coach"
 const MOCK_TURFS = ["Cricket Ground 1", "Cricket Ground 2", "Premium Football Turf"];
 
 const PERMISSION_OPTIONS = [
-  { id: "bookings", label: "Manage Bookings & Slots", desc: "Can view, book, hold, and release time slots" },
-  { id: "pricing", label: "Modify Slot Pricing & Discounts", desc: "Can override slot rates and apply promo codes" },
-  { id: "turfs", label: "Turf & Facility Controls", desc: "Can toggle Open/Closed status & block custom times" },
-  { id: "revenue", label: "Financial & Revenue Reports", desc: "Can view daily earnings, payouts, and sales logs" },
-  { id: "staff", label: "Staff Account Management", desc: "Can add or update staff member profiles & roles" },
+  { id: "dashboard", label: "Dashboard", desc: "Overview analytics, active bookings summary & quick actions" },
+  { id: "revenue", label: "Revenue", desc: "Earnings breakdown, payout reports & transaction history" },
+  { id: "turfs", label: "My Turfs", desc: "Manage turf details, slot schedules, pricing & image gallery" },
+  { id: "bookings", label: "Bookings", desc: "View, approve, hold, or cancel real-time slot bookings" },
+  { id: "roles", label: "Roles & Staff", desc: "Staff account management, access roles & system permissions" },
+  { id: "events", label: "Events & Tournaments", desc: "Create, schedule, and manage local sports tournaments" },
+  { id: "calendar", label: "Calendar View", desc: "Full visual schedule calendar for all turfs & slots" },
+  { id: "reviews", label: "Customer Reviews", desc: "Read customer feedback, ratings, and respond to reviews" },
+  { id: "promotions", label: "Promotions & Offers", desc: "Create promo codes, discounts, and broadcast notifications" },
+  { id: "report", label: "Reports & Analytics", desc: "Export detailed sales, attendance, and performance reports" },
+  { id: "settings", label: "Settings", desc: "Configure turf owner profile, banking & business details" },
 ];
 
+const ALL_PERMISSION_IDS = PERMISSION_OPTIONS.map((p) => p.id);
+
 const ROLE_PERMISSIONS_MAP = {
-  Manager: ["bookings", "pricing", "turfs", "revenue", "staff"],
-  Receptionist: ["bookings", "pricing"],
-  Maintenance: ["turfs"],
-  Security: ["bookings"],
-  Coach: ["bookings"],
+  Manager: ALL_PERMISSION_IDS,
+  Receptionist: ["dashboard", "bookings", "calendar", "turfs"],
+  Maintenance: ["dashboard", "turfs", "calendar"],
+  Security: ["dashboard", "bookings"],
+  Coach: ["dashboard", "events", "calendar"],
 };
 
 export function StaffManagement() {
@@ -76,10 +85,11 @@ export function StaffManagement() {
       lastName: "Sharma",
       email: "rahul@sportxclub.com",
       phone: "+91 9876543210",
+      password: "password123",
       role: "Manager",
       turf: "Cricket Ground 1",
       isActive: true,
-      permissions: ["bookings", "pricing", "turfs", "revenue", "staff"],
+      permissions: ALL_PERMISSION_IDS,
     },
     {
       id: "2",
@@ -87,10 +97,11 @@ export function StaffManagement() {
       lastName: "Patel",
       email: "amit@sportxclub.com",
       phone: "+91 9123456789",
+      password: "password123",
       role: "Maintenance",
       turf: "Premium Football Turf",
       isActive: true,
-      permissions: ["turfs"],
+      permissions: ["dashboard", "turfs", "calendar"],
     },
     {
       id: "3",
@@ -98,10 +109,11 @@ export function StaffManagement() {
       lastName: "Gupta",
       email: "sneha@sportxclub.com",
       phone: "+91 9988776655",
+      password: "password123",
       role: "Receptionist",
       turf: "Cricket Ground 2",
       isActive: false,
-      permissions: ["bookings", "pricing"],
+      permissions: ["dashboard", "bookings", "calendar", "turfs"],
     },
   ]);
 
@@ -113,23 +125,25 @@ export function StaffManagement() {
     firstName: "",
     lastName: "",
     email: "",
-    phone: "",
+    password: "",
     role: "",
     turf: "",
+    turfs: [],
     isActive: true,
-    permissions: ["bookings"],
+    permissions: ["dashboard", "bookings"],
   });
 
   const filteredStaff = useMemo(() => {
     return staffList.filter((staff) =>
       `${staff.firstName} ${staff.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
       staff.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      staff.turf.toLowerCase().includes(searchQuery.toLowerCase())
+      (staff.turf || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (Array.isArray(staff.turfs) ? staff.turfs.join(" ").toLowerCase() : '').includes(searchQuery.toLowerCase())
     );
   }, [staffList, searchQuery]);
 
   const handleRoleChange = (role) => {
-    const defaultPermissions = ROLE_PERMISSIONS_MAP[role] || ["bookings"];
+    const defaultPermissions = ROLE_PERMISSIONS_MAP[role] || ["dashboard", "bookings"];
     setFormData((prev) => ({
       ...prev,
       role,
@@ -150,9 +164,13 @@ export function StaffManagement() {
   const handleOpenModal = (staff = null) => {
     if (staff) {
       setEditingStaff(staff);
+      const existingTurfs = Array.isArray(staff.turfs) ? staff.turfs : (staff.turf ? [staff.turf] : [MOCK_TURFS[0]]);
       setFormData({
         ...staff,
-        permissions: staff.permissions || ROLE_PERMISSIONS_MAP[staff.role] || ["bookings"],
+        password: staff.password || "••••••••",
+        turfs: existingTurfs,
+        turf: existingTurfs[0] || staff.turf || MOCK_TURFS[0],
+        permissions: staff.permissions || ROLE_PERMISSIONS_MAP[staff.role] || ["dashboard", "bookings"],
       });
     } else {
       setEditingStaff(null);
@@ -160,11 +178,12 @@ export function StaffManagement() {
         firstName: "",
         lastName: "",
         email: "",
-        phone: "",
+        password: "",
         role: "",
-        turf: "",
+        turf: MOCK_TURFS[0],
+        turfs: [MOCK_TURFS[0]],
         isActive: true,
-        permissions: ["bookings"],
+        permissions: ["dashboard", "bookings"],
       });
     }
     setIsModalOpen(true);
@@ -173,20 +192,26 @@ export function StaffManagement() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!formData.firstName || !formData.lastName || !formData.role || !formData.turf || !formData.phone) {
+    const selectedTurfs = Array.isArray(formData.turfs) && formData.turfs.length > 0 ? formData.turfs : (formData.turf ? [formData.turf] : []);
+
+    if (!formData.firstName || !formData.lastName || !formData.role || selectedTurfs.length === 0 || !formData.password || !formData.email) {
       toast.error("Please fill in all required fields.");
       return;
     }
 
     if (editingStaff) {
-      setStaffList(staffList.map((s) => (s.id === editingStaff.id ? { ...formData, id: s.id } : s)));
+      const updated = staffList.map((s) => (s.id === editingStaff.id ? { ...formData, id: s.id } : s));
+      setStaffList(updated);
+      localStorage.setItem("staffList", JSON.stringify(updated));
       toast.success("Staff details updated successfully.");
     } else {
       const newStaff = {
         ...formData,
         id: Math.random().toString(36).substr(2, 9),
       };
-      setStaffList([newStaff, ...staffList]);
+      const updated = [newStaff, ...staffList];
+      setStaffList(updated);
+      localStorage.setItem("staffList", JSON.stringify(updated));
       toast.success("New staff added successfully.");
     }
 
@@ -195,20 +220,24 @@ export function StaffManagement() {
 
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to remove this staff member?")) {
-      setStaffList(staffList.filter((s) => s.id !== id));
+      const updated = staffList.filter((s) => s.id !== id);
+      setStaffList(updated);
+      localStorage.setItem("staffList", JSON.stringify(updated));
       toast.success("Staff removed successfully.");
     }
   };
 
   const toggleStatus = (id) => {
-    setStaffList(staffList.map((s) => {
+    const updated = staffList.map((s) => {
       if (s.id === id) {
         const newStatus = !s.isActive;
         toast.info(`${s.firstName} is now ${newStatus ? 'Active' : 'Inactive'}`);
         return { ...s, isActive: newStatus };
       }
       return s;
-    }));
+    });
+    setStaffList(updated);
+    localStorage.setItem("staffList", JSON.stringify(updated));
   };
 
   return (
@@ -364,18 +393,7 @@ export function StaffManagement() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="phone" className="text-xs font-semibold">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  placeholder="e.g. +91 9876543210"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="rounded-lg text-sm"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-semibold">Email Address</Label>
+                <Label htmlFor="email" className="text-xs font-semibold">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -383,11 +401,25 @@ export function StaffManagement() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="rounded-lg text-sm"
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="password" className="text-xs font-semibold">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="rounded-lg text-sm bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 shadow-none focus-visible:ring-0 selection:bg-transparent selection:text-foreground"
+                  required
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              {/* Job Role Column (Left) */}
               <div className="space-y-1.5">
                 <Label htmlFor="role" className="text-xs font-semibold">Job Role *</Label>
                 <Select value={formData.role} onValueChange={handleRoleChange} required>
@@ -401,18 +433,58 @@ export function StaffManagement() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Assigned Turf Column (Right - Dropdown with Checkboxes inside) */}
               <div className="space-y-1.5">
-                <Label htmlFor="turf" className="text-xs font-semibold">Assigned Turf *</Label>
-                <Select value={formData.turf} onValueChange={(val) => setFormData({ ...formData, turf: val })} required>
-                  <SelectTrigger id="turf" className="rounded-lg text-sm">
-                    <SelectValue placeholder="Select turf" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl">
-                    {MOCK_TURFS.map(turf => (
-                      <SelectItem key={turf} value={turf}>{turf}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs font-semibold">Assigned Turf *</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center justify-between w-full h-9 px-3 rounded-lg border border-input bg-transparent text-xs font-medium transition-all hover:bg-muted/40 cursor-pointer shadow-none outline-none"
+                    >
+                      <span className="truncate text-foreground">
+                        {(() => {
+                          const currentTurfs = Array.isArray(formData.turfs) ? formData.turfs : (formData.turf ? [formData.turf] : []);
+                          if (currentTurfs.length === 0) return "Select turfs";
+                          if (currentTurfs.length === 1) return currentTurfs[0];
+                          return `${currentTurfs.length} Turfs Selected`;
+                        })()}
+                      </span>
+                      <ChevronDown className="h-4 w-4 opacity-50 ml-1 shrink-0" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 p-1.5 rounded-xl border border-border/60 shadow-xl space-y-1 bg-popover" align="start">
+                    {MOCK_TURFS.map((turf) => {
+                      const currentTurfs = Array.isArray(formData.turfs) ? formData.turfs : (formData.turf ? [formData.turf] : []);
+                      const isChecked = currentTurfs.includes(turf);
+                      return (
+                        <div
+                          key={turf}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            const nextTurfs = isChecked
+                              ? currentTurfs.filter((t) => t !== turf)
+                              : [...currentTurfs, turf];
+                            setFormData({ ...formData, turfs: nextTurfs, turf: nextTurfs[0] || "" });
+                          }}
+                          className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all cursor-pointer select-none ${
+                            isChecked
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
+                              : "text-foreground hover:bg-muted/50"
+                          }`}
+                        >
+                          <div className={`h-4 w-4 rounded flex items-center justify-center border shrink-0 transition-colors ${
+                            isChecked ? "bg-emerald-500 border-emerald-500 text-white" : "border-border/60 bg-background"
+                          }`}>
+                            {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                          </div>
+                          <span className="truncate">{turf}</span>
+                        </div>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

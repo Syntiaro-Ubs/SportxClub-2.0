@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -13,6 +13,7 @@ import {
   X,
   LogOut,
   User,
+  Users,
   Trophy,
   FlaskConical,
   PanelLeft,
@@ -47,18 +48,38 @@ import { Label } from "../ui/label";
 import { toast } from "sonner";
 
 const ownerNavigation = [
-  { name: "Dashboard", href: "/admin-panel", icon: LayoutDashboard },
-  { name: "Revenue", href: "/admin-panel/revenue", icon: IndianRupee },
-  { name: "Bookings", href: "/admin-panel/bookings", icon: CalendarDays, badge: "18" },
-  { name: "My Turfs", href: "/admin-panel/turfs", icon: MapPin, badge: "4" },
-  { name: "Report", href: "/admin-panel/report", icon: FileText },
-  { name: "Roles", href: "/admin-panel/staff", icon: User },
-  { name: "Events", href: "/admin-panel/tournaments", icon: Trophy, badge: "2" },
-  { name: "Calendar", href: "/admin-panel/calendar", icon: Calendar },
-  { name: "Reviews", href: "/admin-panel/reviews", icon: Star, badge: "4.8★" },
-  { name: "Promotions", href: "/admin-panel/promotions", icon: Tag },
-  { name: "Settings", href: "/admin-panel/settings", icon: Settings },
+  { name: "Dashboard", href: "/admin-panel", icon: LayoutDashboard, permissionKey: "dashboard" },
+  { name: "Revenue", href: "/admin-panel/revenue", icon: IndianRupee, permissionKey: "revenue" },
+  { name: "Bookings", href: "/admin-panel/bookings", icon: CalendarDays, badge: "18", permissionKey: "bookings" },
+  { name: "My Turfs", href: "/admin-panel/turfs", icon: MapPin, badge: "4", permissionKey: "turfs" },
+  { name: "Roles", href: "/admin-panel/staff", icon: Users, permissionKey: "roles" },
+  { name: "Events", href: "/admin-panel/tournaments", icon: Trophy, badge: "2", permissionKey: "events" },
+  { name: "Calendar", href: "/admin-panel/calendar", icon: Calendar, permissionKey: "calendar" },
+  { name: "Reviews", href: "/admin-panel/reviews", icon: Star, badge: "4.8★", permissionKey: "reviews" },
+  { name: "Promotions", href: "/admin-panel/promotions", icon: Tag, permissionKey: "promotions" },
+  { name: "Report", href: "/admin-panel/report", icon: FileText, permissionKey: "report" },
+  { name: "Settings", href: "/admin-panel/settings", icon: Settings, permissionKey: "settings" },
 ];
+
+function TwoLineMenuIcon({ className, ...props }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <line x1="3" y1="8" x2="21" y2="8" />
+      <line x1="3" y1="16" x2="15" y2="16" />
+    </svg>
+  );
+}
 
 export function OwnerLayout() {
   const location = useLocation();
@@ -80,35 +101,9 @@ export function OwnerLayout() {
     });
   };
 
-  // 10-Minute Reminder Toast for active Test Mode
-  useEffect(() => {
-    if (!isTestMode) return;
-
-    const TEN_MINUTES_MS = 10 * 60 * 1000;
-    const intervalId = setInterval(() => {
-      toast.warning("⏱️ Session Notice: Test Mode Active", {
-        description: "You've been in Sandbox Mode for 10 mins. Switch to Live Mode anytime for real-time venue metrics.",
-        duration: 10000,
-      });
-    }, TEN_MINUTES_MS);
-
-    return () => clearInterval(intervalId);
-  }, [isTestMode]);
-
   const handleTestModeToggle = (checked) => {
     setIsTestMode(checked);
     localStorage.setItem("ownerTestMode", checked ? "true" : "false");
-    if (checked) {
-      toast.warning("⚡ Sandbox Environment Active", {
-        description: "Operating in simulated test mode. Live metrics & transactions remain safely isolated.",
-        duration: 5000,
-      });
-    } else {
-      toast.success("🟢 Live Production Mode Active", {
-        description: "Restored real-time venue operations, bookings & revenue metrics.",
-        duration: 5000,
-      });
-    }
   };
 
   // Create a local override state for demo purposes (when not logged in)
@@ -126,6 +121,14 @@ export function OwnerLayout() {
     navigate("/login");
   };
 
+  const visibleNavigation = useMemo(() => {
+    // If Super Admin/Owner or no restricted permissions array, show all 11 pages
+    if (!activeProfile || activeProfile.role === "owner" || !activeProfile.permissions) {
+      return ownerNavigation;
+    }
+    return ownerNavigation.filter((item) => activeProfile.permissions.includes(item.permissionKey));
+  }, [activeProfile]);
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card/50 backdrop-blur-2xl">
       <div className="flex h-14 shrink-0 items-center gap-3 px-4 border-b border-border/40">
@@ -136,7 +139,7 @@ export function OwnerLayout() {
           aria-label="Collapse Sidebar"
           className="hidden md:flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0 my-auto"
         >
-          <Menu className="h-5 w-5" />
+          <TwoLineMenuIcon className="h-5 w-5" />
         </button>
         <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
           <Logo className="h-[50px] md:h-[80px]" />
@@ -144,7 +147,7 @@ export function OwnerLayout() {
       </div>
 
       <div className="flex flex-1 flex-col overflow-y-auto px-3 pt-0 pb-4 scrollbar-visible">
-        {ownerNavigation.map((item) => {
+        {visibleNavigation.map((item) => {
           const Icon = item.icon;
           const isActive =
             location.pathname === item.href ||
@@ -199,7 +202,7 @@ export function OwnerLayout() {
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <span className="sr-only">Open sidebar</span>
-              <Menu className="h-6 w-6" aria-hidden="true" />
+              <TwoLineMenuIcon className="h-6 w-6" aria-hidden="true" />
             </button>
             <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
               <Logo className="h-[50px] md:h-[80px]" />
@@ -218,16 +221,13 @@ export function OwnerLayout() {
                     aria-label="Expand Sidebar"
                     className="flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0"
                   >
-                    <Menu className="h-5 w-5" />
+                    <TwoLineMenuIcon className="h-5 w-5" />
                   </button>
                   <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
                     <Logo className="h-[50px] md:h-[80px]" />
                   </a>
                 </div>
               )}
-              <h1 className="hidden md:block text-xl sm:text-2xl font-black tracking-tight text-foreground capitalize">
-                Dashboard
-              </h1>
             </div>
 
             <div className="flex items-center gap-x-3 sm:gap-x-5">
@@ -245,22 +245,19 @@ export function OwnerLayout() {
               <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center gap-2.5 rounded-full p-1 pr-3 transition-all cursor-pointer">
+                <DropdownMenuTrigger className="outline-none focus:outline-none flex flex-col items-center justify-center gap-1 p-1 transition-all cursor-pointer group">
                   <div className="relative">
-                    <Avatar className="h-9 w-9 border-2 border-emerald-500">
+                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-0 bg-transparent transition-transform group-hover:scale-105">
                       {activeProfile.profilePicture ? (
                         <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                       ) : (
-                        <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 font-black text-xs">
-                          {ownerName.trim().split(/\s+/).map((n) => n[0]).join("").slice(0, 2)}
+                        <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                          <User className="h-4.5 w-4.5 stroke-[2.2]" />
                         </AvatarFallback>
                       )}
                     </Avatar>
-
                   </div>
-                  <div className="hidden lg:flex flex-col text-left">
-                    <span className="text-xs font-bold leading-none text-foreground">{ownerName}</span>
-                  </div>
+                  <span className="text-[11px] font-bold leading-none text-foreground whitespace-nowrap">{ownerName}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 rounded-2xl border-border/60 p-1.5 shadow-xl" align="end" forceMount>
                   <DropdownMenuLabel className="px-3 py-2">
