@@ -112,67 +112,37 @@ export function LoginPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
-      {/* Right Aligned Login Form Drawer */}
-      <div className="w-full sm:w-[440px] sm:max-w-none h-fit bg-white shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-slate-200/80 px-6 sm:px-10 pb-6 pt-6 relative z-10 flex flex-col justify-center">
+      {/* Right Aligned Full Height Login Form Drawer */}
+      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full bg-white shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-slate-200/80 px-6 sm:px-10 py-10 relative z-10 flex flex-col justify-center">
 
         {/* Close Button */}
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="absolute right-4 top-4 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer z-20"
+          className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer z-20"
           title="Close Login"
           aria-label="Close Login"
         >
           <X className="h-5 w-5" />
         </button>
 
-        {/* HEADER LOGO */}
-        <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10 -mb-4">
-          <Link to="/" className="flex items-center m-0 p-0">
-            <img src="/assets/icons/SportXClub.png" alt="SportXClub" className="h-20 sm:h-24 m-0 p-0 object-contain" />
-          </Link>
-        </div>
+        {/* Unified Form Wrapper */}
+        <div className="w-full my-auto space-y-4">
+          {/* HEADER LOGO */}
+          <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10">
+            <Link to="/" className="flex items-center m-0 p-0">
+              <img src="/assets/icons/SportXClub.png" alt="SportXClub" className="h-20 sm:h-22 m-0 p-0 object-contain" />
+            </Link>
+          </div>
 
-        {/* Premium Elegant Gradient Divider */}
-        <div className="w-full mt-0 mb-3 h-[1.5px] bg-gradient-to-r from-transparent via-[#0FA83F]/50 to-transparent" />
+          {/* Premium Elegant Gradient Divider */}
+          <div className="w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#0FA83F]/50 to-transparent" />
 
-        {isSuccess ? (
-          // Success Screen
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex items-center justify-center py-24"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{
-                type: "spring",
-                stiffness: 100,
-                damping: 12,
-              }}
-              className="h-24 w-24 rounded-full bg-emerald-50 flex items-center justify-center"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 120,
-                  damping: 10,
-                  delay: 0.3,
-                }}
-              >
-                <Check className="h-12 w-12 text-emerald-500 stroke-[3]" />
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        ) : (
-          // Sign In Form
-          <div className="space-y-3">
-            <div className="space-y-0.5 mb-2">
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-tight">
-                {loginType === "owner" ? "Admin Login" : "Login"}
+          {/* Sign In Form */}
+          <div className="space-y-3 pt-1">
+          <div className="space-y-0.5 mb-2">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-tight">
+              {loginType === "owner" ? "Admin Login" : "Login"}
               </h1>
               <p className="text-xs text-slate-600 pt-1">
                 Enter your credentials below to access<br className="hidden sm:block" /> your account.
@@ -323,6 +293,76 @@ export function LoginPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Premium UI/UX Success Modal Overlay directly inside Login Card */}
+        {isSuccess && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="absolute inset-0 z-50 bg-white/95 dark:bg-[#0c0d10]/95 backdrop-blur-xl rounded-[32px] p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-2xl border border-emerald-500/20 overflow-hidden"
+          >
+            {/* Subtle Background Glow */}
+            <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Header: Logo & Close */}
+            <div className="w-full flex items-center justify-between z-10 pt-1">
+              <img src="/assets/icons/SportXClub.png" alt="SportXClub" className="h-10 object-contain" />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSuccess(false);
+                  if (loginType === "owner") navigate("/admin-panel");
+                  else navigate("/");
+                }}
+                className="h-8 w-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Subtle Glowing Emerald Line */}
+            <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent my-3 z-10" />
+
+            {/* Center Section: Animated Badge + Message */}
+            <div className="my-auto space-y-4 z-10 w-full flex flex-col items-center">
+              {/* Animated Glowing Ring with Checkmark */}
+              <div className="relative flex items-center justify-center">
+                <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-md animate-pulse" />
+                <div className="h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-500 relative z-10 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
+                  <motion.div
+                    initial={{ scale: 0, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 18 }}
+                  >
+                    <Check className="h-10 w-10 stroke-[3]" />
+                  </motion.div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                  Login Successful!
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-white/60">
+                  Welcome back! Preparing your sports experience...
+                </p>
+              </div>
+
+              {/* Sleek Redirect Progress Bar */}
+              <div className="w-full max-w-[200px] h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-2">
+                <motion.div
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 1.2, ease: "easeInOut" }}
+                  className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                />
+              </div>
+            </div>
+          </motion.div>
         )}
       </div>
     </div>

@@ -58,6 +58,38 @@ import { Footer } from "./Footer";
 
 const asset = (path) => `/assets${path}`;
 
+function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 3.5 }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <polyline points="14 5 10 12 14 19" />
+    </svg>
+  );
+}
+
+function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 3.5 }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <polyline points="10 5 14 12 10 19" />
+    </svg>
+  );
+}
+
 const sports = [
   {
     name: "Football",
@@ -1152,9 +1184,10 @@ export function RecommendedVenuesSection({ asSlider = false }) {
             {asSlider && (
               <button
                 onClick={scrollLeft}
-                className="hidden md:flex absolute -left-4 sm:-left-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+                aria-label="Scroll left"
+                className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-1/2 -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
               >
-                <ChevronLeft className="h-6 w-6 pr-0.5" strokeWidth={3.5} />
+                <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
               </button>
             )}
 
@@ -1228,9 +1261,10 @@ export function RecommendedVenuesSection({ asSlider = false }) {
             {asSlider && (
               <button
                 onClick={scrollRight}
-                className="hidden md:flex absolute -right-4 sm:-right-6 top-[40%] z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+                aria-label="Scroll right"
+                className="hidden md:flex absolute -right-7 sm:-right-9 lg:-right-11 top-1/2 -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
               >
-                <ChevronRight className="h-6 w-6 pl-0.5" strokeWidth={3.5} />
+                <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
               </button>
             )}
           </div>
@@ -1566,31 +1600,34 @@ export function SportsBackgroundAnimation() {
         );
       });
 
-      ctx.strokeStyle = isDark
-        ? "rgba(109, 255, 59, 0.04)"
-        : "rgba(34, 197, 94, 0.03)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i < count; i++) {
-        for (let j = i + 1; j < count; j++) {
-          const p1 = particles[i];
-          const p2 = particles[j];
-          const dist = Math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2);
-          if (dist < 180) {
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-          }
-        }
-      }
-
       animationFrameId = requestAnimationFrame(animate);
     };
 
-    animate();
+    let isWindowScrolling = false;
+    let scrollTimeout;
+    const handleScroll = () => {
+      isWindowScrolling = true;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isWindowScrolling = false;
+      }, 150);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    const safeAnimate = () => {
+      if (!isWindowScrolling) {
+        animate();
+      } else {
+        animationFrameId = requestAnimationFrame(safeAnimate);
+      }
+    };
+
+    safeAnimate();
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
       if (parent) {
         parent.removeEventListener("mousemove", handleMouseMove);
         parent.removeEventListener("mouseleave", handleMouseLeave);
@@ -1623,24 +1660,25 @@ export function SportsCategories() {
   };
 
   return (
-    <section className="pt-[10px] pb-2 md:pb-3 relative overflow-hidden group/section">
+    <section className="pt-1 pb-0 relative overflow-hidden group/section">
       <SportsBackgroundAnimation />
       <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8 relative">
         <SectionHeading
           eyebrow="Popular Sports"
         />
 
-        <div className="relative mt-4">
+        <div className="relative mt-1.5">
           <button
             onClick={scrollLeft}
-            className="hidden md:flex absolute -left-2 sm:-left-4 lg:-left-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+            aria-label="Scroll left"
+            className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
           >
-            <ChevronLeft className="h-6 w-6 pr-0.5" strokeWidth={3.5} />
+            <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
           </button>
 
           <div
             ref={scrollRef}
-            className="flex snap-x snap-mandatory overflow-x-auto gap-2 pb-6 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex snap-x snap-mandatory overflow-x-auto gap-2 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {sports.map((sport, index) => (
               <SportCard key={sport.name} index={index} {...sport} />
@@ -1649,9 +1687,10 @@ export function SportsCategories() {
 
           <button
             onClick={scrollRight}
-            className="hidden md:flex absolute -right-2 sm:-right-4 lg:-right-6 top-[calc(50%-12px)] -translate-y-1/2 z-10 h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-white/5 dark:bg-white/5 border border-black/15 dark:border-white/15 text-slate-800 dark:text-white hover:bg-white/15 dark:hover:bg-white/15 hover:scale-110 active:scale-95 transition-all opacity-0 group-hover/section:opacity-100 cursor-pointer"
+            aria-label="Scroll right"
+            className="hidden md:flex absolute -right-7 sm:-right-9 lg:-right-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
           >
-            <ChevronRight className="h-6 w-6 pl-0.5" strokeWidth={3.5} />
+            <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
           </button>
         </div>
       </div>
@@ -1815,8 +1854,7 @@ const storeProducts = [
     category: "Equipment",
     price: "₹1,499",
     rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1614632537190-23e4146777db?w=500&q=80",
+    image: asset("/sports/cat-football.webp"),
   },
   {
     id: 2,
@@ -1824,8 +1862,7 @@ const storeProducts = [
     category: "Equipment",
     price: "₹3,499",
     rating: "4.9",
-    image:
-      "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=500&q=80",
+    image: asset("/sports/cat-badminton.webp"),
   },
   {
     id: 3,
@@ -1833,8 +1870,7 @@ const storeProducts = [
     category: "Equipment",
     price: "₹8,500",
     rating: "4.7",
-    image:
-      "https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=500&q=80",
+    image: asset("/sports/cat-cricket.webp"),
   },
   {
     id: 4,
@@ -1842,8 +1878,7 @@ const storeProducts = [
     category: "Accessories",
     price: "₹599",
     rating: "4.6",
-    image:
-      "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=500&q=80",
+    image: asset("/sports/cat-basketball.webp"),
   },
   {
     id: 5,
@@ -1851,8 +1886,7 @@ const storeProducts = [
     category: "Equipment",
     price: "₹2,499",
     rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=500&q=80",
+    image: asset("/sports/cat-padel.webp"),
   },
   {
     id: 6,
@@ -1860,14 +1894,66 @@ const storeProducts = [
     category: "Accessories",
     price: "₹899",
     rating: "4.7",
-    image:
-      "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&q=80",
+    image: asset("/venues/new_cricket_turf_2.png"),
+  },
+  {
+    id: 7,
+    name: "Anti-Slip Performance Grip Socks",
+    category: "Apparel",
+    price: "₹399",
+    rating: "4.9",
+    image: asset("/sports/cat-swimming.webp"),
+  },
+  {
+    id: 8,
+    name: "Carbon Fiber Pro Shin Guards",
+    category: "Accessories",
+    price: "₹1,299",
+    rating: "4.8",
+    image: asset("/venues/champions_sports_arena_football.jpg"),
+  },
+  {
+    id: 9,
+    name: "Pro Match Tennis Balls (Pack of 3)",
+    category: "Accessories",
+    price: "₹649",
+    rating: "4.7",
+    image: asset("/sports/cat-tennis.webp"),
+  },
+  {
+    id: 10,
+    name: "Multi-Sport Duffel Bag 45L",
+    category: "Apparel",
+    price: "₹2,199",
+    rating: "4.9",
+    image: asset("/sports/cat-boxmma.webp"),
   },
 ];
 
 export function StoreSection() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
+  const navigate = useNavigate();
+
+  const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
+  const [selectedCat, setSelectedCat] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [addedItems, setAddedItems] = useState({});
+
+  const handleAddToCart = (e, product) => {
+    e.stopPropagation();
+    setAddedItems((prev) => ({ ...prev, [product.id]: true }));
+    toast.success(`${product.name} added to cart!`, {
+      description: `Price: ${product.price} | Category: ${product.category}`,
+    });
+  };
+
+  const filteredModalProducts = storeProducts.filter((product) => {
+    const matchesCat = selectedCat === "All" || product.category === selectedCat;
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
 
   const containerRef = useRef(null);
   const isDown = useRef(false);
@@ -1901,7 +1987,7 @@ export function StoreSection() {
     if (!isDown.current) return;
     e.preventDefault();
     const x = e.pageX - containerRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5; // Scroll speed multiplier
+    const walk = (x - startX.current) * 1.5;
     containerRef.current.scrollLeft = scrollLeftVal.current - walk;
   };
 
@@ -1921,7 +2007,6 @@ export function StoreSection() {
     const container = containerRef.current;
     if (!container) return;
 
-    // Sync float ref with actual scroll position
     currentScrollLeft.current = container.scrollLeft;
 
     const halfWidth = container.scrollWidth / 2;
@@ -1941,19 +2026,42 @@ export function StoreSection() {
   };
 
   useEffect(() => {
+    if (isStoreModalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isStoreModalOpen]);
+
+  useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     currentScrollLeft.current = container.scrollLeft;
 
     let animationFrameId;
-    const speed = 1.0; // scroll speed in pixels per frame
+    const speed = 1.0;
+    let isWindowScrolling = false;
+    let scrollTimeout;
+
+    const handleWindowScroll = () => {
+      isWindowScrolling = true;
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        isWindowScrolling = false;
+      }, 150);
+    };
+
+    window.addEventListener("scroll", handleWindowScroll, { passive: true });
 
     const animate = () => {
       const now = Date.now();
       const isUserScrolling = now - lastScrollTime.current < 1500;
 
-      if (!isDown.current && !isUserScrolling) {
+      if (!isDown.current && !isUserScrolling && !isStoreModalOpen && !isWindowScrolling) {
         currentScrollLeft.current += speed;
 
         const halfWidth = container.scrollWidth / 2;
@@ -1969,9 +2077,10 @@ export function StoreSection() {
     animationFrameId = requestAnimationFrame(animate);
 
     return () => {
+      window.removeEventListener("scroll", handleWindowScroll);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [isStoreModalOpen]);
 
   return (
     <section className="pt-2 pb-2 md:pt-3 md:pb-4 relative overflow-hidden">
@@ -1985,7 +2094,6 @@ export function StoreSection() {
 
       {/* Infinite scrolling marquee slider track */}
       <div className="relative overflow-hidden w-full py-4">
-        {/* Gradient fade edge masks */}
         <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white dark:from-[#050505] to-transparent z-10 pointer-events-none opacity-30" />
         <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white dark:from-[#050505] to-transparent z-10 pointer-events-none opacity-30" />
 
@@ -2001,7 +2109,6 @@ export function StoreSection() {
           onTouchMove={handleTouchMove}
           className="flex gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab select-none w-full"
         >
-          {/* First list iteration */}
           {storeProducts.map((product) => (
             <div
               key={`first-${product.id}`}
@@ -2015,7 +2122,7 @@ export function StoreSection() {
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
                 )}
               >
-                <div className="aspect-[4/3] w-full overflow-hidden bg-slate-100 relative">
+                <div className="h-44 sm:h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative shrink-0">
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
@@ -2066,15 +2173,18 @@ export function StoreSection() {
                     </span>
                     <Button
                       size="sm"
+                      onClick={(e) => handleAddToCart(e, product)}
                       className={cn(
-                        "rounded-full px-4 text-xs tracking-wide transition-all group",
-                        isDark
-                          ? "border border-white/20 bg-transparent text-white/80 hover:border-white hover:text-white"
-                          : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
+                        "rounded-full px-4 text-xs tracking-wide transition-all group cursor-pointer",
+                        addedItems[product.id]
+                          ? "bg-emerald-600 text-white"
+                          : isDark
+                            ? "border border-white/20 bg-transparent text-white/80 hover:border-white hover:text-white"
+                            : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
                       )}
                     >
                       <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                      Add
+                      {addedItems[product.id] ? "Added ✓" : "Add"}
                     </Button>
                   </div>
                 </div>
@@ -2096,7 +2206,7 @@ export function StoreSection() {
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
                 )}
               >
-                <div className="aspect-[4/3] w-full overflow-hidden bg-slate-100 relative">
+                <div className="h-44 sm:h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative shrink-0">
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
@@ -2147,15 +2257,18 @@ export function StoreSection() {
                     </span>
                     <Button
                       size="sm"
+                      onClick={(e) => handleAddToCart(e, product)}
                       className={cn(
-                        "rounded-full px-4 text-xs tracking-wide transition-all group",
-                        isDark
-                          ? "border border-white/20 bg-transparent text-white/80 hover:border-white hover:text-white"
-                          : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
+                        "rounded-full px-4 text-xs tracking-wide transition-all group cursor-pointer",
+                        addedItems[product.id]
+                          ? "bg-emerald-600 text-white"
+                          : isDark
+                            ? "border border-white/20 bg-transparent text-white/80 hover:border-white hover:text-white"
+                            : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
                       )}
                     >
                       <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                      Add
+                      {addedItems[product.id] ? "Added ✓" : "Add"}
                     </Button>
                   </div>
                 </div>
@@ -2169,17 +2282,175 @@ export function StoreSection() {
         <div className="mt-10 flex justify-center">
           <Button
             variant="outline"
+            onClick={() => setIsStoreModalOpen(true)}
             className={cn(
-              "rounded-full border-dashed px-8 h-12 transition-all",
+              "rounded-full border-2 px-8 h-12 transition-all cursor-pointer font-bold shadow-sm hover:scale-105 active:scale-95 bg-transparent",
               isDark
-                ? "border-white/20 text-white hover:border-emerald-600/50 hover:bg-emerald-600/10 hover:text-emerald-600"
-                : "border-slate-300 text-slate-700 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700",
+                ? "border-emerald-500 text-emerald-400 hover:bg-emerald-500/10"
+                : "border-emerald-600 text-emerald-600 hover:bg-emerald-50",
             )}
           >
             View All Products
           </Button>
         </div>
       </div>
+
+      {/* Pro Store Catalog Modal */}
+      <AnimatePresence>
+        {isStoreModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={cn(
+                "relative w-full max-w-6xl max-h-[90vh] flex flex-col rounded-[24px] sm:rounded-[28px] border shadow-2xl overflow-hidden [will-change:transform] [transform:translateZ(0)]",
+                isDark ? "bg-[#0b0c10] border-white/10 text-white" : "bg-white border-slate-200/90 text-slate-900"
+              )}
+            >
+              {/* Modal Header */}
+              <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between gap-4 bg-slate-50/70 dark:bg-white/[0.02]">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <ShoppingCart className="h-5 w-5" />
+                    </div>
+                    Pro Store Equipment Catalog
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                    Premium sports equipment, apparel, and accessories for players & sports clubs
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsStoreModalOpen(false)}
+                  className="p-2.5 rounded-full hover:bg-slate-200/80 dark:hover:bg-white/10 transition cursor-pointer text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Filter & Search Bar */}
+              <div className="p-4 sm:px-6 bg-slate-100/70 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                  {["All", "Equipment", "Accessories", "Apparel"].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCat(cat)}
+                      className={cn(
+                        "px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap active:scale-95 bg-transparent",
+                        selectedCat === cat
+                          ? "border-2 border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 shadow-sm"
+                          : isDark
+                            ? "border border-white/15 text-slate-300 hover:border-emerald-500/50 hover:text-emerald-400"
+                            : "border border-slate-300 text-slate-700 hover:border-emerald-600 hover:text-emerald-600"
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative w-full sm:w-72">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search equipment or gear..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={cn(
+                      "w-full pl-9 pr-3 py-2 rounded-full text-xs font-medium outline-none border transition-all",
+                      isDark
+                        ? "bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                        : "bg-white border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 shadow-sm"
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Products Grid with High Performance Hardware Scroll */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 smooth-scroll-container [will-change:transform] [transform:translateZ(0)] [overscroll-behavior:contain]">
+                {filteredModalProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    className={cn(
+                      "group flex flex-col h-[270px] overflow-hidden rounded-2xl border transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 shrink-0",
+                      isDark ? "bg-[#12141a] border-white/10 hover:border-emerald-500/40" : "bg-white border-slate-200/90 hover:border-emerald-500/30 shadow-sm"
+                    )}
+                  >
+                    {/* Card Image (50% Height) */}
+                    <div className="h-[135px] w-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative shrink-0 rounded-t-2xl">
+                      <ImageWithFallback
+                        src={product.image}
+                        alt={product.name}
+                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      <Badge className="absolute top-2.5 right-2.5 rounded-full px-2 py-0.5 text-[10px] font-bold bg-black/70 backdrop-blur-md text-emerald-400 border border-emerald-500/30 shadow-sm">
+                        <Star className="h-2.5 w-2.5 fill-current mr-0.5" />
+                        {product.rating}
+                      </Badge>
+                    </div>
+
+                    {/* Card Body (50% Height) */}
+                    <div className="p-3.5 flex flex-col justify-between h-[135px] shrink-0 bg-white dark:bg-[#12141a]">
+                      <div>
+                        <span className="text-[10px] uppercase font-extrabold text-emerald-600 dark:text-emerald-400 tracking-wider mb-1 block">
+                          {product.category}
+                        </span>
+                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight">
+                          {product.name}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5 mt-auto">
+                        <span className="text-sm font-black text-slate-900 dark:text-white">
+                          {product.price}
+                        </span>
+                        <Button
+                          size="sm"
+                          onClick={(e) => handleAddToCart(e, product)}
+                          className={cn(
+                            "h-7 rounded-full text-[11px] px-3.5 font-bold transition cursor-pointer active:scale-95 bg-transparent border-2",
+                            addedItems[product.id]
+                              ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400"
+                              : "border-emerald-600/60 text-emerald-600 hover:bg-emerald-600 hover:text-white dark:border-emerald-400/60 dark:text-emerald-400 dark:hover:bg-emerald-500 dark:hover:text-white"
+                          )}
+                        >
+                          {addedItems[product.id] ? "Added ✓" : "Add +"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:px-6 border-t border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/[0.01] flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Showing {filteredModalProducts.length} items
+                </span>
+                <div className="flex gap-2.5">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsStoreModalOpen(false)}
+                    className="rounded-full text-xs font-semibold h-9 px-5 cursor-pointer border-slate-300 dark:border-white/20 bg-transparent text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setIsStoreModalOpen(false);
+                      navigate("/bookings");
+                    }}
+                    className="rounded-full border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-white text-xs font-bold h-9 px-6 cursor-pointer transition-all shadow-sm"
+                  >
+                    View Cart / Checkout
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

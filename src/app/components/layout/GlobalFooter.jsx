@@ -13,7 +13,6 @@ export function GlobalFooter() {
   }, []);
 
   const isDark = !mounted || resolvedTheme !== "light";
-  const [failedSocials, setFailedSocials] = useState({});
 
   const columns = [
     {
@@ -30,6 +29,14 @@ export function GlobalFooter() {
         { label: "Organizers", to: "/organizer-dashboard" },
         { label: "Player Details", to: "/profile" },
         { label: "Support", to: "/profile" }
+      ]
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Terms & Conditions", to: "/terms" },
+        { label: "Privacy Policy", to: "/privacy" },
+        { label: "Refund Policy", to: "/refund-policy" }
       ]
     }
   ];
@@ -85,13 +92,13 @@ export function GlobalFooter() {
   ];
 
   return (
-    <footer className={`w-full pt-5 sm:pt-10 pb-5 sm:pb-6 px-6 md:px-12 border-t mt-4 sm:mt-8 transition-all duration-300 text-left ${isDark
+    <footer className={`w-full pt-4 sm:pt-6 pb-4 px-6 md:px-12 border-t mt-2 transition-all duration-300 text-left ${isDark
       ? "bg-[#090D16] border-white/[0.05] text-white"
       : "bg-[#FBFBFA] border-slate-200 text-slate-800"
       }`}>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1.2fr] gap-5 lg:gap-8 items-start">
+      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_0.75fr_0.75fr_0.8fr_0.8fr] gap-5 lg:gap-8 items-start">
         {/* Left Column: Logo, description, and app badges */}
-        <div className="space-y-2.5 sm:space-y-4 max-w-md">
+        <div className="space-y-2.5 sm:space-y-4 max-w-md col-span-2 sm:col-span-3 lg:col-span-1">
           <a href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
             <Logo className="h-[50px] md:h-[80px]" />
           </a>
@@ -99,7 +106,6 @@ export function GlobalFooter() {
             }`}>
             SportXClub is the premium way to discover, book, and compete across the best sports venues and tournaments.
           </p>
-
         </div>
 
         {/* Platform & For Business Columns */}
@@ -149,10 +155,13 @@ export function GlobalFooter() {
         </div>
       </div>
 
-      <div className={`max-w-7xl mx-auto border-t mt-6 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[8.5px] sm:text-[10px] transition-colors duration-300 ${isDark ? "border-white/[0.08] text-white/65" : "border-slate-200 text-slate-700"
-        }`}>
-        <div className="flex-1 hidden sm:block"></div>
-        <p className="font-light text-center flex-1 text-[8.5px] sm:text-[10px] tracking-wide">
+      <div
+        className={cn(
+          "mt-4 pt-3 border-t flex flex-col sm:flex-row items-center justify-center gap-4 text-xs font-light",
+          isDark ? "border-white/10 text-slate-400" : "border-slate-200 text-slate-500"
+        )}
+      >
+        <p className="text-center">
           Powered By{" "}
           <a
             href="https://www.syntiaro.com/"
@@ -166,17 +175,6 @@ export function GlobalFooter() {
             SYNTIARO
           </a>
         </p>
-        <div className="flex-1 flex gap-3 sm:gap-4 justify-center sm:justify-end">
-          <Link to="/" className={`hover:underline ${isDark ? "hover:text-white" : "hover:text-slate-900"}`}>
-            Privacy
-          </Link>
-          <Link to="/" className={`hover:underline ${isDark ? "hover:text-white" : "hover:text-slate-900"}`}>
-            Terms
-          </Link>
-          <Link to="/" className={`hover:underline ${isDark ? "hover:text-white" : "hover:text-slate-900"}`}>
-            Contact
-          </Link>
-        </div>
       </div>
     </footer>
   );

@@ -30,6 +30,8 @@ export function ImageWithFallback(props) {
     <img
       src={src}
       alt={alt}
+      decoding="async"
+      loading="lazy"
       className={className}
       style={style}
       {...rest}
