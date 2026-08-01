@@ -812,15 +812,7 @@ export function TimeSlots() {
                         </span>
                       </div>
 
-                      {/* Slots remaining badge */}
-                      <Badge variant="outline" className={`px-3 py-1.5 text-[10px] font-extrabold rounded-lg shadow-2xs shrink-0 ${availableSlots > 5
-                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                        : availableSlots > 0
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                          : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
-                        }`}>
-                        {availableSlots} Slots Left
-                      </Badge>
+
 
                       {/* Block Custom Time Button */}
                       <Button

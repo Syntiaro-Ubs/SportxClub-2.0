@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { useAuth } from "../../providers/auth-provider";
-import { Mail, Phone, MapPin, Building2, Briefcase, Camera, Edit2 } from "lucide-react";
+import { Mail, Phone, MapPin, Building2, Briefcase, Camera, Edit2, Hash } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import { useOutletContext } from "react-router";
 export function OwnerProfile() {
   const { activeProfile, setDemoProfile } = useOutletContext();
   const { currentUser, updateUser } = useAuth();
-  
+
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editFormData, setEditFormData] = useState({
     fullName: activeProfile?.fullName || "",
@@ -63,7 +63,7 @@ export function OwnerProfile() {
           canvas.height = height;
           const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
-          
+
           const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
           setEditFormData(prev => ({ ...prev, profilePicture: compressedBase64 }));
         };
@@ -100,7 +100,7 @@ export function OwnerProfile() {
       {/* 1. Avatar & Owner Title Header Section */}
       <div className="px-1 sm:px-2">
         <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4">
-          
+
           {/* Left Block: Avatar + Name + Badges */}
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left w-full sm:w-auto">
             <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-2 border-border/60 shadow-lg ring-2 ring-emerald-500/20 bg-background shrink-0">
@@ -128,9 +128,9 @@ export function OwnerProfile() {
 
           {/* Right Block: Edit Profile CTA Button */}
           <div className="w-full sm:w-auto flex justify-center sm:justify-end sm:pb-2">
-            <Button 
+            <Button
               onClick={() => setIsEditProfileOpen(true)}
-              className="w-full sm:w-auto h-10 px-5 rounded-2xl bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-bold text-xs transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2"
+              className="w-full sm:w-auto h-10 px-5 text-emerald-600 dark:text-emerald-400 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 bg-transparent border-none shadow-none hover:bg-transparent hover:text-emerald-700 dark:hover:text-emerald-300"
             >
               <Edit2 className="h-4 w-4 text-emerald-500" />
               Edit Profile
@@ -142,7 +142,7 @@ export function OwnerProfile() {
 
       {/* 3. Personal & Business Information Grid */}
       <div className="grid gap-5 md:grid-cols-3 pt-2">
-        
+
         {/* Card 1: Personal Details */}
         <Card className="md:col-span-1 border border-border/40 bg-card/60 backdrop-blur-xl shadow-lg rounded-3xl p-5 space-y-4">
           <div className="border-b border-border/40 pb-3">
@@ -191,7 +191,7 @@ export function OwnerProfile() {
           </div>
 
           <div className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-3 gap-4">
               <div className="p-3.5 rounded-2xl border border-border/40 bg-muted/20 space-y-1">
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                   <Building2 className="h-4 w-4" /> Company Name
@@ -205,13 +205,20 @@ export function OwnerProfile() {
                 </div>
                 <p className="text-sm font-extrabold font-mono text-foreground">SPORTX-2026-98X2</p>
               </div>
+
+              <div className="p-3.5 rounded-2xl border border-border/40 bg-muted/20 space-y-1">
+                <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-bold text-xs">
+                  <Hash className="h-4 w-4" /> Customer ID
+                </div>
+                <p className="text-sm font-extrabold font-mono text-foreground">2607 0001</p>
+              </div>
             </div>
 
             <div className="space-y-2 pt-2 border-t border-border/40">
               <h4 className="font-bold text-xs text-foreground uppercase tracking-wider">About the Venue Brand</h4>
               <p className="text-xs text-muted-foreground leading-relaxed font-medium">
-                Dedicated to providing premium quality sports infrastructure to local communities. 
-                We manage highly rated multi-sport arenas with professional-grade synthetic turf, 
+                Dedicated to providing premium quality sports infrastructure to local communities.
+                We manage highly rated multi-sport arenas with professional-grade synthetic turf,
                 floodlights, and top-tier amenities.
               </p>
             </div>
@@ -240,11 +247,11 @@ export function OwnerProfile() {
                 <Label htmlFor="picture-upload" className="cursor-pointer bg-secondary hover:bg-secondary/80 text-secondary-foreground px-4 py-2 rounded-md text-sm font-medium transition-colors">
                   Upload new
                 </Label>
-                <Input 
-                  id="picture-upload" 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
+                <Input
+                  id="picture-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
                   onChange={handleImageUpload}
                 />
               </div>

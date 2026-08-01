@@ -698,7 +698,7 @@ export function Dashboard() {
               <div className="space-y-0.5">
                 <p className="text-[9px] sm:text-[10px] font-extrabold text-muted-foreground tracking-widest">Active Turfs</p>
                 <h3 className="text-lg sm:text-xl font-black tracking-tight text-foreground mt-0.5 sm:mt-1">
-                  {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}/{isTestMode ? "0" : (data?.stats?.totalTurfs || 5)}
+                  <span className="text-emerald-600 dark:text-emerald-400">{isTestMode ? "0" : (data?.stats?.activeTurfs || 4)}</span>/{isTestMode ? "0" : (data?.stats?.totalTurfs || 5)}
                 </h3>
               </div>
               <div className="flex items-center justify-center">
@@ -710,7 +710,11 @@ export function Dashboard() {
               <div className="flex gap-1.5 items-center">
                 <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-extrabold text-[8px] sm:text-[9px]">
                   <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Operational
+                  {isTestMode ? "0" : (data?.stats?.activeTurfs || 4)} Active
+                </span>
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-extrabold text-[8px] sm:text-[9px]">
+                  <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-rose-500"></span>
+                  {isTestMode ? "0" : ((data?.stats?.totalTurfs || 5) - (data?.stats?.activeTurfs || 4))} Closed
                 </span>
               </div>
               <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 text-[9px] sm:text-[10px] font-extrabold tracking-wider rounded-full transition-all duration-300 flex items-center gap-0.5 sm:gap-1 group/btn bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 shadow-xs cursor-pointer shrink-0">
