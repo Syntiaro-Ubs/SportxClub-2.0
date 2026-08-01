@@ -13,7 +13,7 @@ export function Footer() {
     <footer
       id="contact"
       className={cn(
-        "relative overflow-hidden border-t pb-4 pt-16 transition-colors duration-200",
+        "relative overflow-hidden border-t pb-4 pt-6 md:pt-8 transition-colors duration-200",
         isDark ? "border-white/[0.08] bg-[#050505]" : "border-slate-200 bg-white"
       )}
     >
@@ -37,8 +37,8 @@ export function Footer() {
       </div>
 
       <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-[1.18fr_0.8fr_0.8fr_0.8fr]">
-          <div className="max-w-md">
+        <div className="grid gap-8 sm:gap-10 grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_0.75fr_0.75fr_0.8fr_0.8fr]">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1 max-w-md">
             <div className="flex items-center gap-3">
               <a href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
                 <Logo className="h-[50px] md:h-[80px]" />
@@ -69,6 +69,14 @@ export function Footer() {
                 { label: "Organizers", to: "/organizer-dashboard" },
                 { label: "Player Details", to: "/profile" },
                 { label: "Support", to: "/profile" },
+              ],
+            },
+            {
+              title: "Legal",
+              links: [
+                { label: "Terms & Conditions", to: "/terms" },
+                { label: "Privacy Policy", to: "/privacy" },
+                { label: "Refund Policy", to: "/refund-policy" },
               ],
             },
             {
@@ -166,27 +174,15 @@ export function Footer() {
         </div>
 
         <div className={cn(
-          "mt-8 flex flex-col md:flex-row gap-4 border-t pt-4 text-sm items-center justify-between",
+          "mt-4 flex flex-col md:flex-row gap-3 border-t pt-3 text-sm items-center justify-center",
           isDark ? "border-white/[0.08] text-white/46" : "border-slate-200 text-slate-500"
         )}>
-          <div className="flex-1 hidden md:block"></div>
           <p className={cn(
-            "flex-1 text-[10px] md:text-xs font-light text-center",
+            "text-[10px] md:text-xs font-light text-center",
             isDark ? "text-white/40" : "text-slate-400"
           )}>
             Powered By <a href="https://www.syntiaro.com/" target="_blank" rel="noopener noreferrer" className={cn("font-normal transition-colors", isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-600 hover:text-teal-700")}>SYNTIARO</a>
           </p>
-          <div className="flex-1 flex flex-wrap gap-5 justify-center md:justify-end">
-            <a href="#" className={cn("transition", isDark ? "hover:text-white" : "hover:text-slate-900")}>
-              Privacy
-            </a>
-            <a href="#" className={cn("transition", isDark ? "hover:text-white" : "hover:text-slate-900")}>
-              Terms
-            </a>
-            <a href="#" className={cn("transition", isDark ? "hover:text-white" : "hover:text-slate-900")}>
-              Contact
-            </a>
-          </div>
         </div>
       </div>
     </footer>

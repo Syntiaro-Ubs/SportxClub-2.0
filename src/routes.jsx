@@ -425,6 +425,27 @@ export const router = createBrowserRouter([
           return { Component: AISportsAssistant };
         },
       },
+      {
+        path: "/terms",
+        lazy: async () => {
+          const { TermsAndConditions } = await import("./app/pages/terms");
+          return { Component: TermsAndConditions };
+        },
+      },
+      {
+        path: "/privacy",
+        lazy: async () => {
+          const { PrivacyPolicy } = await import("./app/pages/privacy");
+          return { Component: PrivacyPolicy };
+        },
+      },
+      {
+        path: "/refund-policy",
+        lazy: async () => {
+          const { RefundPolicy } = await import("./app/pages/refund-policy");
+          return { Component: RefundPolicy };
+        },
+      },
     ],
   },
 ]);
