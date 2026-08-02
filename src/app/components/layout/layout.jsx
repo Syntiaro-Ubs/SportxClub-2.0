@@ -7,6 +7,7 @@ import {
   Trophy,
   Users,
   UserCircle,
+  User,
   MessageSquare,
   ChevronDown,
   Check,
@@ -194,14 +195,12 @@ export function Layout() {
                 variant="ghost"
                 className="group relative rounded-md gap-2.5 text-muted-foreground hover:text-primary hover:bg-transparent px-3 h-10 cursor-pointer focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"
               >
-                <Avatar className="h-6.5 w-6.5 border-2 border-emerald-500">
+                <Avatar className="h-6.5 w-6.5 border-0 bg-transparent flex items-center justify-center">
                   {currentUser?.profilePicture && (
                     <AvatarImage src={currentUser.profilePicture} className="object-cover" />
                   )}
-                  <AvatarFallback className="bg-transparent text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                    {currentUser?.fullName
-                      ? currentUser.fullName.trim().split(/\s+/).map((n) => n[0]).join("").slice(0, 2)
-                      : "U"}
+                  <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <User className="h-4 w-4 stroke-[2.2]" />
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-semibold leading-none">{displayName}</span>

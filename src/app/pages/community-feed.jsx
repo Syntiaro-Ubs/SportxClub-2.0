@@ -89,12 +89,12 @@ export function CommunityFeed() {
   );
 
   return (
-    <div className="grid lg:grid-cols-3 gap-8">
+    <div className="grid lg:grid-cols-3 gap-5 sm:gap-6 -mt-1 sm:-mt-2">
       {/* Main Feed */}
-      <div className="lg:col-span-2 space-y-6">
+      <div className="lg:col-span-2 space-y-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">Community Feed</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-xl font-extrabold tracking-tight text-foreground">Community Feed</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-0.5">
             Stay connected with the sports community
           </p>
         </div>
@@ -119,16 +119,29 @@ export function CommunityFeed() {
 
                 <div className="flex items-center justify-between">
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <ImageIcon className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-500/20 shadow-none cursor-pointer"
+                    >
+                      <ImageIcon className="h-4 w-4 stroke-[2.2]" />
                       Photo
                     </Button>
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <Video className="h-4 w-4" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 rounded-xl text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-emerald-500/20 shadow-none cursor-pointer"
+                    >
+                      <Video className="h-4 w-4 stroke-[2.2]" />
                       Video
                     </Button>
                   </div>
-                  <Button>Post</Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl px-6 h-9 bg-transparent border-2 border-emerald-600 text-slate-900 dark:text-white hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 hover:border-emerald-500 font-extrabold text-xs shadow-none cursor-pointer transition-all active:scale-95"
+                  >
+                    Post
+                  </Button>
                 </div>
               </div>
             </div>
@@ -136,10 +149,10 @@ export function CommunityFeed() {
         </Card>
 
         {/* Posts */}
-        <div className="space-y-6">
+        <div className="space-y-3.5">
           {posts.map((post) => (
             <Card key={post.id} className="border-border/50">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-4.5">
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar>
                     <AvatarFallback className="bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold">
@@ -179,7 +192,7 @@ export function CommunityFeed() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                <div className="flex items-center justify-between pt-2.5 border-t border-border/50">
                   <div className="flex gap-6">
                     <Button variant="ghost" size="sm" className="gap-2">
                       <Heart className="h-4 w-4" />
@@ -202,12 +215,12 @@ export function CommunityFeed() {
       </div>
 
       {/* Sidebar */}
-      <div className="space-y-6">
+      <div className="space-y-3.5">
         {/* Stats */}
         <Card className="border-border/50">
-          <CardContent className="p-6">
-            <h3 className="text-base font-bold mb-3 text-foreground">Your Activity</h3>
-            <div className="space-y-4">
+          <CardContent className="p-4 sm:p-4.5">
+            <h3 className="text-base font-bold mb-2.5 text-foreground">Your Activity</h3>
+            <div className="space-y-2.5">
               {[
                 { label: "Posts", value: "24" },
                 { label: "Following", value: "156" },
@@ -229,8 +242,8 @@ export function CommunityFeed() {
 
         {/* Trending */}
         <Card className="border-border/50">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-4">
+          <CardContent className="p-4 sm:p-4.5">
+            <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="h-5 w-5 text-primary" />
               <h3 className="text-base font-bold text-foreground">Trending Topics</h3>
             </div>
@@ -250,9 +263,9 @@ export function CommunityFeed() {
 
         {/* Suggested Connections */}
         <Card className="border-border/50">
-          <CardContent className="p-6">
-            <h3 className="text-base font-bold mb-3 text-foreground">Suggested Players</h3>
-            <div className="space-y-4">
+          <CardContent className="p-4 sm:p-4.5">
+            <h3 className="text-base font-bold mb-2.5 text-foreground">Suggested Players</h3>
+            <div className="space-y-3">
               {displaySuggestions.map((name) => (
                 <div key={name} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
