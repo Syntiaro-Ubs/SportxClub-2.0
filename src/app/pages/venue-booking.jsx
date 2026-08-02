@@ -555,15 +555,15 @@ export function VenueBooking() {
     return (
       <div
         key={venue.id}
-        className="relative w-full flex flex-col md:flex-row bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-200 dark:border-slate-800 group cursor-pointer"
+        className="relative w-full flex flex-col md:flex-row bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/80 group cursor-pointer"
         onClick={() => navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } })}
       >
         {/* Left Side: Main Image */}
-        <div className="relative w-full md:w-[55%] lg:w-[60%] h-[180px] sm:h-[220px] md:h-[280px] lg:h-[320px]">
+        <div className="relative w-full md:w-[48%] lg:w-[50%] h-[145px] sm:h-[185px] md:h-[240px] lg:h-[280px] shrink-0 ml-[0.5cm] my-1.5 sm:my-2 rounded-xl overflow-hidden">
           <img
             src={venue.image}
             alt={venue.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               e.target.src = "/assets/venues/turf-1.webp"; // Fallback image
             }}
@@ -577,23 +577,23 @@ export function VenueBooking() {
         </div>
 
         {/* Right Side: Details & Sub-images */}
-        <div className="flex flex-1 flex-row w-full md:w-[45%] lg:w-[40%] gap-3 sm:gap-4">
+        <div className="flex flex-1 flex-row w-full md:w-[52%] lg:w-[50%] gap-2 sm:gap-3 pl-1.5 sm:pl-2 min-w-0">
 
           {/* Left Column in Right Side: 3 Sub-images */}
-          <div className="flex flex-col w-[50%] sm:w-[240px] lg:w-[320px] shrink-0">
+          <div className="flex flex-col w-[52%] sm:w-[240px] lg:w-[290px] shrink-0 py-0.5 sm:py-1 gap-1">
             {subImages.map((subImg, idx) => (
-              <div key={idx} className="flex-1 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 relative">
+              <div key={idx} className="flex-1 rounded-sm overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 relative">
                 <img
                   src={subImg}
                   alt={`${venue.name} view ${idx + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
               </div>
             ))}
           </div>
 
           {/* Right Column in Right Side: Info & Button */}
-          <div className="flex flex-col flex-1 justify-between py-3 sm:py-4 pr-3 sm:pr-4 min-w-0">
+          <div className="flex flex-col flex-1 justify-between py-3 sm:py-4 pr-6 sm:pr-8 min-w-0">
             {/* Top: Stars & Sport */}
             <div className="space-y-1">
               <div className="flex items-center justify-end gap-1.5 w-full">
@@ -623,7 +623,7 @@ export function VenueBooking() {
                   e.stopPropagation();
                   navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
                 }}
-                className="bg-transparent text-black dark:text-white border border-emerald-600 hover:border-slate-900 dark:border-emerald-500 dark:hover:border-emerald-300 font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-colors shadow-none"
+                className="bg-transparent hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 text-slate-900 dark:text-white border-2 border-emerald-600 hover:border-emerald-500 font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 shadow-none hover:shadow-sm hover:shadow-emerald-500/20"
               >
                 Book Slot
               </Button>

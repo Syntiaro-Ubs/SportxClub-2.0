@@ -82,9 +82,9 @@ function SelectItem({ className, children, ...props }) {
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-1.5 pr-8 pl-2.5 text-sm outline-hidden select-none border border-transparent transition-all text-slate-900 dark:text-slate-100",
-        "focus:bg-transparent focus:border-emerald-500 focus:text-slate-900 dark:focus:text-slate-100",
-        "data-[state=checked]:bg-transparent data-[state=checked]:border-2 data-[state=checked]:border-emerald-500 data-[state=checked]:text-slate-900 dark:data-[state=checked]:text-slate-100 data-[state=checked]:font-bold",
+        "relative flex w-full cursor-pointer items-center gap-2 py-2 pr-8 pl-3 text-sm outline-hidden select-none border-b border-slate-200/80 dark:border-slate-800/80 last:border-b-0 transition-all text-slate-900 dark:text-slate-100",
+        "focus:bg-slate-100 dark:focus:bg-slate-800/60 focus:text-slate-900 dark:focus:text-slate-100",
+        "data-[state=checked]:bg-emerald-50/40 dark:data-[state=checked]:bg-emerald-950/20 data-[state=checked]:text-emerald-700 dark:data-[state=checked]:text-emerald-400 data-[state=checked]:font-bold",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}

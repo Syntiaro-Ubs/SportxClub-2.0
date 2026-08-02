@@ -107,19 +107,19 @@ export function Tournaments() {
   const { currentUser } = useAuth();
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-4 pb-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl  tracking-tight">Leagues & Tournaments</h1>
-          <p className="text-muted-foreground mt-1 text-lg">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Leagues & Tournaments</h1>
+          <p className="text-muted-foreground mt-0.5 text-sm sm:text-base">
             Compete with the best and win exciting prizes
           </p>
         </div>
         {currentUser && (
           <Link to="/organizer-dashboard">
-            <Button size="lg" className="shadow-lg shadow-primary/20">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button size="default" className="shadow-md shadow-primary/20 h-9 rounded-xl font-bold text-xs">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
               Organize Tournament
             </Button>
           </Link>
@@ -127,7 +127,7 @@ export function Tournaments() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           {
             label: "Active Now",
@@ -166,18 +166,18 @@ export function Tournaments() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
             >
-              <Card className="border-border/40 bg-card/50">
-                <CardContent className="p-4 sm:p-6 flex items-center justify-between">
+              <Card className="border-slate-300 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/60 shadow-2xs hover:border-emerald-500/50 transition-all">
+                <CardContent className="p-3 sm:p-4 flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] sm:text-xs  text-muted-foreground uppercase tracking-widest mb-1">
+                    <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-widest mb-0.5">
                       {stat.label}
                     </p>
-                    <p className="text-xl sm:text-2xl ">{stat.value}</p>
+                    <p className="text-lg sm:text-xl font-black">{stat.value}</p>
                   </div>
                   <div
-                    className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center ${stat.color}`}
+                    className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center ${stat.color}`}
                   >
-                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                   </div>
                 </CardContent>
               </Card>
@@ -186,33 +186,33 @@ export function Tournaments() {
         })}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1 group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input
                 placeholder="Search tournaments..."
-                className="pl-11 h-12 border-border/60 bg-card/50"
+                className="pl-10 h-10 text-xs border-border/60 bg-card/50 rounded-xl"
               />
             </div>
             <Tabs defaultValue="all" className="w-full sm:w-auto">
-              <TabsList className="h-12 bg-muted/50 p-1 border border-border/40">
-                <TabsTrigger value="all" className="px-6 ">
+              <TabsList className="h-10 bg-muted/50 p-1 border border-border/40 rounded-xl">
+                <TabsTrigger value="all" className="px-4 text-xs">
                   All
                 </TabsTrigger>
-                <TabsTrigger value="ongoing" className="px-6 ">
+                <TabsTrigger value="ongoing" className="px-4 text-xs">
                   Ongoing
                 </TabsTrigger>
-                <TabsTrigger value="upcoming" className="px-6 ">
+                <TabsTrigger value="upcoming" className="px-4 text-xs">
                   Upcoming
                 </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid gap-3.5 sm:gap-4">
             {tournaments.length > 0 ? (
               tournaments.map((tournament, index) => (
                 <motion.div
@@ -230,16 +230,10 @@ export function Tournaments() {
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
 
-                        <div className="absolute top-3 left-3">
-                          <Badge
-                            className={
-                              tournament.status === "Registration Open"
-                                ? "bg-primary text-primary-foreground  uppercase text-[10px] tracking-wider"
-                                : "bg-accent text-accent-foreground  uppercase text-[10px] tracking-wider"
-                            }
-                          >
+                        <div className="absolute top-3 left-3 z-10">
+                          <span className="inline-flex items-center justify-center bg-transparent border-2 border-white text-white font-extrabold text-xs rounded-lg px-2.5 py-1 tracking-wide shadow-md backdrop-blur-[2px]">
                             {tournament.status}
-                          </Badge>
+                          </span>
                         </div>
                       </div>
                       <CardContent className="p-6 flex-1 flex flex-col justify-between">

@@ -247,7 +247,7 @@ export function OwnerLayout() {
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex flex-col items-center justify-center gap-1 p-1 transition-all cursor-pointer group">
                   <div className="relative">
-                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-0 bg-transparent transition-transform group-hover:scale-105">
+                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-0 bg-transparent transition-transform group-hover:scale-105 flex items-center justify-center">
                       {activeProfile.profilePicture ? (
                         <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                       ) : (

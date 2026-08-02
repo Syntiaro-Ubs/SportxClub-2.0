@@ -337,7 +337,7 @@ export function TournamentOrganizerDashboard() {
           return (
             <Card
               key={stat.label}
-              className="gap-0 bg-slate-50/80 dark:bg-slate-900/60 border-2 border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition-all duration-300 rounded-2xl flex flex-col justify-between p-3 sm:p-3.5 pb-2 sm:pb-2.5 min-h-[85px] text-foreground shadow-2xs hover:shadow-xs"
+              className="gap-0 bg-white dark:bg-slate-900/60 border-2 border-slate-300 dark:border-slate-700 hover:border-emerald-500 transition-all duration-300 rounded-2xl flex flex-col justify-between p-3 sm:p-3.5 pb-2 sm:pb-2.5 min-h-[85px] text-foreground shadow-2xs hover:shadow-xs"
             >
               <div className="flex items-start justify-between">
                 <div className="space-y-0.5">
@@ -370,7 +370,7 @@ export function TournamentOrganizerDashboard() {
           {tournamentsList.map((tournament) => (
             <div
               key={tournament.id}
-              className="p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs hover:border-emerald-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="p-4 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs hover:border-emerald-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
               <div className="space-y-1.5 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -433,7 +433,7 @@ export function TournamentOrganizerDashboard() {
 
       {/* Tabs Section for Approvals, Fixtures, and Live Scores */}
       <Tabs defaultValue="approvals" className="space-y-4 pt-2">
-        <TabsList className="bg-slate-100 dark:bg-slate-900/80 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 inline-flex items-center gap-1 max-w-full overflow-x-auto scrollbar-none">
+        <TabsList className="bg-white dark:bg-slate-900/80 p-1 rounded-2xl border border-slate-200/80 dark:border-slate-800 inline-flex items-center gap-1 max-w-full overflow-x-auto scrollbar-none">
           <TabsTrigger
             value="approvals"
             className="rounded-xl text-xs font-bold px-4 py-1.5 data-[state=active]:bg-white dark:data-[state=active]:bg-slate-800 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:shadow-xs transition-all flex items-center gap-1.5"
@@ -477,7 +477,7 @@ export function TournamentOrganizerDashboard() {
 
             <CardContent className="p-0 space-y-3">
               {pendingList.length === 0 ? (
-                <div className="text-center py-12 border border-slate-200/80 dark:border-slate-800 rounded-2xl bg-slate-50/50 dark:bg-slate-900/40">
+                <div className="text-center py-12 border border-slate-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900/40">
                   <Check className="h-8 w-8 text-emerald-500 mx-auto mb-2 opacity-80" />
                   <p className="text-sm font-bold text-foreground">All Approvals Cleared!</p>
                   <p className="text-xs text-muted-foreground mt-0.5">No pending team registration requests.</p>
@@ -486,7 +486,7 @@ export function TournamentOrganizerDashboard() {
                 pendingList.map((team) => (
                   <div
                     key={team.id}
-                    className="p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs hover:border-emerald-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    className="p-4 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs hover:border-emerald-500/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -552,7 +552,7 @@ export function TournamentOrganizerDashboard() {
               {fixturesList.map((fixture) => (
                 <div
                   key={fixture.id}
-                  className="p-4 rounded-2xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-3"
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-3"
                 >
                   <div className="grid grid-cols-12 items-center gap-2">
                     <div className="col-span-5 text-right font-extrabold text-sm text-foreground">
@@ -598,7 +598,7 @@ export function TournamentOrganizerDashboard() {
             </CardHeader>
 
             <CardContent className="p-0">
-              <div className="p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-4">
+              <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="font-extrabold text-sm text-foreground flex items-center gap-2">
                     <Flame className="h-4 w-4 text-amber-500" />

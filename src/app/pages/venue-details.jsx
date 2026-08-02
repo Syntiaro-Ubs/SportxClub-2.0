@@ -772,8 +772,8 @@ export function VenueDetails() {
                     isDark ? "text-emerald-600" : "text-emerald-600"
                   )} />
                   <span className={cn(
-                    "text-[10px] font-black uppercase tracking-widest leading-none",
-                    isDark ? "text-white/40" : "text-slate-400"
+                    "text-xs font-extrabold tracking-wide leading-none",
+                    isDark ? "text-slate-200" : "text-slate-800"
                   )}>
                     Sort Reviews
                   </span>
@@ -797,11 +797,11 @@ export function VenueDetails() {
                         type="button"
                         onClick={() => setSortBy(opt.key)}
                         className={cn(
-                          "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
+                          "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
                           isActive
                             ? isDark
-                              ? "bg-emerald-600 text-black shadow-md shadow-emerald-600/10 scale-100"
-                              : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100"
+                              ? "bg-emerald-600 text-black shadow-md shadow-emerald-600/10 scale-100 font-extrabold"
+                              : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100 font-bold"
                             : isDark
                               ? "text-white/60 hover:text-white bg-transparent border-transparent"
                               : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
@@ -928,10 +928,10 @@ export function VenueDetails() {
           </div>
 
           {/* Right Column: High-Converting Interactive Slot Booking Widget */}
-          <div className="w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 lg:h-full lg:overflow-y-auto lg:pl-1 lg:pb-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 lg:h-full lg:pl-1 lg:pb-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <Card
               className={cn(
-                "rounded-xl border shadow-2xl overflow-hidden relative isolate transition-colors duration-300",
+                "rounded-xl border shadow-2xl relative z-20 transition-colors duration-300",
                 isDark
                   ? "border-emerald-600/30 bg-[#0d0f15] text-white"
                   : "border-slate-200 bg-white text-slate-900",
@@ -940,16 +940,16 @@ export function VenueDetails() {
               {/* Ambient Glow */}
               <div
                 className={cn(
-                  "absolute top-0 right-0 h-40 w-40 rounded-full blur-3xl pointer-events-none",
+                  "absolute top-0 right-0 h-40 w-40 rounded-tr-xl rounded-full blur-3xl pointer-events-none overflow-hidden",
                   isDark ? "bg-emerald-600/10" : "bg-emerald-500/10",
                 )}
               />
 
-              <CardContent className="p-4 sm:p-5 space-y-4 relative z-10">
+              <CardContent className="pt-2 sm:pt-2.5 pb-4 px-4 sm:px-5 space-y-3 relative z-10">
                 {/* Header & Controls */}
                 <div
                   className={cn(
-                    "flex flex-col xl:flex-row xl:items-center justify-between border-b pb-4 gap-4",
+                    "flex flex-col xl:flex-row xl:items-center justify-between border-b pb-1.5 gap-4 -mt-1",
                     isDark ? "border-white/10" : "border-slate-200",
                   )}
                 >
@@ -965,262 +965,269 @@ export function VenueDetails() {
                   </div>
 
                   {/* Single Row 3 Dropdown Controls (Sport, Date, Duration) */}
-                  <div className="grid grid-cols-[1.2fr_1.4fr_0.8fr] gap-1.5 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[550px]">
-                  {/* 1. Sport Select */}
-                  <div className="space-y-1">
-                    <label
-                      className={cn(
-                        "text-xs font-semibold tracking-wide block truncate",
-                        isDark ? "text-white/70" : "text-slate-700"
-                      )}
-                    >
-                      1. Sport
-                    </label>
-                    <Select value={selectedSport} onValueChange={setSelectedSport}>
-                      <SelectTrigger
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[620px]">
+                    {/* 1. Sport Select */}
+                    <div className="space-y-1 min-w-0">
+                      <label
                         className={cn(
-                          "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-3",
-                          isDark
-                            ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
-                            : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
+                          "text-xs font-semibold tracking-wide block truncate",
+                          isDark ? "text-white/70" : "text-slate-700"
                         )}
                       >
-                        <SelectValue placeholder="Select Sport" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700">
-                        <SelectItem value="Football" className="text-sm font-medium py-2">⚽ Football</SelectItem>
-                        <SelectItem value="Cricket" className="text-sm font-medium py-2">🏏 Cricket</SelectItem>
-                        <SelectItem value="Basketball" className="text-sm font-medium py-2">🏀 Basketball</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* 2. Date Select + Interactive Calendar Trigger */}
-                  <div className="space-y-1 relative">
-                    <label
-                      className={cn(
-                        "text-xs font-semibold tracking-wide block truncate",
-                        isDark ? "text-white/70" : "text-slate-700"
-                      )}
-                    >
-                      2. Select Date
-                    </label>
-                    <Select
-                      value={selectedDate}
-                      onValueChange={(val) => {
-                        if (val === "custom") {
-                          setCurrentCalendarDate(new Date(selectedDate));
-                          setShowCalendar(true);
-                        } else {
-                          setSelectedDate(val);
-                          setShowCalendar(false);
-                        }
-                      }}
-                    >
-                      <SelectTrigger
-                        className={cn(
-                          "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-3",
-                          isDark
-                            ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
-                            : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
-                        )}
-                      >
-                        <SelectValue placeholder="Select Date">
-                          <span className="truncate block">
-                            📅 {
-                              selectedDate === dateOptions[0]?.iso
-                                ? "Today"
-                                : selectedDate === dateOptions[1]?.iso
-                                  ? "Tomorrow"
-                                  : formatDateLabel(selectedDate)
-                            }
-                          </span>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
-                        {dateOptions.map((opt) => (
-                          <SelectItem key={opt.iso} value={opt.iso} className="text-sm font-medium py-2 cursor-pointer">
-                            📅 {opt.label}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="custom" className="text-sm font-medium py-2 cursor-pointer">
-                          📅 Custom Date
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    {/* Dropdown Popover Monthly Calendar */}
-                    {showCalendar && (
-                      <>
-                        {/* Click away backdrop */}
-                        <div
-                          className="fixed inset-0 z-40 cursor-default"
-                          onClick={() => setShowCalendar(false)}
-                        />
-                        <div
+                        1. Sport
+                      </label>
+                      <Select value={selectedSport} onValueChange={setSelectedSport}>
+                        <SelectTrigger
                           className={cn(
-                            "absolute left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 top-12 z-50 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border p-3.5 sm:p-4 shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95",
+                            "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-3",
                             isDark
-                              ? "bg-[#0d0f15]/98 border-emerald-600/30 text-white"
-                              : "bg-white border-slate-300 text-slate-800 shadow-emerald-500/10"
+                              ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
+                              : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
                           )}
                         >
-                          {/* Calendar Header */}
-                          <div className="flex items-center justify-between mb-3">
-                            <button
-                              type="button"
-                              onClick={handlePrevMonth}
-                              className={cn(
-                                "p-1.5 rounded-lg border transition-all cursor-pointer",
-                                isDark
-                                  ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
-                                  : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
-                              )}
-                            >
-                              <ChevronLeft className="h-3.5 w-3.5" />
-                            </button>
-                            <span className="text-xs font-black uppercase tracking-wider">
-                              {currentCalendarDate.toLocaleDateString("en-US", {
-                                month: "long",
-                                year: "numeric",
-                              })}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={handleNextMonth}
-                              className={cn(
-                                "p-1.5 rounded-lg border transition-all cursor-pointer",
-                                isDark
-                                  ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
-                                  : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
-                              )}
-                            >
-                              <ChevronRight className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-
-                          {/* Days Header */}
-                          <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                              <span
-                                key={day}
-                                className={cn(
-                                  "text-[10px] font-bold uppercase tracking-wider",
-                                  isDark ? "text-white/40" : "text-slate-400"
-                                )}
-                              >
-                                {day}
-                              </span>
-                            ))}
-                          </div>
-
-                          {/* Calendar Cells */}
-                          <div className="grid grid-cols-7 gap-1.5 text-center">
-                            {getCalendarCells().map((cell, idx) => {
-                              const isSelected = selectedDate === cell.iso;
-                              const isDisabled = isDateDisabled(cell.date);
-                              return (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  disabled={isDisabled}
-                                  onClick={() => {
-                                    setSelectedDate(cell.iso);
-                                    setShowCalendar(false);
-                                  }}
-                                  className={cn(
-                                    "h-8 w-8 text-[11px] font-bold rounded-lg flex items-center justify-center transition-all cursor-pointer",
-                                    isSelected
-                                      ? "bg-emerald-600 text-white font-extrabold shadow-sm"
-                                      : isDisabled
-                                        ? "text-slate-300 dark:text-white/10 cursor-not-allowed line-through opacity-40"
-                                        : cell.isCurrentMonth
-                                          ? isDark
-                                            ? "text-white hover:bg-white/10"
-                                            : "text-slate-800 hover:bg-slate-100"
-                                          : isDark
-                                            ? "text-white/30 hover:bg-white/5"
-                                            : "text-slate-400 hover:bg-slate-100"
-                                  )}
-                                >
-                                  {cell.day}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* 3. Duration Select & Direct Manual Input */}
-                  <div className="space-y-1">
-                    <label
-                      className={cn(
-                        "text-xs font-semibold tracking-wide block truncate",
-                        isDark ? "text-white/70" : "text-slate-700"
-                      )}
-                    >
-                      3. Duration
-                    </label>
-                    <div
-                      className={cn(
-                        "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all flex items-center justify-between px-2 sm:px-3 shadow-xs relative",
-                        isDark
-                          ? "bg-slate-900/60 border-slate-700 text-white focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
-                          : "bg-white border-slate-300 text-slate-900 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
-                      )}
-                    >
-                      <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 flex-1">
-                        <span className="shrink-0 text-sm">⏱️</span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          value={tempDuration}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "" || /^[0-9]+$/.test(val)) {
-                              setTempDuration(val);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              commitDuration();
-                              e.target.blur();
-                            }
-                          }}
-                          onBlur={commitDuration}
-                          className="w-5 sm:w-6 bg-transparent text-center font-semibold focus:outline-none text-sm p-0 m-0 border-0 focus:ring-0 text-foreground cursor-text"
-                          aria-label="Custom Duration in Hours"
-                        />
-                        <span className="text-xs sm:text-sm font-semibold shrink-0">{playHours === 1 ? "Hr" : "Hrs"}</span>
-                      </div>
-
-                      {/* Dropdown for quick presets */}
-                      <Select
-                        value={String(playHours)}
-                        onValueChange={(val) => setPlayHours(Number(val))}
-                      >
-                        <SelectTrigger
-                          className="h-full w-5 p-0 border-0 shadow-none bg-transparent hover:bg-transparent focus:ring-0 focus:outline-none cursor-pointer flex items-center justify-center shrink-0"
-                          aria-label="Preset Duration Options"
-                        >
-                          <SelectValue placeholder="" />
+                          <SelectValue placeholder="Select Sport" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
-                          <SelectItem value="1" className="text-sm font-medium py-2">⏱️ 1 Hr</SelectItem>
-                          <SelectItem value="2" className="text-sm font-medium py-2">⏱️ 2 Hrs</SelectItem>
-                          <SelectItem value="3" className="text-sm font-medium py-2">⏱️ 3 Hrs</SelectItem>
-                          <SelectItem value="4" className="text-sm font-medium py-2">⏱️ 4 Hrs</SelectItem>
-                          <SelectItem value="5" className="text-sm font-medium py-2">⏱️ 5 Hrs</SelectItem>
-                          <SelectItem value="6" className="text-sm font-medium py-2">⏱️ 6 Hrs</SelectItem>
-                          <SelectItem value="8" className="text-sm font-medium py-2">⏱️ 8 Hrs</SelectItem>
+                        <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700">
+                          <SelectItem value="Football" className="text-sm font-medium py-2">⚽ Football</SelectItem>
+                          <SelectItem value="Cricket" className="text-sm font-medium py-2">🏏 Cricket</SelectItem>
+                          <SelectItem value="Basketball" className="text-sm font-medium py-2">🏀 Basketball</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* 2. Date Select + Interactive Calendar Trigger */}
+                    <div className="space-y-1 relative min-w-0">
+                      <label
+                        className={cn(
+                          "text-xs font-semibold tracking-wide block truncate",
+                          isDark ? "text-white/70" : "text-slate-700"
+                        )}
+                      >
+                        2. Select Date
+                      </label>
+                      <div className="relative flex items-center">
+                        <Select
+                          value={selectedDate}
+                          onValueChange={(val) => {
+                            setSelectedDate(val);
+                            setShowCalendar(false);
+                          }}
+                        >
+                          <SelectTrigger
+                            className={cn(
+                              "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs pl-8 pr-2 sm:pr-3",
+                              isDark
+                                ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
+                                : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
+                            )}
+                          >
+                            <SelectValue placeholder="Select Date">
+                              <span className="truncate block">
+                                {
+                                  selectedDate === dateOptions[0]?.iso
+                                    ? "Today"
+                                    : selectedDate === dateOptions[1]?.iso
+                                      ? "Tomorrow"
+                                      : formatDateLabel(selectedDate)
+                                }
+                              </span>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
+                            {dateOptions.map((opt) => (
+                              <SelectItem key={opt.iso} value={opt.iso} className="text-sm font-medium py-2 cursor-pointer">
+                                📅 {opt.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            setShowCalendar((prev) => !prev);
+                          }}
+                          className="absolute left-2 z-20 hover:scale-125 transition-transform cursor-pointer text-base bg-transparent border-0 p-0.5 focus:outline-none"
+                          title="Click to open full calendar"
+                        >
+                          📅
+                        </button>
+                      </div>
+
+                      {/* Dropdown Popover Monthly Calendar */}
+                      {showCalendar && (
+                        <>
+                          {/* Click away backdrop */}
+                          <div
+                            className="fixed inset-0 z-40 cursor-default"
+                            onClick={() => setShowCalendar(false)}
+                          />
+                          <div
+                            className={cn(
+                              "absolute left-1/2 -translate-x-1/2 sm:left-[-35px] sm:translate-x-0 top-12 z-[100] w-76 sm:w-80 max-w-[90vw] rounded-2xl border-2 p-4 sm:p-5 shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95",
+                              isDark
+                                ? "bg-[#0d0f15]/98 border-slate-700 text-white shadow-emerald-500/10"
+                                : "bg-white border-slate-300 text-slate-800 shadow-emerald-500/15"
+                            )}
+                          >
+                            {/* Calendar Header */}
+                            <div className="flex items-center justify-between mb-3">
+                              <button
+                                type="button"
+                                onClick={handlePrevMonth}
+                                className={cn(
+                                  "p-1.5 rounded-lg border transition-all cursor-pointer",
+                                  isDark
+                                    ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
+                                    : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
+                                )}
+                              >
+                                <ChevronLeft className="h-3.5 w-3.5" />
+                              </button>
+                              <span className="text-xs font-black uppercase tracking-wider">
+                                {currentCalendarDate.toLocaleDateString("en-US", {
+                                  month: "long",
+                                  year: "numeric",
+                                })}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleNextMonth}
+                                className={cn(
+                                  "p-1.5 rounded-lg border transition-all cursor-pointer",
+                                  isDark
+                                    ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
+                                    : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
+                                )}
+                              >
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+
+                            {/* Days Header */}
+                            <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                                <span
+                                  key={day}
+                                  className={cn(
+                                    "text-[10px] font-bold uppercase tracking-wider",
+                                    isDark ? "text-white/40" : "text-slate-400"
+                                  )}
+                                >
+                                  {day}
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* Calendar Cells */}
+                            <div className="grid grid-cols-7 gap-1.5 text-center">
+                              {getCalendarCells().map((cell, idx) => {
+                                const isSelected = selectedDate === cell.iso;
+                                const isDisabled = isDateDisabled(cell.date);
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    disabled={isDisabled}
+                                    onClick={() => {
+                                      setSelectedDate(cell.iso);
+                                      setShowCalendar(false);
+                                    }}
+                                    className={cn(
+                                      "h-8 w-8 text-[11px] font-bold rounded-lg flex items-center justify-center transition-all cursor-pointer",
+                                      isSelected
+                                        ? "bg-emerald-600 text-white font-extrabold shadow-sm"
+                                        : isDisabled
+                                          ? "text-slate-300 dark:text-white/10 cursor-not-allowed line-through opacity-40"
+                                          : cell.isCurrentMonth
+                                            ? isDark
+                                              ? "text-white hover:bg-white/10"
+                                              : "text-slate-800 hover:bg-slate-100"
+                                            : isDark
+                                              ? "text-white/30 hover:bg-white/5"
+                                              : "text-slate-400 hover:bg-slate-100"
+                                    )}
+                                  >
+                                    {cell.day}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* 3. Duration Select & Direct Manual Input */}
+                    <div className="space-y-1 min-w-0">
+                      <label
+                        className={cn(
+                          "text-xs font-semibold tracking-wide block truncate",
+                          isDark ? "text-white/70" : "text-slate-700"
+                        )}
+                      >
+                        3. Duration
+                      </label>
+                      <div
+                        className={cn(
+                          "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all flex items-center justify-between px-2 sm:px-3 shadow-xs relative",
+                          isDark
+                            ? "bg-slate-900/60 border-slate-700 text-white focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
+                            : "bg-white border-slate-300 text-slate-900 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
+                        )}
+                      >
+                        <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 flex-1">
+                          <span className="shrink-0 text-sm">⏱️</span>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={tempDuration}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || /^[0-9]+$/.test(val)) {
+                                setTempDuration(val);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                commitDuration();
+                                e.target.blur();
+                              }
+                            }}
+                            onBlur={commitDuration}
+                            className="w-5 sm:w-6 bg-transparent text-center font-semibold focus:outline-none text-sm p-0 m-0 border-0 focus:ring-0 text-foreground cursor-text"
+                            aria-label="Custom Duration in Hours"
+                          />
+                          <span className="text-xs sm:text-sm font-semibold shrink-0">{playHours === 1 ? "Hr" : "Hrs"}</span>
+                        </div>
+
+                        {/* Dropdown for quick presets */}
+                        <Select
+                          value={String(playHours)}
+                          onValueChange={(val) => setPlayHours(Number(val))}
+                        >
+                          <SelectTrigger
+                            className="h-full w-5 p-0 border-0 shadow-none bg-transparent hover:bg-transparent focus:ring-0 focus:outline-none cursor-pointer flex items-center justify-center shrink-0"
+                            aria-label="Preset Duration Options"
+                          >
+                            <SelectValue placeholder="" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
+                            <SelectItem value="1" className="text-sm font-medium py-2">⏱️ 1 Hr</SelectItem>
+                            <SelectItem value="2" className="text-sm font-medium py-2">⏱️ 2 Hrs</SelectItem>
+                            <SelectItem value="3" className="text-sm font-medium py-2">⏱️ 3 Hrs</SelectItem>
+                            <SelectItem value="4" className="text-sm font-medium py-2">⏱️ 4 Hrs</SelectItem>
+                            <SelectItem value="5" className="text-sm font-medium py-2">⏱️ 5 Hrs</SelectItem>
+                            <SelectItem value="6" className="text-sm font-medium py-2">⏱️ 6 Hrs</SelectItem>
+                            <SelectItem value="8" className="text-sm font-medium py-2">⏱️ 8 Hrs</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </div>
-                </div>
                 </div>
 
                 {/* Step 4: Time Slot Matrix */}
@@ -1244,7 +1251,7 @@ export function VenueDetails() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
                     {timeSlots.length === 0 ? (
                       <div className="col-span-full py-8 text-center px-4 rounded-2xl border border-dashed border-border bg-muted/20">
                         <p className="text-xs font-bold text-muted-foreground">
