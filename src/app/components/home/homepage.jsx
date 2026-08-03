@@ -618,15 +618,15 @@ export function Navbar() {
               id="hamburger-menu-toggle-btn"
               onClick={() => setMenuOpen(!menuOpen)}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full transition duration-200 cursor-pointer",
+                "flex h-10 w-10 items-center justify-center rounded-full transition duration-200 cursor-pointer bg-transparent hover:bg-transparent group",
                 isDark
-                  ? "text-white/80 hover:bg-white/[0.08] hover:text-white"
-                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-900",
+                  ? "text-white/80 hover:text-white"
+                  : "text-slate-700 hover:text-slate-900",
               )}
               aria-label="Toggle menu"
             >
               {menuOpen ? (
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -638,7 +638,7 @@ export function Navbar() {
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="h-5 w-5"
+                  className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
                 >
                   <line x1="4" y1="9" x2="20" y2="9" />
                   <line x1="4" y1="15" x2="14" y2="15" />

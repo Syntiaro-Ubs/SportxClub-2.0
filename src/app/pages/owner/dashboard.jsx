@@ -133,6 +133,16 @@ const renderCustomYAxisTick = ({ x, y, payload }) => {
   );
 };
 
+const renderBarYAxisTick = ({ x, y, payload }) => {
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x="-36" y="2" textAnchor="start" fontSize="10" fill="var(--foreground)" fontWeight="600">
+        {payload.value}
+      </text>
+    </g>
+  );
+};
+
 const PremiumStar = ({ size = 16, fillPercent = 100, className = "" }) => {
   const gradientId = useMemo(() => `star-grad-${Math.random().toString(36).substring(2, 9)}`, []);
   return (
@@ -184,99 +194,31 @@ const mockHourlyOccupancy = [
   { hour: '10:00 PM', rate: 50 },
 ];
 
-const initialBookingsList = [
-  {
-    id: "B-8930",
-    customerName: "Rahul Sharma",
-    phone: "+91 98765 43210",
-    turfName: "Main Arena A",
-    sport: "Football",
-    slotTime: "06:00 PM - 07:00 PM",
-    date: "Today",
-    amount: 1500,
-    status: "Confirmed",
-    paymentType: "Online",
-    timeAgo: "5 mins ago",
-  },
-  {
-    id: "B-8929",
-    customerName: "Amit Patel",
-    phone: "+91 91234 56789",
-    turfName: "Indoor Turf B",
-    sport: "Cricket",
-    slotTime: "08:00 PM - 10:00 PM",
-    date: "Today",
-    amount: 3000,
-    status: "Pending",
-    paymentType: "Online",
-    timeAgo: "15 mins ago",
-  },
-  {
-    id: "B-8928",
-    customerName: "Siddharth Sen",
-    phone: "+91 99887 76655",
-    turfName: "Court 1 (Clay)",
-    sport: "Tennis",
-    slotTime: "04:00 PM - 05:00 PM",
-    date: "Today",
-    amount: 1200,
-    status: "Confirmed",
-    paymentType: "Walk-in",
-    timeAgo: "1 hour ago",
-  },
-  {
-    id: "B-8927",
-    customerName: "Priyanka Nair",
-    phone: "+91 95432 10987",
-    turfName: "Multipurpose Hall",
-    sport: "Basketball",
-    slotTime: "07:00 PM - 08:00 PM",
-    date: "Today",
-    amount: 1800,
-    status: "Cancelled",
-    paymentType: "Online",
-    timeAgo: "2 hours ago",
-  },
-  {
-    id: "B-8926",
-    customerName: "Vikram Rathore",
-    phone: "+91 98123 45670",
-    turfName: "Main Arena A",
-    sport: "Football",
-    slotTime: "09:00 PM - 10:00 PM",
-    date: "Today",
-    amount: 1500,
-    status: "Confirmed",
-    paymentType: "Online",
-    timeAgo: "3 hours ago",
-  },
-  {
-    id: "B-8925",
-    customerName: "Rohan Das",
-    phone: "+91 92345 67890",
-    turfName: "Badminton Court 1",
-    sport: "Badminton",
-    slotTime: "05:00 PM - 06:00 PM",
-    date: "Tomorrow",
-    amount: 800,
-    status: "Confirmed",
-    paymentType: "Walk-in",
-    timeAgo: "4 hours ago",
-  },
-  {
-    id: "B-8924",
-    customerName: "Kunal Verma",
-    phone: "+91 93456 78901",
-    turfName: "Indoor Turf B",
-    sport: "Cricket",
-    slotTime: "06:00 AM - 08:00 AM",
-    date: "Tomorrow",
-    amount: 2800,
-    status: "Pending",
-    paymentType: "Online",
-    timeAgo: "5 hours ago",
-  },
-];
+const initialBookingsList = Array.from({ length: 20 }, (_, i) => {
+  const base = [
+    { customerName: "Rahul Sharma", phone: "+91 98765 43210", turfName: "Main Arena A", sport: "Football", slotTime: "06:00 PM - 07:00 PM", amount: 1500, status: "Confirmed", paymentType: "Online" },
+    { customerName: "Amit Patel", phone: "+91 91234 56789", turfName: "Indoor Turf B", sport: "Cricket", slotTime: "08:00 PM - 10:00 PM", amount: 3000, status: "Pending", paymentType: "Online" },
+    { customerName: "Siddharth Sen", phone: "+91 99887 76655", turfName: "Court 1 (Clay)", sport: "Tennis", slotTime: "04:00 PM - 05:00 PM", amount: 1200, status: "Confirmed", paymentType: "Walk-in" },
+    { customerName: "Priyanka Nair", phone: "+91 95432 10987", turfName: "Multipurpose Hall", sport: "Basketball", slotTime: "07:00 PM - 08:00 PM", amount: 1800, status: "Cancelled", paymentType: "Online" },
+    { customerName: "Vikram Rathore", phone: "+91 98123 45670", turfName: "Main Arena A", sport: "Football", slotTime: "09:00 PM - 10:00 PM", amount: 1500, status: "Confirmed", paymentType: "Online" },
+    { customerName: "Rohan Das", phone: "+91 92345 67890", turfName: "Badminton Court 1", sport: "Badminton", slotTime: "05:00 PM - 06:00 PM", amount: 800, status: "Confirmed", paymentType: "Walk-in" },
+    { customerName: "Kunal Verma", phone: "+91 93456 78901", turfName: "Indoor Turf B", sport: "Cricket", slotTime: "06:00 AM - 08:00 AM", amount: 2800, status: "Pending", paymentType: "Online" }
+  ];
+  const b = base[i % base.length];
+  return {
+    id: `B-89${(30 - i).toString().padStart(2, '0')}`,
+    customerName: b.customerName,
+    phone: b.phone,
+    turfName: b.turfName,
+    sport: b.sport,
+    slotTime: b.slotTime,
+    date: i < 5 ? "Today" : (i < 12 ? "Tomorrow" : "Next Week"),
+    amount: b.amount,
+    status: i % 5 === 0 && i !== 0 ? "Pending" : b.status,
+    paymentType: b.paymentType,
+    timeAgo: `${(i * 15) + 5} mins ago`,
+  };
+});
 
 const fallbackData = {
   stats: {
@@ -626,6 +568,20 @@ export function Dashboard() {
       return matchesSearch && matchesSport && matchesStatus;
     });
   }, [bookings, searchQuery, sportFilter, statusFilter, isTestMode]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, sportFilter, statusFilter]);
+
+  const currentBookings = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredBookings.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredBookings, currentPage]);
+
+  const totalPages = Math.ceil(filteredBookings.length / itemsPerPage);
 
   // Bookings Radial Circle progress calculations
   const totalSlotsCount = 24;
@@ -995,7 +951,7 @@ export function Dashboard() {
             <div className="flex flex-col justify-center min-w-0">
               <div className="h-[210px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
+                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="chartRevenueGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
@@ -1004,7 +960,7 @@ export function Dashboard() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
                     <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
+                    <YAxis width={45} stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 1000 ? `₹${val / 1000}k` : `₹${val}`} tick={{ fill: "var(--foreground)" }} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
                       itemStyle={{ color: "var(--foreground)" }}
@@ -1026,10 +982,10 @@ export function Dashboard() {
             <div className="flex flex-col justify-center min-w-0">
               <div className="h-[210px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
                     <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis width={45} stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip
                       cursor={false}
                       contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
@@ -1078,12 +1034,12 @@ export function Dashboard() {
                 <SelectValue placeholder="All Sports" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
-                <SelectItem value="all" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">All Sports</SelectItem>
-                <SelectItem value="football" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Football</SelectItem>
-                <SelectItem value="cricket" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Cricket</SelectItem>
-                <SelectItem value="tennis" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Tennis</SelectItem>
-                <SelectItem value="badminton" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Badminton</SelectItem>
-                <SelectItem value="basketball" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Basketball</SelectItem>
+                <SelectItem value="all" className="cursor-pointer">All Sports</SelectItem>
+                <SelectItem value="football" className="cursor-pointer">Football</SelectItem>
+                <SelectItem value="cricket" className="cursor-pointer">Cricket</SelectItem>
+                <SelectItem value="tennis" className="cursor-pointer">Tennis</SelectItem>
+                <SelectItem value="badminton" className="cursor-pointer">Badminton</SelectItem>
+                <SelectItem value="basketball" className="cursor-pointer">Basketball</SelectItem>
               </SelectContent>
             </Select>
 
@@ -1093,10 +1049,10 @@ export function Dashboard() {
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
-                <SelectItem value="all" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">All Statuses</SelectItem>
-                <SelectItem value="confirmed" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Confirmed</SelectItem>
-                <SelectItem value="pending" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Pending</SelectItem>
-                <SelectItem value="cancelled" className="border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">Cancelled</SelectItem>
+                <SelectItem value="all" className="cursor-pointer">All Statuses</SelectItem>
+                <SelectItem value="confirmed" className="cursor-pointer">Confirmed</SelectItem>
+                <SelectItem value="pending" className="cursor-pointer">Pending</SelectItem>
+                <SelectItem value="cancelled" className="cursor-pointer">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1118,8 +1074,8 @@ export function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30 text-xs">
-                {filteredBookings.length > 0 ? (
-                  filteredBookings.map((booking) => (
+                {currentBookings.length > 0 ? (
+                  currentBookings.map((booking) => (
                     <tr
                       key={booking.id}
                       className="hover:bg-muted/10 transition-colors group"
@@ -1232,6 +1188,37 @@ export function Dashboard() {
               </tbody>
             </table>
           </div>
+          
+          {totalPages > 1 && filteredBookings.length > 0 && (
+            <div className="flex items-center justify-between border-t border-border/40 px-4 py-3 sm:px-6 bg-card/40 rounded-b-2xl">
+              <div className="text-xs text-muted-foreground hidden sm:block">
+                Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredBookings.length)}</span> of <span className="font-bold text-foreground">{filteredBookings.length}</span> entries
+              </div>
+              <div className="flex flex-1 justify-between sm:justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 text-xs font-medium border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1 sm:hidden">
+                  <span className="text-xs text-muted-foreground">Page {currentPage} of {totalPages}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 text-xs font-medium border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -137,9 +137,9 @@ export function OwnerLayout() {
           onClick={toggleSidebar}
           title="Collapse Sidebar (Ctrl+\)"
           aria-label="Collapse Sidebar"
-          className="hidden md:flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0 my-auto"
+          className="hidden md:flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent transition-all duration-200 cursor-pointer shrink-0 my-auto group"
         >
-          <TwoLineMenuIcon className="h-5 w-5" />
+          <TwoLineMenuIcon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
         </button>
         <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
           <Logo className="h-[50px] md:h-[80px]" />
@@ -198,11 +198,11 @@ export function OwnerLayout() {
           <div className="flex items-center gap-2 md:hidden">
             <button
               type="button"
-              className="-m-1.5 p-1.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center shrink-0"
+              className="-m-1.5 p-1.5 text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent transition-all duration-200 cursor-pointer flex items-center justify-center shrink-0 group"
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <span className="sr-only">Open sidebar</span>
-              <TwoLineMenuIcon className="h-6 w-6" aria-hidden="true" />
+              <TwoLineMenuIcon className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" aria-hidden="true" />
             </button>
             <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
               <Logo className="h-[50px] md:h-[80px]" />
@@ -219,9 +219,9 @@ export function OwnerLayout() {
                     onClick={toggleSidebar}
                     title="Expand Sidebar (Ctrl+\)"
                     aria-label="Expand Sidebar"
-                    className="flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors cursor-pointer shrink-0"
+                    className="flex items-center justify-center p-2 rounded-full text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent transition-all duration-200 cursor-pointer shrink-0 group"
                   >
-                    <TwoLineMenuIcon className="h-5 w-5" />
+                    <TwoLineMenuIcon className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
                   </button>
                   <a href="/admin-panel" className="flex items-center shrink-0 translate-y-[6px]">
                     <Logo className="h-[50px] md:h-[80px]" />
@@ -232,12 +232,12 @@ export function OwnerLayout() {
 
             <div className="flex items-center gap-x-3 sm:gap-x-5">
               {/* Test Mode Toggle Switch */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-muted-foreground select-none">Test Mode</span>
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground select-none">Test Mode</span>
                 <Switch
                   checked={isTestMode}
                   onCheckedChange={handleTestModeToggle}
-                  className="data-[state=checked]:bg-rose-500 data-[state=checked]:border-rose-500 cursor-pointer"
+                  className="data-[state=checked]:bg-red-400 data-[state=checked]:border-red-400 cursor-pointer scale-[0.8]"
                 />
               </div>
 
@@ -245,9 +245,9 @@ export function OwnerLayout() {
               <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none focus:outline-none flex flex-col items-center justify-center gap-1 p-1 transition-all cursor-pointer group">
+                <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center justify-center gap-1.5 p-1 transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 group">
                   <div className="relative">
-                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-0 bg-transparent transition-transform group-hover:scale-105 flex items-center justify-center">
+                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-0 bg-transparent flex items-center justify-center">
                       {activeProfile.profilePicture ? (
                         <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                       ) : (
@@ -257,7 +257,7 @@ export function OwnerLayout() {
                       )}
                     </Avatar>
                   </div>
-                  <span className="text-[11px] font-bold leading-none text-foreground whitespace-nowrap">{ownerName}</span>
+                  <span className="text-sm font-semibold leading-none text-foreground whitespace-nowrap">{ownerName}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 rounded-2xl border-border/60 p-1.5 shadow-xl" align="end" forceMount>
                   <DropdownMenuLabel className="px-3 py-2">
