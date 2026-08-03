@@ -458,7 +458,7 @@ export function OwnerReport() {
               <div className="text-xs text-muted-foreground hidden sm:block">
                 Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> of <span className="font-bold text-foreground">{filteredData.length}</span> entries
               </div>
-              <div className="flex flex-1 justify-between sm:justify-end gap-2">
+              <div className="flex flex-1 justify-between sm:justify-end gap-2 pr-6 sm:pr-10 md:pr-14">
                 <Button
                   variant="outline"
                   size="sm"

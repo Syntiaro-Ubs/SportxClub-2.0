@@ -561,169 +561,41 @@ export function Revenue() {
         </Card>
 
         {/* Widget 3: Upcoming Settlements (Clickable Button Trigger) */}
-        <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
-          <Card
-            onClick={() => setStatusFilter("pending")}
-            className={`bg-transparent border-2 shadow-xs hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 [&:last-child]:pb-2.5 min-h-[90px] cursor-pointer group hover:-translate-y-0.5 ${statusFilter === "pending" ? "border-[#059669] shadow-md" : "border-[#059669]/40 hover:border-[#059669]"}`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="space-y-0.5">
-                <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 tracking-widest flex items-center gap-1">
-                  Upcoming Settlements
-                </p>
-                <h3 className="text-2xl font-bold tracking-tight text-[#059669] dark:text-emerald-400 mt-0.5 flex items-center">
-                  <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
-                  {pendingRevenue.toLocaleString('en-IN')}
-                </h3>
-              </div>
-              <div className="flex items-center justify-center p-1 group-hover:scale-110 transition-transform">
-                <Clock className="h-4.5 w-4.5 text-[#059669]" />
-              </div>
+        <Card
+          onClick={() => setStatusFilter("pending")}
+          className={`bg-transparent border-2 shadow-xs hover:shadow-md transition-all duration-300 rounded-2xl flex flex-col justify-between p-3.5 pb-2.5 [&:last-child]:pb-2.5 min-h-[90px] cursor-pointer group hover:-translate-y-0.5 ${statusFilter === "pending" ? "border-[#059669] shadow-md" : "border-[#059669]/40 hover:border-[#059669]"}`}
+        >
+          <div className="flex items-start justify-between">
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-bold text-[#059669] dark:text-emerald-400 tracking-widest flex items-center gap-1">
+                Upcoming Settlements
+              </p>
+              <h3 className="text-2xl font-bold tracking-tight text-[#059669] dark:text-emerald-400 mt-0.5 flex items-center">
+                <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0 mr-0.5 text-[#059669] dark:text-emerald-400" />
+                {pendingRevenue.toLocaleString('en-IN')}
+              </h3>
             </div>
-            <div className="mt-1.5 flex items-center justify-between text-xs text-[#059669] font-semibold pt-1 border-t border-black/5 dark:border-white/10">
-              <span className="flex items-center gap-1">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                Auto-settled via Escrow
-              </span>
-              <DialogTrigger asChild>
-                <button className="text-[10px] font-bold tracking-wider flex items-center gap-0.5 hover:underline cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                  View History <ChevronRight className="h-3 w-3" />
-                </button>
-              </DialogTrigger>
+            <div className="flex items-center justify-center p-1 group-hover:scale-110 transition-transform">
+              <Clock className="h-4.5 w-4.5 text-[#059669]" />
             </div>
-          </Card>
-
-          <DialogContent className="rounded-3xl border border-border/40 bg-popover max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-primary/10 text-primary border-primary/20 text-xs px-2.5 py-0.5 font-mono">
-                  Batch #{mockSettlementData.settlementRef}
-                </Badge>
-                <Badge variant="outline" className="text-xs font-semibold border-emerald-500/20 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">
-                  T+1 Settlement Cycle
-                </Badge>
-              </div>
-              <DialogTitle className="text-2xl font-extrabold tracking-tight flex items-center gap-2 text-foreground">
-                <Clock className="h-6 w-6 text-primary" />
-                Upcoming Settlements Breakdown
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Detailed user-wise breakdown of funds queued for bank credit.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6 py-4">
-              {/* Summary Credit Banner */}
-              <div className="rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-primary tracking-widest">
-                    Expected Bank Credit ETA
-                  </span>
-                  <h4 className="text-lg font-black text-foreground flex items-center gap-2">
-                    <Building2 className="h-4.5 w-4.5 text-primary" />
-                    {mockSettlementData.expectedDate}
-                  </h4>
-                  <p className="text-xs text-muted-foreground">
-                    Destination: <strong className="text-foreground">{mockSettlementData.nodalBank}</strong>
-                  </p>
-                </div>
-                <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-primary/20 pt-2 sm:pt-0 sm:pl-4">
-                  <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Gross Pending</span>
-                  <p className="text-2xl font-black text-primary font-mono flex items-center justify-start sm:justify-end gap-0.5">
-                    <IndianRupee className="h-5 w-5 shrink-0 stroke-[2.5]" />
-                    {mockSettlementData.totalGross.toLocaleString('en-IN')}
-                  </p>
-                </div>
-              </div>
-
-              {/* User-Wise History List */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-muted-foreground tracking-wider flex items-center justify-between">
-                  <span>User Transactions ({mockSettlementData.breakdown.length})</span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Razorpay Verified Escrow
-                  </span>
-                </h4>
-
-                <div className="divide-y divide-border/30 border border-border/40 rounded-2xl overflow-hidden bg-card/40">
-                  {mockSettlementData.breakdown.map((item) => (
-                    <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/20 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                          <User className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-sm text-foreground">{item.userName}</p>
-                            <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                              {item.id}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground font-medium mt-0.5">
-                            {item.turfName} · <span className="text-foreground">{item.slotTime}</span> ({item.slotDate})
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 border-border/20 pt-2 sm:pt-0">
-                        <div className="text-left sm:text-right">
-                          <p className="font-mono font-bold text-sm text-foreground flex items-center justify-start sm:justify-end gap-0.5"><IndianRupee className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" />{item.grossAmount}</p>
-                          <span className="text-[10px] text-muted-foreground font-semibold">{item.paymentMode}</span>
-                        </div>
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5 whitespace-nowrap">
-                          {item.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Settlement Deductions Breakdown Table */}
-              <div className="rounded-2xl border border-border/40 bg-muted/20 p-4 space-y-2">
-                <h5 className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
-                  <CreditCard className="h-4 w-4 text-primary" /> Net Payout Calculation Summary
-                </h5>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Gross Upcoming Revenue</span>
-                  <span className="font-mono font-semibold text-foreground inline-flex items-center gap-0.5"><IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gross.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>Payment Gateway Fee (2%)</span>
-                  <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gatewayFee.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>GST on Gateway Fee (18%)</span>
-                  <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gstOnFee.toFixed(2)}</span>
-                </div>
-                <div className="border-t border-border/40 pt-2 flex justify-between text-sm font-bold text-foreground">
-                  <span>Net Credited to Bank Account</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base inline-flex items-center gap-0.5">
-                    <IndianRupee className="h-4 w-4 shrink-0 stroke-[2.5]" />{mockSettlementData.calculations.netPayout.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  toast.success("Settlement advice PDF generated!");
-                }}
-                className="rounded-xl h-10 text-xs font-bold gap-2 cursor-pointer"
-              >
-                <Download className="h-4 w-4" /> Download Settlement Advice (PDF)
-              </Button>
-              <Button
-                onClick={() => setIsSettlementsModalOpen(false)}
-                className="rounded-xl h-10 text-xs bg-primary text-primary-foreground font-bold cursor-pointer hover:opacity-95"
-              >
-                Close Breakdown
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-xs text-[#059669] font-semibold pt-1 border-t border-black/5 dark:border-white/10">
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Auto-settled via Escrow
+            </span>
+            <button
+              type="button"
+              className="text-[10px] font-bold tracking-wider flex items-center gap-0.5 hover:underline cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsSettlementsModalOpen(true);
+              }}
+            >
+              View History <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+        </Card>
 
         {/* Widget 4: Cancellations */}
         <Card
@@ -867,11 +739,11 @@ export function Revenue() {
 
         {/* Settlement Breakdown Modal */}
         <Dialog open={isSettlementsModalOpen} onOpenChange={setIsSettlementsModalOpen}>
-          <DialogContent className="sm:max-w-[620px] max-h-[88vh] overflow-y-auto rounded-3xl p-6">
-            <DialogHeader className="space-y-1.5 pb-2 border-b border-border/40">
+          <DialogContent className="sm:max-w-[640px] w-full h-[88vh] flex flex-col justify-between rounded-3xl p-5 bg-white dark:bg-card text-foreground border border-border/40 shadow-2xl">
+            <DialogHeader className="space-y-1 pb-2 border-b border-border/40 shrink-0">
               <div className="flex items-center gap-2">
                 <div className="h-9 w-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  <Building2 className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
                   <DialogTitle className="text-lg font-extrabold text-foreground">
@@ -884,65 +756,65 @@ export function Revenue() {
               </div>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
+            <div className="flex-1 overflow-y-auto space-y-4 py-3 pr-1">
               {/* Summary Credit Banner */}
-              <div className="rounded-2xl bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-primary tracking-widest">
+              <div className="rounded-xl bg-gradient-to-r from-primary/15 via-primary/5 to-transparent border border-primary/20 p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                <div className="space-y-0.5">
+                  <span className="text-[9px] font-bold text-primary tracking-widest uppercase">
                     Expected Bank Credit ETA
                   </span>
-                  <h4 className="text-lg font-black text-foreground flex items-center gap-2">
-                    <Building2 className="h-4.5 w-4.5 text-primary" />
+                  <h4 className="text-base font-black text-foreground flex items-center gap-1.5">
+                    <Building2 className="h-4 w-4 text-primary" />
                     {mockSettlementData.expectedDate}
                   </h4>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-[11px] text-muted-foreground">
                     Destination: <strong className="text-foreground">{mockSettlementData.nodalBank}</strong>
                   </p>
                 </div>
-                <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-primary/20 pt-2 sm:pt-0 sm:pl-4">
-                  <span className="text-[10px] font-bold text-muted-foreground tracking-widest">Gross Pending</span>
-                  <p className="text-2xl font-black text-primary font-mono flex items-center justify-start sm:justify-end gap-0.5">
-                    <IndianRupee className="h-5 w-5 shrink-0 stroke-[2.5]" />
+                <div className="text-left sm:text-right border-t sm:border-t-0 sm:border-l border-primary/20 pt-1.5 sm:pt-0 sm:pl-3.5">
+                  <span className="text-[9px] font-bold text-muted-foreground tracking-widest uppercase">Gross Pending</span>
+                  <p className="text-xl font-black text-primary font-mono flex items-center justify-start sm:justify-end gap-0.5">
+                    <IndianRupee className="h-4.5 w-4.5 shrink-0 stroke-[2.5]" />
                     {mockSettlementData.totalGross.toLocaleString('en-IN')}
                   </p>
                 </div>
               </div>
 
               {/* User-Wise History List */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-bold text-muted-foreground tracking-wider flex items-center justify-between">
+              <div className="space-y-1.5">
+                <h4 className="text-[11px] font-bold text-muted-foreground tracking-wider flex items-center justify-between">
                   <span>User Transactions ({mockSettlementData.breakdown.length})</span>
                   <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
                     <ShieldCheck className="h-3.5 w-3.5" /> Razorpay Verified Escrow
                   </span>
                 </h4>
 
-                <div className="divide-y divide-border/30 border border-border/40 rounded-2xl overflow-hidden bg-card/40">
+                <div className="divide-y divide-border/30 border border-border/40 rounded-xl overflow-hidden bg-card/40">
                   {mockSettlementData.breakdown.map((item) => (
-                    <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-muted/20 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
-                          <User className="h-5 w-5 text-primary" />
+                    <div key={item.id} className="p-2.5 sm:px-3 sm:py-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2 hover:bg-muted/20 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                          <User className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-sm text-foreground">{item.userName}</p>
-                            <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-xs text-foreground">{item.userName}</p>
+                            <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                               {item.id}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                          <p className="text-[11px] text-muted-foreground font-medium mt-0.5">
                             {item.turfName} · <span className="text-foreground">{item.slotTime}</span> ({item.slotDate})
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 border-border/20 pt-2 sm:pt-0">
+                      <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-border/20 pt-1.5 sm:pt-0">
                         <div className="text-left sm:text-right">
-                          <p className="font-mono font-bold text-sm text-foreground flex items-center justify-start sm:justify-end gap-0.5"><IndianRupee className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" />{item.grossAmount}</p>
-                          <span className="text-[10px] text-muted-foreground font-semibold">{item.paymentMode}</span>
+                          <p className="font-mono font-bold text-xs text-foreground flex items-center justify-start sm:justify-end gap-0.5"><IndianRupee className="h-3 w-3 shrink-0 stroke-[2.5]" />{item.grossAmount}</p>
+                          <span className="text-[9px] text-muted-foreground font-semibold">{item.paymentMode}</span>
                         </div>
-                        <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold rounded-lg px-2 py-0.5 whitespace-nowrap">
+                        <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-bold rounded-md px-1.5 py-0.5 whitespace-nowrap">
                           {item.status}
                         </Badge>
                       </div>
@@ -952,46 +824,47 @@ export function Revenue() {
               </div>
 
               {/* Settlement Deductions Breakdown Table */}
-              <div className="rounded-2xl border border-border/40 bg-muted/20 p-4 space-y-2">
-                <h5 className="text-xs font-bold text-foreground mb-3 flex items-center gap-1.5">
-                  <CreditCard className="h-4 w-4 text-primary" /> Net Payout Calculation Summary
+              <div className="rounded-xl border border-border/40 bg-muted/20 p-3 space-y-1.5">
+                <h5 className="text-[11px] font-bold text-foreground mb-1.5 flex items-center gap-1.5">
+                  <CreditCard className="h-3.5 w-3.5 text-primary" /> Net Payout Calculation Summary
                 </h5>
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
                   <span>Gross Upcoming Revenue</span>
                   <span className="font-mono font-semibold text-foreground inline-flex items-center gap-0.5"><IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gross.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
                   <span>Payment Gateway Fee (2%)</span>
                   <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gatewayFee.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
+                <div className="flex justify-between text-[11px] text-muted-foreground">
                   <span>GST on Gateway Fee (18%)</span>
                   <span className="font-mono font-semibold text-rose-500 inline-flex items-center gap-0.5">-<IndianRupee className="h-3 w-3 shrink-0" />{mockSettlementData.calculations.gstOnFee.toFixed(2)}</span>
                 </div>
-                <div className="border-t border-border/40 pt-2 flex justify-between text-sm font-bold text-foreground">
+                <div className="border-t border-border/40 pt-1.5 flex justify-between text-xs font-bold text-foreground">
                   <span>Net Credited to Bank Account</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-base inline-flex items-center gap-0.5">
-                    <IndianRupee className="h-4 w-4 shrink-0 stroke-[2.5]" />{mockSettlementData.calculations.netPayout.toFixed(2)}
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold text-sm inline-flex items-center gap-0.5">
+                    <IndianRupee className="h-3.5 w-3.5 shrink-0 stroke-[2.5]" />{mockSettlementData.calculations.netPayout.toFixed(2)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter className="gap-2.5 pt-2 border-t border-border/30 mt-1">
               <Button
                 variant="outline"
                 onClick={() => {
                   toast.success("Settlement advice PDF generated!");
                 }}
-                className="rounded-xl h-10 text-xs font-bold gap-2 cursor-pointer"
+                className="rounded-xl h-9 text-xs font-bold gap-1.5 cursor-pointer"
               >
-                <Download className="h-4 w-4" /> Download Settlement Advice (PDF)
+                <Download className="h-3.5 w-3.5" /> Download Settlement Advice (PDF)
               </Button>
               <Button
+                variant="outline"
                 onClick={() => setIsSettlementsModalOpen(false)}
-                className="rounded-xl h-10 text-xs bg-primary text-primary-foreground font-bold cursor-pointer hover:opacity-95"
+                className="rounded-xl h-10 px-6 text-sm font-extrabold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer transition-all shadow-none"
               >
-                Close Breakdown
+                Close
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1005,18 +878,32 @@ export function Revenue() {
           <Card className="border-0 bg-transparent shadow-none flex flex-col justify-between w-full">
             <div className="bg-transparent p-0 pb-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground">Transaction History</CardTitle>
-                  <CardDescription className="text-xs text-muted-foreground">Recent payments and settlement receipts</CardDescription>
+                {/* Left: Title & Inline Search Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div>
+                    <CardTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground">Transaction History</CardTitle>
+                    <CardDescription className="text-xs text-muted-foreground">Recent payments and settlement receipts</CardDescription>
+                  </div>
+
+                  {/* Search bar positioned next to Transaction History */}
+                  <div className="relative w-full sm:w-64 sm:ml-3">
+                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by transaction ID, turf..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-8 h-8 rounded-full bg-transparent border border-slate-300 dark:border-slate-700 text-xs w-full focus:border-emerald-500"
+                    />
+                  </div>
                 </div>
 
-                {/* Status filtering pills row */}
-                <div className="inline-flex w-fit items-center gap-0.5 bg-transparent p-0.5 rounded-full border border-slate-300 dark:border-slate-700">
+                {/* Right: Status filtering pills aligned with the Status column */}
+                <div className="inline-flex w-fit items-center gap-0.5 bg-transparent p-0.5 rounded-full border border-slate-300 dark:border-slate-700 self-start md:self-auto md:mr-12 lg:mr-16">
                   {["all", "completed", "pending", "failed"].map((status) => (
                     <button
                       key={status}
                       onClick={() => setStatusFilter(status)}
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold capitalize tracking-wider transition-all cursor-pointer border ${statusFilter === status
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold capitalize tracking-wider transition-all cursor-pointer border ${statusFilter === status
                         ? status === "completed"
                           ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-bold"
                           : status === "pending"
@@ -1031,17 +918,6 @@ export function Revenue() {
                     </button>
                   ))}
                 </div>
-              </div>
-
-              {/* Live Search input */}
-              <div className="relative mt-2.5 max-w-[260px] sm:max-w-xs">
-                <Search className="absolute left-2.5 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search by transaction ID, turf..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 h-7.5 rounded-full bg-transparent border border-slate-300 dark:border-slate-700 text-[11px] w-full focus:border-emerald-500"
-                />
               </div>
             </div>
 
@@ -1108,13 +984,13 @@ export function Revenue() {
                   </table>
                 </div>
               )}
-              
+
               {!isLoading && totalPages > 1 && filteredPayments.length > 0 && (
                 <div className="flex items-center justify-between border-t border-border/40 px-4 py-3 sm:px-6 bg-card/40 rounded-b-2xl">
                   <div className="text-xs text-muted-foreground hidden sm:block">
                     Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredPayments.length)}</span> of <span className="font-bold text-foreground">{filteredPayments.length}</span> entries
                   </div>
-                  <div className="flex flex-1 justify-between sm:justify-end gap-2">
+                  <div className="flex flex-1 justify-between sm:justify-end gap-2 pr-2 sm:pr-6 md:pr-8 lg:pr-10">
                     <Button
                       variant="outline"
                       size="sm"

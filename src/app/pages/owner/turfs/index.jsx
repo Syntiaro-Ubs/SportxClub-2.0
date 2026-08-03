@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../../components/ui/dropdown-menu";
 import { turfService } from "../../../services/turf.service";
@@ -247,16 +248,19 @@ export function TurfList() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-40 rounded-2xl p-1.5 shadow-xl border-slate-300 dark:border-slate-700">
                       {/* 1. View Details */}
-                      <DropdownMenuItem className="gap-2 cursor-pointer font-semibold rounded-xl" asChild>
+                      <DropdownMenuItem className="gap-2 cursor-pointer font-semibold rounded-xl focus:bg-muted/60 focus:text-foreground hover:bg-muted/60 text-foreground" asChild>
                         <Link to={`/venue/${turf.id || 'turf-1'}`}>
                           <Eye className="h-4 w-4 text-emerald-500" /> View Details
                         </Link>
                       </DropdownMenuItem>
 
+                      {/* Middle Separator Line */}
+                      <DropdownMenuSeparator className="my-1 border-t border-slate-200 dark:border-slate-800" />
+
                       {/* 2. Delete */}
                       <DropdownMenuItem
                         onClick={() => handleDeleteTurf(turf.id)}
-                        className="gap-2 cursor-pointer font-semibold rounded-xl text-rose-500 focus:text-rose-500 hover:bg-rose-500/10"
+                        className="gap-2 cursor-pointer font-semibold rounded-xl text-rose-500 focus:text-rose-500 focus:bg-rose-500/10 hover:bg-rose-500/10"
                       >
                         <Trash2 className="h-4 w-4 text-rose-500" /> Delete
                       </DropdownMenuItem>

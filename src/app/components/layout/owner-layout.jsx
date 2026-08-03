@@ -241,7 +241,7 @@ export function OwnerLayout() {
               </div>
 
               {/* Dark / Light Mode Theme Toggle Button */}
-              <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
+              <ThemeToggleButton className="h-8 w-8 !bg-transparent hover:!bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
 
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 p-1 transition-all duration-200 cursor-pointer group">

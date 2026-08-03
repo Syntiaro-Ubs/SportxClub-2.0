@@ -22,6 +22,29 @@ export function ReviewsList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTopicFilter, setSelectedTopicFilter] = useState("all");
   const [selectedSort, setSelectedSort] = useState("relevant");
+  const [replyingId, setReplyingId] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [ownerReplies, setOwnerReplies] = useState({});
+
+  const handleSendReply = (reviewId) => {
+    if (!replyText.trim()) {
+      toast.error("Please enter a reply message.");
+      return;
+    }
+    setOwnerReplies((prev) => ({ ...prev, [reviewId]: replyText.trim() }));
+    setReplyingId(null);
+    setReplyText("");
+    toast.success("Reply posted successfully!");
+  };
+
+  const handleDeleteReply = (reviewId) => {
+    setOwnerReplies((prev) => {
+      const updated = { ...prev };
+      delete updated[reviewId];
+      return updated;
+    });
+    toast.info("Reply removed");
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -154,7 +177,7 @@ export function ReviewsList() {
         <div>
           <h1 className="text-xl font-bold text-foreground tracking-tight flex items-center gap-2">
             Customer Reviews
-            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-lg">
+            <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-white border border-emerald-500/20 text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-lg">
               {stats.total} Feedback
             </Badge>
           </h1>
@@ -176,12 +199,18 @@ export function ReviewsList() {
               {[5, 4, 3, 2, 1].map((rating) => {
                 const count = stats[rating] || 0;
                 const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
+                const barColorClass =
+                  rating >= 4
+                    ? "bg-emerald-500"
+                    : rating === 3
+                      ? "bg-amber-400"
+                      : "bg-rose-500";
                 return (
                   <div key={rating} className="flex items-center gap-3">
                     <span className="text-[13px] font-medium text-foreground w-2 text-right">{rating}</span>
                     <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#fbbc04] rounded-full"
+                        className={`h-full rounded-full transition-all duration-300 ${barColorClass}`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -192,14 +221,27 @@ export function ReviewsList() {
 
             {/* Overall Rating (Right) */}
             <div className="flex flex-col items-center justify-start min-w-[100px] mt-[-8px]">
-              <span className="text-[56px] font-normal text-foreground leading-[1] tracking-tight">{stats.average}</span>
+              <span className="text-[54px] font-light text-foreground leading-[1] tracking-tight">{stats.average}</span>
               <div className="flex items-center gap-0.5 mt-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-4 h-4 ${star <= Math.round(Number(stats.average)) ? "fill-[#fbbc04] text-[#fbbc04]" : "fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700"}`}
-                  />
-                ))}
+                {[1, 2, 3, 4, 5].map((starIndex) => {
+                  const ratingVal = Number(stats.average) || 0;
+                  const fillPercent = Math.max(0, Math.min(100, (ratingVal - (starIndex - 1)) * 100));
+                  return (
+                    <div key={starIndex} className="relative inline-block w-4 h-4 shrink-0">
+                      {/* Empty background star */}
+                      <Star className="w-4 h-4 fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700 absolute top-0 left-0" />
+                      {/* Partial filled yellow star */}
+                      {fillPercent > 0 && (
+                        <div
+                          className="absolute top-0 left-0 overflow-hidden h-4"
+                          style={{ width: `${fillPercent}%` }}
+                        >
+                          <Star className="w-4 h-4 fill-[#fbbc04] text-[#fbbc04] shrink-0 min-w-4" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <span className="text-[13px] text-muted-foreground mt-1">({stats.total})</span>
             </div>
@@ -215,8 +257,8 @@ export function ReviewsList() {
               className={cn(
                 "px-4 py-1.5 rounded-full text-[13px] transition-all duration-200 cursor-pointer whitespace-nowrap outline-none",
                 selectedTopicFilter === "all"
-                  ? "border border-transparent text-emerald-600 dark:text-emerald-400 font-bold scale-105 bg-transparent"
-                  : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-transparent"
+                  ? "border border-transparent text-emerald-600 dark:text-white font-bold scale-105 bg-transparent"
+                  : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-white hover:border-transparent"
               )}
             >
               All
@@ -228,12 +270,12 @@ export function ReviewsList() {
                 className={cn(
                   "px-4 py-1.5 rounded-full text-[13px] transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 outline-none",
                   selectedTopicFilter === topic.key
-                    ? "border border-transparent text-emerald-600 dark:text-emerald-400 font-bold scale-105 bg-transparent"
-                    : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-transparent"
+                    ? "border border-transparent text-emerald-600 dark:text-white font-bold scale-105 bg-transparent"
+                    : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-white hover:border-transparent"
                 )}
               >
                 <span>{topic.label}</span>
-                <span className={selectedTopicFilter === topic.key ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-muted-foreground"}>
+                <span className={selectedTopicFilter === topic.key ? "text-emerald-600/80 dark:text-white/80" : "text-muted-foreground"}>
                   {topic.count}
                 </span>
               </button>
@@ -246,10 +288,6 @@ export function ReviewsList() {
           </div>
         </div>
       </div>
-
-
-
-
 
       {/* Sort Filter Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-none mb-4">
@@ -265,8 +303,8 @@ export function ReviewsList() {
             className={cn(
               "px-4 py-1.5 rounded-full text-[13px] transition-all duration-200 cursor-pointer whitespace-nowrap outline-none",
               selectedSort === tab.key
-                ? "border border-transparent text-emerald-600 dark:text-emerald-400 font-bold scale-105 bg-transparent"
-                : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-transparent"
+                ? "border border-transparent text-emerald-600 dark:text-white font-bold scale-105 bg-transparent"
+                : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-white hover:border-transparent"
             )}
           >
             {tab.label}
@@ -299,15 +337,20 @@ export function ReviewsList() {
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2.5">
                       <Avatar className="h-9 w-9 border-2 border-emerald-500/30 bg-emerald-500/10">
-                        <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 font-extrabold text-xs">
+                        <AvatarFallback className="bg-transparent text-emerald-600 dark:text-white font-extrabold text-xs">
                           {getInitials(review.customerName)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-xs font-bold text-foreground tracking-tight group-hover:text-emerald-600 transition-colors">
-                          {review.customerName}
-                        </p>
-                        <p className="text-[10px] font-medium text-muted-foreground">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs font-bold text-foreground tracking-tight group-hover:text-emerald-600 dark:group-hover:text-white transition-colors">
+                            {review.customerName}
+                          </p>
+                          <Badge variant="outline" className="text-[8.5px] font-extrabold text-emerald-600 dark:text-white bg-emerald-500/10 border-emerald-500/20 uppercase px-1.5 py-0.2 rounded-md shrink-0">
+                            Verified Player
+                          </Badge>
+                        </div>
+                        <p className="text-[10px] font-medium text-muted-foreground mt-0.5">
                           {review.date}
                         </p>
                       </div>
@@ -327,16 +370,105 @@ export function ReviewsList() {
                   </div>
                 </div>
 
-                {/* Footer Tag: Turf Location */}
-                <div className="pt-2.5 border-t border-border/30 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                    <MapPin className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>{review.turfName}</span>
+                {/* Footer Tag: Turf Location & Reply Action */}
+                <div className="pt-2.5 border-t border-border/30 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-white font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 truncate">
+                    <MapPin className="w-3.5 h-3.5 stroke-[2.5] shrink-0 text-emerald-600 dark:text-white" />
+                    <span className="truncate">{review.turfName}</span>
                   </div>
-                  <Badge variant="outline" className="text-[9px] font-bold text-muted-foreground uppercase border-border/50">
-                    Verified Player
-                  </Badge>
+
+                  {!ownerReplies[review.id] && !review.ownerReply && replyingId !== review.id && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setReplyingId(review.id);
+                        setReplyText("");
+                      }}
+                      className="h-7 px-2.5 rounded-lg text-xs font-extrabold text-emerald-600 dark:text-white border border-emerald-500/40 bg-transparent hover:bg-emerald-500/10 gap-1 cursor-pointer transition-all shadow-none shrink-0"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-white" />
+                      Reply
+                    </Button>
+                  )}
                 </div>
+
+                {/* Inline Owner Reply Form */}
+                {replyingId === review.id && (
+                  <div className="mt-2 pt-2 border-t border-border/40 space-y-2 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-white text-[11px]">
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-white" /> Write Owner Reply
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setReplyingId(null)}
+                        className="text-[10px] text-muted-foreground hover:text-foreground font-semibold cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    <textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Write your response to this customer..."
+                      className="w-full p-2 text-xs rounded-lg border border-border bg-muted/20 text-foreground focus:outline-none focus:border-emerald-500 min-h-[60px] resize-none"
+                    />
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        onClick={() => setReplyingId(null)}
+                        className="h-7 px-3.5 text-[11px] font-bold rounded-lg border border-border/50 text-foreground bg-transparent hover:bg-muted/60 transition-all cursor-pointer shadow-none"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        type="button"
+                        onClick={() => handleSendReply(review.id)}
+                        className="h-7 px-3.5 text-[11px] font-extrabold rounded-lg border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-white bg-transparent hover:bg-emerald-500/10 transition-all cursor-pointer shadow-none"
+                      >
+                        Post Reply
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Displayed Owner Reply Box */}
+                {(ownerReplies[review.id] || review.ownerReply) && replyingId !== review.id && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs space-y-1 animate-in fade-in duration-200">
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-emerald-600 dark:text-white text-[11px] flex items-center gap-1">
+                        <MessageSquare className="w-3.5 h-3.5 text-emerald-600 dark:text-white" /> Owner Response
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingId(review.id);
+                            setReplyText(ownerReplies[review.id] || review.ownerReply || "");
+                          }}
+                          className="text-[10px] font-bold text-muted-foreground hover:text-emerald-600 dark:hover:text-white cursor-pointer"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReply(review.id)}
+                          className="text-[10px] font-bold text-rose-500 hover:text-rose-600 cursor-pointer"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-foreground/90 font-medium leading-relaxed">
+                      {ownerReplies[review.id] || review.ownerReply}
+                    </p>
+                  </div>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>

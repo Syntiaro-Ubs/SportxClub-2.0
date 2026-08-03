@@ -15,12 +15,7 @@ export function Logo({ className, ...props }) {
       <img
         src="/assets/icons/SportXClub.png"
         alt="SportXClub"
-        className="block dark:hidden h-full w-auto object-contain transition-all duration-300"
-      />
-      <img
-        src="/assets/icons/SportXClub-light.png"
-        alt="SportXClub"
-        className="hidden dark:block h-full w-auto object-contain transition-all duration-300"
+        className="h-full w-auto object-contain transition-all duration-300 dark:brightness-0 dark:invert"
       />
     </div>
   );
