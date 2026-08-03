@@ -678,11 +678,11 @@ export function TimeSlots() {
                   <SelectValue placeholder="Select Turf" className="truncate" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
-                  <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
+                  <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
                     ⚡ All Turfs <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">(View All Grounds Stacked)</span>
                   </SelectItem>
                   {turfs.map(turf => (
-                    <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                    <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
                       {turf.name} <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location})</span>
                     </SelectItem>
                   ))}
@@ -711,16 +711,16 @@ export function TimeSlots() {
                   </div>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
-                  <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                  <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
                     1 Hour <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
                   </SelectItem>
-                  <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                  <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
                     2 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
                   </SelectItem>
-                  <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                  <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
                     3 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
                   </SelectItem>
-                  <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 border border-transparent focus:bg-transparent focus:border-emerald-500 hover:bg-transparent hover:border-emerald-500">
+                  <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 focus:bg-emerald-500/10 hover:bg-emerald-500/10">
                     ⚙️ Custom Duration... {selectedDurationOption === "custom" && `(${playHours} hrs)`}
                   </SelectItem>
                 </SelectContent>
@@ -821,9 +821,9 @@ export function TimeSlots() {
                           setSelectedTurfForCustomBlock(turf);
                           setIsBlockModalOpen(true);
                         }}
-                        className="h-8 rounded-lg bg-background text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/50 hover:border-rose-600 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs shrink-0"
+                        className="h-8 rounded-lg bg-background text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 border border-rose-500/50 hover:border-rose-600 text-[11px] font-extrabold tracking-wider px-3 py-1 cursor-pointer transition-all active:scale-95 flex items-center gap-1.5 shadow-2xs shrink-0"
                       >
-                        <Power className="w-3.5 h-3.5 text-rose-500" /> Block Custom Time
+                        <Power className="w-3.5 h-3.5 text-rose-500" /> Manage Availability
                       </Button>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "motion/react";
 import {
   FileText,
@@ -34,85 +34,29 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 
-const mockReportsData = [
-  {
-    id: "TRX-8923",
-    player: "Rahul Sharma",
-    turf: "Premium Green Turf",
-    sport: "Football",
-    date: "2024-03-24",
-    time: "18:00 - 20:00",
-    amount: 1500,
-    status: "Success",
-    type: "Booking"
-  },
-  {
-    id: "TRX-8924",
-    player: "Amit Patel",
-    turf: "Skyline Arena",
-    sport: "Cricket",
-    date: "2024-03-24",
-    time: "07:00 - 09:00",
-    amount: 2000,
-    status: "Cancelled",
-    type: "Booking"
-  },
-  {
-    id: "TRX-8925",
-    player: "Priya Desai",
-    turf: "Community Pitch",
-    sport: "Badminton",
-    date: "2024-03-25",
-    time: "10:00 - 11:00",
-    amount: 800,
-    status: "Success",
-    type: "Booking"
-  },
-  {
-    id: "TRX-8926",
-    player: "Vikram Singh",
-    turf: "Neon Box",
-    sport: "Box Cricket",
-    date: "2024-03-25",
-    time: "20:00 - 22:00",
-    amount: 2500,
-    status: "Refunded",
-    type: "Cancellation"
-  },
-  {
-    id: "TRX-8927",
-    player: "Neha Gupta",
-    turf: "Olympus Tennis Court",
-    sport: "Tennis",
-    date: "2024-03-26",
-    time: "08:00 - 10:00",
-    amount: 1200,
-    status: "Pending",
-    type: "Booking"
-  },
-  {
-    id: "TRX-8928",
-    player: "Arjun Reddy",
-    turf: "Premium Green Turf",
-    sport: "Football",
-    date: "2024-03-26",
-    time: "21:00 - 23:00",
-    amount: 1500,
-    status: "Success",
-    type: "Booking"
-  },
-  {
-    id: "TRX-8929",
-    player: "Riya Sen",
-    turf: "Titan Basketball Gym",
-    sport: "Basketball",
-    date: "2024-03-27",
-    time: "16:00 - 18:00",
-    amount: 1800,
-    status: "Success",
-    type: "Booking"
-  },
-];
+const mockReportsData = Array.from({ length: 20 }, (_, i) => {
+  const base = [
+    { player: "Rahul Sharma", turf: "Premium Green Turf", sport: "Football", time: "18:00 - 20:00", amount: 1500, status: "Success", type: "Booking" },
+    { player: "Amit Patel", turf: "Skyline Arena", sport: "Cricket", time: "07:00 - 09:00", amount: 2000, status: "Cancelled", type: "Booking" },
+    { player: "Sneha Reddy", turf: "Elite Sports Club", sport: "Tennis", time: "06:00 - 07:00", amount: 800, status: "Success", type: "Booking" },
+    { player: "Kiran Kumar", turf: "Downtown Court", sport: "Basketball", time: "19:00 - 20:00", amount: 1200, status: "Refunded", type: "Booking" },
+    { player: "Priya Singh", turf: "Premium Green Turf", sport: "Football", time: "20:00 - 21:00", amount: 1500, status: "Pending", type: "Booking" },
+    { player: "Vikram Rathore", turf: "Elite Sports Club", sport: "Badminton", time: "17:00 - 18:00", amount: 600, status: "Success", type: "Booking" },
+    { player: "Ananya Desai", turf: "Skyline Arena", sport: "Tennis", time: "16:00 - 18:00", amount: 1800, status: "Success", type: "Booking" }
+  ];
+  const b = base[i % base.length];
+  return {
+    id: `TRX-89${(30 - i).toString().padStart(2, '0')}`,
+    player: b.player,
+    turf: b.turf,
+    sport: b.sport,
+    date: `2024-03-${Math.max(1, 24 - Math.floor(i / 2)).toString().padStart(2, '0')}`,
+    time: b.time,
+    amount: b.amount,
+    status: b.status,
+    type: b.type
+  };
+});
 
 export function OwnerReport() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,14 +77,30 @@ export function OwnerReport() {
     }
   };
 
-  const filteredData = mockReportsData.filter(item => {
-    const matchesSearch =
-      item.player.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.turf.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "All" || item.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredData = useMemo(() => {
+    return mockReportsData.filter(item => {
+      const matchesSearch =
+        item.player.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.turf.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchQuery, statusFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const currentReports = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredData, currentPage]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   return (
     <motion.div
@@ -216,7 +176,7 @@ export function OwnerReport() {
       </div>
 
       {/* Transaction Table */}
-      <Card className="bg-transparent border-0 shadow-none sm:bg-card sm:border sm:border-border/40 sm:shadow-lg rounded-2xl">
+      <Card className="bg-transparent border-0 shadow-none sm:bg-card sm:border sm:border-border/40 sm:shadow-lg rounded-2xl w-full max-w-full overflow-hidden">
         <CardHeader className="px-0 sm:px-6 pb-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <CardTitle className="text-xl font-bold text-foreground">Transaction History</CardTitle>
@@ -248,7 +208,7 @@ export function OwnerReport() {
           </div>
         </CardHeader>
         <CardContent className="px-0 sm:px-6 pb-2">
-          <div className="w-full overflow-x-auto pb-4 [scrollbar-width:auto] [scrollbar-color:#059669_#cbd5e1] dark:[scrollbar-color:#10b981_#334155] [&::-webkit-scrollbar]:h-3.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-600 dark:[&::-webkit-scrollbar-thumb]:bg-emerald-500 [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white dark:[&::-webkit-scrollbar-thumb]:border-slate-900 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-slate-300 dark:[&::-webkit-scrollbar-track]:bg-slate-700">
+          <div className="w-full max-w-full pb-4">
             <Table className="w-full min-w-[700px] md:min-w-full text-center border-collapse">
               <TableHeader className="bg-muted/40">
                 <TableRow>
@@ -261,7 +221,7 @@ export function OwnerReport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.map((trx) => (
+                {currentReports.map((trx) => (
                   <TableRow key={trx.id}>
                     <TableCell className="font-mono text-xs text-center">{trx.id}</TableCell>
                     <TableCell className="font-medium text-center">{trx.player}</TableCell>
@@ -300,6 +260,37 @@ export function OwnerReport() {
               </TableBody>
             </Table>
           </div>
+          
+          {totalPages > 1 && filteredData.length > 0 && (
+            <div className="flex items-center justify-between border-t border-border/40 px-4 py-3 sm:px-6 bg-card/40 rounded-b-2xl">
+              <div className="text-xs text-muted-foreground hidden sm:block">
+                Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> of <span className="font-bold text-foreground">{filteredData.length}</span> entries
+              </div>
+              <div className="flex flex-1 justify-between sm:justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 text-xs font-medium border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1 sm:hidden">
+                  <span className="text-xs text-muted-foreground">Page {currentPage} of {totalPages}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 text-xs font-medium border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>

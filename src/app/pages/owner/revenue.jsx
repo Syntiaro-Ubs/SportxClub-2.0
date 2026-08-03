@@ -74,6 +74,16 @@ const renderCustomYAxisTick = ({ x, y, payload }) => {
   );
 };
 
+const renderBarYAxisTick = ({ x, y, payload }) => {
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x="-36" y="2" textAnchor="start" fontSize="10" fill="var(--foreground)" fontWeight="600">
+        {payload.value}
+      </text>
+    </g>
+  );
+};
+
 // TODO: Replace with actual auth context ownerId
 const OWNER_ID = "owner-123";
 
@@ -117,17 +127,28 @@ const bookingsFilledData = [
 
 const totalBookings = sportPopularityData.reduce((sum, item) => sum + item.count, 0);
 
-const mockTransactions = [
-  { id: "TXN8930A4", date: "Jul 26, 2026", source: "Cricket Ground 1", amount: 1200, status: "completed", method: "UPI" },
-  { id: "TXN8929A2", date: "Jul 26, 2026", source: "Premium Football Turf", amount: 1600, status: "completed", method: "Card" },
-  { id: "TXN8928B3", date: "Jul 25, 2026", source: "Cricket Ground 2", amount: 800, status: "pending", method: "Cash" },
-  { id: "TXN8927A1", date: "Jul 25, 2026", source: "Cricket Ground 1", amount: 1200, status: "completed", method: "UPI" },
-  { id: "TXN8926C4", date: "Jul 24, 2026", source: "Premium Football Turf", amount: 1600, status: "failed", method: "UPI" },
-  { id: "TXN8925A9", date: "Jul 24, 2026", source: "Cricket Ground 1", amount: 800, status: "completed", method: "UPI" },
-  { id: "TXN8924B2", date: "Jul 23, 2026", source: "Cricket Ground 2", amount: 1200, status: "completed", method: "Cash" },
-  { id: "TXN8923C1", date: "Jul 22, 2026", source: "Premium Football Turf", amount: 1600, status: "completed", method: "Card" },
-  { id: "TXN8922A3", date: "Jul 22, 2026", source: "Cricket Ground 1", amount: 800, status: "pending", method: "UPI" },
-];
+const mockTransactions = Array.from({ length: 20 }, (_, i) => {
+  const base = [
+    { source: "Cricket Ground 1", amount: 1200, status: "completed", method: "UPI" },
+    { source: "Premium Football Turf", amount: 1600, status: "completed", method: "Card" },
+    { source: "Cricket Ground 2", amount: 800, status: "pending", method: "Cash" },
+    { source: "Cricket Ground 1", amount: 1200, status: "completed", method: "UPI" },
+    { source: "Premium Football Turf", amount: 1600, status: "failed", method: "UPI" },
+    { source: "Cricket Ground 1", amount: 800, status: "completed", method: "UPI" },
+    { source: "Cricket Ground 2", amount: 1200, status: "completed", method: "Cash" },
+    { source: "Premium Football Turf", amount: 1600, status: "completed", method: "Card" },
+    { source: "Cricket Ground 1", amount: 800, status: "pending", method: "UPI" }
+  ];
+  const b = base[i % base.length];
+  return {
+    id: `TXN89${(30 - i).toString().padStart(2, '0')}A${(i % 9) + 1}`,
+    date: `Jul ${Math.max(1, 26 - Math.floor(i / 2)).toString().padStart(2, '0')}, 2026`,
+    source: b.source,
+    amount: b.amount,
+    status: b.status,
+    method: b.method,
+  };
+});
 
 export function Revenue() {
   const [data, setData] = useState([]);
@@ -413,6 +434,20 @@ export function Revenue() {
       return matchesSearch && matchesStatus;
     });
   }, [activePayments, searchQuery, statusFilter]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const currentPayments = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredPayments.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredPayments, currentPage]);
+
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
 
   const handleExport = () => {
     toast.promise(
@@ -728,6 +763,17 @@ export function Revenue() {
               <CardTitle className="text-lg font-bold tracking-tight">Sport Popularity</CardTitle>
             </div>
             <div className="flex flex-row items-center justify-start gap-4 sm:gap-6 w-full h-[220px] min-w-0">
+              <div className="flex flex-col items-start justify-end gap-y-1 text-xs h-full shrink-0 pb-3">
+                {sportPopularityData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-1.5 px-1 py-[1px] rounded-md hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                    <div className="flex items-center gap-1.5 whitespace-nowrap">
+                      <span className="font-bold text-foreground text-[11px]">{item.name}</span>
+                      <span className="text-[11px] text-muted-foreground font-semibold">({item.count})</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
               <div className="relative h-[200px] w-[200px] shrink-0 flex items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -757,17 +803,6 @@ export function Revenue() {
                   <span className="text-[9px] font-bold text-muted-foreground tracking-wider mt-0.5">Bookings</span>
                 </div>
               </div>
-              <div className="flex flex-col items-start justify-end gap-y-1 text-xs h-full shrink-0 pb-3">
-                {sportPopularityData.map((item) => (
-                  <div key={item.name} className="flex items-center gap-1.5 px-1 py-[1px] rounded-md hover:bg-muted/30 transition-all border border-transparent hover:border-border/30 w-full">
-                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                    <div className="flex items-center gap-1.5 whitespace-nowrap">
-                      <span className="font-bold text-foreground text-[11px]">{item.name}</span>
-                      <span className="text-[11px] text-muted-foreground font-semibold">({item.count})</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -779,7 +814,7 @@ export function Revenue() {
             <div className="flex flex-col justify-center min-w-0">
               <div className="h-[210px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: -5, bottom: 0 }}>
+                  <AreaChart data={revenueTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="revenuePageChartGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3} />
@@ -788,7 +823,7 @@ export function Revenue() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
                     <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tick={renderCustomYAxisTick} />
+                    <YAxis width={45} stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(val) => val >= 1000 ? `₹${val / 1000}k` : `₹${val}`} tick={{ fill: "var(--foreground)" }} />
                     <Tooltip
                       contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
                       itemStyle={{ color: "var(--foreground)" }}
@@ -810,10 +845,10 @@ export function Revenue() {
             <div className="flex flex-col justify-center min-w-0">
               <div className="h-[210px] w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                  <BarChart data={bookingsFilledData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.3} />
                     <XAxis dataKey="name" stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                    <YAxis stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} />
+                    <YAxis width={45} stroke="var(--muted-foreground)" tick={{ fill: "var(--foreground)" }} fontSize={11} tickLine={false} axisLine={false} />
                     <Tooltip
                       cursor={false}
                       contentStyle={{ backgroundColor: "var(--popover)", borderColor: "var(--border)", borderRadius: "12px", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}
@@ -1037,7 +1072,7 @@ export function Revenue() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/30">
-                      {filteredPayments.map((tx) => (
+                      {currentPayments.map((tx) => (
                         <tr key={tx.id} className="hover:bg-emerald-500/5 transition-colors group cursor-default">
                           <td className="px-2 py-2 whitespace-nowrap text-center">
                             <span className="font-mono font-bold text-foreground/90 group-hover:text-foreground transition-colors text-xs">{tx.id}</span>
@@ -1071,6 +1106,37 @@ export function Revenue() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+              
+              {!isLoading && totalPages > 1 && filteredPayments.length > 0 && (
+                <div className="flex items-center justify-between border-t border-border/40 px-4 py-3 sm:px-6 bg-card/40 rounded-b-2xl">
+                  <div className="text-xs text-muted-foreground hidden sm:block">
+                    Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredPayments.length)}</span> of <span className="font-bold text-foreground">{filteredPayments.length}</span> entries
+                  </div>
+                  <div className="flex flex-1 justify-between sm:justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 text-xs font-medium border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1 sm:hidden">
+                      <span className="text-xs text-muted-foreground">Page {currentPage} of {totalPages}</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="h-8 text-xs font-medium border-slate-300 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>

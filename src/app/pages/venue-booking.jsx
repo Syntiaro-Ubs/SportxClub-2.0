@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { Star, MapPin, ChevronRight, Filter, ChevronLeft, ChevronDown, Check, RotateCcw } from "lucide-react";
+import { Star, MapPin, ChevronRight, Filter, ChevronLeft, ChevronDown, Check, RotateCcw, Heart, CalendarDays, Users, Lightbulb, Bath, Car, MoreHorizontal, Dribbble } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../components/ui/utils";
 import { Button } from "../components/ui/button";
@@ -555,81 +555,176 @@ export function VenueBooking() {
     return (
       <div
         key={venue.id}
-        className="relative w-full flex flex-col md:flex-row bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border-2 border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/80 group cursor-pointer"
+        className="relative w-full bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/80 group cursor-pointer mb-4 md:mb-0"
         onClick={() => navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } })}
       >
-        {/* Left Side: Main Image */}
-        <div className="relative w-full md:w-[48%] lg:w-[50%] h-[145px] sm:h-[185px] md:h-[240px] lg:h-[280px] shrink-0 ml-[0.5cm] my-1.5 sm:my-2 rounded-xl overflow-hidden">
-          <img
-            src={venue.image}
-            alt={venue.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => {
-              e.target.src = "/assets/venues/turf-1.webp"; // Fallback image
-            }}
-          />
-          {/* Overlay for Name text at the bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3 sm:p-4 md:p-5">
-            <h3 className="text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl leading-tight line-clamp-1 drop-shadow-lg">
-              {venue.name}
-            </h3>
+        {/* DESKTOP LAYOUT (Hidden on mobile) */}
+        <div className="hidden md:flex flex-row w-full h-[145px] sm:h-[185px] md:h-[240px] lg:h-[280px]">
+          {/* Left Side: Main Image */}
+          <div className="relative w-full md:w-[48%] lg:w-[50%] shrink-0 ml-[0.5cm] my-1.5 sm:my-2 rounded-xl overflow-hidden">
+            <img
+              src={venue.image}
+              alt={venue.name}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={(e) => {
+                e.target.src = "/assets/venues/turf-1.webp"; // Fallback image
+              }}
+            />
+            {/* Overlay for Name text at the bottom */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3 sm:p-4 md:p-5">
+              <h3 className="text-white font-bold text-sm sm:text-base md:text-lg lg:text-xl leading-tight line-clamp-1 drop-shadow-lg">
+                {venue.name}
+              </h3>
+            </div>
+          </div>
+
+          {/* Right Side: Details & Sub-images */}
+          <div className="flex flex-1 flex-row w-full md:w-[52%] lg:w-[50%] gap-2 sm:gap-3 pl-1.5 sm:pl-2 min-w-0">
+            {/* Left Column in Right Side: 3 Sub-images */}
+            <div className="flex flex-col w-[52%] sm:w-[240px] lg:w-[290px] shrink-0 py-0.5 sm:py-1 gap-1">
+              {subImages.map((subImg, idx) => (
+                <div key={idx} className="flex-1 rounded-sm overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 relative">
+                  <img
+                    src={subImg}
+                    alt={`${venue.name} view ${idx + 1}`}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Right Column in Right Side: Info & Button */}
+            <div className="flex flex-col flex-1 justify-between py-3 sm:py-4 pr-6 sm:pr-8 min-w-0">
+              {/* Top: Stars & Sport */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-end gap-1.5 w-full">
+                  <span className="text-foreground/60 font-extrabold tracking-wider uppercase text-[9px] sm:text-[10px]">
+                    {venue.sports}
+                  </span>
+                </div>
+                <div className="flex items-center justify-end gap-1 text-slate-800 dark:text-slate-200 font-semibold text-[10px] sm:text-xs">
+                  <span>{venue.rating.toFixed(1)}</span>
+                  <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500 text-emerald-500 shrink-0" />
+                  <span className="text-slate-500 font-medium">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)})</span>
+                </div>
+              </div>
+
+              {/* Middle: Address */}
+              <div className="flex flex-col items-end text-right my-2">
+                <div className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-xs font-medium line-clamp-2 flex items-start justify-end gap-1 w-full max-w-[200px]">
+                  {typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}
+                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 mt-0.5 text-slate-400" />
+                </div>
+              </div>
+
+              {/* Bottom: Button */}
+              <div className="flex justify-end mt-auto">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
+                  }}
+                  className="bg-transparent hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 text-slate-900 dark:text-white border-2 border-emerald-600 hover:border-emerald-500 font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 shadow-none hover:shadow-sm hover:shadow-emerald-500/20"
+                >
+                  Book Slot
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Side: Details & Sub-images */}
-        <div className="flex flex-1 flex-row w-full md:w-[52%] lg:w-[50%] gap-2 sm:gap-3 pl-1.5 sm:pl-2 min-w-0">
+        {/* MOBILE LAYOUT (Hidden on desktop) */}
+        <div className="flex flex-col md:hidden w-full">
+          {/* Hero Image */}
+          <div className="relative w-full h-[220px]">
+            <img
+              src={venue.image}
+              alt={venue.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src = "/assets/venues/turf-1.webp"; // Fallback image
+              }}
+            />
+            {/* Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
-          {/* Left Column in Right Side: 3 Sub-images */}
-          <div className="flex flex-col w-[52%] sm:w-[240px] lg:w-[290px] shrink-0 py-0.5 sm:py-1 gap-1">
+            {/* Sport Badge & Heart Icon */}
+            <div className="absolute top-3 left-3 bg-[#0d4d35]/80 backdrop-blur-md border border-white/20 text-white px-2.5 py-1 rounded-full text-[9px] font-extrabold flex items-center gap-1.5 tracking-wider">
+              <Dribbble className="w-3 h-3 text-white/80" />
+              {venue.sports?.toUpperCase() || "FOOTBALL"}
+            </div>
+            <button
+              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-black/20 backdrop-blur-sm border border-white/20"
+              onClick={(e) => { e.stopPropagation(); /* Add favorite logic here if needed */ }}
+            >
+              <Heart className="w-4 h-4 text-white" />
+            </button>
+
+            {/* Name, Rating, Location */}
+            <div className="absolute bottom-3 left-3 right-3 flex flex-col gap-1.5">
+              <h3 className="text-white font-bold text-xl leading-tight line-clamp-1 drop-shadow-md">
+                {venue.name}
+              </h3>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-1">
+                  <span className="text-white font-bold text-sm">{venue.rating.toFixed(1)}</span>
+                  <Star className="w-3.5 h-3.5 fill-emerald-500 text-emerald-500 shrink-0" />
+                  <span className="text-white/80 text-xs ml-0.5">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)} Reviews)</span>
+                </div>
+                <div className="flex items-center justify-end gap-1 text-xs text-white/90">
+                  <MapPin className="w-3 h-3 shrink-0" />
+                  <span className="truncate max-w-[140px]">{typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sub images */}
+          <div className="flex flex-row w-full gap-2 p-3 pb-2">
             {subImages.map((subImg, idx) => (
-              <div key={idx} className="flex-1 rounded-sm overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 relative">
+              <div key={idx} className="flex-1 aspect-[16/9] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-800 relative shadow-sm">
                 <img
                   src={subImg}
                   alt={`${venue.name} view ${idx + 1}`}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
               </div>
             ))}
           </div>
 
-          {/* Right Column in Right Side: Info & Button */}
-          <div className="flex flex-col flex-1 justify-between py-3 sm:py-4 pr-6 sm:pr-8 min-w-0">
-            {/* Top: Stars & Sport */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-end gap-1.5 w-full">
-                <span className="text-foreground/60 font-extrabold tracking-wider uppercase text-[9px] sm:text-[10px]">
-                  {venue.sports}
-                </span>
-              </div>
-              <div className="flex items-center justify-end gap-1 text-slate-800 dark:text-slate-200 font-semibold text-[10px] sm:text-xs">
-                <span>{venue.rating.toFixed(1)}</span>
-                <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500 text-emerald-500 shrink-0" />
-                <span className="text-slate-500 font-medium">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)})</span>
-              </div>
+          {/* Amenities Row */}
+          <div className="flex flex-row items-center justify-around px-4 py-3 border-t border-b border-slate-100 dark:border-slate-800">
+            <div className="flex flex-col items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <Users className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
+              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-300">11-A-Side</span>
             </div>
-
-            {/* Middle: Address */}
-            <div className="flex flex-col items-end text-right my-2">
-              <div className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-xs font-medium line-clamp-2 flex items-start justify-end gap-1 w-full max-w-[200px]">
-                {typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}
-                <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 mt-0.5 text-slate-400" />
-              </div>
+            <div className="flex flex-col items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <Lightbulb className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
+              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-300">Flood Lights</span>
             </div>
-
-            {/* Bottom: Button */}
-            <div className="flex justify-end mt-auto">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
-                }}
-                className="bg-transparent hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 text-slate-900 dark:text-white border-2 border-emerald-600 hover:border-emerald-500 font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 shadow-none hover:shadow-sm hover:shadow-emerald-500/20"
-              >
-                Book Slot
-              </Button>
+            <div className="flex flex-col items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <Bath className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
+              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-300">Changing Room</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5 text-slate-500 dark:text-slate-400">
+              <MoreHorizontal className="w-5 h-5 text-emerald-600 dark:text-emerald-500" />
+              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-300">See More</span>
             </div>
           </div>
 
+          {/* Book Slot Button */}
+          <div className="p-3">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
+              }}
+              className="w-full bg-[#00925d] hover:bg-[#00925d] text-white hover:text-white dark:hover:text-white border-2 border-transparent hover:border-white/80 rounded-lg h-11 font-bold text-sm shadow-md transition-all duration-200"
+            >
+              <CalendarDays className="w-4 h-4 mr-2" />
+              Book Slot
+            </Button>
+          </div>
         </div>
       </div>
     );

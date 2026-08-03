@@ -212,7 +212,7 @@ export function OwnerProfile() {
             <Button
               onClick={() => setIsPreviewModalOpen(true)}
               variant="ghost"
-              className="h-9 px-3 text-emerald-600 dark:text-emerald-400 font-extrabold text-xs transition-all cursor-pointer flex items-center gap-1.5 border-0 bg-transparent hover:bg-transparent shadow-none hover:text-emerald-700 dark:hover:text-emerald-300"
+              className="h-9 px-3 text-emerald-600 dark:text-emerald-400 font-extrabold text-xs transition-all duration-200 cursor-pointer flex items-center gap-1.5 border-0 bg-transparent hover:bg-transparent shadow-none hover:text-emerald-700 dark:hover:text-emerald-300 hover:scale-105 active:scale-95"
             >
               <Eye className="h-4 w-4 text-emerald-500" />
               Turf Preview
@@ -220,7 +220,7 @@ export function OwnerProfile() {
 
             <Button
               onClick={() => setIsEditProfileOpen(true)}
-              className="h-9 px-4 text-emerald-600 dark:text-emerald-400 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 bg-transparent border-none shadow-none hover:bg-transparent hover:text-emerald-700 dark:hover:text-emerald-300"
+              className="h-9 px-4 text-emerald-600 dark:text-emerald-400 font-bold text-xs transition-all duration-200 cursor-pointer flex items-center justify-center gap-2 bg-transparent border-none shadow-none hover:bg-transparent hover:text-emerald-700 dark:hover:text-emerald-300 hover:scale-105 active:scale-95"
             >
               <Edit2 className="h-4 w-4 text-emerald-500" />
               Edit Profile
