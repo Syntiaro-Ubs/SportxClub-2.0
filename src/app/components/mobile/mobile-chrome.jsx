@@ -299,21 +299,22 @@ export function MobileAppBar() {
               </div>
 
               {/* Powered by Footer */}
-              <div className="border-t border-border/40 p-5 bg-muted/20 flex items-center justify-center">
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
+              <div className="border-t border-border/40 p-4 bg-muted/20 flex flex-col items-center justify-center gap-1.5 text-center">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-semibold whitespace-nowrap">
                   Powered By{" "}
                   <a
                     href="https://www.syntiaro.com/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn(
-                      "font-bold transition-colors",
+                      "font-extrabold transition-colors",
                       isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-700 hover:text-teal-800"
                     )}
                   >
                     SYNTIARO
                   </a>
                 </p>
+                <span className="text-[10px] font-mono font-extrabold text-muted-foreground/70 tracking-normal lowercase px-2 py-0.5 rounded-full bg-muted/60 border border-border/40">v2.0.4</span>
               </div>
             </motion.div>
           </>

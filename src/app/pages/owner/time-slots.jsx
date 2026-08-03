@@ -895,13 +895,15 @@ export function TimeSlots() {
                               onClick={() => handleSlotClick(turf, slot, startIndex)}
                               onMouseEnter={() => handleSlotMouseEnter(turf, startIndex)}
                               onMouseLeave={handleSlotMouseLeave}
-                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-emerald-500/40 bg-card hover:border-emerald-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-emerald-500/40 bg-emerald-500/[0.02] dark:bg-emerald-500/5 hover:bg-emerald-500/5 hover:border-emerald-500 hover:shadow-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
                             >
                               <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{displayTime}</span>
-                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400">
-                                Available {playHours > 1 ? `(${item.duration}h)` : ''}
-                              </span>
-                              <span className="text-[9px] font-mono font-black px-2 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">₹{price}</span>
+                              <div className="flex items-center justify-center gap-1.5 w-full">
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                                  Available {playHours > 1 ? `(${item.duration}h)` : ''}
+                                </span>
+                                <span className="text-[9px] font-mono font-black px-1.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">₹{price}</span>
+                              </div>
                             </div>
                           );
                         }
@@ -913,13 +915,15 @@ export function TimeSlots() {
                             <div
                               key={idx}
                               onClick={() => handleSlotClick(turf, slot, startIndex)}
-                              className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-rose-500/40 bg-card hover:border-rose-500 hover:shadow-md hover:-translate-y-0.5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                              className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-rose-500/40 bg-rose-500/[0.02] dark:bg-rose-500/5 hover:bg-rose-500/5 hover:border-rose-500 hover:shadow-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
                             >
                               <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{displayTime}</span>
-                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500">BOOKED</span>
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1 truncate max-w-full">
-                                <Lock className="w-2.5 h-2.5 text-rose-500 shrink-0" /> <span className="truncate">Release Slot</span>
-                              </span>
+                              <div className="flex items-center justify-center gap-1.5 w-full">
+                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500 whitespace-nowrap">BOOKED</span>
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1 shrink-0">
+                                  <Lock className="w-2.5 h-2.5 text-rose-500 shrink-0" /> <span className="truncate">Release</span>
+                                </span>
+                              </div>
                             </div>
                           );
                         }
@@ -930,7 +934,7 @@ export function TimeSlots() {
                             <div
                               key={idx}
                               onClick={() => handleSlotClick(turf, slot, startIndex)}
-                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-amber-500/40 bg-amber-500/5 hover:border-amber-500 hover:shadow-md flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-amber-500/40 bg-amber-500/[0.02] dark:bg-amber-500/5 hover:bg-amber-500/5 hover:border-amber-500 hover:shadow-md flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
                             >
                               <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
                               <span className="font-extrabold text-[10px] sm:text-xs text-foreground text-center tracking-tight truncate max-w-full px-0.5">{displayTime}</span>
@@ -1537,26 +1541,26 @@ export function TimeSlots() {
           Release Slot Dialog Modal
           ------------------------------------------------------------- */}
       <Dialog open={isReleaseModalOpen} onOpenChange={setIsReleaseModalOpen}>
-        <DialogContent className="sm:max-w-[400px] rounded-2xl border border-border/40 bg-popover shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="font-bold flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+        <DialogContent className="sm:max-w-[460px] rounded-3xl border border-border/40 bg-white dark:bg-card text-foreground p-6 shadow-2xl">
+          <DialogHeader className="space-y-1.5 pr-8">
+            <DialogTitle className="text-lg font-extrabold flex items-center gap-2 text-foreground">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               Release / Unblock Slot
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-muted-foreground leading-normal">
               This action will release the blocked slot and mark it as Available for bookings again.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4 space-y-3">
-            <div className="p-4 rounded-xl border border-border bg-card/60 space-y-2">
+          <div className="py-3 space-y-3">
+            <div className="p-4 rounded-2xl border border-border/40 bg-muted/20 space-y-2.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground font-semibold">Turf:</span>
                 <span className="font-bold text-foreground">{selectedSlotForRelease?.turf.name}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground font-semibold">Slot Time:</span>
-                <span className="font-mono font-bold text-primary">
+                <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
                   {selectedSlotForRelease && selectedSlotForRelease.slot.blockedTimeRange
                     ? selectedSlotForRelease.slot.blockedTimeRange
                     : selectedSlotForRelease && formatTimeRange(selectedSlotForRelease.slot.time)}
@@ -1564,27 +1568,28 @@ export function TimeSlots() {
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-muted-foreground font-semibold">Current Status:</span>
-                <Badge variant="outline" className={selectedSlotForRelease?.slot.status === 'Booked' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}>
+                <Badge variant="outline" className={selectedSlotForRelease?.slot.status === 'Booked' ? 'bg-rose-500/10 text-rose-500 border-rose-500/20 font-bold' : 'bg-amber-500/10 text-amber-500 border-amber-500/20 font-bold'}>
                   {selectedSlotForRelease?.slot.status}
                 </Badge>
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground text-center">Are you sure you want to proceed?</p>
+            <p className="text-xs text-muted-foreground text-center font-medium">Are you sure you want to proceed?</p>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2.5 pt-2 border-t border-border/30">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsReleaseModalOpen(false)}
-              className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-muted/40 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
+              className="rounded-xl px-5 border border-border/50 text-foreground bg-transparent hover:bg-muted/60 transition-all font-bold text-xs h-10 cursor-pointer"
             >
               Cancel
             </Button>
             <Button
               type="button"
+              variant="outline"
               onClick={handleReleaseSlot}
-              className="rounded-xl px-4 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.02] transition-all font-bold text-xs h-10 cursor-pointer shadow-xs"
+              className="rounded-xl px-5 border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 transition-all font-extrabold text-xs h-10 cursor-pointer shadow-none"
             >
               Release Slot Now
             </Button>

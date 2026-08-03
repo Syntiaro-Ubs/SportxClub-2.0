@@ -63,6 +63,63 @@ export function OwnerProfile() {
   });
 
   const [isKycModalOpen, setIsKycModalOpen] = useState(false);
+  const [aadhaarVerified, setAadhaarVerified] = useState(true);
+  const [panVerified, setPanVerified] = useState(false);
+
+  // OTP Verification Modal State
+  const [otpModalDoc, setOtpModalDoc] = useState(null); // 'aadhaar' | 'pan' | null
+  const [otpStep, setOtpStep] = useState(1); // 1: Send OTP, 2: Enter OTP
+  const [otpValue, setOtpValue] = useState(["", "", "", "", "", ""]);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+  const handleOpenOtpModal = (docType) => {
+    setOtpModalDoc(docType);
+    setOtpStep(1);
+    setOtpValue(["", "", "", "", "", ""]);
+  };
+
+  const handleSendOtp = () => {
+    setOtpStep(2);
+    toast.info(`OTP sent to registered mobile number for ${otpModalDoc === 'aadhaar' ? 'Aadhaar' : 'PAN'} verification!`);
+  };
+
+  const handleOtpChange = (index, value) => {
+    if (value.length > 1) value = value[value.length - 1];
+    const newOtp = [...otpValue];
+    newOtp[index] = value;
+    setOtpValue(newOtp);
+
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      if (nextInput) nextInput.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otpValue[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-input-${index - 1}`);
+      if (prevInput) prevInput.focus();
+    }
+  };
+
+  const handleVerifyOtpSubmit = () => {
+    const code = otpValue.join("");
+    if (code.length < 6) {
+      toast.error("Please enter 6-digit OTP code.");
+      return;
+    }
+    setIsVerifyingOtp(true);
+    setTimeout(() => {
+      setIsVerifyingOtp(false);
+      if (otpModalDoc === 'aadhaar') {
+        setAadhaarVerified(true);
+      } else {
+        setPanVerified(true);
+      }
+      toast.success(`${otpModalDoc === 'aadhaar' ? 'Aadhaar Card' : 'PAN Card'} verified via OTP successfully!`);
+      setOtpModalDoc(null);
+    }, 1000);
+  };
 
   const [kycFormData, setKycFormData] = useState({
     bankName: "HDFC Bank",
@@ -313,93 +370,128 @@ export function OwnerProfile() {
               </p>
             </div>
 
-            {/* Senior UI/UX Redesigned Ultra-Premium KYC Documents Section */}
-            <div className="space-y-4 pt-6 border-t border-border/40">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-left">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    <ShieldCheck className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-xs text-foreground tracking-wider">KYC & Compliance Verification</h4>
-                    <p className="text-[11px] text-muted-foreground font-medium">Verified government identification documents</p>
-                  </div>
+            {/* KYC Documents Section with Proper Spacing & OTP Verification */}
+            <div className="space-y-4 pt-6 border-t border-border/40 text-left">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm sm:text-base font-bold text-foreground">KYC Documents</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">Government ID verification & tax compliance status</p>
                 </div>
-                <Badge className="w-fit text-[10px] font-bold py-1 px-2.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                <Badge className="text-[10px] font-bold py-1 px-2.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Fully Verified
                 </Badge>
               </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                {/* Aadhaar Verification Card */}
-                <div className="group relative rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card/95 to-emerald-500/[0.02] p-4 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md text-left overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-border/50 group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-colors">
-                        <FileCheck className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h5 className="font-bold text-xs text-foreground">Aadhaar Card</h5>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                          <CheckCircle2 className="h-3 w-3" /> Identity Approved
-                        </span>
-                      </div>
+
+              <div className="space-y-1.5 pt-1">
+                {/* Aadhaar Card Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all text-xs sm:text-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                      <FileCheck className="h-4 w-4" />
                     </div>
-                    <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-md border-border/60 text-muted-foreground bg-background/50">
-                      Govt Issued
-                    </Badge>
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="font-bold text-foreground">Aadhar Card</span>
+                      {aadhaarVerified ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
+                          <CheckCircle2 className="h-3 w-3" /> Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
+                          Unverified
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground">Document Number</p>
-                      <p className="text-xs sm:text-sm font-mono font-black text-foreground tracking-wider mt-0.5">XXXX XXXX 1234</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-8 rounded-xl px-3 border-0 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-xs cursor-pointer transition-colors shadow-none flex items-center gap-1.5" 
+                  <div className="font-mono font-bold text-muted-foreground text-xs sm:text-sm sm:text-center">
+                    XXXX XXXX 1234
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 justify-end">
+                    <button
+                      type="button"
                       onClick={() => window.open("https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=1000&auto=format&fit=crop", "_blank")}
-                      title="View Document"
+                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                      title="View Aadhaar Card"
                     >
-                      <Eye className="h-3.5 w-3.5" /> View
-                    </Button>
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    {!aadhaarVerified ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenOtpModal('aadhaar')}
+                        className="h-8 px-3 rounded-lg text-xs font-extrabold border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5" /> Verify via OTP
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenOtpModal('aadhaar')}
+                        className="h-8 px-3 rounded-lg text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1 transition-all"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Re-verify</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
 
-                {/* PAN Identification Card */}
-                <div className="group relative rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card/95 to-emerald-500/[0.02] p-4 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md text-left overflow-hidden">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-border/50 group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-colors">
-                        <Landmark className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <h5 className="font-bold text-xs text-foreground">PAN Card</h5>
-                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                          <CheckCircle2 className="h-3 w-3" /> Tax ID Verified
-                        </span>
-                      </div>
+                {/* PAN Card Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all text-xs sm:text-sm">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                      <Landmark className="h-4 w-4" />
                     </div>
-                    <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-md border-border/60 text-muted-foreground bg-background/50">
-                      Tax Reg.
-                    </Badge>
+                    <div className="flex items-center gap-2 flex-wrap min-w-0">
+                      <span className="font-bold text-foreground">PAN Card</span>
+                      {panVerified ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
+                          <CheckCircle2 className="h-3 w-3" /> Verified
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
+                          Unverified
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground">Document Number</p>
-                      <p className="text-xs sm:text-sm font-mono font-black text-foreground tracking-wider mt-0.5">ABCDE1234F</p>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="h-8 rounded-xl px-3 border-0 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-xs cursor-pointer transition-colors shadow-none flex items-center gap-1.5" 
+                  <div className="font-mono font-bold text-muted-foreground text-xs sm:text-sm sm:text-center">
+                    ABCDE1234F
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 justify-end">
+                    <button
+                      type="button"
                       onClick={() => window.open("https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=1000&auto=format&fit=crop", "_blank")}
-                      title="View Document"
+                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                      title="View PAN Card"
                     >
-                      <Eye className="h-3.5 w-3.5" /> View
-                    </Button>
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    {!panVerified ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenOtpModal('pan')}
+                        className="h-8 px-3 rounded-lg text-xs font-extrabold border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5" /> Verify via OTP
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenOtpModal('pan')}
+                        className="h-8 px-3 rounded-lg text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1 transition-all"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Re-verify</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -728,6 +820,109 @@ export function OwnerProfile() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* OTP Verification Modal */}
+      <Dialog open={!!otpModalDoc} onOpenChange={(open) => !open && setOtpModalDoc(null)}>
+        <DialogContent className="sm:max-w-[420px] rounded-2xl p-6">
+          <DialogHeader className="pr-6">
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+              <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              Verify {otpModalDoc === 'aadhaar' ? 'Aadhaar Card' : 'PAN Card'} via OTP
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-1">
+              Verify document authenticity using OTP sent to your registered mobile number.
+            </DialogDescription>
+          </DialogHeader>
+
+          {otpStep === 1 ? (
+            <div className="space-y-4 py-3">
+              <div className="p-3.5 rounded-xl bg-muted/40 border border-border/50 text-xs space-y-2">
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Document Type:</span>
+                  <span className="font-bold text-foreground uppercase">{otpModalDoc === 'aadhaar' ? 'Aadhaar Card' : 'PAN Card'}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Document Number:</span>
+                  <span className="font-mono font-bold text-foreground">{otpModalDoc === 'aadhaar' ? 'XXXX XXXX 1234' : 'ABCDE1234F'}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Linked Mobile:</span>
+                  <span className="font-bold text-foreground">+91 98765 ****40</span>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={handleSendOtp}
+                className="w-full h-10 rounded-lg text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-2 transition-all"
+              >
+                Send Verification OTP
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4 py-3">
+              <div className="text-center space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  Enter 6-digit OTP code sent to <span className="font-bold text-foreground">+91 98765 ****40</span>
+                </p>
+              </div>
+
+              {/* 6 OTP Input Boxes */}
+              <div className="flex items-center justify-center gap-2 py-2">
+                {otpValue.map((digit, index) => (
+                  <input
+                    key={index}
+                    id={`otp-input-${index}`}
+                    type="text"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                    className="w-10 h-12 text-center text-base font-extrabold rounded-xl border border-border bg-muted/20 text-foreground focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
+                  />
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center text-xs">
+                <button
+                  type="button"
+                  onClick={handleSendOtp}
+                  className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                >
+                  Resend OTP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOtpStep(1)}
+                  className="text-muted-foreground hover:text-foreground font-medium cursor-pointer"
+                >
+                  Change Details
+                </button>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setOtpModalDoc(null)}
+                  className="h-9 px-4 text-xs font-bold rounded-lg cursor-pointer"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={handleVerifyOtpSubmit}
+                  disabled={isVerifyingOtp}
+                  className="h-9 px-5 text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none transition-all"
+                >
+                  {isVerifyingOtp ? "Verifying..." : "Verify & Confirm"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

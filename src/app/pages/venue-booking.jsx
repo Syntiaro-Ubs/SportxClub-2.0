@@ -559,7 +559,7 @@ export function VenueBooking() {
     return (
       <div
         key={venue.id}
-        className="relative w-full bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/80 group cursor-pointer mb-4 md:mb-0"
+        className="relative w-full bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/80 group cursor-pointer"
         onClick={() => navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } })}
       >
         {/* DESKTOP LAYOUT (Hidden on mobile) */}
@@ -890,7 +890,7 @@ export function VenueBooking() {
           </div>
 
           {/* Explore Other Venues List */}
-          <div className="flex flex-col gap-4 pb-8">
+          <div className="flex flex-col gap-2.5 pb-8">
             {otherVenues.length > 0 ? (
               otherVenues.map(renderHorizontalVenueCard)
             ) : (

@@ -150,7 +150,7 @@ const PremiumStar = ({ size = 16, fillPercent = 100, className = "" }) => {
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      className={`shrink-0 drop-shadow-[0_1.5px_4px_rgba(245,158,11,0.5)] ${className}`}
+      className={`shrink-0 ${className}`}
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1016,7 +1016,7 @@ export function Dashboard() {
             <p className="text-xs text-muted-foreground mt-0.5">Filter, search, approve or decline real-time bookings.</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 pr-2 sm:pr-6 md:pr-8 lg:pr-10">
             {/* Search Input */}
             <div className="relative flex-1 min-w-[130px] sm:max-w-[200px]">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -1194,7 +1194,7 @@ export function Dashboard() {
               <div className="text-xs text-muted-foreground hidden sm:block">
                 Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredBookings.length)}</span> of <span className="font-bold text-foreground">{filteredBookings.length}</span> entries
               </div>
-              <div className="flex flex-1 justify-between sm:justify-end gap-2">
+              <div className="flex flex-1 justify-between sm:justify-end gap-2 pr-2 sm:pr-6 md:pr-8 lg:pr-10">
                 <Button
                   variant="outline"
                   size="sm"

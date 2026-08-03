@@ -525,11 +525,7 @@ export function MobileHomePage() {
       <MobileAppBar />
 
       <div>
-        <div className="space-y-4 px-4 pb-4 pt-0">
-          <div className="relative z-10">
-            <SearchBar />
-          </div>
-
+        <div className="space-y-4 px-4 pb-4 pt-2">
           <motion.section
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}

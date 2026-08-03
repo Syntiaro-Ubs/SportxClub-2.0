@@ -47,6 +47,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
 
@@ -294,16 +295,27 @@ export function StaffManagement() {
                       {/* Actions Menu */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg -mt-1 -mr-2 text-muted-foreground hover:text-foreground">
+                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg -mt-1 -mr-2 text-muted-foreground hover:text-foreground hover:bg-muted/40 data-[state=open]:bg-transparent data-[state=open]:text-foreground border-0 shadow-none cursor-pointer">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                          <DropdownMenuItem onClick={() => handleOpenModal(staff)} className="cursor-pointer">
-                            <Pencil className="w-4 h-4 mr-2" /> Edit
+                        <DropdownMenuContent align="end" className="w-40 rounded-xl p-1 shadow-lg border border-border/40">
+                          <DropdownMenuItem
+                            onClick={() => handleOpenModal(staff)}
+                            className="cursor-pointer font-semibold focus:bg-transparent hover:bg-transparent text-foreground hover:text-emerald-600 dark:hover:text-emerald-400 focus:text-emerald-600 transition-colors group/edit"
+                          >
+                            <Pencil className="w-4 h-4 mr-2 text-muted-foreground group-hover/edit:text-emerald-600 dark:group-hover/edit:text-emerald-400 group-hover/edit:scale-110 transition-all" />
+                            Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(staff.id)} className="cursor-pointer text-rose-500 focus:text-rose-500">
-                            <Trash2 className="w-4 h-4 mr-2" /> Remove
+
+                          <DropdownMenuSeparator className="my-1 border-t border-border/40" />
+
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(staff.id)}
+                            className="cursor-pointer font-semibold focus:bg-transparent hover:bg-transparent text-rose-500 hover:text-rose-600 dark:hover:text-rose-400 focus:text-rose-600 transition-colors group/remove"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2 text-rose-500 group-hover/remove:text-rose-600 group-hover/remove:scale-110 transition-all" />
+                            Remove
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

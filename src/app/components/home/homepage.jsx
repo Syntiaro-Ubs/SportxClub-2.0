@@ -58,7 +58,7 @@ import { Footer } from "./Footer";
 
 const asset = (path) => `/assets${path}`;
 
-function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
+function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.35 }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -74,7 +74,7 @@ function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 da
   );
 }
 
-function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
+function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.35 }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -1135,7 +1135,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                 aria-label="Scroll left"
                 className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-1/2 -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
               >
-                <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
+                <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
               </button>
             )}
 
@@ -1621,7 +1621,7 @@ export function SportsCategories() {
             aria-label="Scroll left"
             className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
           >
-            <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
+            <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
           </button>
 
           <div
@@ -1638,7 +1638,7 @@ export function SportsCategories() {
             aria-label="Scroll right"
             className="hidden md:flex absolute -right-7 sm:-right-9 lg:-right-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
           >
-            <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
+            <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
           </button>
         </div>
       </div>

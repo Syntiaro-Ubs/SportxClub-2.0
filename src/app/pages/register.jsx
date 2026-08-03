@@ -359,7 +359,7 @@ export function RegisterPage() {
               {/* Step Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="space-y-1">
-                  <p className="text-xs  uppercase tracking-[0.2em] text-primary">
+                  <p className="text-xs text-primary dark:text-white font-semibold">
                     Step {step} of 2
                   </p>
                   <h1 className="text-2xl  tracking-tight sm:text-3xl">
@@ -480,13 +480,13 @@ export function RegisterPage() {
                             variant="outline"
                             disabled={!formData.email.includes("@") || emailOtpSent}
                             onClick={sendEmailOtp}
-                            className="h-10.5 px-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary text-xs transition-all shrink-0 font-bold"
+                            className="h-10.5 px-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary dark:text-white text-xs transition-all shrink-0 font-bold"
                           >
                             {emailOtpSent ? "OTP Sent" : "Send OTP"}
                           </Button>
                         )}
                         {emailVerified && (
-                          <div className="h-10.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center gap-1 text-xs shrink-0 font-semibold">
+                          <div className="h-10.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-white flex items-center justify-center gap-1 text-xs shrink-0 font-semibold">
                             <Check className="h-4 w-4 stroke-[3]" /> Verified
                           </div>
                         )}
@@ -519,7 +519,7 @@ export function RegisterPage() {
                             type="button"
                             disabled={formData.otp.length !== 6}
                             onClick={verifyEmailOtp}
-                            className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all text-xs font-bold shrink-0"
+                            className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-transparent text-emerald-600 dark:text-white hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 dark:hover:text-white hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all text-xs font-bold shrink-0"
                           >
                             Verify Code
                           </Button>
@@ -556,13 +556,13 @@ export function RegisterPage() {
                             variant="outline"
                             disabled={formData.phone.length < 10 || phoneOtpSent}
                             onClick={sendPhoneOtp}
-                            className="h-10.5 px-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary text-xs transition-all shrink-0 font-bold"
+                            className="h-10.5 px-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary dark:text-white text-xs transition-all shrink-0 font-bold"
                           >
                             {phoneOtpSent ? "OTP Sent" : "Send OTP"}
                           </Button>
                         )}
                         {phoneVerified && (
-                          <div className="h-10.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center gap-1 text-xs shrink-0 font-semibold">
+                          <div className="h-10.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-white flex items-center justify-center gap-1 text-xs shrink-0 font-semibold">
                             <Check className="h-4 w-4 stroke-[3]" /> Verified
                           </div>
                         )}
@@ -594,7 +594,7 @@ export function RegisterPage() {
                             type="button"
                             disabled={phoneOtp.length !== 6}
                             onClick={verifyPhoneOtp}
-                            className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all text-xs font-bold shrink-0"
+                            className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-transparent text-emerald-600 dark:text-white hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 dark:hover:text-white hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all text-xs font-bold shrink-0"
                           >
                             Verify Code
                           </Button>
@@ -615,7 +615,7 @@ export function RegisterPage() {
                         type="button"
                         disabled={!isStep1Valid()}
                         onClick={handleNext}
-                        className="w-1/2 h-11 rounded-full border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-1.5 group"
+                        className="w-1/2 h-11 rounded-full border border-emerald-600 bg-transparent text-emerald-600 dark:text-white hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 dark:hover:text-white hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-1.5 group"
                       >
                         Continue
                         <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -813,7 +813,7 @@ export function RegisterPage() {
                       <Button
                         type="submit"
                         disabled={!isStep2Valid() || isSubmitting}
-                        className="h-11 px-6 rounded-full border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-1.5"
+                        className="h-11 px-6 rounded-full border border-emerald-600 bg-transparent text-emerald-600 dark:text-white hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 dark:hover:text-white hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-1.5"
                       >
                         {isSubmitting ? (
                           <span className="flex items-center gap-2">
@@ -838,7 +838,7 @@ export function RegisterPage() {
         {/* Form Footer */}
         <div className="text-center text-sm text-muted-foreground mt-4 pt-4 border-t border-border/40">
           Already have an account?{" "}
-          <Link to={`/login${formData.role === "owner" ? "?type=owner" : ""}`} className="text-primary hover:underline">
+          <Link to={`/login${formData.role === "owner" ? "?type=owner" : ""}`} className="text-primary dark:text-white hover:underline">
             Sign in
           </Link>
         </div>

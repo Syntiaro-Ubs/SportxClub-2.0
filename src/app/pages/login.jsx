@@ -131,12 +131,9 @@ export function LoginPage() {
           {/* HEADER LOGO */}
           <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10">
             <Link to="/" className="flex items-center m-0 p-0">
-              <img src="/assets/icons/SportXClub.png" alt="SportXClub" className="h-20 sm:h-22 m-0 p-0 object-contain" />
+              <Logo className="h-20 sm:h-22" />
             </Link>
           </div>
-
-          {/* Premium Elegant Gradient Divider */}
-          <div className="w-full h-[1.5px] bg-gradient-to-r from-transparent via-[#0FA83F]/50 to-transparent" />
 
           {/* Sign In Form */}
           <div className="space-y-3 pt-1">
@@ -302,15 +299,11 @@ export function LoginPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="absolute inset-0 z-50 bg-white/95 dark:bg-[#0c0d10]/95 backdrop-blur-xl rounded-[32px] p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-2xl border border-emerald-500/20 overflow-hidden"
+            className="absolute inset-0 z-50 bg-white dark:bg-[#0c0d10] rounded-none p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-2xl border-none overflow-hidden"
           >
-            {/* Subtle Background Glow */}
-            <div className="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
             {/* Header: Logo & Close */}
             <div className="w-full flex items-center justify-between z-10 pt-1">
-              <img src="/assets/icons/SportXClub.png" alt="SportXClub" className="h-10 object-contain" />
+              <Logo className="h-10" />
               <button
                 type="button"
                 onClick={() => {
@@ -324,14 +317,10 @@ export function LoginPage() {
               </button>
             </div>
 
-            {/* Subtle Glowing Emerald Line */}
-            <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent my-3 z-10" />
-
             {/* Center Section: Animated Badge + Message */}
             <div className="my-auto space-y-4 z-10 w-full flex flex-col items-center">
               {/* Animated Glowing Ring with Checkmark */}
               <div className="relative flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-emerald-500/20 blur-md animate-pulse" />
                 <div className="h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-500 relative z-10 shadow-[0_0_25px_rgba(16,185,129,0.2)]">
                   <motion.div
                     initial={{ scale: 0, rotate: -45 }}
