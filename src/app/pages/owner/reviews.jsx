@@ -9,7 +9,7 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
 import { Avatar, AvatarFallback } from "../../components/ui/avatar";
-import { Loader2, AlertCircle, Star, MessageSquare, MapPin, Search, Filter, ThumbsUp, Quote, Sparkles } from "lucide-react";
+import { Loader2, AlertCircle, Star, MessageSquare, MapPin, Search, Filter, ThumbsUp, Quote, Sparkles, Info } from "lucide-react";
 import { reviewService } from "../../services/review.service";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../../components/ui/utils";
@@ -20,7 +20,8 @@ export function ReviewsList() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRatingFilter, setSelectedRatingFilter] = useState("all"); // 'all', '5', '4', '3', '2', '1'
+  const [selectedTopicFilter, setSelectedTopicFilter] = useState("all");
+  const [selectedSort, setSelectedSort] = useState("relevant");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -28,7 +29,7 @@ export function ReviewsList() {
         setIsLoading(true);
         const ownerId = currentUser?.id || "guest";
         const result = await reviewService.getAll(ownerId);
-        
+
         // Update mock dates to look recent
         const modifiedResult = result.map((r, i) => {
           const d = new Date();
@@ -38,7 +39,7 @@ export function ReviewsList() {
             date: format(d, "MMM dd, yyyy"),
           };
         });
-        
+
         setData(modifiedResult);
       } catch (err) {
         setError(err.message || "Failed to load data");
@@ -53,10 +54,10 @@ export function ReviewsList() {
   // Statistics calculation
   const stats = useMemo(() => {
     if (!data.length) return { average: "0.0", total: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
-    
+
     const sum = data.reduce((acc, curr) => acc + curr.rating, 0);
     const average = (sum / data.length).toFixed(1);
-    
+
     const counts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     data.forEach((r) => {
       const star = Math.floor(r.rating);
@@ -66,21 +67,44 @@ export function ReviewsList() {
     return { average, total: data.length, ...counts };
   }, [data]);
 
+  const topics = useMemo(() => {
+    const counts = {};
+    data.forEach((r) => {
+      const topic = r.turfName || "Other";
+      counts[topic] = (counts[topic] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .map(([key, count]) => ({ key, label: key, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5); // Take top 5 topics
+  }, [data]);
+
   // Filtered reviews logic
   const filteredReviews = useMemo(() => {
-    return data.filter((review) => {
+    let result = data.filter((review) => {
       const matchesSearch =
         review.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         review.comment?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         review.turfName?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesRating =
-        selectedRatingFilter === "all" ||
-        Math.floor(review.rating).toString() === selectedRatingFilter;
 
-      return matchesSearch && matchesRating;
+      const matchesTopic =
+        selectedTopicFilter === "all" ||
+        review.turfName === selectedTopicFilter ||
+        (!review.turfName && selectedTopicFilter === "Other");
+
+      return matchesSearch && matchesTopic;
     });
-  }, [data, searchQuery, selectedRatingFilter]);
+
+    if (selectedSort === "newest") {
+      result.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else if (selectedSort === "highest") {
+      result.sort((a, b) => b.rating - a.rating);
+    } else if (selectedSort === "lowest") {
+      result.sort((a, b) => a.rating - b.rating);
+    }
+
+    return result;
+  }, [data, searchQuery, selectedTopicFilter, selectedSort]);
 
   const getInitials = (name) => {
     if (!name) return "U";
@@ -91,13 +115,12 @@ export function ReviewsList() {
     return (
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
-          <Star 
-            key={star} 
-            className={`w-3.5 h-3.5 ${
-              star <= rating 
-                ? 'fill-amber-400 text-amber-400 stroke-none' 
-                : 'fill-muted/30 text-muted/30 stroke-none'
-            }`} 
+          <Star
+            key={star}
+            className={`w-3.5 h-3.5 ${star <= rating
+              ? 'fill-amber-400 text-amber-400 stroke-none'
+              : 'fill-muted/30 text-muted/30 stroke-none'
+              }`}
           />
         ))}
       </div>
@@ -138,85 +161,117 @@ export function ReviewsList() {
         </div>
       </div>
 
-      {/* Top Stat Summary Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Rating Card */}
-        <div className="p-4 rounded-2xl bg-background border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xs flex items-center justify-between transition-all duration-300">
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Average Rating</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-foreground">{stats.average}</span>
-              <span className="text-xs font-bold text-muted-foreground">/ 5.0</span>
+      {/* Summary and Topic Filters Grid */}
+      <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 pb-6 pt-3 mb-6 w-full max-w-5xl">
+        {/* SportXclub Review Summary */}
+        <div className="w-full lg:w-1/2">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-medium text-foreground">SportXclub review summary</h2>
+            <Info className="w-5 h-5 text-muted-foreground/60 cursor-pointer" />
+          </div>
+
+          <div className="flex items-start gap-8 sm:gap-12">
+            {/* Progress Bars (Left) */}
+            <div className="flex-1 flex flex-col gap-1.5">
+              {[5, 4, 3, 2, 1].map((rating) => {
+                const count = stats[rating] || 0;
+                const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
+                return (
+                  <div key={rating} className="flex items-center gap-3">
+                    <span className="text-[13px] font-medium text-foreground w-2 text-right">{rating}</span>
+                    <div className="flex-1 h-2.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#fbbc04] rounded-full"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="pt-0.5">{renderStars(Math.round(Number(stats.average)))}</div>
-          </div>
-          <div className="text-amber-400">
-            <Star className="w-6 h-6 fill-amber-400 stroke-none" />
+
+            {/* Overall Rating (Right) */}
+            <div className="flex flex-col items-center justify-start min-w-[100px] mt-[-8px]">
+              <span className="text-[56px] font-normal text-foreground leading-[1] tracking-tight">{stats.average}</span>
+              <div className="flex items-center gap-0.5 mt-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={`w-4 h-4 ${star <= Math.round(Number(stats.average)) ? "fill-[#fbbc04] text-[#fbbc04]" : "fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700"}`}
+                  />
+                ))}
+              </div>
+              <span className="text-[13px] text-muted-foreground mt-1">({stats.total})</span>
+            </div>
           </div>
         </div>
 
-        {/* Total Reviews Card */}
-        <div className="p-4 rounded-2xl bg-background border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xs flex items-center justify-between transition-all duration-300">
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Feedback</p>
-            <p className="text-2xl font-black text-foreground">{stats.total}</p>
-            <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">100% verified player reviews</p>
-          </div>
-          <div className="text-emerald-500">
-            <MessageSquare className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Satisfaction Rating Card */}
-        <div className="p-4 rounded-2xl bg-background border-2 border-emerald-500/30 hover:border-emerald-500 shadow-xs flex items-center justify-between transition-all duration-300">
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Positive Ratio</p>
-            <p className="text-2xl font-black text-foreground">
-              {stats.total > 0 ? Math.round(((stats[5] + stats[4]) / stats.total) * 100) : 100}%
-            </p>
-            <p className="text-[10px] font-semibold text-muted-foreground">4 & 5 Star Ratings</p>
-          </div>
-          <div className="text-emerald-500">
-            <ThumbsUp className="w-6 h-6" />
+        {/* Topic Filters */}
+        <div className="w-full lg:w-1/2 flex flex-col justify-start pt-1">
+          <h2 className="text-xl font-medium text-foreground mb-5">Reviews</h2>
+          <div className="flex flex-wrap items-center gap-2 px-1 py-1">
+            <button
+              onClick={() => setSelectedTopicFilter("all")}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-[13px] transition-all duration-200 cursor-pointer whitespace-nowrap outline-none",
+                selectedTopicFilter === "all"
+                  ? "border border-transparent text-emerald-600 dark:text-emerald-400 font-bold scale-105 bg-transparent"
+                  : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-transparent"
+              )}
+            >
+              All
+            </button>
+            {topics.map((topic) => (
+              <button
+                key={topic.key}
+                onClick={() => setSelectedTopicFilter(topic.key)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[13px] transition-all duration-200 cursor-pointer whitespace-nowrap flex items-center gap-1.5 outline-none",
+                  selectedTopicFilter === topic.key
+                    ? "border border-transparent text-emerald-600 dark:text-emerald-400 font-bold scale-105 bg-transparent"
+                    : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-transparent"
+                )}
+              >
+                <span>{topic.label}</span>
+                <span className={selectedTopicFilter === topic.key ? "text-emerald-600/80 dark:text-emerald-400/80" : "text-muted-foreground"}>
+                  {topic.count}
+                </span>
+              </button>
+            ))}
+            {topics.length > 5 && (
+              <div className="px-4 py-1.5 rounded-full text-[13px] border border-border/60 bg-transparent text-foreground whitespace-nowrap">
+                +{data.length - topics.reduce((acc, curr) => acc + curr.count, 0)}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Filter & Search Bar Section */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-2">
-        {/* Rating Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {[
-            { key: "all", label: "All Reviews" },
-            { key: "5", label: "5 Stars ★" },
-            { key: "4", label: "4 Stars ★" },
-            { key: "3", label: "3 Stars ★" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setSelectedRatingFilter(tab.key)}
-              className={cn(
-                "px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer whitespace-nowrap border-2",
-                selectedRatingFilter === tab.key
-                  ? "border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 shadow-2xs"
-                  : "border-border/50 bg-transparent text-muted-foreground hover:border-border hover:text-foreground"
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-          <Input
-            placeholder="Search reviews or turfs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 border-2 border-emerald-500/40 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs rounded-xl bg-background"
-          />
-        </div>
+
+
+
+      {/* Sort Filter Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-none mb-4">
+        {[
+          { key: "relevant", label: "Most relevant" },
+          { key: "newest", label: "Newest" },
+          { key: "highest", label: "Highest" },
+          { key: "lowest", label: "Lowest" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setSelectedSort(tab.key)}
+            className={cn(
+              "px-4 py-1.5 rounded-full text-[13px] transition-all duration-200 cursor-pointer whitespace-nowrap outline-none",
+              selectedSort === tab.key
+                ? "border border-transparent text-emerald-600 dark:text-emerald-400 font-bold scale-105 bg-transparent"
+                : "border border-border/60 bg-transparent text-muted-foreground hover:scale-105 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-transparent"
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Reviews Grid Section */}
@@ -257,7 +312,7 @@ export function ReviewsList() {
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col items-end gap-0.5">
                       {renderStars(review.rating)}
                       <span className="text-[10px] font-black text-amber-500">{review.rating}.0</span>

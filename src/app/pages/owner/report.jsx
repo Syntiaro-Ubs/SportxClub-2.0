@@ -14,7 +14,15 @@ import {
   IndianRupee,
   CalendarDays,
   TrendingUp,
+  CalendarIcon,
 } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "../../components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../../components/ui/popover";
 import {
   Card,
   CardContent,
@@ -33,6 +41,20 @@ import {
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectSeparator,
+} from "../../components/ui/select";
 
 const mockReportsData = Array.from({ length: 20 }, (_, i) => {
   const base = [
@@ -45,12 +67,17 @@ const mockReportsData = Array.from({ length: 20 }, (_, i) => {
     { player: "Ananya Desai", turf: "Skyline Arena", sport: "Tennis", time: "16:00 - 18:00", amount: 1800, status: "Success", type: "Booking" }
   ];
   const b = base[i % base.length];
+
+  // Generate a random date within the last 7 months to have varied mock data
+  const d = new Date();
+  d.setDate(d.getDate() - Math.floor(Math.random() * 210));
+
   return {
     id: `TRX-89${(30 - i).toString().padStart(2, '0')}`,
     player: b.player,
     turf: b.turf,
     sport: b.sport,
-    date: `2024-03-${Math.max(1, 24 - Math.floor(i / 2)).toString().padStart(2, '0')}`,
+    date: format(d, "yyyy-MM-dd"),
     time: b.time,
     amount: b.amount,
     status: b.status,
@@ -61,6 +88,10 @@ const mockReportsData = Array.from({ length: 20 }, (_, i) => {
 export function OwnerReport() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("This Month");
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -84,16 +115,39 @@ export function OwnerReport() {
         item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.turf.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "All" || item.status === statusFilter;
-      return matchesSearch && matchesStatus;
+
+      let matchesDate = true;
+      if (dateFilter === "Custom Date" && selectedDate) {
+        matchesDate = item.date === format(selectedDate, "yyyy-MM-dd");
+      } else if (dateFilter === "Custom Month" && selectedMonth) {
+        matchesDate = item.date.startsWith(selectedMonth);
+      } else if (dateFilter === "Custom Year" && selectedYear) {
+        matchesDate = item.date.startsWith(selectedYear);
+      } else if (dateFilter === "Past 6 Months") {
+        const itemDate = new Date(item.date);
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        matchesDate = itemDate >= sixMonthsAgo;
+      } else if (dateFilter === "Yearly") {
+        const itemDate = new Date(item.date);
+        const now = new Date();
+        matchesDate = itemDate.getFullYear() === now.getFullYear();
+      } else if (dateFilter === "This Month") {
+        const itemDate = new Date(item.date);
+        const now = new Date();
+        matchesDate = itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      }
+
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, dateFilter, selectedDate, selectedMonth, selectedYear]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, dateFilter, selectedDate]);
 
   const currentReports = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -101,6 +155,65 @@ export function OwnerReport() {
   }, [filteredData, currentPage]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const exportToExcel = () => {
+    const headers = ["Transaction ID", "Player", "Turf", "Sport", "Date", "Time", "Amount", "Status"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredData.map(row => [
+        row.id,
+        `"${row.player}"`,
+        `"${row.turf}"`,
+        `"${row.sport}"`,
+        row.date,
+        `"${row.time}"`,
+        row.amount,
+        row.status
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `reports_${statusFilter.toLowerCase()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    import('jspdf').then(({ jsPDF }) => {
+      const doc = new jsPDF();
+      doc.text(`Reports - ${statusFilter}`, 14, 15);
+
+      let yPos = 25;
+      const headers = ["ID", "Player", "Turf", "Amount", "Status"];
+      doc.setFontSize(10);
+      doc.text(headers[0], 14, yPos);
+      doc.text(headers[1], 45, yPos);
+      doc.text(headers[2], 95, yPos);
+      doc.text(headers[3], 150, yPos);
+      doc.text(headers[4], 175, yPos);
+
+      yPos += 10;
+      doc.setFontSize(9);
+      filteredData.forEach(row => {
+        if (yPos > 280) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text(row.id.toString(), 14, yPos);
+        doc.text(row.player.toString().substring(0, 20), 45, yPos);
+        doc.text(row.turf.toString().substring(0, 25), 95, yPos);
+        doc.text(row.amount.toString(), 150, yPos);
+        doc.text(row.status.toString(), 175, yPos);
+        yPos += 7;
+      });
+
+      doc.save(`reports_${statusFilter.toLowerCase()}.pdf`);
+    });
+  };
 
   return (
     <motion.div
@@ -112,8 +225,20 @@ export function OwnerReport() {
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Reports & History</h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Export CSV</Button>
+        <div className="flex flex-wrap gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline"><Download className="w-4 h-4 mr-2" /> Export</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={exportToExcel} className="cursor-pointer focus:bg-emerald-50/80 focus:text-emerald-700 dark:focus:bg-emerald-950/30 dark:focus:text-emerald-400 focus:font-semibold">
+                Export Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={exportToPDF} className="cursor-pointer focus:bg-emerald-50/80 focus:text-emerald-700 dark:focus:bg-emerald-950/30 dark:focus:text-emerald-400 focus:font-semibold">
+                Export PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -204,6 +329,73 @@ export function OwnerReport() {
                   </button>
                 ))}
               </div>
+              <div className="hidden sm:flex items-center gap-2">
+                <Select value={dateFilter} onValueChange={setDateFilter}>
+                  <SelectTrigger className="w-[130px] rounded-xl h-8 text-xs font-semibold bg-muted/50 border-border/40 focus:ring-0">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="This Month" className="text-xs">Month</SelectItem>
+                    <SelectSeparator />
+                    <SelectItem value="Past 6 Months" className="text-xs">6 Months</SelectItem>
+                    <SelectSeparator />
+                    <SelectItem value="Yearly" className="text-xs">Yearly</SelectItem>
+                    <SelectSeparator />
+                    <SelectItem value="Custom Date" className="text-xs">
+                      <div className="flex items-center">
+                        <CalendarIcon className="mr-1.5 h-3.5 w-3.5 text-indigo-400" />
+                        Custom
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="Custom Month" className="text-xs">Custom Month</SelectItem>
+                    <SelectItem value="Custom Year" className="text-xs">Custom Year</SelectItem>
+                  </SelectContent>
+                </Select>
+                {dateFilter === "Custom Date" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={`h-8 rounded-xl text-xs font-semibold bg-muted/50 border-border/40 justify-start text-left font-normal ${!selectedDate && "text-muted-foreground"}`}
+                      >
+                        <CalendarIcon className="mr-2 h-3 w-3" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        initialFocus
+                        captionLayout="dropdown-buttons"
+                        fromYear={2010}
+                        toYear={new Date().getFullYear()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                )}
+                {dateFilter === "Custom Month" && (
+                  <input
+                    type="month"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="h-8 w-[140px] rounded-xl text-xs font-semibold bg-muted/50 border border-border/40 px-3 outline-none focus:ring-2 focus:ring-emerald-500/20 text-foreground"
+                  />
+                )}
+                {dateFilter === "Custom Year" && (
+                  <Select value={selectedYear} onValueChange={setSelectedYear}>
+                    <SelectTrigger className="w-[100px] h-8 rounded-xl text-xs font-semibold bg-muted/50 border-border/40 focus:ring-0">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                        <SelectItem key={year} value={year.toString()} className="text-xs">{year}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -260,8 +452,8 @@ export function OwnerReport() {
               </TableBody>
             </Table>
           </div>
-          
-          {totalPages > 1 && filteredData.length > 0 && (
+
+          {filteredData.length > 0 && (
             <div className="flex items-center justify-between border-t border-border/40 px-4 py-3 sm:px-6 bg-card/40 rounded-b-2xl">
               <div className="text-xs text-muted-foreground hidden sm:block">
                 Showing <span className="font-bold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-bold text-foreground">{Math.min(currentPage * itemsPerPage, filteredData.length)}</span> of <span className="font-bold text-foreground">{filteredData.length}</span> entries

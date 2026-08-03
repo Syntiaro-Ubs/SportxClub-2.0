@@ -58,7 +58,7 @@ import { Footer } from "./Footer";
 
 const asset = (path) => `/assets${path}`;
 
-function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 3.5 }) {
+function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -74,7 +74,7 @@ function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 da
   );
 }
 
-function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 3.5 }) {
+function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -361,17 +361,8 @@ export function Navbar() {
     () => localStorage.getItem("preferred-city") || "Mumbai",
   );
   const [menuOpen, setMenuOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
   const drawerRef = useRef(null);
   const navigate = useNavigate();
-
-  const handleSearch = (e) => {
-    if (e.key === "Enter" && searchValue.trim()) {
-      navigate("/venues", { state: { search: searchValue.trim() } });
-      setSearchValue("");
-      setMenuOpen(false);
-    }
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -454,48 +445,16 @@ export function Navbar() {
             : "border-slate-200/80 bg-white/95 text-slate-900",
         )}
       >
-        <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 px-6 lg:px-8">
+        <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 pl-6 lg:pl-8 pr-0">
           {/* Left Section: Logo */}
-          <div className="flex flex-1 items-center justify-start">
+          <div className="flex items-center justify-start">
             <a href="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
               <Logo className="h-[50px] md:h-[80px]" />
             </a>
           </div>
-          {/* Center Section: Sleek Separate Search & Location Bars */}
-          <div className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-6 relative shrink-0">
-            {/* Search Pill */}
-            <div
-              className={cn(
-                "flex items-center w-full rounded-full border px-4 py-2.5 shadow-sm transition-all duration-200 focus-within:ring-2",
-                isDark
-                  ? "border-white/30 bg-white/[0.03] focus-within:border-white focus-within:ring-white/20"
-                  : "border-slate-200 bg-[#F1F3F6]/60 hover:bg-[#F1F3F6]/80 focus-within:bg-white focus-within:border-emerald-500/30 focus-within:ring-emerald-500/10",
-              )}
-            >
-              <Search
-                className={cn(
-                  "h-4 w-4 shrink-0 mr-2.5",
-                  isDark ? "text-white" : "text-emerald-600",
-                )}
-              />
-              <input
-                type="text"
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                onKeyDown={handleSearch}
-                placeholder="Search for venues, events, sports..."
-                className={cn(
-                  "w-full bg-transparent border-0 p-0 text-[0.825rem] lg:text-[0.875rem] font-normal outline-none focus:ring-0 focus:outline-none",
-                  isDark
-                    ? "placeholder:text-white/40 text-white"
-                    : "placeholder:text-slate-400 text-slate-800",
-                )}
-              />
-            </div>
-          </div>
 
           {/* Right Section: Sign In + Hamburger Menu Toggle */}
-          <div className="flex flex-1 items-center justify-end gap-3 md:gap-4">
+          <div className="flex items-center justify-end gap-3 md:gap-4">
             {/* Location Pill (Moved here) */}
             <div className="hidden md:block">
               <LocationModal
@@ -508,7 +467,7 @@ export function Navbar() {
                     )}
                   >
                     <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-emerald-600 dark:text-white" />
-                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-black dark:text-white">
+                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-black dark:text-white group-hover:scale-110 transition-transform duration-300 origin-left">
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
                     <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80 text-black dark:text-white" />
@@ -602,13 +561,13 @@ export function Navbar() {
               <Link to="/login">
                 <button
                   className={cn(
-                    "flex h-10 items-center justify-center rounded-md border px-5 text-sm tracking-wide transition-all cursor-pointer group",
+                    "flex h-10 items-center justify-center px-5 text-sm tracking-wide transition-all cursor-pointer group",
                     isDark
-                      ? "border-slate-700 bg-transparent text-white hover:border-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)]"
-                      : "border-slate-300 bg-transparent text-slate-800 hover:border-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)]",
+                      ? "bg-transparent text-white hover:shadow-none"
+                      : "bg-transparent text-slate-800 hover:shadow-none",
                   )}
                 >
-                  Login
+                  <span className="group-hover:scale-110 transition-transform duration-300">Login</span>
                 </button>
               </Link>
             )}
@@ -650,51 +609,26 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile/Tablet Search pill (shown only below 'md' screen size) */}
+        {/* Mobile/Tablet Location pill (shown only below 'md' screen size) */}
         <div className="md:hidden px-4 pb-3">
           <div
             className={cn(
-              "flex items-center w-full rounded-full border px-4 py-2 shadow-sm transition-all duration-200",
+              "flex items-center justify-center w-full rounded-full border px-4 py-2.5 shadow-sm transition-all duration-200",
               isDark
-                ? "border-white/[0.08] bg-white/[0.03] focus-within:border-emerald-600/30 focus-within:ring-2 focus-within:ring-emerald-600/10"
-                : "border-slate-200 bg-[#F1F3F6]/60 focus-within:bg-white focus-within:border-emerald-500/30 focus-within:ring-2 focus-within:ring-emerald-500/10",
+                ? "border-white/[0.08] bg-white/[0.03]"
+                : "border-slate-200 bg-[#F1F3F6]/60",
             )}
           >
-            <Search
-              className={cn(
-                "h-4 w-4 shrink-0 mr-2.5",
-                isDark ? "text-white" : "text-emerald-600",
-              )}
-            />
-            <input
-              type="text"
-              value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={handleSearch}
-              placeholder="Search venues, sports..."
-              className={cn(
-                "w-full bg-transparent border-0 p-0 text-sm font-normal outline-none focus:ring-0",
-                isDark
-                  ? "placeholder:text-white/40 text-white"
-                  : "placeholder:text-slate-400 text-slate-800",
-              )}
-            />
-
-            <div
-              className={cn(
-                "h-4 w-[1px] shrink-0 mx-2",
-                isDark ? "bg-white/[0.12]" : "bg-slate-300",
-              )}
-            />
             <LocationModal
               activeCity={activeCity}
               onCitySelect={handleCitySelect}
               trigger={
-                <button className="flex items-center gap-1 shrink-0 text-xs cursor-pointer text-black dark:text-white">
+                <button className="flex items-center gap-1.5 shrink-0 text-sm font-medium cursor-pointer text-black dark:text-white">
                   <MapPin
-                    className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-white"
+                    className="h-4 w-4 shrink-0 text-emerald-600 dark:text-white"
                   />
-                  <span className="truncate max-w-[120px] sm:max-w-[150px] text-black dark:text-white">{activeCity === "All" ? "Cities" : activeCity}</span>
+                  <span className="truncate max-w-[200px] text-black dark:text-white">{activeCity === "All" ? "All Areas" : activeCity}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 opacity-80 text-black dark:text-white" />
                 </button>
               }
             />
@@ -1201,7 +1135,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                 aria-label="Scroll left"
                 className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-1/2 -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
               >
-                <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
+                <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
               </button>
             )}
 
@@ -1278,7 +1212,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                 aria-label="Scroll right"
                 className="hidden md:flex absolute -right-7 sm:-right-9 lg:-right-11 top-1/2 -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
               >
-                <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
+                <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
               </button>
             )}
           </div>
@@ -1687,7 +1621,7 @@ export function SportsCategories() {
             aria-label="Scroll left"
             className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
           >
-            <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
+            <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
           </button>
 
           <div
@@ -1704,7 +1638,7 @@ export function SportsCategories() {
             aria-label="Scroll right"
             className="hidden md:flex absolute -right-7 sm:-right-9 lg:-right-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
           >
-            <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
+            <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
           </button>
         </div>
       </div>

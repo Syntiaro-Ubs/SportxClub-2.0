@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../components/ui/utils";
 import { Button } from "../components/ui/button";
 
-function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 3.5 }) {
+function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -21,7 +21,7 @@ function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 da
   );
 }
 
-function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 3.5 }) {
+function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -269,16 +269,16 @@ function CustomSelect({ value, onChange, options }) {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex w-full items-center justify-between rounded-xl border px-2.5 py-1 h-7.5 text-left text-[11px] font-semibold transition-all duration-200 cursor-pointer shadow-2xs",
+          "flex w-full items-center justify-between rounded-[14px] sm:rounded-2xl px-3 sm:px-4 py-2 h-9 sm:h-10 text-left text-[12px] sm:text-[13px] font-medium transition-all duration-200 cursor-pointer shadow-sm",
           isOpen
-            ? "border-emerald-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-            : "border-slate-200/90 dark:border-slate-700/80 bg-white dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600"
+            ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+            : "bg-white dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
         )}
       >
-        <span className="truncate">{value}</span>
+        <span className="truncate text-slate-700 dark:text-slate-300">{value}</span>
         <ChevronDown
           className={cn(
-            "h-3 w-3 text-slate-400 transition-transform duration-200 shrink-0 ml-1",
+            "h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 transition-transform duration-200 shrink-0 ml-1",
             isOpen ? "rotate-180 text-emerald-600 dark:text-emerald-400" : ""
           )}
         />
@@ -291,9 +291,9 @@ function CustomSelect({ value, onChange, options }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.12 }}
-            className="absolute left-0 right-0 mt-1 z-50 max-h-44 overflow-y-auto rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white/98 dark:bg-[#0f172a]/98 p-1 shadow-md backdrop-blur-xl [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full"
+            className="absolute left-0 right-0 mt-1 z-50 max-h-44 overflow-y-auto overflow-x-hidden rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-[#0f172a] shadow-lg backdrop-blur-xl [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 [&::-webkit-scrollbar-thumb]:rounded-full flex flex-col"
           >
-            {options.map((opt) => {
+            {options.map((opt, index) => {
               const isSelected = value === opt;
               return (
                 <button
@@ -304,14 +304,14 @@ function CustomSelect({ value, onChange, options }) {
                     setIsOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-[11px] font-medium transition-colors cursor-pointer my-0.5",
+                    "flex w-full items-center justify-between px-3.5 py-2.5 text-left text-[13px] sm:text-[14px] transition-colors cursor-pointer",
+                    index !== options.length - 1 ? "border-b border-slate-100 dark:border-slate-800/60" : "",
                     isSelected
-                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold"
-                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-[#f4f7fc] dark:bg-slate-800/50 text-[#144268] dark:text-white font-medium"
+                      : "text-[#264c6d] dark:text-slate-300 bg-white dark:bg-transparent hover:bg-[#f4f7fc] dark:hover:bg-slate-800/50 hover:text-[#144268] dark:hover:text-white"
                   )}
                 >
                   <span className="truncate">{opt}</span>
-                  {isSelected && <Check className="h-3 w-3 stroke-[2.5] text-emerald-600 dark:text-emerald-400 shrink-0 ml-1" />}
                 </button>
               );
             })}
@@ -835,7 +835,7 @@ export function VenueBooking() {
                 aria-label="Scroll left"
                 className={getArrowClass(premiumVenues, "left")}
               >
-                <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
+                <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
               </button>
             )}
 
@@ -858,7 +858,7 @@ export function VenueBooking() {
                 aria-label="Scroll right"
                 className={getArrowClass(premiumVenues, "right")}
               >
-                <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={3.5} />
+                <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.5} />
               </button>
             )}
           </div>

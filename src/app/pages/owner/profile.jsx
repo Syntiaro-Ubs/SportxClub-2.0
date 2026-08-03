@@ -312,6 +312,50 @@ export function OwnerProfile() {
                 floodlights, and top-tier amenities.
               </p>
             </div>
+
+            <div className="space-y-4 pt-6 border-t border-border/40">
+              <h4 className="font-bold text-xs text-foreground tracking-wider">KYC Documents</h4>
+              
+              <div className="space-y-3 max-w-lg">
+                {/* Aadhar Card */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <div className="w-28 text-xs font-bold text-muted-foreground">Aadhar Card</div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="w-full sm:w-48 bg-muted/20 border border-border/50 rounded-xl px-3 py-2 text-sm font-mono font-medium text-foreground shadow-xs">
+                      XXXX XXXX 1234
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-9 w-9 rounded-xl border-border/50 text-muted-foreground transition-all hover:scale-110 hover:bg-transparent hover:border-transparent hover:text-muted-foreground focus:ring-0 shrink-0 shadow-none" 
+                      onClick={() => window.open("https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=1000&auto=format&fit=crop", "_blank")}
+                      title="View Document"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* PAN Card */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <div className="w-28 text-xs font-bold text-muted-foreground">PAN Card</div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <div className="w-full sm:w-48 bg-muted/20 border border-border/50 rounded-xl px-3 py-2 text-sm font-mono font-medium text-foreground shadow-xs">
+                      ABCDE1234F
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-9 w-9 rounded-xl border-border/50 text-muted-foreground transition-all hover:scale-110 hover:bg-transparent hover:border-transparent hover:text-muted-foreground focus:ring-0 shrink-0 shadow-none" 
+                      onClick={() => window.open("https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=1000&auto=format&fit=crop", "_blank")}
+                      title="View Document"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

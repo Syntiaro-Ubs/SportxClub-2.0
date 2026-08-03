@@ -54,7 +54,6 @@ const ownerNavigation = [
   { name: "My Turfs", href: "/admin-panel/turfs", icon: MapPin, badge: "4", permissionKey: "turfs" },
   { name: "Roles", href: "/admin-panel/staff", icon: Users, permissionKey: "roles" },
   { name: "Events", href: "/admin-panel/tournaments", icon: Trophy, badge: "2", permissionKey: "events" },
-  { name: "Calendar", href: "/admin-panel/calendar", icon: Calendar, permissionKey: "calendar" },
   { name: "Reviews", href: "/admin-panel/reviews", icon: Star, badge: "4.8★", permissionKey: "reviews" },
   { name: "Promotions", href: "/admin-panel/promotions", icon: Tag, permissionKey: "promotions" },
   { name: "Report", href: "/admin-panel/report", icon: FileText, permissionKey: "report" },
