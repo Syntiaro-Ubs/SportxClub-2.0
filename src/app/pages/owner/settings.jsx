@@ -441,69 +441,8 @@ export function Settings() {
                   </div>
                 </div>
 
-                {/* Custom Theme Color Card */}
-                <div
-                  onClick={() => { setTheme("custom"); handleChange("theme", "custom"); }}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center text-center gap-3 ${theme === "custom" ? "border-emerald-500 bg-emerald-500/5 shadow-md" : "border-border/50 hover:border-border"}`}
-                >
-                  <div
-                    className="h-14 w-full rounded-xl border border-border flex items-center justify-center transition-all shadow-inner"
-                    style={{ backgroundColor: customColor }}
-                  >
-                    <Palette className="h-6 w-6 text-white drop-shadow-md" />
-                  </div>
-                  <div className="flex items-center justify-between w-full">
-                    <span className="text-xs font-bold text-foreground">Custom Color</span>
-                    {theme === "custom" && <CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-                  </div>
-                </div>
 
-              </div>
 
-              {/* Custom Accent Color Palette Picker */}
-              <div className="pt-4 border-t border-border/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-emerald-500" /> Custom Primary Accent Color
-                  </Label>
-                  <span className="text-xs font-mono font-bold text-muted-foreground uppercase bg-muted/60 px-2 py-0.5 rounded-md border border-border/40">
-                    {customColor}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Preset Swatches */}
-                  {[
-                    { name: "Emerald", hex: "#059669" },
-                    { name: "Electric Blue", hex: "#2563eb" },
-                    { name: "Neon Violet", hex: "#7c3aed" },
-                    { name: "Sunset Orange", hex: "#f97316" },
-                    { name: "Crimson Red", hex: "#e11d48" },
-                    { name: "Rose Pink", hex: "#ec4899" },
-                  ].map((c) => (
-                    <button
-                      key={c.hex}
-                      type="button"
-                      onClick={() => handleColorChange(c.hex)}
-                      style={{ backgroundColor: c.hex }}
-                      className={`w-9 h-9 rounded-xl transition-all cursor-pointer border-2 shadow-xs flex items-center justify-center ${customColor.toLowerCase() === c.hex.toLowerCase() ? "border-foreground scale-110 shadow-md ring-2 ring-emerald-500/40" : "border-transparent hover:scale-105"}`}
-                      title={c.name}
-                    >
-                      {customColor.toLowerCase() === c.hex.toLowerCase() && <CheckCircle2 className="w-4.5 h-4.5 text-white drop-shadow-md" />}
-                    </button>
-                  ))}
-
-                  {/* Native Custom Color Wheel Picker */}
-                  <label className="relative w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 via-green-500 to-blue-500 border-2 border-border cursor-pointer flex items-center justify-center shadow-xs hover:scale-105 transition-all overflow-hidden" title="Pick Any Custom Color">
-                    <input
-                      type="color"
-                      value={customColor}
-                      onChange={(e) => handleColorChange(e.target.value)}
-                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    />
-                    <Plus className="w-4.5 h-4.5 text-white drop-shadow-md stroke-[3]" />
-                  </label>
-                </div>
               </div>
 
             </CardContent>
