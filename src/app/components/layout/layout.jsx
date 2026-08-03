@@ -240,7 +240,8 @@ export function Layout() {
                 location.pathname.startsWith("/venues") ||
                 location.pathname.startsWith("/payment") ||
                 location.pathname.startsWith("/squad-booking") ||
-                location.pathname.startsWith("/booking-success")
+                location.pathname.startsWith("/booking-success") ||
+                location.pathname.startsWith("/profile")
                 ? "w-full"
                 : "px-4 py-5 md:px-6 md:py-6 lg:px-8 md:mx-auto md:max-w-7xl"
             }

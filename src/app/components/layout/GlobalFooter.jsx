@@ -92,7 +92,7 @@ export function GlobalFooter() {
   ];
 
   return (
-    <footer className={`w-full pt-4 sm:pt-6 pb-4 px-6 md:px-12 border-t mt-2 transition-all duration-300 text-left ${isDark
+    <footer className={`w-full pt-4 sm:pt-6 pb-4 md:pb-6 px-6 md:px-12 border-t mt-2 transition-all duration-300 text-left ${isDark
       ? "bg-[#090D16] border-white/[0.05] text-white"
       : "bg-[#FBFBFA] border-slate-200 text-slate-800"
       }`}>

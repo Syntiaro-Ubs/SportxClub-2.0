@@ -266,7 +266,6 @@ export function UserProfile() {
           1: true,
           2: true,
         }));
-        toast.success("Vikram M. (2), Arjun K. (3) paid their share!");
       }, 8000);
       return () => clearTimeout(timer);
     }
@@ -534,11 +533,11 @@ export function UserProfile() {
       </Dialog>
 
       {/* Main Consolidated Profile Page Layout */}
-      <Container className="py-6 space-y-8 max-w-4xl">
+      <Container className="px-0 sm:px-6 py-2 sm:py-6 space-y-6 sm:space-y-8 max-w-4xl w-full">
         {/* 1. Profile Header with Avatar, Sports & XP Progress */}
-        <Card className="border-border/50 bg-gradient-to-br from-primary/5 via-card to-card overflow-hidden relative">
+        <Card className="rounded-none sm:rounded-2xl border-x-0 sm:border-x border-border/50 bg-gradient-to-br from-primary/5 via-card to-card overflow-hidden relative">
           <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-600/5 blur-[80px] pointer-events-none" />
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col gap-6 md:flex-row md:items-start justify-between">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
                 <Avatar className="h-24 w-24 border border-primary/15 bg-background shadow-inner">
@@ -598,7 +597,7 @@ export function UserProfile() {
         </Card>
 
         {/* 2. Interactive Wallet Banner */}
-        <div className="bg-gradient-to-br from-card to-card/95 border border-border shadow-sm rounded-[24px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden text-left">
+        <div className="bg-gradient-to-br from-card to-card/95 border-y sm:border border-border shadow-sm rounded-none sm:rounded-[24px] p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden text-left">
           <div className="absolute right-0 top-0 w-44 h-44 bg-emerald-600/5 blur-[60px] pointer-events-none" />
           <div className="flex items-center gap-4 z-10">
             <div className="bg-emerald-600/10 p-3.5 rounded-2xl border border-emerald-600/20 text-emerald-600">
@@ -624,7 +623,7 @@ export function UserProfile() {
         </div>
 
         {/* 3. Achievements Badge List */}
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 px-3 sm:px-0">
           {achievements.map((achievement) => {
             const Icon = achievement.icon;
             return (

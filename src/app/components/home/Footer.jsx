@@ -13,7 +13,7 @@ export function Footer() {
     <footer
       id="contact"
       className={cn(
-        "relative overflow-hidden border-t pb-4 pt-6 md:pt-8 transition-colors duration-200",
+        "relative overflow-hidden border-t pb-4 md:pb-8 pt-6 md:pt-8 transition-colors duration-200",
         isDark ? "border-white/[0.08] bg-[#050505]" : "border-slate-200 bg-white"
       )}
     >

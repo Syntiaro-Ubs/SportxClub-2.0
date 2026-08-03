@@ -244,19 +244,19 @@ export function OwnerLayout() {
               <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
 
               <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none focus:outline-none flex items-center justify-center gap-1.5 p-1 transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 group">
+                <DropdownMenuTrigger className="outline-none focus:outline-none flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 p-1 transition-all duration-200 cursor-pointer group">
                   <div className="relative">
-                    <Avatar className="h-8 w-8 sm:h-9 sm:w-9 border-0 bg-transparent flex items-center justify-center">
+                    <Avatar className="h-6 w-6 sm:h-9 sm:w-9 border-0 bg-transparent flex items-center justify-center">
                       {activeProfile.profilePicture ? (
                         <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                       ) : (
                         <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                          <User className="h-4.5 w-4.5 stroke-[2.2]" />
+                          <User className="h-4 w-4 sm:h-4.5 sm:w-4.5 stroke-[2.2]" />
                         </AvatarFallback>
                       )}
                     </Avatar>
                   </div>
-                  <span className="text-sm font-semibold leading-none text-foreground whitespace-nowrap">{ownerName}</span>
+                  <span className="text-[10px] sm:text-sm font-semibold leading-tight text-foreground whitespace-nowrap">{ownerName}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 rounded-2xl border-border/60 p-1.5 shadow-xl" align="end" forceMount>
                   <DropdownMenuLabel className="px-3 py-2">

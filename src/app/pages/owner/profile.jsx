@@ -313,44 +313,92 @@ export function OwnerProfile() {
               </p>
             </div>
 
+            {/* Senior UI/UX Redesigned Ultra-Premium KYC Documents Section */}
             <div className="space-y-4 pt-6 border-t border-border/40">
-              <h4 className="font-bold text-xs text-foreground tracking-wider">KYC Documents</h4>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-left">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <ShieldCheck className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-xs text-foreground tracking-wider">KYC & Compliance Verification</h4>
+                    <p className="text-[11px] text-muted-foreground font-medium">Verified government identification documents</p>
+                  </div>
+                </div>
+                <Badge className="w-fit text-[10px] font-bold py-1 px-2.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Fully Verified
+                </Badge>
+              </div>
               
-              <div className="space-y-3 max-w-lg">
-                {/* Aadhar Card */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <div className="w-28 text-xs font-bold text-muted-foreground">Aadhar Card</div>
-                  <div className="flex-1 flex items-center gap-2">
-                    <div className="w-full sm:w-48 bg-muted/20 border border-border/50 rounded-xl px-3 py-2 text-sm font-mono font-medium text-foreground shadow-xs">
-                      XXXX XXXX 1234
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                {/* Aadhaar Verification Card */}
+                <div className="group relative rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card/95 to-emerald-500/[0.02] p-4 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md text-left overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-border/50 group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-colors">
+                        <FileCheck className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-xs text-foreground">Aadhaar Card</h5>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 className="h-3 w-3" /> Identity Approved
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-md border-border/60 text-muted-foreground bg-background/50">
+                      Govt Issued
+                    </Badge>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground">Document Number</p>
+                      <p className="text-xs sm:text-sm font-mono font-black text-foreground tracking-wider mt-0.5">XXXX XXXX 1234</p>
                     </div>
                     <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-9 w-9 rounded-xl border-border/50 text-muted-foreground transition-all hover:scale-110 hover:bg-transparent hover:border-transparent hover:text-muted-foreground focus:ring-0 shrink-0 shadow-none" 
+                      variant="ghost" 
+                      size="sm"
+                      className="h-8 rounded-xl px-3 border-0 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-xs cursor-pointer transition-colors shadow-none flex items-center gap-1.5" 
                       onClick={() => window.open("https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=1000&auto=format&fit=crop", "_blank")}
                       title="View Document"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3.5 w-3.5" /> View
                     </Button>
                   </div>
                 </div>
 
-                {/* PAN Card */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                  <div className="w-28 text-xs font-bold text-muted-foreground">PAN Card</div>
-                  <div className="flex-1 flex items-center gap-2">
-                    <div className="w-full sm:w-48 bg-muted/20 border border-border/50 rounded-xl px-3 py-2 text-sm font-mono font-medium text-foreground shadow-xs">
-                      ABCDE1234F
+                {/* PAN Identification Card */}
+                <div className="group relative rounded-2xl border border-border/60 bg-gradient-to-br from-card via-card/95 to-emerald-500/[0.02] p-4 transition-all duration-300 hover:border-emerald-500/40 hover:shadow-md text-left overflow-hidden">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-border/50 group-hover:bg-emerald-500/10 group-hover:text-emerald-600 transition-colors">
+                        <Landmark className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h5 className="font-bold text-xs text-foreground">PAN Card</h5>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+                          <CheckCircle2 className="h-3 w-3" /> Tax ID Verified
+                        </span>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-md border-border/60 text-muted-foreground bg-background/50">
+                      Tax Reg.
+                    </Badge>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wider font-extrabold text-muted-foreground">Document Number</p>
+                      <p className="text-xs sm:text-sm font-mono font-black text-foreground tracking-wider mt-0.5">ABCDE1234F</p>
                     </div>
                     <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="h-9 w-9 rounded-xl border-border/50 text-muted-foreground transition-all hover:scale-110 hover:bg-transparent hover:border-transparent hover:text-muted-foreground focus:ring-0 shrink-0 shadow-none" 
+                      variant="ghost" 
+                      size="sm"
+                      className="h-8 rounded-xl px-3 border-0 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold text-xs cursor-pointer transition-colors shadow-none flex items-center gap-1.5" 
                       onClick={() => window.open("https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=1000&auto=format&fit=crop", "_blank")}
                       title="View Document"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-3.5 w-3.5" /> View
                     </Button>
                   </div>
                 </div>
