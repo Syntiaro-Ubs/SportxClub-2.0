@@ -45,7 +45,7 @@ function SelectContent({ className, children, position = "popper", ...props }) {
         className={cn(
           "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md",
           position === "popper" &&
-            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className,
         )}
         position={position}
@@ -56,7 +56,7 @@ function SelectContent({ className, children, position = "popper", ...props }) {
           className={cn(
             "p-1",
             position === "popper" &&
-              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
+            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
           )}
         >
           {children}
@@ -82,20 +82,20 @@ function SelectItem({ className, children, ...props }) {
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 py-2 pr-8 pl-3 text-sm outline-hidden select-none border-b border-slate-200/80 dark:border-slate-800/80 last:border-b-0 transition-all text-slate-900 dark:text-slate-100",
+        "relative flex w-full cursor-pointer items-center justify-between gap-2 py-2.5 pr-10 pl-3.5 text-sm outline-hidden select-none border-b border-slate-200/80 dark:border-slate-800/80 last:border-b-0 transition-all text-slate-900 dark:text-slate-100",
         "focus:bg-slate-100 dark:focus:bg-slate-800/60 focus:text-slate-900 dark:focus:text-slate-100",
         "data-[state=checked]:bg-emerald-50/40 dark:data-[state=checked]:bg-emerald-950/20 data-[state=checked]:text-emerald-700 dark:data-[state=checked]:text-emerald-400 data-[state=checked]:font-bold",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
     >
-      <span className="absolute right-2.5 flex size-3.5 items-center justify-center text-emerald-600 dark:text-emerald-400">
+      <SelectPrimitive.ItemText className="truncate min-w-0 flex-1 pr-3 block">{children}</SelectPrimitive.ItemText>
+      <span className="absolute right-3 flex size-4 items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 pointer-events-none">
         <SelectPrimitive.ItemIndicator>
           <CheckIcon className="size-4 stroke-[2.5]" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   );
 }

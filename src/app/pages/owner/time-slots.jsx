@@ -672,18 +672,18 @@ export function TimeSlots() {
           <div className="flex flex-row flex-wrap items-center gap-2 shrink-0">
 
             {/* Turf Selector Dropdown */}
-            <div className="flex-1 sm:flex-initial sm:w-[200px] min-w-0">
+            <div className="flex-1 sm:flex-initial sm:w-[145px] min-w-0">
               <Select value={selectedTurfId} onValueChange={setSelectedTurfId}>
-                <SelectTrigger className="h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
+                <SelectTrigger className="h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1 px-3 overflow-hidden">
                   <SelectValue placeholder="Select Turf" className="truncate" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
                   <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
-                    ⚡ All Turfs <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">(View All Grounds Stacked)</span>
+                    ⚡ All Turfs
                   </SelectItem>
                   {turfs.map(turf => (
-                    <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
-                      {turf.name} <span className="hidden sm:inline text-[10px] text-muted-foreground ml-2 font-normal">({turf.sportType} • {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location})</span>
+                    <SelectItem key={turf.id} value={turf.id} className="text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer">
+                      <span className="truncate min-w-0 flex-1">{turf.name}</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -691,7 +691,7 @@ export function TimeSlots() {
             </div>
 
             {/* Duration Selector Dropdown */}
-            <div className="flex-1 sm:flex-initial sm:w-[180px] min-w-0">
+            <div className="flex-1 sm:flex-initial sm:w-[145px] min-w-0">
               <Select
                 value={selectedDurationOption}
                 onValueChange={(val) => {
@@ -704,52 +704,54 @@ export function TimeSlots() {
                   }
                 }}
               >
-                <SelectTrigger className="h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1.5 px-3 overflow-hidden">
+                <SelectTrigger className="h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1 px-3 overflow-hidden">
                   <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                     <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                     <SelectValue placeholder="Duration" className="truncate" />
                   </div>
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
-                  <SelectItem value="1" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
-                    1 Hour <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Standard Slot)</span>
+                  <SelectItem value="1" className="text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer">
+                    1 Hour
                   </SelectItem>
-                  <SelectItem value="2" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
-                    2 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(Double Slot)</span>
+                  <SelectItem value="2" className="text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer">
+                    2 Hours
                   </SelectItem>
-                  <SelectItem value="3" className="text-xs font-bold py-2 px-3 rounded-lg cursor-pointer">
-                    3 Hours <span className="hidden sm:inline text-[10px] text-muted-foreground ml-1.5 font-normal">(3 Hrs Continuous)</span>
+                  <SelectItem value="3" className="text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer">
+                    3 Hours
                   </SelectItem>
-                  <SelectItem value="custom" className="text-xs font-extrabold py-2 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 focus:bg-emerald-500/10 hover:bg-emerald-500/10">
-                    ⚙️ Custom Duration... {selectedDurationOption === "custom" && `(${playHours} hrs)`}
+                  <SelectItem value="custom" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer text-emerald-600 dark:text-emerald-400 focus:bg-emerald-500/10 hover:bg-emerald-500/10">
+                    ⚙️ Custom
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Date Selector Popover (Calendar) */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3 h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground hover:bg-muted/30 transition-all cursor-pointer shadow-2xs shrink-0 min-w-0 overflow-hidden"
-                  title="Select specific date"
-                >
-                  <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                  <span className="truncate">{format(selectedDate, 'MMM dd, yyyy')}</span>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
-                <CustomCalendar
-                  selectedDate={selectedDate}
-                  onSelect={(date) => {
-                    if (date) {
-                      setSelectedDate(date);
-                    }
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
+            <div className="flex-1 sm:flex-initial sm:w-[145px] min-w-0">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center justify-start gap-1.5 px-3 h-10 w-full rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 text-xs font-bold text-foreground hover:bg-muted/30 transition-all cursor-pointer shadow-2xs min-w-0 overflow-hidden"
+                    title="Select specific date"
+                  >
+                    <CalendarIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                    <span className="truncate">{format(selectedDate, 'MMM dd, yyyy')}</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
+                  <CustomCalendar
+                    selectedDate={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setSelectedDate(date);
+                      }
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
 
@@ -1066,7 +1068,8 @@ export function TimeSlots() {
               </Button>
               <Button
                 type="submit"
-                className="rounded-xl px-4 py-2 border border-border text-foreground bg-white dark:bg-slate-900 hover:bg-emerald-600 hover:text-black hover:border-emerald-600 hover:scale-[1.03] transition-all duration-300 font-bold text-xs h-10 cursor-pointer shadow-xs"
+                variant="outline"
+                className="rounded-xl px-5 h-10 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 bg-transparent hover:bg-transparent hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-xs transition-colors cursor-pointer shadow-none"
               >
                 Confirm & Generate Pass
               </Button>
@@ -1644,13 +1647,13 @@ export function TimeSlots() {
               Cancel
             </Button>
             <Button
+              variant="outline"
               onClick={() => {
                 setPlayHours(tempCustomHours);
                 setSelectedDurationOption("custom");
                 setIsCustomDurationDialogOpen(false);
-                toast.success(`Custom duration set to ${tempCustomHours} hour(s)`);
               }}
-              className="rounded-xl bg-emerald-600 text-black hover:bg-emerald-700 font-bold text-xs px-5"
+              className="rounded-xl border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 bg-transparent hover:bg-transparent hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-xs px-5 transition-colors cursor-pointer shadow-none"
             >
               Apply Duration
             </Button>

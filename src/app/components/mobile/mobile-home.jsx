@@ -846,7 +846,9 @@ export function MobileHomePage() {
           {/* App Download Section */}
           <AppDownloadCTA />
         </div>
-        <GlobalFooter />
+        <div className="pb-10 md:pb-0">
+          <GlobalFooter />
+        </div>
       </div>
 
       <MobileBottomNav activeTab="home" />

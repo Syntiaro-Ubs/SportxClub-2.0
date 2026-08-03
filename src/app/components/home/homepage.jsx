@@ -1891,9 +1891,6 @@ export function StoreSection() {
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
     setAddedItems((prev) => ({ ...prev, [product.id]: true }));
-    toast.success(`${product.name} added to cart!`, {
-      description: `Price: ${product.price} | Category: ${product.category}`,
-    });
   };
 
   const filteredModalProducts = storeProducts.filter((product) => {
@@ -2357,10 +2354,10 @@ export function StoreSection() {
                           size="sm"
                           onClick={(e) => handleAddToCart(e, product)}
                           className={cn(
-                            "h-7 rounded-full text-[11px] px-3.5 font-bold transition cursor-pointer active:scale-95 bg-transparent border-2",
+                            "h-7 rounded-full text-[11px] px-3.5 font-bold transition-colors cursor-pointer bg-transparent border hover:bg-transparent shadow-none",
                             addedItems[product.id]
-                              ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400"
-                              : "border-emerald-600/60 text-emerald-600 hover:bg-emerald-600 hover:text-white dark:border-emerald-400/60 dark:text-emerald-400 dark:hover:bg-emerald-500 dark:hover:text-white"
+                              ? "border-emerald-600 text-emerald-600 dark:border-emerald-400 dark:text-emerald-400 font-extrabold"
+                              : "border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400"
                           )}
                         >
                           {addedItems[product.id] ? "Added ✓" : "Add +"}
@@ -2385,11 +2382,12 @@ export function StoreSection() {
                     Close
                   </Button>
                   <Button
+                    variant="outline"
                     onClick={() => {
                       setIsStoreModalOpen(false);
                       navigate("/bookings");
                     }}
-                    className="rounded-full border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-600 hover:text-white dark:hover:bg-emerald-500 dark:hover:text-white text-xs font-bold h-9 px-6 cursor-pointer transition-all shadow-sm"
+                    className="rounded-full border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 bg-transparent hover:bg-transparent hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 text-xs font-bold h-9 px-6 cursor-pointer transition-colors shadow-none"
                   >
                     View Cart / Checkout
                   </Button>

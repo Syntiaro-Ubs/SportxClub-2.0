@@ -274,7 +274,10 @@ export function BookingsPage() {
                 </p>
               </div>
 
-              <Button className="h-12 w-1/2 flex mx-auto justify-center items-center gap-2 rounded-[18px] bg-primary text-primary-foreground shadow-[0_12px_24px_-18px_rgba(34,197,94,0.8)] hover:bg-primary/90">
+              <Button
+                variant="outline"
+                className="h-12 w-full sm:w-1/2 flex mx-auto justify-center items-center gap-2 rounded-[18px] border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 bg-transparent hover:bg-transparent hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-sm cursor-pointer transition-colors shadow-none"
+              >
                 Confirm booking
                 <ArrowRight className="h-4 w-4" />
               </Button>
@@ -293,7 +296,10 @@ export function BookingsPage() {
               {selectedDate} at {selectedTime}
             </p>
           </div>
-          <Button className="h-11 rounded-[16px] bg-primary px-5  text-primary-foreground hover:bg-primary/90">
+          <Button
+            variant="outline"
+            className="h-11 rounded-[16px] border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 bg-transparent hover:bg-transparent hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-sm px-5 cursor-pointer transition-colors shadow-none"
+          >
             Book now
           </Button>
         </div>
