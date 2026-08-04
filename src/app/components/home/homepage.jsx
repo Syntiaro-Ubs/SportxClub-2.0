@@ -677,7 +677,7 @@ export function Navbar() {
             <div className="flex flex-col">
               {menuItems.map((item) => {
                 const itemContent = (
-                  <div className="flex items-center justify-between w-full py-3 px-3 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] group">
+                  <div className="flex items-center justify-between w-full py-1.5 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] group">
                     <div className="flex items-center gap-3">
                       <span
                         className={cn(

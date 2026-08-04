@@ -384,34 +384,35 @@ export function OwnerProfile() {
 
               <div className="space-y-1.5 pt-1">
                 {/* Aadhaar Card Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all text-xs sm:text-sm">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
-                      <FileCheck className="h-4 w-4" />
+                <div className="flex items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all text-xs sm:text-sm overflow-hidden">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="p-2 sm:p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                      <FileCheck className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
-                      <span className="font-bold text-foreground">Aadhar Card</span>
-                      {aadhaarVerified ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
-                          <CheckCircle2 className="h-3 w-3" /> Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
-                          Unverified
-                        </span>
-                      )}
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-foreground whitespace-nowrap">Aadhar Card</span>
+                        {aadhaarVerified ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
+                            <CheckCircle2 className="h-3 w-3 hidden sm:block" /> Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md border border-amber-500/20 shrink-0">
+                            Unverified
+                          </span>
+                        )}
+                      </div>
+                      <div className="font-mono font-semibold text-muted-foreground text-[10px] sm:text-xs">
+                        XXXX XXXX 1234
+                      </div>
                     </div>
                   </div>
 
-                  <div className="font-mono font-bold text-muted-foreground text-xs sm:text-sm sm:text-center">
-                    XXXX XXXX 1234
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0 justify-end">
+                  <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => window.open("https://images.unsplash.com/photo-1628155930542-3c7a64e2c833?q=80&w=1000&auto=format&fit=crop", "_blank")}
-                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                      className="p-1.5 sm:p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                       title="View Aadhaar Card"
                     >
                       <Eye className="h-4 w-4" />
@@ -421,18 +422,18 @@ export function OwnerProfile() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenOtpModal('aadhaar')}
-                        className="h-8 px-3 rounded-lg text-xs font-extrabold border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1"
+                        className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg text-[10px] sm:text-xs font-extrabold border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5" /> Verify via OTP
+                        <ShieldCheck className="h-3.5 w-3.5 hidden sm:block" /> Verify
                       </Button>
                     ) : (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenOtpModal('aadhaar')}
-                        className="h-8 px-3 rounded-lg text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1 transition-all"
+                        className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg text-[10px] sm:text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1 transition-all"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <ShieldCheck className="h-3.5 w-3.5 hidden sm:block text-emerald-600 dark:text-emerald-400" />
                         <span>Re-verify</span>
                       </Button>
                     )}
@@ -440,34 +441,35 @@ export function OwnerProfile() {
                 </div>
 
                 {/* PAN Card Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-[1.2fr_1fr_auto] items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all text-xs sm:text-sm">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
-                      <Landmark className="h-4 w-4" />
+                <div className="flex items-center justify-between gap-2 sm:gap-4 p-3 sm:p-4 rounded-xl border border-border/40 bg-card/40 hover:bg-card/70 transition-all text-xs sm:text-sm overflow-hidden">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="p-2 sm:p-2.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                      <Landmark className="h-4 w-4 sm:h-5 sm:w-5" />
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap min-w-0">
-                      <span className="font-bold text-foreground">PAN Card</span>
-                      {panVerified ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
-                          <CheckCircle2 className="h-3 w-3" /> Verified
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 shrink-0">
-                          Unverified
-                        </span>
-                      )}
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-foreground whitespace-nowrap">PAN Card</span>
+                        {panVerified ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20 shrink-0">
+                            <CheckCircle2 className="h-3 w-3 hidden sm:block" /> Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md border border-amber-500/20 shrink-0">
+                            Unverified
+                          </span>
+                        )}
+                      </div>
+                      <div className="font-mono font-semibold text-muted-foreground text-[10px] sm:text-xs">
+                        ABCDE1234F
+                      </div>
                     </div>
                   </div>
 
-                  <div className="font-mono font-bold text-muted-foreground text-xs sm:text-sm sm:text-center">
-                    ABCDE1234F
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0 justify-end">
+                  <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => window.open("https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=1000&auto=format&fit=crop", "_blank")}
-                      className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                      className="p-1.5 sm:p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                       title="View PAN Card"
                     >
                       <Eye className="h-4 w-4" />
@@ -477,18 +479,18 @@ export function OwnerProfile() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenOtpModal('pan')}
-                        className="h-8 px-3 rounded-lg text-xs font-extrabold border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1"
+                        className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg text-[10px] sm:text-xs font-extrabold border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5" /> Verify via OTP
+                        <ShieldCheck className="h-3.5 w-3.5 hidden sm:block" /> Verify
                       </Button>
                     ) : (
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenOtpModal('pan')}
-                        className="h-8 px-3 rounded-lg text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1 transition-all"
+                        className="h-7 sm:h-8 px-2 sm:px-3 rounded-lg text-[10px] sm:text-xs font-bold border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 cursor-pointer shadow-none gap-1 transition-all"
                       >
-                        <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <ShieldCheck className="h-3.5 w-3.5 hidden sm:block text-emerald-600 dark:text-emerald-400" />
                         <span>Re-verify</span>
                       </Button>
                     )}
@@ -502,7 +504,7 @@ export function OwnerProfile() {
 
       {/* Edit Profile Dialog */}
       <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] !rounded-none">
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
             <DialogDescription className="text-xs">Update your personal contact details and location.</DialogDescription>
@@ -596,7 +598,7 @@ export function OwnerProfile() {
 
       {/* Turf Customer View Preview Modal */}
       <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
-        <DialogContent className="sm:max-w-[620px] rounded-3xl p-0 overflow-hidden border border-border/50 shadow-2xl">
+        <DialogContent className="sm:max-w-[620px] !rounded-none p-0 overflow-hidden border border-border/50 shadow-2xl">
           {/* Top Banner Notice */}
           <div className="bg-emerald-500/10 border-b border-emerald-500/20 px-5 py-2.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -682,7 +684,7 @@ export function OwnerProfile() {
 
       {/* Bank & Owner KYC Verification Modal */}
       <Dialog open={isKycModalOpen} onOpenChange={setIsKycModalOpen}>
-        <DialogContent className="sm:max-w-[500px] rounded-3xl p-6">
+        <DialogContent className="sm:max-w-[500px] !rounded-none p-6">
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
               <ShieldCheck className="h-5 w-5" />
@@ -825,7 +827,7 @@ export function OwnerProfile() {
 
       {/* OTP Verification Modal */}
       <Dialog open={!!otpModalDoc} onOpenChange={(open) => !open && setOtpModalDoc(null)}>
-        <DialogContent className="sm:max-w-[420px] rounded-2xl p-6">
+        <DialogContent className="sm:max-w-[420px] !rounded-none p-6">
           <DialogHeader className="pr-6">
             <DialogTitle className="text-base font-bold flex items-center gap-2 text-foreground">
               <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />

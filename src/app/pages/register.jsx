@@ -50,7 +50,8 @@ export function RegisterPage() {
 
   // Form State
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -120,7 +121,8 @@ export function RegisterPage() {
 
   const isStep1Valid = () => {
     return (
-      formData.fullName.trim() !== "" &&
+      formData.firstName.trim() !== "" &&
+      formData.lastName.trim() !== "" &&
       formData.email.includes("@") &&
       emailVerified &&
       formData.phone.length >= 10 &&
@@ -189,7 +191,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     const result = register({
-      fullName: formData.fullName,
+      fullName: `${formData.firstName} ${formData.lastName}`.trim(),
       email: formData.email,
       phone: formData.phone,
       password: formData.password,
@@ -205,7 +207,7 @@ export function RegisterPage() {
     if (result.success) {
       // Ensure isLoggedIn and userName are explicitly set for homepage/mobile-home
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userName", formData.fullName.split(" ")[0]);
+      localStorage.setItem("userName", formData.firstName);
 
       setIsSuccess(true);
       setTimeout(() => {
@@ -229,7 +231,7 @@ export function RegisterPage() {
   const strengthLabels = ["Empty", "Weak", "Fair", "Good", "Strong"];
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col items-center justify-center p-4 sm:p-6 md:p-10 transition-colors duration-200">
+    <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-end font-sans transition-colors duration-200">
       {/* BACKGROUND ELEMENTS (Grid + Radial Accent Glows) */}
       <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06] bg-[radial-gradient(#22c55e_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
@@ -245,15 +247,16 @@ export function RegisterPage() {
 
 
 
-      {/* HEADER LOGO */}
-      <div className="w-full max-w-xl flex items-center justify-center mb-[-12px] md:mb-[-22px] z-10">
-        <Link to="/" className="flex items-center gap-3">
-          <Logo />
-        </Link>
-      </div>
+      {/* MAIN CONTAINER (Right Aligned Full Height Drawer) */}
+      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full border-y border-l border-border/50 bg-card/95 backdrop-blur-3xl rounded-none p-6 sm:p-10 shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.4)] relative overflow-y-auto z-10 flex flex-col justify-center">
+        
+        {/* HEADER LOGO */}
+        <div className="w-full flex items-center justify-center mb-6 md:mb-10 z-10">
+          <Link to="/" className="flex items-center gap-3">
+            <Logo />
+          </Link>
+        </div>
 
-      {/* MAIN CONTAINER (Centered premium Card) */}
-      <div className="w-full max-w-xl border border-border/50 bg-card/65 backdrop-blur-2xl rounded-[32px] p-6 sm:p-10 shadow-[0_28px_60px_-24px_rgba(15,23,42,0.15)] dark:shadow-[0_28px_60px_-24px_rgba(0,0,0,0.4)] relative overflow-hidden z-10">
         {/* Subtle top decoration bar */}
         <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
@@ -289,7 +292,7 @@ export function RegisterPage() {
                   Registration Complete!
                 </h1>
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  Welcome aboard, {formData.fullName}. Creating your
+                  Welcome aboard, {formData.firstName}. Creating your
                   personalized sports dashboard...
                 </p>
               </div>
@@ -298,12 +301,12 @@ export function RegisterPage() {
               <div className="p-4 rounded-2xl border border-border bg-card/50 text-left space-y-3 shadow-md max-w-xs mx-auto">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center  text-sm">
-                    {formData.fullName.slice(0, 2).toUpperCase()}
+                    {formData.firstName.slice(0, 1).toUpperCase()}{formData.lastName.slice(0, 1).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm ">{formData.fullName}</p>
+                    <p className="text-sm ">{formData.firstName} {formData.lastName}</p>
                     <p className="text-xs text-muted-foreground">
-                      @{formData.fullName.toLowerCase().replace(/\s+/g, "")}
+                      @{formData.firstName.toLowerCase()}{formData.lastName.toLowerCase()}
                     </p>
                   </div>
                 </div>
@@ -387,20 +390,38 @@ export function RegisterPage() {
                   <div className="space-y-3">
                     {/* Account Type Selector Removed */}
 
-                    <div className="space-y-1.5">
-                      <Label htmlFor="fullName">Full Name</Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
-                        <Input
-                          id="fullName"
-                          name="fullName"
-                          type="text"
-                          placeholder="John Doe"
-                          className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          required
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                          <Input
+                            id="firstName"
+                            name="firstName"
+                            type="text"
+                            placeholder="Enter First Name"
+                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs"
+                            value={formData.firstName}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                          <Input
+                            id="lastName"
+                            name="lastName"
+                            type="text"
+                            placeholder="Enter Last Name"
+                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs"
+                            value={formData.lastName}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -467,8 +488,8 @@ export function RegisterPage() {
                             name="email"
                             type="email"
                             disabled={emailVerified}
-                            placeholder="john@example.com"
-                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background disabled:opacity-75"
+                            placeholder="Enter Your Email"
+                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background disabled:opacity-75 placeholder:text-xs"
                             value={formData.email}
                             onChange={handleInputChange}
                             required
@@ -543,8 +564,8 @@ export function RegisterPage() {
                             name="phone"
                             type="tel"
                             disabled={phoneVerified}
-                            placeholder="98765 43210"
-                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background disabled:opacity-75"
+                            placeholder="Enter Mobile No."
+                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background disabled:opacity-75 placeholder:text-xs"
                             value={formData.phone}
                             onChange={handleInputChange}
                             required

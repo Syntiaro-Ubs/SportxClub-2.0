@@ -677,7 +677,7 @@ export function TimeSlots() {
                 <SelectTrigger className="h-10 rounded-lg bg-background/50 border border-slate-300 dark:border-slate-700 focus:ring-1 focus:ring-emerald-500/30 text-xs font-bold transition-all w-full flex items-center justify-between gap-1 px-3 overflow-hidden">
                   <SelectValue placeholder="Select Turf" className="truncate" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
+                <SelectContent className="!rounded-none border-border/40 shadow-xl bg-popover z-50">
                   <SelectItem value="all" className="text-xs font-extrabold py-2.5 px-3 rounded-lg cursor-pointer focus:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10">
                     ⚡ All Turfs
                   </SelectItem>
@@ -710,7 +710,7 @@ export function TimeSlots() {
                     <SelectValue placeholder="Duration" className="truncate" />
                   </div>
                 </SelectTrigger>
-                <SelectContent className="rounded-xl border-border/40 shadow-xl bg-popover z-50">
+                <SelectContent className="!rounded-none border-border/40 shadow-xl bg-popover z-50">
                   <SelectItem value="1" className="text-xs font-bold py-2.5 px-3 rounded-lg cursor-pointer">
                     1 Hour
                   </SelectItem>
@@ -740,7 +740,7 @@ export function TimeSlots() {
                     <span className="truncate">{format(selectedDate, 'MMM dd, yyyy')}</span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 rounded-2xl border border-border/40 bg-popover shadow-xl z-50" align="end">
+                <PopoverContent className="w-auto p-0 !rounded-none border border-border/40 bg-popover shadow-xl z-50" align="end">
                   <CustomCalendar
                     selectedDate={selectedDate}
                     onSelect={(date) => {
@@ -964,7 +964,7 @@ export function TimeSlots() {
           Manual Booking Dialog Modal
           ------------------------------------------------------------- */}
       <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
-        <DialogContent className="sm:max-w-[425px] rounded-2xl border border-border/40 bg-popover shadow-xl">
+        <DialogContent className="sm:max-w-[425px] !rounded-none border border-border/40 bg-popover shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-bold flex items-center gap-2">
               <Ticket className="h-5 w-5 text-primary" />
@@ -977,11 +977,11 @@ export function TimeSlots() {
 
           <form onSubmit={handleBookingSubmit} className="space-y-4 py-3">
             {/* Toggle Action Type */}
-            <div className="grid grid-cols-2 gap-2 bg-muted/40 p-1 rounded-xl border border-border/40 mb-2">
+            <div className="grid grid-cols-2 gap-2 bg-muted/40 p-1 rounded-none border border-border/40 mb-4 max-w-[280px] mx-auto">
               <button
                 type="button"
                 onClick={() => setBookingActionType("booking")}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${bookingActionType === "booking"
+                className={`py-2 text-xs font-bold rounded-none transition-all cursor-pointer border-2 ${bookingActionType === "booking"
                   ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-extrabold shadow-xs"
                   : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
@@ -991,7 +991,7 @@ export function TimeSlots() {
               <button
                 type="button"
                 onClick={() => setBookingActionType("block")}
-                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${bookingActionType === "block"
+                className={`py-2 text-xs font-bold rounded-none transition-all cursor-pointer border-2 ${bookingActionType === "block"
                   ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-transparent font-extrabold shadow-xs"
                   : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
@@ -1264,7 +1264,7 @@ export function TimeSlots() {
           Block Custom Time & Multi-Day Date Range Dialog Modal
           ------------------------------------------------------------- */}
       <Dialog open={isBlockModalOpen} onOpenChange={setIsBlockModalOpen}>
-        <DialogContent className="sm:max-w-[480px] rounded-2xl border border-border/40 bg-popover shadow-xl">
+        <DialogContent className="sm:max-w-[480px] !rounded-none border border-border/40 bg-popover shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-bold flex items-center gap-2">
               <Power className="h-5 w-5 text-emerald-500" />
