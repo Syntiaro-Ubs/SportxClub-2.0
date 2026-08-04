@@ -20,6 +20,7 @@ import {
   PanelLeftClose,
   FileText,
   Settings,
+  ArrowLeft,
 } from "lucide-react";
 import { Logo } from "../brand/Logo";
 import { Button } from "../ui/button";
@@ -157,7 +158,7 @@ export function OwnerLayout() {
               key={item.name}
               to={item.href}
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`group flex items-center justify-between w-full py-2.5 px-3 border-b border-border/40 transition-colors duration-150 hover:bg-muted/30 ${isActive
+              className={`group flex items-center justify-between w-full py-1.5 px-3 border-b border-border/40 transition-colors duration-150 hover:bg-muted/30 ${isActive
                 ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
                 : "text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400"
                 }`}
@@ -227,6 +228,16 @@ export function OwnerLayout() {
                   </a>
                 </div>
               )}
+              {/* Always show back button in main header on non-dashboard pages (desktop) */}
+              {location.pathname !== "/admin-panel" && (
+                <button
+                  onClick={() => navigate(-1)}
+                  className="hidden md:flex items-center justify-center p-1.5 sm:p-2 rounded-full text-muted-foreground hover:text-foreground bg-transparent hover:bg-transparent transition-all duration-200 cursor-pointer shrink-0 group"
+                  title="Go Back"
+                >
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 transition-transform duration-200 group-hover:scale-110" />
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-x-3 sm:gap-x-5">
@@ -258,18 +269,18 @@ export function OwnerLayout() {
                   </div>
                   <span className="text-[10px] sm:text-sm font-semibold leading-tight text-foreground whitespace-nowrap">{ownerName}</span>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 rounded-2xl border-border/60 p-1.5 shadow-xl" align="end" forceMount>
+                <DropdownMenuContent className="w-56 !rounded-none border-border/60 p-1.5 shadow-xl" align="end" forceMount>
                   <DropdownMenuLabel className="px-3 py-2">
                     <p className="text-xs font-bold text-foreground">{ownerName}</p>
                     <p className="text-[10px] text-muted-foreground truncate">{ownerEmail}</p>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/admin-panel/profile")} className="cursor-pointer rounded-xl text-xs font-medium py-2 focus:text-emerald-600 dark:focus:text-emerald-400 focus:bg-emerald-500/10">
+                  <DropdownMenuItem onClick={() => navigate("/admin-panel/profile")} className="cursor-pointer !rounded-none text-xs font-medium py-2 focus:text-emerald-600 dark:focus:text-emerald-400 focus:bg-emerald-500/10">
                     <User className="mr-2 h-4 w-4 text-emerald-500" />
                     View Profile
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer rounded-xl text-xs font-medium py-2 text-rose-500 focus:text-rose-500 focus:bg-rose-500/10">
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer !rounded-none text-xs font-medium py-2 text-rose-500 focus:text-rose-500 focus:bg-rose-500/10">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>

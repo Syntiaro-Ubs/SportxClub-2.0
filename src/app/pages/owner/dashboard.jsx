@@ -860,7 +860,7 @@ export function Dashboard() {
             >
               {["month", "6month", "year", "custom"].includes(timeframe) ? <SelectValue /> : <span>More Options</span>}
             </SelectTrigger>
-            <SelectContent className="rounded-lg border-slate-300 dark:border-slate-700">
+            <SelectContent className="!rounded-none border-slate-300 dark:border-slate-700">
               {["today", "tomorrow", "week"].includes(timeframe) && (
                 <SelectItem value={timeframe} className="hidden" style={{ display: "none" }}>Hidden</SelectItem>
               )}
@@ -1033,7 +1033,7 @@ export function Dashboard() {
               <SelectTrigger className="w-[105px] h-8 rounded-xl border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs font-medium transition-all shadow-xs shrink-0 px-2.5">
                 <SelectValue placeholder="All Sports" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
+              <SelectContent className="!rounded-none border border-slate-300 dark:border-slate-700">
                 <SelectItem value="all" className="cursor-pointer">All Sports</SelectItem>
                 <SelectItem value="football" className="cursor-pointer">Football</SelectItem>
                 <SelectItem value="cricket" className="cursor-pointer">Cricket</SelectItem>
@@ -1048,7 +1048,7 @@ export function Dashboard() {
               <SelectTrigger className="w-[105px] h-8 rounded-xl border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs font-medium transition-all shadow-xs shrink-0 px-2.5">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700">
+              <SelectContent className="!rounded-none border border-slate-300 dark:border-slate-700">
                 <SelectItem value="all" className="cursor-pointer">All Statuses</SelectItem>
                 <SelectItem value="confirmed" className="cursor-pointer">Confirmed</SelectItem>
                 <SelectItem value="pending" className="cursor-pointer">Pending</SelectItem>

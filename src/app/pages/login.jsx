@@ -111,15 +111,15 @@ export function LoginPage() {
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
+    <div className="bg-background min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
       {/* Right Aligned Full Height Login Form Drawer */}
-      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full bg-white shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-slate-200/80 px-6 sm:px-10 py-10 relative z-10 flex flex-col justify-center">
+      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full bg-card shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-border px-6 sm:px-10 py-10 relative z-10 flex flex-col justify-center">
 
         {/* Close Button */}
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="absolute right-5 top-5 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer z-20"
+          className="absolute right-5 top-5 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer z-20"
           title="Close Login"
           aria-label="Close Login"
         >
@@ -131,17 +131,17 @@ export function LoginPage() {
           {/* HEADER LOGO */}
           <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10">
             <Link to="/" className="flex items-center m-0 p-0">
-              <Logo className="h-20 sm:h-22" />
+              <Logo className="h-[120px] sm:h-22" />
             </Link>
           </div>
 
           {/* Sign In Form */}
           <div className="space-y-3 pt-1">
           <div className="space-y-0.5 mb-2">
-            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 leading-tight">
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-tight">
               {loginType === "owner" ? "Admin Login" : "Login"}
               </h1>
-              <p className="text-xs text-slate-600 pt-1">
+              <p className="text-xs text-muted-foreground pt-1">
                 Enter your credentials below to access<br className="hidden sm:block" /> your account.
               </p>
             </div>
@@ -150,15 +150,15 @@ export function LoginPage() {
               {/* Account Type Selector Removed */}
 
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[12px] font-medium text-slate-900">Email Address</Label>
+                <Label htmlFor="email" className="text-[12px] font-medium text-foreground">Email Address</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-2.5 h-5 w-5 text-slate-500" strokeWidth={1.5} />
+                  <Mail className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <Input
                     id="email"
                     name="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="pl-11 h-10 rounded-lg border-slate-300 text-[12px] focus-visible:ring-1 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 placeholder:text-slate-500 bg-white"
+                    className="pl-11 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -168,22 +168,22 @@ export function LoginPage() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-[12px] font-medium text-slate-900">Password</Label>
+                  <Label htmlFor="password" className="text-[12px] font-medium text-foreground">Password</Label>
                   <Link
                     to="/forgot-password"
-                    className="text-[12px] font-medium text-slate-900 hover:text-emerald-600 hover:underline transition-colors"
+                    className="text-[12px] font-medium text-foreground hover:text-primary hover:underline transition-colors"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3.5 top-2.5 h-5 w-5 text-slate-500" strokeWidth={1.5} />
+                  <Lock className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-11 pr-10 h-10 rounded-lg border-slate-300 text-[12px] focus-visible:ring-1 focus-visible:ring-emerald-500 focus-visible:border-emerald-500 placeholder:text-slate-500 bg-white"
+                    className="pl-11 pr-10 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
@@ -191,7 +191,7 @@ export function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-700 transition-colors cursor-pointer"
+                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" strokeWidth={1.5} />
@@ -207,11 +207,11 @@ export function LoginPage() {
                   id="remember"
                   checked={formData.rememberMe}
                   onCheckedChange={handleCheckboxChange}
-                  className="rounded border-slate-300 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 cursor-pointer"
+                  className="rounded border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer"
                 />
                 <label
                   htmlFor="remember"
-                  className="text-[12px] font-medium text-slate-600 cursor-pointer select-none"
+                  className="text-[12px] font-medium text-muted-foreground cursor-pointer select-none"
                 >
                   Remember me for 30 days
                 </label>
@@ -221,7 +221,7 @@ export function LoginPage() {
                 type="submit"
                 disabled={isSubmitting || !isFormValid()}
                 className={cn(
-                  "w-full h-10 rounded-lg bg-[#0FA83F] hover:bg-[#0c8a34] text-white font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer mt-3",
+                  "w-full h-10 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer mt-3",
                   (!isFormValid() || isSubmitting) && "opacity-60 cursor-not-allowed"
                 )}
               >
@@ -241,10 +241,10 @@ export function LoginPage() {
 
             <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
+                <div className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-white px-3 text-slate-600 font-medium tracking-wider">
+                <span className="bg-card px-3 text-muted-foreground font-medium tracking-wider">
                   OR CONTINUE WITH
                 </span>
               </div>
@@ -255,7 +255,7 @@ export function LoginPage() {
               variant="outline"
               disabled={isSubmitting}
               onClick={handleGoogleLogin}
-              className="w-full h-10 rounded-lg border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              className="w-full h-10 rounded-lg border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -279,11 +279,11 @@ export function LoginPage() {
             </Button>
 
             <div className="text-center pt-2">
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-muted-foreground">
                 Don't have an account yet?{" "}
                 <Link
                   to={`/register?type=${loginType}`}
-                  className="font-medium text-[#0FA83F] hover:underline"
+                  className="font-medium text-primary hover:underline"
                 >
                   Sign up
                 </Link>
@@ -299,7 +299,7 @@ export function LoginPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className="absolute inset-0 z-50 bg-white dark:bg-[#0c0d10] rounded-none p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-2xl border-none overflow-hidden"
+            className="absolute inset-0 z-50 bg-background rounded-none p-6 sm:p-8 flex flex-col justify-between items-center text-center shadow-2xl border-none overflow-hidden"
           >
             {/* Header: Logo & Close */}
             <div className="w-full flex items-center justify-between z-10 pt-1">
@@ -311,7 +311,7 @@ export function LoginPage() {
                   if (loginType === "owner") navigate("/admin-panel");
                   else navigate("/");
                 }}
-                className="h-8 w-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white transition-all cursor-pointer"
+                className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-all cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -333,16 +333,16 @@ export function LoginPage() {
               </div>
 
               <div className="space-y-1">
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
                   Login Successful!
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-white/60">
+                <p className="text-xs text-muted-foreground">
                   Welcome back! Preparing your sports experience...
                 </p>
               </div>
 
               {/* Sleek Redirect Progress Bar */}
-              <div className="w-full max-w-[200px] h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-2">
+              <div className="w-full max-w-[200px] h-1.5 bg-muted rounded-full overflow-hidden mt-2">
                 <motion.div
                   initial={{ width: "0%" }}
                   animate={{ width: "100%" }}

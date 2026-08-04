@@ -297,7 +297,7 @@ export function EditTurf() {
 
           {/* TAB 1: BASIC INFO */}
           <TabsContent value="basic" className="mt-3 space-y-3">
-            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl !rounded-none p-5 sm:p-6 shadow-xl space-y-4">
               <div className="border-b border-slate-300/60 dark:border-slate-700/60 pb-2.5">
                 <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                   <Building2 className="h-4.5 w-4.5 text-emerald-500" /> Basic Information
@@ -331,9 +331,9 @@ export function EditTurf() {
                       <SelectTrigger className="h-10 rounded-xl border-slate-300 dark:border-slate-700/80 text-xs">
                         <SelectValue placeholder="Select a sport" />
                       </SelectTrigger>
-                      <SelectContent className="rounded-2xl border-slate-300 dark:border-slate-700/80">
+                      <SelectContent className="!rounded-none border-slate-300 dark:border-slate-700/80">
                         {SPORTS.map((sport) => (
-                          <SelectItem key={sport} value={sport} className="rounded-xl cursor-pointer text-xs">
+                          <SelectItem key={sport} value={sport} className="!rounded-none cursor-pointer text-xs">
                             {sport}
                           </SelectItem>
                         ))}
@@ -396,7 +396,7 @@ export function EditTurf() {
 
           {/* TAB 2: DETAILS & AMENITIES */}
           <TabsContent value="details" className="mt-3 space-y-3">
-            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl !rounded-none p-5 sm:p-6 shadow-xl space-y-4">
               <div className="border-b border-slate-300/60 dark:border-slate-700/60 pb-2.5">
                 <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                   <MapPin className="h-4.5 w-4.5 text-emerald-500" /> Location & Amenities
@@ -475,7 +475,7 @@ export function EditTurf() {
 
           {/* TAB 3: PRICING */}
           <TabsContent value="pricing" className="mt-3 space-y-3">
-            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+            <Card className="border border-slate-300/80 dark:border-slate-700/80 bg-card/60 backdrop-blur-2xl !rounded-none p-5 sm:p-6 shadow-xl space-y-4">
               <div className="border-b border-slate-300/60 dark:border-slate-700/60 pb-2.5">
                 <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                   <IndianRupee className="h-4.5 w-4.5 text-emerald-500 stroke-[2.5]" /> Standard Pricing

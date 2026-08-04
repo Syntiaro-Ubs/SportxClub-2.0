@@ -40,14 +40,14 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
 
       {!multiple && !file && (
         <div
-          className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center bg-background/30 hover:bg-background/80 transition-colors cursor-pointer group"
+          className="border-2 border-dashed border-border rounded-xl p-4 py-3 flex flex-col items-center justify-center bg-background/30 hover:bg-background/80 transition-colors cursor-pointer group"
           onClick={() => onUpload({ name: `uploaded_file_${Date.now()}.png` })}
         >
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-            <UploadCloud className="h-5 w-5 text-primary" />
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+            <UploadCloud className="h-4 w-4 text-primary" />
           </div>
-          <p className="text-sm font-medium">Click to upload or drag & drop</p>
-          <p className="text-xs text-muted-foreground mt-1">{hint}</p>
+          <p className="text-xs font-medium">Click to upload or drag & drop</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{hint}</p>
         </div>
       )}
 
@@ -118,7 +118,7 @@ export function OwnerSetupPage() {
     return {
       personal: { fullName: currentUser?.fullName || "John Owner", dob: "", gender: "", profilePhoto: null, address: "", city: "", state: "", pincode: "" },
       business: { businessName: "", ownerName: "", businessType: "", gst: "", tradeLicense: null, yearsInBusiness: "", email: "", phone: "" },
-      identity: { aadhaarFront: null, aadhaarBack: null, panCard: null, selfie: null },
+      identity: { aadhaarFront: null, aadhaarBack: null, panCard: null, electricBill: null, rentalAgreement: null },
       turf: { name: "", sports: [], turfType: "", groundCount: "", groundSize: "", surfaceType: "", description: "" },
       location: { address: "", landmark: "", city: "", state: "", pincode: "", facilities: [] },
       images: { cover: null, gallery: [], promoVideo: null },
@@ -260,13 +260,11 @@ export function OwnerSetupPage() {
       <div className="fixed top-0 left-0 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: "8s" }} />
 
       {/* Left Sidebar Stepper */}
-      <div className="hidden md:flex flex-col w-72 lg:w-80 border-r border-border/50 bg-card/30 backdrop-blur-xl p-6 sticky top-0 h-screen overflow-y-auto z-10">
-        <div className="mb-10">
-          <Logo />
-        </div>
-        <div className="space-y-1">
-          <h3 className="text-lg font-bold tracking-tight mb-1">Onboarding Setup</h3>
-          <p className="text-xs text-muted-foreground mb-6">Complete the steps below to list your turf.</p>
+      <div className="hidden md:flex flex-col w-64 lg:w-72 border-r border-border/50 bg-card/30 backdrop-blur-xl px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 sticky top-0 h-screen overflow-y-auto z-10">
+        <div className="-mt-4 -mb-4">
+          <div onClick={() => window.location.reload()} className="cursor-pointer">
+            <Logo />
+          </div>
         </div>
 
         <div className="relative space-y-0 z-10">
@@ -322,7 +320,9 @@ export function OwnerSetupPage() {
       <div className="flex-1 flex flex-col min-w-0 relative z-10 h-screen overflow-y-auto pb-8">
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border/50 bg-background/80 backdrop-blur-xl sticky top-0 z-20">
-          <Logo />
+          <div onClick={() => window.location.reload()} className="cursor-pointer">
+            <Logo />
+          </div>
           <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20">
             Step {currentStep}/10
           </Badge>
@@ -354,20 +354,20 @@ export function OwnerSetupPage() {
             className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-sm mb-8"
           >
             {currentStep === 2 && (
-              <div className="space-y-6">
-                <div className="space-y-1.5">
-                  <Label>Full Name (As per ID)</Label>
-                  <Input value={formData.personal.fullName} onChange={(e) => updateSection('personal', 'fullName', e.target.value)} placeholder="John Doe" className="h-11 rounded-xl" />
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Full Name (As per ID)</Label>
+                  <Input value={formData.personal.fullName} onChange={(e) => updateSection('personal', 'fullName', e.target.value)} placeholder="John Doe" className="h-9 rounded-xl text-sm" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <Label>Date of Birth</Label>
-                    <Input type="date" value={formData.personal.dob} onChange={(e) => updateSection('personal', 'dob', e.target.value)} className="h-11 rounded-xl" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Date of Birth</Label>
+                    <Input type="date" value={formData.personal.dob} onChange={(e) => updateSection('personal', 'dob', e.target.value)} className="h-9 rounded-xl text-sm" />
                   </div>
-                  <div className="space-y-1.5">
-                    <Label>Gender</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Gender</Label>
                     <Select value={formData.personal.gender} onValueChange={(val) => updateSection('personal', 'gender', val)}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Gender" /></SelectTrigger>
+                      <SelectTrigger className="h-9 rounded-xl text-sm"><SelectValue placeholder="Select Gender" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="male">Male</SelectItem>
                         <SelectItem value="female">Female</SelectItem>
@@ -378,16 +378,16 @@ export function OwnerSetupPage() {
                 </div>
                 <FileUpload label="Profile Photo (Optional)" file={formData.personal.profilePhoto} onUpload={(f) => updateSection('personal', 'profilePhoto', f)} onRemove={() => updateSection('personal', 'profilePhoto', null)} />
 
-                <div className="space-y-4 pt-4 border-t border-border/50">
-                  <h3 className="font-semibold text-sm">Residential Address</h3>
-                  <div className="space-y-1.5">
-                    <Label>Complete Address</Label>
-                    <Textarea value={formData.personal.address} onChange={(e) => updateSection('personal', 'address', e.target.value)} placeholder="House/Flat No., Building Name, Street" className="rounded-xl min-h-[80px]" />
+                <div className="space-y-3 pt-3 border-t border-border/50">
+                  <h3 className="font-semibold text-xs">Residential Address</h3>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Complete Address</Label>
+                    <Textarea value={formData.personal.address} onChange={(e) => updateSection('personal', 'address', e.target.value)} placeholder="House/Flat No., Building Name, Street" className="rounded-xl min-h-[60px] text-sm" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-1.5"><Label>City</Label><Input value={formData.personal.city} onChange={(e) => updateSection('personal', 'city', e.target.value)} className="h-11 rounded-xl" /></div>
-                    <div className="space-y-1.5"><Label>State</Label><Input value={formData.personal.state} onChange={(e) => updateSection('personal', 'state', e.target.value)} className="h-11 rounded-xl" /></div>
-                    <div className="space-y-1.5"><Label>Pincode</Label><Input value={formData.personal.pincode} onChange={(e) => updateSection('personal', 'pincode', e.target.value)} className="h-11 rounded-xl" /></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1"><Label className="text-xs">City</Label><Input value={formData.personal.city} onChange={(e) => updateSection('personal', 'city', e.target.value)} className="h-9 rounded-xl text-sm" /></div>
+                    <div className="space-y-1"><Label className="text-xs">State</Label><Input value={formData.personal.state} onChange={(e) => updateSection('personal', 'state', e.target.value)} className="h-9 rounded-xl text-sm" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Pincode</Label><Input value={formData.personal.pincode} onChange={(e) => updateSection('personal', 'pincode', e.target.value)} className="h-9 rounded-xl text-sm" /></div>
                   </div>
                 </div>
               </div>
@@ -437,8 +437,11 @@ export function OwnerSetupPage() {
                   <FileUpload label="Aadhaar Card (Front) *" file={formData.identity.aadhaarFront} onUpload={(f) => updateSection('identity', 'aadhaarFront', f)} onRemove={() => updateSection('identity', 'aadhaarFront', null)} />
                   <FileUpload label="Aadhaar Card (Back) *" file={formData.identity.aadhaarBack} onUpload={(f) => updateSection('identity', 'aadhaarBack', f)} onRemove={() => updateSection('identity', 'aadhaarBack', null)} />
                 </div>
-                <FileUpload label="PAN Card *" file={formData.identity.panCard} onUpload={(f) => updateSection('identity', 'panCard', f)} onRemove={() => updateSection('identity', 'panCard', null)} />
-                <FileUpload label="Selfie with Aadhaar (Optional)" hint="Hold your Aadhaar card near your face" file={formData.identity.selfie} onUpload={(f) => updateSection('identity', 'selfie', f)} onRemove={() => updateSection('identity', 'selfie', null)} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FileUpload label="PAN Card *" file={formData.identity.panCard} onUpload={(f) => updateSection('identity', 'panCard', f)} onRemove={() => updateSection('identity', 'panCard', null)} />
+                  <FileUpload label="Electric Bill *" file={formData.identity.electricBill} onUpload={(f) => updateSection('identity', 'electricBill', f)} onRemove={() => updateSection('identity', 'electricBill', null)} />
+                </div>
+                <FileUpload label="Rental Land Agreement (Optional)" hint="Upload your rental or lease agreement if applicable" file={formData.identity.rentalAgreement} onUpload={(f) => updateSection('identity', 'rentalAgreement', f)} onRemove={() => updateSection('identity', 'rentalAgreement', null)} />
               </div>
             )}
 

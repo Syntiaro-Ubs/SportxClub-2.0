@@ -263,7 +263,7 @@ export function MobileAppBar() {
                 {menuItems.map((item) => {
                   const Icon = item.icon;
                   const itemContent = (
-                    <div className="flex items-center justify-between w-full py-3 px-1 group transition-colors duration-150">
+                    <div className="flex items-center justify-between w-full py-1.5 px-1 group transition-colors duration-150">
                       <div className="flex items-center gap-3">
                         {Icon && (
                           <Icon className="h-5 w-5 text-primary" />
