@@ -33,6 +33,7 @@ import { Separator } from "../components/ui/separator";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { toast } from "sonner";
 import { cn } from "../components/ui/utils";
+import { adminApi } from "../services/admin-api";
 
 const asset = (path) => `/assets${path}`;
 
@@ -185,12 +186,36 @@ export function Payment() {
     return null; // Return null while redirecting
   }
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      const formattedDate = formatBookingDate(booking.date);
+      const bookingPayload = {
+        booking_code: `SX-${Date.now().toString().slice(-6)}`,
+        user_name: currentUser?.fullName || "Website Customer",
+        user_email: currentUser?.email || "customer@example.com",
+        turf_name: booking.venue || "Sports Turf",
+        date: formattedDate,
+        time_slot: booking.time,
+        slot_time: booking.time,
+        amount: total,
+        status: "Confirmed",
+        payment_method: paymentMethod.toUpperCase(),
+      };
 
-      // Save last booking details for booking-success page
+      await adminApi.create("bookings", bookingPayload);
+
+      const paymentPayload = {
+        transaction_id: `TXN-${Date.now().toString().slice(-6)}`,
+        user_name: currentUser?.fullName || "Website Customer",
+        turf_name: booking.venue || "Sports Turf",
+        amount: total,
+        payment_method: paymentMethod.toUpperCase(),
+        status: "Success",
+      };
+
+      await adminApi.create("payments", paymentPayload);
+
       const hasTeammates = teammates.length > 0;
       const numPlayers = teammates.length + 1;
       const finalPrice = total;
@@ -200,7 +225,7 @@ export function Payment() {
         paymentMode: hasTeammates ? "split" : "full",
         costPerPlayer: costPer,
         totalPrice: finalPrice,
-        selectedDate: formatBookingDate(booking.date),
+        selectedDate: formattedDate,
         startTime: booking.time,
         playHours: 1,
         venue: {
@@ -221,9 +246,14 @@ export function Payment() {
 
       sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(successBookingData));
 
-      toast.success("Booking confirmed! Check your email for details.");
+      toast.success("Booking confirmed and saved to database!");
       navigate("/booking-success");
-    }, 2000);
+    } catch (err) {
+      console.error("Payment & Booking submission error:", err);
+      toast.error("Failed to save booking. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
 

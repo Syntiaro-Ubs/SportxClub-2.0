@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -50,6 +50,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../components/ui/dropdown-menu";
+import { adminApi } from "../../services/admin-api";
+import { turfService } from "../../services/turf.service";
 
 const JOB_ROLES = ["Manager", "Receptionist", "Maintenance", "Security", "Coach"];
 const MOCK_TURFS = ["Cricket Ground 1", "Cricket Ground 2", "Premium Football Turf"];
@@ -79,48 +81,62 @@ const ROLE_PERMISSIONS_MAP = {
 };
 
 export function StaffManagement() {
-  const [staffList, setStaffList] = useState([
-    {
-      id: "1",
-      firstName: "Rahul",
-      lastName: "Sharma",
-      email: "rahul@sportxclub.com",
-      phone: "+91 9876543210",
-      password: "password123",
-      role: "Manager",
-      turf: "Cricket Ground 1",
-      isActive: true,
-      permissions: ALL_PERMISSION_IDS,
-    },
-    {
-      id: "2",
-      firstName: "Amit",
-      lastName: "Patel",
-      email: "amit@sportxclub.com",
-      phone: "+91 9123456789",
-      password: "password123",
-      role: "Maintenance",
-      turf: "Premium Football Turf",
-      isActive: true,
-      permissions: ["dashboard", "turfs", "calendar"],
-    },
-    {
-      id: "3",
-      firstName: "Sneha",
-      lastName: "Gupta",
-      email: "sneha@sportxclub.com",
-      phone: "+91 9988776655",
-      password: "password123",
-      role: "Receptionist",
-      turf: "Cricket Ground 2",
-      isActive: false,
-      permissions: ["dashboard", "bookings", "calendar", "turfs"],
-    },
-  ]);
-
+  const [staffList, setStaffList] = useState([]);
+  const [availableTurfs, setAvailableTurfs] = useState(MOCK_TURFS);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      const [dbStaff, dbTurfs] = await Promise.all([
+        adminApi.getAll("staff").catch(() => []),
+        turfService.getAll().catch(() => []),
+      ]);
+
+      if (Array.isArray(dbTurfs) && dbTurfs.length > 0) {
+        const names = Array.from(new Set(dbTurfs.map((t) => t.name).filter(Boolean)));
+        if (names.length > 0) setAvailableTurfs(names);
+      }
+
+      const mapped = (dbStaff || []).map((s) => {
+        let perms = [];
+        try {
+          perms = typeof s.permissions === "string" ? JSON.parse(s.permissions) : (s.permissions || []);
+        } catch (e) {
+          perms = s.permissions || [];
+        }
+        let turfsArr = [];
+        try {
+          turfsArr = typeof s.turfs === "string" ? JSON.parse(s.turfs) : (s.turfs || [s.turf]);
+        } catch (e) {
+          turfsArr = [s.turf || "Cricket Ground 1"];
+        }
+
+        return {
+          id: s.id,
+          firstName: s.first_name || s.firstName || "",
+          lastName: s.last_name || s.lastName || "",
+          email: s.email || "",
+          phone: s.phone || "",
+          password: s.password || "password123",
+          role: s.role || "Receptionist",
+          turf: s.turf || turfsArr[0] || "Cricket Ground 1",
+          turfs: turfsArr,
+          isActive: s.is_active !== undefined ? Boolean(s.is_active) : true,
+          permissions: perms,
+        };
+      });
+
+      setStaffList(mapped);
+    } catch (err) {
+      console.error("Error fetching staff data:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -163,14 +179,15 @@ export function StaffManagement() {
   };
 
   const handleOpenModal = (staff = null) => {
+    const defaultTurf = availableTurfs[0] || MOCK_TURFS[0];
     if (staff) {
       setEditingStaff(staff);
-      const existingTurfs = Array.isArray(staff.turfs) ? staff.turfs : (staff.turf ? [staff.turf] : [MOCK_TURFS[0]]);
+      const existingTurfs = Array.isArray(staff.turfs) ? staff.turfs : (staff.turf ? [staff.turf] : [defaultTurf]);
       setFormData({
         ...staff,
-        password: staff.password || "••••••••",
+        password: staff.password || "password123",
         turfs: existingTurfs,
-        turf: existingTurfs[0] || staff.turf || MOCK_TURFS[0],
+        turf: existingTurfs[0] || staff.turf || defaultTurf,
         permissions: staff.permissions || ROLE_PERMISSIONS_MAP[staff.role] || ["dashboard", "bookings"],
       });
     } else {
@@ -180,17 +197,17 @@ export function StaffManagement() {
         lastName: "",
         email: "",
         password: "",
-        role: "",
-        turf: MOCK_TURFS[0],
-        turfs: [MOCK_TURFS[0]],
+        role: "Receptionist",
+        turf: defaultTurf,
+        turfs: [defaultTurf],
         isActive: true,
-        permissions: ["dashboard", "bookings"],
+        permissions: ROLE_PERMISSIONS_MAP["Receptionist"] || ["dashboard", "bookings"],
       });
     }
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const selectedTurfs = Array.isArray(formData.turfs) && formData.turfs.length > 0 ? formData.turfs : (formData.turf ? [formData.turf] : []);
@@ -200,45 +217,57 @@ export function StaffManagement() {
       return;
     }
 
-    if (editingStaff) {
-      const updated = staffList.map((s) => (s.id === editingStaff.id ? { ...formData, id: s.id } : s));
-      setStaffList(updated);
-      localStorage.setItem("staffList", JSON.stringify(updated));
-      toast.success("Staff details updated successfully.");
-    } else {
-      const newStaff = {
-        ...formData,
-        id: Math.random().toString(36).substr(2, 9),
-      };
-      const updated = [newStaff, ...staffList];
-      setStaffList(updated);
-      localStorage.setItem("staffList", JSON.stringify(updated));
-      toast.success("New staff added successfully.");
-    }
+    const payload = {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      role: formData.role,
+      turf: selectedTurfs[0] || "",
+      turfs: JSON.stringify(selectedTurfs),
+      is_active: formData.isActive ? 1 : 0,
+      permissions: JSON.stringify(formData.permissions || []),
+    };
 
-    setIsModalOpen(false);
-  };
-
-  const handleDelete = (id) => {
-    if (confirm("Are you sure you want to remove this staff member?")) {
-      const updated = staffList.filter((s) => s.id !== id);
-      setStaffList(updated);
-      localStorage.setItem("staffList", JSON.stringify(updated));
-      toast.success("Staff removed successfully.");
-    }
-  };
-
-  const toggleStatus = (id) => {
-    const updated = staffList.map((s) => {
-      if (s.id === id) {
-        const newStatus = !s.isActive;
-        toast.info(`${s.firstName} is now ${newStatus ? 'Active' : 'Inactive'}`);
-        return { ...s, isActive: newStatus };
+    try {
+      if (editingStaff) {
+        await adminApi.update("staff", editingStaff.id, payload);
+        toast.success("Staff details updated successfully.");
+      } else {
+        await adminApi.create("staff", payload);
+        toast.success("New staff created successfully.");
       }
-      return s;
-    });
-    setStaffList(updated);
-    localStorage.setItem("staffList", JSON.stringify(updated));
+      setIsModalOpen(false);
+      fetchData();
+    } catch (err) {
+      toast.error(err.message || "Failed to save staff");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (confirm("Are you sure you want to remove this staff member?")) {
+      try {
+        await adminApi.delete("staff", id);
+        toast.success("Staff removed successfully.");
+        fetchData();
+      } catch (err) {
+        toast.error("Failed to delete staff");
+      }
+    }
+  };
+
+  const toggleStatus = async (id) => {
+    const target = staffList.find((s) => s.id === id);
+    if (!target) return;
+    const newStatus = !target.isActive;
+    try {
+      await adminApi.update("staff", id, { is_active: newStatus ? 1 : 0 });
+      toast.info(`${target.firstName} is now ${newStatus ? 'Active' : 'Inactive'}`);
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to update staff status");
+    }
   };
 
   return (
@@ -467,7 +496,7 @@ export function StaffManagement() {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56 p-1.5 rounded-xl border border-border/60 shadow-xl space-y-1 bg-popover" align="start">
-                    {MOCK_TURFS.map((turf) => {
+                    {availableTurfs.map((turf) => {
                       const currentTurfs = Array.isArray(formData.turfs) ? formData.turfs : (formData.turf ? [formData.turf] : []);
                       const isChecked = currentTurfs.includes(turf);
                       return (

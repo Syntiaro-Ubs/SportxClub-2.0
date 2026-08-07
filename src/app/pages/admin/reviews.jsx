@@ -1,36 +1,93 @@
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { Search, Plus, Filter } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
+import { Search, Trash2, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
+import { adminApi } from "../../services/admin-api";
 
 export function AdminReviews() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const loadReviews = async () => {
+    setLoading(true);
+    try {
+      const data = await adminApi.getAll("reviews");
+      setReviews(data);
+    } catch (err) {
+      console.warn("Failed loading reviews from MySQL:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReviews();
+  }, []);
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const updated = await adminApi.update("reviews", id, { status: newStatus });
+      setReviews(reviews.map((r) => (r.id === id ? updated : r)));
+    } catch (err) {
+      alert("Error updating review status: " + err.message);
+    }
+  };
+
+  const handleDeleteReview = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this review from MySQL?")) return;
+    try {
+      await adminApi.delete("reviews", id);
+      setReviews(reviews.filter((r) => r.id !== id));
+    } catch (err) {
+      alert("Error deleting review: " + err.message);
+    }
+  };
+
+  const filteredReviews = reviews.filter(
+    (r) =>
+      r.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.turf_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.comment?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }} 
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">User Reviews</h1>
-          <p className="text-muted-foreground">Moderate platform reviews.</p>
+          <p className="text-muted-foreground">Moderate user reviews dynamically in MySQL (`reviews` table).</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline"><Filter className="h-4 w-4 mr-2" /> Filter</Button>
-          <Button><Plus className="h-4 w-4 mr-2" /> Add New</Button>
+          <Button variant="outline" size="sm" onClick={loadReviews} disabled={loading} className="gap-2">
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} /> Refresh
+          </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle>Overview</CardTitle>
+            <CardTitle>Reviews Directory ({filteredReviews.length})</CardTitle>
             <div className="relative w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search records..." className="pl-9 bg-muted/50" />
+              <Input
+                placeholder="Search user, turf, comment..."
+                className="pl-9 bg-muted/50"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           </div>
         </CardHeader>
@@ -44,37 +101,55 @@ export function AdminReviews() {
                   <TableHead>Rating</TableHead>
                   <TableHead>Comment</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell>Amit K.</TableCell>
-                  <TableCell>Green Field</TableCell>
-                  <TableCell>5/5</TableCell>
-                  <TableCell>Excellent turf quality!</TableCell>
-                  <TableCell><Badge variant="secondary" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border-none font-medium">Published</Badge></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Suresh R.</TableCell>
-                  <TableCell>Box Hub</TableCell>
-                  <TableCell>2/5</TableCell>
-                  <TableCell>Lighting was very poor.</TableCell>
-                  <TableCell><Badge variant="secondary" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border-none font-medium">Published</Badge></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Priya S.</TableCell>
-                  <TableCell>Elite Club</TableCell>
-                  <TableCell>4/5</TableCell>
-                  <TableCell>Good overall.</TableCell>
-                  <TableCell><Badge variant="secondary" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border-none font-medium">Published</Badge></TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Ravi T.</TableCell>
-                  <TableCell>Super Turf</TableCell>
-                  <TableCell>1/5</TableCell>
-                  <TableCell>Inappropriate language.</TableCell>
-                  <TableCell><Badge variant="secondary" className="bg-rose-500/15 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25 border-none font-medium">Flagged</Badge></TableCell>
-                </TableRow>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Loading reviews from MySQL...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredReviews.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No reviews found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredReviews.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-semibold">{r.user_name}</TableCell>
+                      <TableCell>{r.turf_name}</TableCell>
+                      <TableCell className="text-amber-500 font-bold">★ {r.rating} / 5</TableCell>
+                      <TableCell className="text-xs max-w-xs text-muted-foreground italic">"{r.comment}"</TableCell>
+                      <TableCell>
+                        <Select value={r.status} onValueChange={(val) => handleStatusChange(r.id, val)}>
+                          <SelectTrigger className={`w-[120px] h-8 text-xs border ${
+                            r.status === "Approved"
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                              : r.status === "Pending"
+                              ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                              : "bg-destructive/10 text-destructive border-destructive/20"
+                          }`}>
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Approved">Approved</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                            <SelectItem value="Flagged">Flagged</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDeleteReview(r.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

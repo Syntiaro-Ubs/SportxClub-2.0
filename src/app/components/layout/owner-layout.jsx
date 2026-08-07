@@ -122,12 +122,28 @@ export function OwnerLayout() {
   };
 
   const visibleNavigation = useMemo(() => {
-    // If Super Admin/Owner or no restricted permissions array, show all 11 pages
-    if (!activeProfile || activeProfile.role === "owner" || !activeProfile.permissions) {
+    if (!activeProfile) return ownerNavigation;
+    const isOwnerOrAdmin = activeProfile.role === "owner" || activeProfile.role === "Turf Owner" || activeProfile.role === "Admin";
+    if (isOwnerOrAdmin || !activeProfile.permissions || !Array.isArray(activeProfile.permissions)) {
       return ownerNavigation;
     }
     return ownerNavigation.filter((item) => activeProfile.permissions.includes(item.permissionKey));
   }, [activeProfile]);
+
+  useEffect(() => {
+    if (activeProfile && activeProfile.permissions && Array.isArray(activeProfile.permissions) && activeProfile.permissions.length > 0) {
+      const isOwnerOrAdmin = activeProfile.role === "owner" || activeProfile.role === "Turf Owner" || activeProfile.role === "Admin";
+      if (!isOwnerOrAdmin) {
+        const currentItem = ownerNavigation.find((item) => item.href === location.pathname);
+        if (currentItem && !activeProfile.permissions.includes(currentItem.permissionKey)) {
+          const firstAllowed = ownerNavigation.find((item) => activeProfile.permissions.includes(item.permissionKey));
+          if (firstAllowed) {
+            navigate(firstAllowed.href, { replace: true });
+          }
+        }
+      }
+    }
+  }, [location.pathname, activeProfile, navigate]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card/50 backdrop-blur-2xl">

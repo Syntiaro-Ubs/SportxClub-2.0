@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
+import { Link, useNavigate, useLocation, useParams } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "../providers/auth-provider";
 import { useTheme } from "next-themes";
@@ -33,6 +33,7 @@ import {
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { adminApi } from "../services/admin-api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { cn } from "../components/ui/utils";
@@ -170,28 +171,41 @@ export function VenueDetails() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
 
   const passedVenue = location.state?.venue;
-  const venue = passedVenue
+  const [fetchedTurf, setFetchedTurf] = useState(null);
+
+  useEffect(() => {
+    if (!passedVenue && id) {
+      adminApi.getAll("turfs").then((turfs) => {
+        const found = (turfs || []).find((t) => String(t.id) === String(id));
+        if (found) setFetchedTurf(found);
+      }).catch(console.error);
+    }
+  }, [id, passedVenue]);
+
+  const activeVenueData = passedVenue || fetchedTurf;
+  const venue = activeVenueData
     ? {
-      name: passedVenue.name,
-      location: passedVenue.location,
-      address: `${typeof passedVenue.location === 'object' ? (passedVenue.location?.address || passedVenue.location?.city || '') : (passedVenue.location || '')}, Mumbai, Maharashtra`,
+      name: activeVenueData.name,
+      location: activeVenueData.location,
+      address: `${typeof activeVenueData.location === 'object' ? (activeVenueData.location?.address || activeVenueData.location?.city || '') : (activeVenueData.location || '')}, Mumbai, Maharashtra`,
       rating:
-        typeof passedVenue.rating === "number"
-          ? passedVenue.rating
-          : parseFloat(passedVenue.rating) || 4.9,
-      reviews: passedVenue.reviews || 128,
+        typeof activeVenueData.rating === "number"
+          ? activeVenueData.rating
+          : parseFloat(activeVenueData.rating) || 4.9,
+      reviews: activeVenueData.reviews || 128,
       price:
-        typeof passedVenue.price === "number"
-          ? passedVenue.price
+        typeof activeVenueData.price === "number"
+          ? activeVenueData.price
           : parseInt(
-            String(passedVenue.price).replace(/[^0-9]/g, "") || "1200",
+            String(activeVenueData.price || activeVenueData.price_per_hour).replace(/[^0-9]/g, "") || "1200",
           ),
-      sport: passedVenue.sport?.split("•")[0]?.trim() || "Football",
-      description: `${passedVenue.name} is built for fast discovery and confident booking. The venue combines FIFA-grade turfing, pro floodlighting, verified access, and 100% refund-safe terms.`,
-      image: passedVenue.image,
-      area: passedVenue.area || "8,500 Sq. Ft. (120ft × 70ft)",
+      sport: (activeVenueData.sport || activeVenueData.sport_type || activeVenueData.sportType || "Football").split("•")[0]?.trim(),
+      description: activeVenueData.description || `${activeVenueData.name} is built for fast discovery and confident booking.`,
+      image: activeVenueData.image_url || activeVenueData.image || "/assets/venues/turf-1.webp",
+      area: activeVenueData.area || "8,500 Sq. Ft. (120ft × 70ft)",
     }
     : defaultVenue;
 
@@ -230,12 +244,65 @@ export function VenueDetails() {
   const [sortBy, setSortBy] = useState("recent");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
   const [showAllSlots, setShowAllSlots] = useState(false);
+  const [dbBookings, setDbBookings] = useState([]);
+
+  useEffect(() => {
+    async function loadBookings() {
+      try {
+        const data = await adminApi.getAll("bookings");
+        setDbBookings(data || []);
+      } catch (err) {
+        console.error("Error loading bookings in venue-details:", err);
+      }
+    }
+    loadBookings();
+  }, []);
+
   const isToday = selectedDate === new Date().toISOString().split("T")[0];
   const venueOpeningHour = venue.openingHour || 6;
   const venueClosingHour = venue.closingHour || 23;
 
   const baseTimeSlots = useMemo(() => {
     const slots = [];
+    const targetVenueName = String(venue.name || "").toLowerCase().trim();
+
+    // Filter active bookings for this venue & selectedDate
+    const venueBookings = dbBookings.filter((b) => {
+      const bVenueName = String(b.turf_name || b.venue || "").toLowerCase().trim();
+      const isSameVenue = !targetVenueName || bVenueName.includes(targetVenueName) || targetVenueName.includes(bVenueName);
+      const isNotCancelled = String(b.status || "").toLowerCase() !== "cancelled";
+
+      const bDate = String(b.date || "").toLowerCase().trim();
+      const sDate = String(selectedDate || "").toLowerCase().trim();
+
+      // Timezone-safe Date Comparison
+      let matchesDate = false;
+      if (bDate === sDate || (bDate && sDate && (bDate.includes(sDate) || sDate.includes(bDate)))) {
+        matchesDate = true;
+      } else {
+        const parseYMD = (str) => {
+          if (!str) return null;
+          const m = str.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+          if (m) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+          const d = new Date(str);
+          if (!isNaN(d.getTime())) {
+            const y = d.getFullYear();
+            const mo = String(d.getMonth() + 1).padStart(2, '0');
+            const da = String(d.getDate()).padStart(2, '0');
+            return `${y}-${mo}-${da}`;
+          }
+          return null;
+        };
+        const y1 = parseYMD(bDate);
+        const y2 = parseYMD(sDate);
+        if (y1 && y2 && y1 === y2) {
+          matchesDate = true;
+        }
+      }
+
+      return isSameVenue && isNotCancelled && matchesDate;
+    });
+
     for (let h = venueOpeningHour; h < venueClosingHour; h++) {
       const formatHour = (hourNum) => {
         let h12 = hourNum % 12;
@@ -243,9 +310,52 @@ export function VenueDetails() {
         const ampm = hourNum >= 12 && hourNum < 24 ? "PM" : "AM";
         return `${String(h12).padStart(2, "0")}:00 ${ampm}`;
       };
-      let bookedBy = undefined;
-      if (h === 17) bookedBy = "Squad Alpha";
-      if (h === 22) bookedBy = "Night League";
+
+      const matchingBkg = venueBookings.find((b) => {
+        const bTime = String(b.time_slot || b.slot_time || b.slotTime || b.time || "").toLowerCase().trim();
+        if (!bTime) return false;
+
+        const rangeMatch = bTime.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+        if (rangeMatch) {
+          let startH = parseInt(rangeMatch[1], 10);
+          let startPeriod = rangeMatch[3] ? rangeMatch[3].toLowerCase() : null;
+          let endH = parseInt(rangeMatch[4], 10);
+          let endPeriod = rangeMatch[6] ? rangeMatch[6].toLowerCase() : null;
+
+          if (!endPeriod) {
+            if (startPeriod) endPeriod = startPeriod;
+            else endPeriod = (bTime.includes("pm") && !bTime.includes("am")) ? "pm" : "am";
+          }
+          if (!startPeriod) {
+            if (endPeriod === "pm" && startH <= endH) startPeriod = "pm";
+            else if (endPeriod === "pm" && startH > endH) startPeriod = "am";
+            else startPeriod = "am";
+          }
+
+          if (startPeriod === "pm" && startH < 12) startH += 12;
+          if (startPeriod === "am" && startH === 12) startH = 0;
+
+          if (endPeriod === "pm" && endH < 12) endH += 12;
+          if (endPeriod === "am" && endH === 12) endH = 0;
+
+          if (endH <= startH) endH += 24;
+
+          return h >= startH && h < endH;
+        }
+
+        const singleMatch = bTime.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+        if (singleMatch) {
+          let startH = parseInt(singleMatch[1], 10);
+          const period = singleMatch[3] ? singleMatch[3].toLowerCase() : (bTime.includes("pm") ? "pm" : "am");
+          if (period === "pm" && startH < 12) startH += 12;
+          if (period === "am" && startH === 12) startH = 0;
+          return h === startH;
+        }
+
+        return false;
+      });
+
+      let bookedBy = matchingBkg ? (matchingBkg.user_name || "Booked Player") : undefined;
 
       slots.push({
         startHour: h,
@@ -255,7 +365,7 @@ export function VenueDetails() {
       });
     }
     return slots;
-  }, [venueOpeningHour, venueClosingHour]);
+  }, [venueOpeningHour, venueClosingHour, dbBookings, venue.name, selectedDate]);
 
   const currentDate = new Date();
   const currentLiveHour = currentDate.getHours();
@@ -1273,7 +1383,7 @@ export function VenueDetails() {
                           <button
                             key={slotHour}
                             type="button"
-                            disabled={overlaps || outOfBounds}
+                            disabled={cannotSelect}
                             onClick={() => !cannotSelect && setStartTime(hourToTimeStr(slotHour))}
                             className={cn(
                               "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative",

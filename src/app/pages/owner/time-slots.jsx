@@ -57,6 +57,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "../../components/ui/popover";
+import { turfService } from "../../services/turf.service";
+import { adminApi } from "../../services/admin-api";
 
 // TODO: Replace with actual auth context ownerId
 const OWNER_ID = "owner-123";
@@ -248,87 +250,120 @@ export function TimeSlots() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const savedMockTurfs = JSON.parse(localStorage.getItem("mock_turfs") || "[]");
-        const approvedStr = localStorage.getItem("approved_turfs");
+        const [dbTurfs, dbBookings] = await Promise.all([
+          turfService.getAll(),
+          adminApi.getAll("bookings").catch(() => []),
+        ]);
 
-        let baseTurfs = [
-          {
-            id: '1',
-            name: 'Cricket Ground 1',
-            location: 'Downtown Sports Complex',
-            sportType: 'Cricket',
-            status: 'Active',
-            slots: generateMockSlots(),
-          },
-          {
-            id: '2',
-            name: 'Cricket Ground 2',
-            location: 'Downtown Sports Complex',
-            sportType: 'Cricket',
-            status: 'Active',
-            slots: generateMockSlots(),
-          },
-          {
-            id: '3',
-            name: 'Premium Football Turf',
-            location: 'Downtown Sports Complex',
-            sportType: 'Football',
-            status: 'Closed',
-            slots: generateMockSlots(),
-          }
-        ];
+        const selectedYmd = format(selectedDate, "yyyy-MM-dd").toLowerCase();
+        const selectedMmmd = format(selectedDate, "MMM d, yyyy").toLowerCase();
+        const selectedMmmmd = format(selectedDate, "MMMM d, yyyy").toLowerCase();
 
-        if (approvedStr) {
-          const approved = JSON.parse(approvedStr);
-          if (approved.length > 0) {
-            baseTurfs = approved.map(item => ({
-              id: String(item.id),
-              name: item.turf?.name || item.name || "Sports Turf",
-              location: item.location?.address ? `${item.location.address}, ${item.location.city}` : (item.location || 'Downtown Sports Complex'),
-              sportType: item.turf?.sports && item.turf.sports.length > 0 ? item.turf.sports.join(" & ") : (item.sportType || "Cricket"),
-              status: item.status || 'Active',
-              slots: generateMockSlots(),
-            }));
-          }
-        }
+        const mappedTurfs = (dbTurfs || []).map((t) => {
+          const turfBookings = (dbBookings || []).filter((b) => {
+            const matchesTurf = String(b.turf_id) === String(t.id) ||
+              String(b.turf_name || b.venue || "").toLowerCase().trim().includes(String(t.name || "").toLowerCase().trim()) ||
+              String(t.name || "").toLowerCase().trim().includes(String(b.turf_name || b.venue || "").toLowerCase().trim());
+            const statusLower = String(b.status || "").toLowerCase();
+            const isActiveBooking = statusLower !== "cancelled";
 
-        // Merge savedMockTurfs edits into baseTurfs
-        const allSaved = [...savedMockTurfs];
-        const finalTurfs = baseTurfs.map(bt => {
-          const match = allSaved.find(s => String(s.id) === String(bt.id));
-          if (match) {
-            return {
-              ...bt,
-              name: match.name || bt.name,
-              location: match.location || bt.location,
-              sportType: match.sportType || bt.sportType,
-              status: match.status || bt.status,
-              price: match.price || bt.price,
-            };
-          }
-          return bt;
-        });
+            const bDate = String(b.date || "").toLowerCase().trim();
+            let matchesDate = bDate.includes(selectedYmd) ||
+              bDate.includes(selectedMmmd) ||
+              bDate.includes(selectedMmmmd) ||
+              (bDate === "today" && format(new Date(), "yyyy-MM-dd") === selectedYmd);
 
-        // Append any new custom created turfs
-        allSaved.forEach(s => {
-          if (!finalTurfs.some(ft => String(ft.id) === String(s.id))) {
-            finalTurfs.push({
-              id: String(s.id),
-              name: s.name,
-              location: s.location || 'Downtown Sports Complex',
-              sportType: s.sportType || 'Cricket',
-              status: s.status || 'Active',
-              slots: generateMockSlots(),
+            if (!matchesDate && bDate) {
+              const parsed = new Date(bDate);
+              if (!isNaN(parsed) && format(parsed, "yyyy-MM-dd") === selectedYmd) {
+                matchesDate = true;
+              }
+            }
+
+            return matchesTurf && isActiveBooking && matchesDate;
+          });
+
+          const slots = [];
+          for (let i = 6; i <= 22; i++) {
+            const timeStr = `${i.toString().padStart(2, '0')}:00`;
+
+            const matchingBooking = turfBookings.find((b) => {
+              const bTime = String(b.time_slot || b.slot_time || b.slotTime || b.time || "").toLowerCase().trim();
+              if (!bTime) return false;
+
+              // Check time range e.g. "03:00 pm - 04:00 pm", "12:00 pm - 01:00 pm", "03:00 pm - 04:00 pm (1 hr)"
+              const rangeMatch = bTime.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+              if (rangeMatch) {
+                let startH = parseInt(rangeMatch[1], 10);
+                let startPeriod = rangeMatch[3] ? rangeMatch[3].toLowerCase() : null;
+                let endH = parseInt(rangeMatch[4], 10);
+                let endPeriod = rangeMatch[6] ? rangeMatch[6].toLowerCase() : null;
+
+                if (!endPeriod) {
+                  if (startPeriod) endPeriod = startPeriod;
+                  else endPeriod = (bTime.includes("pm") && !bTime.includes("am")) ? "pm" : "am";
+                }
+                if (!startPeriod) {
+                  if (endPeriod === "pm" && startH <= endH) startPeriod = "pm";
+                  else if (endPeriod === "pm" && startH > endH) startPeriod = "am";
+                  else startPeriod = "am";
+                }
+
+                if (startPeriod === "pm" && startH < 12) startH += 12;
+                if (startPeriod === "am" && startH === 12) startH = 0;
+
+                if (endPeriod === "pm" && endH < 12) endH += 12;
+                if (endPeriod === "am" && endH === 12) endH = 0;
+
+                if (endH <= startH) endH += 24;
+
+                return i >= startH && i < endH;
+              }
+
+              // Single hour exact match (e.g. "15:00")
+              const singleMatch = bTime.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+              if (singleMatch) {
+                let startH = parseInt(singleMatch[1], 10);
+                const period = singleMatch[3] ? singleMatch[3].toLowerCase() : (bTime.includes("pm") ? "pm" : "am");
+                if (period === "pm" && startH < 12) startH += 12;
+                if (period === "am" && startH === 12) startH = 0;
+                return i === startH;
+              }
+
+              return false;
+            });
+
+            slots.push({
+              time: timeStr,
+              status: matchingBooking ? "Booked" : "Available",
+              price: i >= 17 ? Math.round((Number(t.price_per_hour || t.price || 1200)) * 1.1) : Number(t.price_per_hour || t.price || 800),
+              bookingDetails: matchingBooking ? {
+                id: matchingBooking.id,
+                name: matchingBooking.user_name || matchingBooking.customerName || "Customer",
+                phone: matchingBooking.user_phone || matchingBooking.phone || "+91 98765 43210",
+                method: matchingBooking.payment_method || matchingBooking.payment_type || "Online",
+              } : null,
             });
           }
+
+          return {
+            id: String(t.id),
+            name: t.name,
+            location: typeof t.location === "object" ? (t.location?.city || t.location?.address || "Location unavailable") : t.location || "Location unavailable",
+            sportType: t.sport_type || t.sportType || "Football",
+            status: t.status || "Active",
+            price: Number(t.price_per_hour || t.price || 1200),
+            slots,
+          };
         });
 
-        setTurfs(finalTurfs);
-        if (!selectedTurfId && finalTurfs.length > 0) {
-          setSelectedTurfId(finalTurfs[0].id);
+        setTurfs(mappedTurfs);
+        if (!selectedTurfId && mappedTurfs.length > 0) {
+          setSelectedTurfId(mappedTurfs[0].id);
         }
       } catch (err) {
-        console.error("Failed to fetch turfs", err);
+        console.error("Failed to fetch turfs & bookings from MySQL", err);
+        setTurfs([]);
       } finally {
         setIsLoading(false);
       }
@@ -414,7 +449,7 @@ export function TimeSlots() {
     setHoveredSlotInfo(null);
   };
 
-  const handleBookingSubmit = (e) => {
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
     if (!selectedSlotForBooking) return;
 
@@ -423,32 +458,13 @@ export function TimeSlots() {
     let totalPrice = 0;
     const isBlocking = bookingActionType === "block";
 
-    // Simulate database update locally in state
-    const updatedTurfs = turfs.map(t => {
-      if (t.id === turf.id) {
-        const updatedSlots = [...t.slots];
-        for (let i = 0; i < playHours; i++) {
-          totalPrice += updatedSlots[slotIdx + i].price;
-          updatedSlots[slotIdx + i] = {
-            ...updatedSlots[slotIdx + i],
-            status: isBlocking ? 'Maintenance' : 'Booked',
-            blockedTimeRange: null
-          };
-        }
-        return { ...t, slots: updatedSlots };
+    for (let i = 0; i < playHours; i++) {
+      if (turf.slots[slotIdx + i]) {
+        totalPrice += turf.slots[slotIdx + i].price;
       }
-      return t;
-    });
-
-    setTurfs(updatedTurfs);
-
-    if (isBlocking) {
-      setIsBookingModalOpen(false);
-      toast.success(`Slot(s) successfully blocked!`);
-      return;
     }
 
-    const endTime = turf.slots[slotIdx + playHours - 1].time;
+    const endTime = turf.slots[slotIdx + playHours - 1]?.time || slot.time;
     const endHour = parseInt(endTime.split(':')[0]) + 1;
 
     const formatTime12 = (hour) => {
@@ -461,48 +477,69 @@ export function TimeSlots() {
     const startHour = parseInt(slot.time.split(':')[0]);
     const passTimeStr = `${formatTime12(startHour)} - ${formatTime12(endHour)}`;
 
-    // Generate boarding ticket details
-    const pass = {
-      id: "BKG" + Math.random().toString(36).substr(2, 6).toUpperCase(),
-      date: format(selectedDate, 'MMM dd, yyyy'),
-      time: passTimeStr,
-      turfName: turf.name,
-      location: turf.location,
-      price: totalPrice,
-      customerName: bookingDetails.customerName || "Walk-in Customer",
-      customerPhone: bookingDetails.customerPhone || "N/A",
-      paymentMethod: bookingDetails.paymentMethod
-    };
+    try {
+      const bookingPayload = {
+        booking_code: `SX-${Date.now().toString().slice(-6)}`,
+        turf_id: turf.id,
+        turf_name: turf.name,
+        user_name: bookingDetails.customerName || "Walk-in Customer",
+        user_phone: bookingDetails.customerPhone || "+91 98765 43210",
+        user_email: "walkin@example.com",
+        sport: turf.sportType || "Football",
+        time_slot: passTimeStr,
+        slot_time: passTimeStr,
+        date: format(selectedDate, "yyyy-MM-dd"),
+        amount: totalPrice,
+        status: isBlocking ? "Maintenance" : "Confirmed",
+        payment_method: (bookingDetails.paymentMethod || "CASH").toUpperCase(),
+        payment_type: (bookingDetails.paymentMethod || "CASH").toUpperCase(),
+      };
 
-    setGeneratedPass(pass);
-    setIsBookingModalOpen(false);
-    setIsPassModalOpen(true);
-    toast.success(`Booking created successfully for ${pass.customerName}!`);
+      const createdBooking = await adminApi.create("bookings", bookingPayload);
+
+      const pass = {
+        id: "BKG" + (createdBooking?.id || Math.random().toString(36).substr(2, 6).toUpperCase()),
+        date: format(selectedDate, 'MMM dd, yyyy'),
+        time: passTimeStr,
+        turfName: turf.name,
+        location: turf.location,
+        price: totalPrice,
+        customerName: bookingDetails.customerName || "Walk-in Customer",
+        customerPhone: bookingDetails.customerPhone || "N/A",
+        paymentMethod: bookingDetails.paymentMethod
+      };
+
+      setGeneratedPass(pass);
+      setIsBookingModalOpen(false);
+      setIsPassModalOpen(true);
+
+      window.dispatchEvent(new Event("storage"));
+      toast.success(`Booking created successfully for ${pass.customerName}!`);
+    } catch (err) {
+      console.error("Failed to save booking to MySQL", err);
+      toast.error("Failed to save booking. Please try again.");
+    }
   };
 
   // Release Slot Handler
-  const handleReleaseSlot = () => {
+  const handleReleaseSlot = async () => {
     if (!selectedSlotForRelease) return;
-    const { turf, slot, slotIdx } = selectedSlotForRelease;
+    const { slot } = selectedSlotForRelease;
 
-    const updatedTurfs = turfs.map(t => {
-      if (t.id === turf.id) {
-        const updatedSlots = [...t.slots];
-        updatedSlots[slotIdx] = {
-          ...updatedSlots[slotIdx],
-          status: 'Available',
-          blockedTimeRange: null,
-          blockedReason: null
-        };
-        return { ...t, slots: updatedSlots };
+    try {
+      if (slot.bookingDetails?.id) {
+        await adminApi.update("bookings", slot.bookingDetails.id, { status: "Cancelled" });
       }
-      return t;
-    });
 
-    setTurfs(updatedTurfs);
-    setIsReleaseModalOpen(false);
-    setSelectedSlotForRelease(null);
-    toast.success("Slot successfully released back to Available!");
+      setIsReleaseModalOpen(false);
+      setSelectedSlotForRelease(null);
+
+      window.dispatchEvent(new Event("storage"));
+      toast.success("Slot successfully released back to Available!");
+    } catch (err) {
+      console.error("Failed to release slot in MySQL", err);
+      toast.error("Failed to release slot. Please try again.");
+    }
   };
 
   // Helper: Convert time string and period into decimal hours (e.g. "10:15", "AM" -> 10.25)

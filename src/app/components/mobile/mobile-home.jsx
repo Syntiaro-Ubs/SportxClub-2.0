@@ -28,7 +28,7 @@ import { MobileAppBar, MobileBottomNav } from "./mobile-chrome";
 import { useAuth } from "../../providers/auth-provider";
 import { AppDownloadCTA } from "../home/AppDownloadCTA";
 import { GlobalFooter } from "../layout/GlobalFooter";
-import { demoVenues } from "../../pages/venue-booking";
+import { adminApi } from "../../services/admin-api";
 
 const asset = (path) => `/assets${path}`;
 
@@ -414,21 +414,30 @@ export function MobileHomePage() {
     return () => window.removeEventListener("preferredCityChanged", handleCityChange);
   }, []);
 
-  const nearbyTurfs = useMemo(() => {
-    const searchCity = city === "All" ? "Mumbai" : city;
-    let filtered = demoVenues.filter(v => v.location.toLowerCase().includes(searchCity.toLowerCase()));
-    if (filtered.length === 0) {
-      filtered = demoVenues.filter(v => v.location.toLowerCase().includes("mumbai"));
+  const [turfs, setTurfs] = useState([]);
+
+  useEffect(() => {
+    async function loadTurfs() {
+      try {
+        const data = await adminApi.getAll("turfs");
+        setTurfs(data || []);
+      } catch (err) {
+        console.error("Error loading turfs in mobile home:", err);
+      }
     }
-    return filtered.slice(0, 3).map((v, i) => ({
+    loadTurfs();
+  }, []);
+
+  const nearbyTurfs = useMemo(() => {
+    return turfs.slice(0, 5).map((v, i) => ({
       id: v.id,
       name: v.name,
-      sport: v.sports || "Football",
+      sport: v.sport_type || v.sportType || "Football",
       distance: `${(1.2 + i * 0.7).toFixed(1)} km`,
-      price: `₹${800 + i * 200}/hr`,
-      image: v.image,
+      price: `₹${v.price || 1500}/hr`,
+      image: v.image_url || v.image || "/assets/venues/turf-1.webp",
     }));
-  }, [city]);
+  }, [turfs]);
 
   const scrollRef = useRef(null);
   const isDown = useRef(false);

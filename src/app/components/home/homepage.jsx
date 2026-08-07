@@ -38,6 +38,8 @@ import {
 import { useIsMobile } from "../ui/use-mobile";
 
 import { Badge } from "../ui/badge";
+import { adminApi } from "../../services/admin-api";
+import { cmsService } from "../../services/cms-service";
 import { LocationModal } from "./LocationModal";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
@@ -1073,6 +1075,32 @@ export function RecommendedVenuesSection({ asSlider = false }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
   const scrollRef = useRef(null);
+  const [turfs, setTurfs] = useState([]);
+
+  useEffect(() => {
+    async function fetchTurfs() {
+      try {
+        const data = await adminApi.getAll("turfs");
+        setTurfs(data || []);
+      } catch (err) {
+        console.error("Error fetching turfs in homepage:", err);
+      }
+    }
+    fetchTurfs();
+  }, []);
+
+  const recommendedVenues = turfs.map((t) => ({
+    id: t.id,
+    name: t.name,
+    location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Complex"),
+    sport: (t.sport_type || t.sportType || "Football").toUpperCase(),
+    rating: String(t.rating || 4.8),
+    reviews: "45",
+    price: `₹${(Number(t.price || t.price_per_hour || 1500)).toLocaleString()}`,
+    unit: "/ hr",
+    badge: t.status === "Active" ? "VERIFIED" : "PROMOTED",
+    image: t.image_url || t.image || asset("/venues/champions_sports_arena_football.jpg"),
+  }));
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -1594,6 +1622,29 @@ export function SportsBackgroundAnimation() {
 
 export function SportsCategories() {
   const scrollRef = useRef(null);
+  const [dynamicSports, setDynamicSports] = useState([]);
+
+  useEffect(() => {
+    async function fetchSports() {
+      try {
+        const data = await cmsService.getSports();
+        if (data && data.length > 0) {
+          const mapped = data.map((s) => ({
+            name: s.name,
+            count: s.description || "1,200+ venues",
+            image: s.image_url || asset("/venues/new_football_turf_2.png"),
+            icon: s.icon,
+          }));
+          setDynamicSports(mapped);
+        }
+      } catch (err) {
+        console.error("Failed fetching dynamic CMS sports cards:", err);
+      }
+    }
+    fetchSports();
+  }, []);
+
+  const sportsToRender = dynamicSports.length > 0 ? dynamicSports : sports;
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -1628,7 +1679,7 @@ export function SportsCategories() {
             ref={scrollRef}
             className="flex snap-x snap-mandatory overflow-x-auto gap-2 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {sports.map((sport, index) => (
+            {sportsToRender.map((sport, index) => (
               <SportCard key={sport.name} index={index} {...sport} />
             ))}
           </div>
@@ -1647,6 +1698,37 @@ export function SportsCategories() {
 }
 
 export function DiscoveryRails() {
+  const [dynamicOffers, setDynamicOffers] = useState([]);
+  const [dynamicEvents, setDynamicEvents] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [offData, evtData] = await Promise.all([
+          cmsService.getOffers().catch(() => []),
+          cmsService.getEvents().catch(() => []),
+        ]);
+        if (offData && offData.length > 0) setDynamicOffers(offData);
+        if (evtData && evtData.length > 0) {
+          const mapped = evtData.map(e => ({
+            id: e.id,
+            title: e.title,
+            date: e.date,
+            location: e.location,
+            image: e.image_url
+          }));
+          setDynamicEvents(mapped);
+        }
+      } catch (err) {
+        console.error("Failed fetching DiscoveryRails CMS data:", err);
+      }
+    }
+    fetchData();
+  }, []);
+
+  const offersToRender = dynamicOffers.length > 0 ? dynamicOffers : offers;
+  const eventsToRender = dynamicEvents.length > 0 ? dynamicEvents : events;
+
   return (
     <section id="how-it-works" className="pt-2 pb-4 md:pt-4 md:pb-6">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
@@ -1668,9 +1750,9 @@ export function DiscoveryRails() {
               </div>
 
               <div className="flex snap-x snap-mandatory overflow-x-auto gap-3 pb-4 md:grid md:grid-cols-3 [-webkit-overflow-scrolling:touch]">
-                {offers.map((offer) => (
+                {offersToRender.map((offer, idx) => (
                   <div
-                    key={offer.title}
+                    key={offer.id || offer.title || idx}
                     className="shrink-0 snap-center w-[85vw] md:w-auto rounded-[22px] border border-white/[0.08] bg-[#050505]/55 p-4"
                   >
                     <Badge className="rounded-full border border-white/[0.08] bg-white/[0.05] px-3 py-1 text-[0.68rem]  uppercase tracking-[0.2em] text-white/72">
@@ -1704,9 +1786,9 @@ export function DiscoveryRails() {
             </div>
 
             <CardContent className="space-y-4 p-6">
-              {events.map((event) => (
+              {eventsToRender.map((event, idx) => (
                 <div
-                  key={event.title}
+                  key={event.id || event.title || idx}
                   className="block cursor-pointer"
                   onClick={() => {
                     if (!currentUser) {
@@ -1752,6 +1834,32 @@ export function DiscoveryRails() {
 }
 
 export function WhySportXClub() {
+  const [dynamicWhyCards, setDynamicWhyCards] = useState([]);
+
+  useEffect(() => {
+    async function fetchWhyCards() {
+      try {
+        const data = await cmsService.getWhyCards();
+        if (data && data.length > 0) {
+          setDynamicWhyCards(data);
+        }
+      } catch (err) {
+        console.error("Failed fetching CMS why cards:", err);
+      }
+    }
+    fetchWhyCards();
+  }, []);
+
+  const cardsToRender = dynamicWhyCards.length > 0 ? dynamicWhyCards : whyCards;
+
+  const getIcon = (iconKey) => {
+    if (typeof iconKey === "function" || typeof iconKey === "object") return iconKey;
+    if (iconKey === "CreditCard") return CreditCard;
+    if (iconKey === "Zap") return Zap;
+    if (iconKey === "Headset") return Headset;
+    return ShieldCheck;
+  };
+
   return (
     <section id="about" className="pt-2 pb-12 md:pt-4 md:pb-16">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
@@ -1763,29 +1871,32 @@ export function WhySportXClub() {
         />
 
         <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {whyCards.map((card, index) => (
-            <motion.div
-              key={card.title}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.45, delay: index * 0.06 }}
-            >
-              <Card className="h-full rounded-[22px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
-                <CardContent className="flex h-full flex-col gap-5 p-6">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-emerald-600/25 bg-emerald-600/10 shadow-[0_0_15px_rgba(109,255,59,0.15)]">
-                    <card.icon className="h-6 w-6 text-emerald-600 dark:text-white filter drop-shadow-[0_2px_8px_rgba(109,255,59,0.3)]" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-lg  text-white">{card.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-white/64">
-                      {card.description}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+          {cardsToRender.map((card, index) => {
+            const IconComponent = getIcon(card.icon);
+            return (
+              <motion.div
+                key={card.id || card.title || index}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.45, delay: index * 0.06 }}
+              >
+                <Card className="h-full rounded-[22px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
+                  <CardContent className="flex h-full flex-col gap-5 p-6">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-[18px] border border-emerald-600/25 bg-emerald-600/10 shadow-[0_0_15px_rgba(109,255,59,0.15)]">
+                      <IconComponent className="h-6 w-6 text-emerald-600 dark:text-white filter drop-shadow-[0_2px_8px_rgba(109,255,59,0.3)]" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg  text-white">{card.title}</h3>
+                      <p className="mt-3 text-sm leading-7 text-white/64">
+                        {card.description}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1887,13 +1998,38 @@ export function StoreSection() {
   const [selectedCat, setSelectedCat] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [addedItems, setAddedItems] = useState({});
+  const [dynamicFacilities, setDynamicFacilities] = useState([]);
+
+  useEffect(() => {
+    async function loadFacilities() {
+      try {
+        const data = await cmsService.getFacilities();
+        if (data && data.length > 0) {
+          const mapped = data.map((f, idx) => ({
+            id: f.id || idx + 1,
+            name: f.title,
+            category: f.category || "Equipment",
+            price: `₹${f.price}`,
+            rating: f.rating || "4.8",
+            image: f.image_url,
+          }));
+          setDynamicFacilities(mapped);
+        }
+      } catch (e) {
+        console.error("Failed fetching facilities:", e);
+      }
+    }
+    loadFacilities();
+  }, []);
+
+  const activeProducts = dynamicFacilities.length > 0 ? dynamicFacilities : storeProducts;
 
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
     setAddedItems((prev) => ({ ...prev, [product.id]: true }));
   };
 
-  const filteredModalProducts = storeProducts.filter((product) => {
+  const filteredModalProducts = activeProducts.filter((product) => {
     const matchesCat = selectedCat === "All" || product.category === selectedCat;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -2054,7 +2190,7 @@ export function StoreSection() {
           onTouchMove={handleTouchMove}
           className="flex gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab select-none w-full"
         >
-          {storeProducts.map((product) => (
+          {activeProducts.map((product) => (
             <div
               key={`first-${product.id}`}
               className="w-[280px] sm:w-[310px] shrink-0"
@@ -2446,6 +2582,33 @@ export function TurfGallery() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+  const [dynamicGallery, setDynamicGallery] = useState([]);
+
+  useEffect(() => {
+    async function fetchGallery() {
+      try {
+        const data = await cmsService.getGallery();
+        if (data && data.length > 0) {
+          const mapped = data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            location: item.location,
+            rating: item.rating || "4.9",
+            reviews: item.reviews || 100,
+            image: item.image_url,
+            className: item.className || "md:col-span-1 md:row-span-1"
+          }));
+          setDynamicGallery(mapped);
+        }
+      } catch (err) {
+        console.error("Failed fetching CMS gallery:", err);
+      }
+    }
+    fetchGallery();
+  }, []);
+
+  const galleryToRender = dynamicGallery.length > 0 ? dynamicGallery : galleryTurfs;
+
   return (
     <section className="pt-0 pb-4 md:pb-6 relative overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
@@ -2456,7 +2619,7 @@ export function TurfGallery() {
         />
 
         <div className="mt-12 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">
-          {galleryTurfs.map((turf) => (
+          {galleryToRender.map((turf) => (
             <motion.div
               key={turf.id}
               initial={{ opacity: 0, scale: 0.98 }}

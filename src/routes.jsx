@@ -12,7 +12,24 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <Navigate to="/admin-panel" replace />,
+    lazy: async () => {
+      const { CMSDashboard } = await import("./app/pages/cms/dashboard");
+      return { Component: CMSDashboard };
+    },
+  },
+  {
+    path: "/dashboard/:view",
+    lazy: async () => {
+      const { CMSDashboard } = await import("./app/pages/cms/dashboard");
+      return { Component: CMSDashboard };
+    },
+  },
+  {
+    path: "/dashboard/login",
+    lazy: async () => {
+      const { CMSLoginPage } = await import("./app/pages/cms/login");
+      return { Component: CMSLoginPage };
+    },
   },
   {
     path: "/login",
@@ -353,6 +370,13 @@ export const router = createBrowserRouter([
       },
       {
         path: "/venues/:id",
+        lazy: async () => {
+          const { VenueDetails } = await import("./app/pages/venue-details");
+          return { Component: VenueDetails };
+        },
+      },
+      {
+        path: "/venue/:id",
         lazy: async () => {
           const { VenueDetails } = await import("./app/pages/venue-details");
           return { Component: VenueDetails };

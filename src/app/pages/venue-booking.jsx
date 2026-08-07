@@ -1,9 +1,10 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { Star, MapPin, ChevronRight, Filter, ChevronLeft, ChevronDown, Check, RotateCcw, Heart, CalendarDays, Users, Lightbulb, Bath, Car, MoreHorizontal, Dribbble } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../components/ui/utils";
 import { Button } from "../components/ui/button";
+import { adminApi } from "../services/admin-api";
 
 function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
   return (
@@ -57,197 +58,7 @@ const getArrowClass = (items, side) => {
   return responsiveClass;
 };
 
-export const demoVenues = [
-  { id: 1, badge: "TOP RATED", rating: 4.7, sports: "FOOTBALL", name: "Andheri Football Arena", location: "Andheri, Mumbai", image: "/assets/venues/turf-1.webp" },
-  { id: 2, badge: "FEATURED", rating: 4.7, sports: "CRICKET", name: "Andheri Cricket Box", location: "Andheri, Mumbai", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 3, badge: "FAST FILLING", rating: 4.4, sports: "BADMINTON", name: "Andheri Badminton Arena", location: "Andheri, Mumbai", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 4, badge: "TOP RATED", rating: 4.6, sports: "LAWN TENNIS", name: "Andheri Lawn tennis Arena", location: "Andheri, Mumbai", image: "/assets/venues/turf-6.webp" },
-  { id: 5, badge: "POPULAR", rating: 4.3, sports: "VOLLEYBALL", name: "Andheri Volleyball Arena", location: "Andheri, Mumbai", image: "/assets/venues/turf-5.webp" },
-  { id: 6, badge: "PROMOTED", rating: 5.0, sports: "PADEL", name: "Andheri Padel Arena", location: "Andheri, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 7, badge: "POPULAR", rating: 4.8, sports: "FOOTBALL", name: "Bandra Football Arena", location: "Bandra, Mumbai", image: "/assets/venues/new_football_turf.png" },
-  { id: 8, badge: "PROMOTED", rating: 5.0, sports: "CRICKET", name: "Bandra Cricket Box", location: "Bandra, Mumbai", image: "/assets/venues/metro_sports_park_cricket.jpg" },
-  { id: 9, badge: "FAST FILLING", rating: 4.6, sports: "BADMINTON", name: "Bandra Badminton Arena", location: "Bandra, Mumbai", image: "/assets/venues/turf-3.webp" },
-  { id: 10, badge: "NEW", rating: 4.4, sports: "LAWN TENNIS", name: "Bandra Lawn tennis Arena", location: "Bandra, Mumbai", image: "/assets/venues/turf-6.webp" },
-  { id: 11, badge: "FEATURED", rating: 4.6, sports: "VOLLEYBALL", name: "Bandra Volleyball Arena", location: "Bandra, Mumbai", image: "/assets/venues/turf-5.webp" },
-  { id: 12, badge: "FAST FILLING", rating: 4.2, sports: "PADEL", name: "Bandra Padel Arena", location: "Bandra, Mumbai", image: "/assets/venues/turf-4.webp" },
-  { id: 13, badge: "PROMOTED", rating: 4.8, sports: "FOOTBALL", name: "Powai Football Arena", location: "Powai, Mumbai", image: "/assets/venues/champions_sports_arena_football.jpg" },
-  { id: 14, badge: "PROMOTED", rating: 4.4, sports: "CRICKET", name: "Powai Cricket Box", location: "Powai, Mumbai", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 15, badge: "PROMOTED", rating: 4.4, sports: "BADMINTON", name: "Powai Badminton Arena", location: "Powai, Mumbai", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 16, badge: "TOP RATED", rating: 4.3, sports: "LAWN TENNIS", name: "Powai Lawn tennis Arena", location: "Powai, Mumbai", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 17, badge: "POPULAR", rating: 4.7, sports: "VOLLEYBALL", name: "Powai Volleyball Arena", location: "Powai, Mumbai", image: "/assets/venues/turf-5.webp" },
-  { id: 18, badge: "TOP RATED", rating: 4.8, sports: "PADEL", name: "Powai Padel Arena", location: "Powai, Mumbai", image: "/assets/venues/turf-1.webp" },
-  { id: 19, badge: "TOP RATED", rating: 4.6, sports: "FOOTBALL", name: "Goregaon Football Arena", location: "Goregaon, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 20, badge: "FEATURED", rating: 4.8, sports: "CRICKET", name: "Goregaon Cricket Box", location: "Goregaon, Mumbai", image: "/assets/venues/turf-2.webp" },
-  { id: 21, badge: "FEATURED", rating: 4.8, sports: "BADMINTON", name: "Goregaon Badminton Arena", location: "Goregaon, Mumbai", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 22, badge: "NEW", rating: 4.8, sports: "LAWN TENNIS", name: "Goregaon Lawn tennis Arena", location: "Goregaon, Mumbai", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 23, badge: "NEW", rating: 4.3, sports: "VOLLEYBALL", name: "Goregaon Volleyball Arena", location: "Goregaon, Mumbai", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 24, badge: "PROMOTED", rating: 4.5, sports: "PADEL", name: "Goregaon Padel Arena", location: "Goregaon, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 25, badge: "FAST FILLING", rating: 4.8, sports: "FOOTBALL", name: "Juhu Football Arena", location: "Juhu, Mumbai", image: "/assets/venues/champions_sports_arena_football.jpg" },
-  { id: 26, badge: "NEW", rating: 4.5, sports: "CRICKET", name: "Juhu Cricket Box", location: "Juhu, Mumbai", image: "/assets/venues/new_cricket_turf_2.png" },
-  { id: 27, badge: "PROMOTED", rating: 4.9, sports: "BADMINTON", name: "Juhu Badminton Arena", location: "Juhu, Mumbai", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 28, badge: "PROMOTED", rating: 4.8, sports: "LAWN TENNIS", name: "Juhu Lawn tennis Arena", location: "Juhu, Mumbai", image: "/assets/venues/turf-6.webp" },
-  { id: 29, badge: "FEATURED", rating: 4.2, sports: "VOLLEYBALL", name: "Juhu Volleyball Arena", location: "Juhu, Mumbai", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 30, badge: "FAST FILLING", rating: 4.4, sports: "PADEL", name: "Juhu Padel Arena", location: "Juhu, Mumbai", image: "/assets/venues/turf-4.webp" },
-  { id: 31, badge: "POPULAR", rating: 4.4, sports: "FOOTBALL", name: "Navi Mumbai Football Arena", location: "Navi Mumbai, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 32, badge: "FEATURED", rating: 4.9, sports: "CRICKET", name: "Navi Mumbai Cricket Box", location: "Navi Mumbai, Mumbai", image: "/assets/venues/metro_sports_park_cricket.jpg" },
-  { id: 33, badge: "POPULAR", rating: 4.4, sports: "BADMINTON", name: "Navi Mumbai Badminton Arena", location: "Navi Mumbai, Mumbai", image: "/assets/venues/turf-3.webp" },
-  { id: 34, badge: "POPULAR", rating: 4.3, sports: "LAWN TENNIS", name: "Navi Mumbai Lawn tennis Arena", location: "Navi Mumbai, Mumbai", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 35, badge: "PROMOTED", rating: 4.4, sports: "VOLLEYBALL", name: "Navi Mumbai Volleyball Arena", location: "Navi Mumbai, Mumbai", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 36, badge: "FEATURED", rating: 4.9, sports: "PADEL", name: "Navi Mumbai Padel Arena", location: "Navi Mumbai, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 37, badge: "POPULAR", rating: 4.2, sports: "FOOTBALL", name: "Thane Football Arena", location: "Thane, Mumbai", image: "/assets/venues/champions_sports_arena_football.jpg" },
-  { id: 38, badge: "FEATURED", rating: 4.7, sports: "CRICKET", name: "Thane Cricket Box", location: "Thane, Mumbai", image: "/assets/venues/metro_sports_park_cricket.jpg" },
-  { id: 39, badge: "TOP RATED", rating: 4.9, sports: "BADMINTON", name: "Thane Badminton Arena", location: "Thane, Mumbai", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 40, badge: "POPULAR", rating: 4.8, sports: "LAWN TENNIS", name: "Thane Lawn tennis Arena", location: "Thane, Mumbai", image: "/assets/venues/turf-6.webp" },
-  { id: 41, badge: "FAST FILLING", rating: 4.9, sports: "VOLLEYBALL", name: "Thane Volleyball Arena", location: "Thane, Mumbai", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 42, badge: "FEATURED", rating: 4.7, sports: "PADEL", name: "Thane Padel Arena", location: "Thane, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 43, badge: "NEW", rating: 4.8, sports: "FOOTBALL", name: "South Mumbai Football Arena", location: "South Mumbai, Mumbai", image: "/assets/venues/turf-1.webp" },
-  { id: 44, badge: "POPULAR", rating: 4.8, sports: "CRICKET", name: "South Mumbai Cricket Box", location: "South Mumbai, Mumbai", image: "/assets/venues/turf-2.webp" },
-  { id: 45, badge: "NEW", rating: 4.4, sports: "BADMINTON", name: "South Mumbai Badminton Arena", location: "South Mumbai, Mumbai", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 46, badge: "FEATURED", rating: 4.4, sports: "LAWN TENNIS", name: "South Mumbai Lawn tennis Arena", location: "South Mumbai, Mumbai", image: "/assets/venues/turf-4.webp" },
-  { id: 47, badge: "POPULAR", rating: 4.5, sports: "VOLLEYBALL", name: "South Mumbai Volleyball Arena", location: "South Mumbai, Mumbai", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 48, badge: "NEW", rating: 4.5, sports: "PADEL", name: "South Mumbai Padel Arena", location: "South Mumbai, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 49, badge: "PROMOTED", rating: 4.3, sports: "FOOTBALL", name: "Malad Football Arena", location: "Malad, Mumbai", image: "/assets/venues/elite_turf_football.png" },
-  { id: 50, badge: "PROMOTED", rating: 4.7, sports: "CRICKET", name: "Malad Cricket Box", location: "Malad, Mumbai", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 51, badge: "FEATURED", rating: 4.4, sports: "BADMINTON", name: "Malad Badminton Arena", location: "Malad, Mumbai", image: "/assets/venues/turf-3.webp" },
-  { id: 52, badge: "FAST FILLING", rating: 4.8, sports: "LAWN TENNIS", name: "Malad Lawn tennis Arena", location: "Malad, Mumbai", image: "/assets/venues/turf-6.webp" },
-  { id: 53, badge: "POPULAR", rating: 4.6, sports: "VOLLEYBALL", name: "Malad Volleyball Arena", location: "Malad, Mumbai", image: "/assets/venues/turf-5.webp" },
-  { id: 54, badge: "TOP RATED", rating: 4.8, sports: "PADEL", name: "Malad Padel Arena", location: "Malad, Mumbai", image: "/assets/venues/turf-4.webp" },
-  { id: 55, badge: "PROMOTED", rating: 4.6, sports: "FOOTBALL", name: "Borivali Football Arena", location: "Borivali, Mumbai", image: "/assets/venues/new_football_turf.png" },
-  { id: 56, badge: "TOP RATED", rating: 4.3, sports: "CRICKET", name: "Borivali Cricket Box", location: "Borivali, Mumbai", image: "/assets/venues/metro_sports_park_cricket.jpg" },
-  { id: 57, badge: "FAST FILLING", rating: 4.3, sports: "BADMINTON", name: "Borivali Badminton Arena", location: "Borivali, Mumbai", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 58, badge: "NEW", rating: 4.7, sports: "LAWN TENNIS", name: "Borivali Lawn tennis Arena", location: "Borivali, Mumbai", image: "/assets/venues/turf-6.webp" },
-  { id: 59, badge: "TOP RATED", rating: 4.4, sports: "VOLLEYBALL", name: "Borivali Volleyball Arena", location: "Borivali, Mumbai", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 60, badge: "TOP RATED", rating: 5.0, sports: "PADEL", name: "Borivali Padel Arena", location: "Borivali, Mumbai", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 61, badge: "POPULAR", rating: 4.4, sports: "FOOTBALL", name: "Connaught Place Football Arena", location: "Connaught Place, Delhi-NCR", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 62, badge: "TOP RATED", rating: 4.9, sports: "CRICKET", name: "Connaught Place Cricket Box", location: "Connaught Place, Delhi-NCR", image: "/assets/venues/metro_sports_park_cricket.jpg" },
-  { id: 63, badge: "PROMOTED", rating: 4.5, sports: "BADMINTON", name: "Connaught Place Badminton Arena", location: "Connaught Place, Delhi-NCR", image: "/assets/venues/turf-3.webp" },
-  { id: 64, badge: "FAST FILLING", rating: 4.9, sports: "LAWN TENNIS", name: "Connaught Place Lawn tennis Arena", location: "Connaught Place, Delhi-NCR", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 65, badge: "NEW", rating: 4.9, sports: "VOLLEYBALL", name: "Connaught Place Volleyball Arena", location: "Connaught Place, Delhi-NCR", image: "/assets/venues/turf-5.webp" },
-  { id: 66, badge: "TOP RATED", rating: 4.9, sports: "PADEL", name: "Connaught Place Padel Arena", location: "Connaught Place, Delhi-NCR", image: "/assets/venues/turf-4.webp" },
-  { id: 67, badge: "FAST FILLING", rating: 4.4, sports: "FOOTBALL", name: "South Ex Football Arena", location: "South Ex, Delhi-NCR", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 68, badge: "FAST FILLING", rating: 4.5, sports: "CRICKET", name: "South Ex Cricket Box", location: "South Ex, Delhi-NCR", image: "/assets/venues/new_cricket_turf_2.png" },
-  { id: 69, badge: "FAST FILLING", rating: 4.5, sports: "BADMINTON", name: "South Ex Badminton Arena", location: "South Ex, Delhi-NCR", image: "/assets/venues/turf-3.webp" },
-  { id: 70, badge: "FAST FILLING", rating: 4.7, sports: "LAWN TENNIS", name: "South Ex Lawn tennis Arena", location: "South Ex, Delhi-NCR", image: "/assets/venues/turf-6.webp" },
-  { id: 71, badge: "POPULAR", rating: 4.7, sports: "VOLLEYBALL", name: "South Ex Volleyball Arena", location: "South Ex, Delhi-NCR", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 72, badge: "POPULAR", rating: 5.0, sports: "PADEL", name: "South Ex Padel Arena", location: "South Ex, Delhi-NCR", image: "/assets/venues/turf-1.webp" },
-  { id: 73, badge: "FAST FILLING", rating: 4.5, sports: "FOOTBALL", name: "Vasant Kunj Football Arena", location: "Vasant Kunj, Delhi-NCR", image: "/assets/venues/elite_turf_football.png" },
-  { id: 74, badge: "TOP RATED", rating: 4.8, sports: "CRICKET", name: "Vasant Kunj Cricket Box", location: "Vasant Kunj, Delhi-NCR", image: "/assets/venues/turf-2.webp" },
-  { id: 75, badge: "NEW", rating: 4.2, sports: "BADMINTON", name: "Vasant Kunj Badminton Arena", location: "Vasant Kunj, Delhi-NCR", image: "/assets/venues/turf-3.webp" },
-  { id: 76, badge: "FAST FILLING", rating: 4.7, sports: "LAWN TENNIS", name: "Vasant Kunj Lawn tennis Arena", location: "Vasant Kunj, Delhi-NCR", image: "/assets/venues/turf-6.webp" },
-  { id: 77, badge: "TOP RATED", rating: 4.4, sports: "VOLLEYBALL", name: "Vasant Kunj Volleyball Arena", location: "Vasant Kunj, Delhi-NCR", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 78, badge: "PROMOTED", rating: 4.3, sports: "PADEL", name: "Vasant Kunj Padel Arena", location: "Vasant Kunj, Delhi-NCR", image: "/assets/venues/turf-1.webp" },
-  { id: 79, badge: "TOP RATED", rating: 4.4, sports: "FOOTBALL", name: "Gurugram Football Arena", location: "Gurugram, Delhi-NCR", image: "/assets/venues/elite_turf_football.png" },
-  { id: 80, badge: "POPULAR", rating: 4.4, sports: "CRICKET", name: "Gurugram Cricket Box", location: "Gurugram, Delhi-NCR", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 81, badge: "PROMOTED", rating: 4.8, sports: "BADMINTON", name: "Gurugram Badminton Arena", location: "Gurugram, Delhi-NCR", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 82, badge: "FEATURED", rating: 4.3, sports: "LAWN TENNIS", name: "Gurugram Lawn tennis Arena", location: "Gurugram, Delhi-NCR", image: "/assets/venues/turf-6.webp" },
-  { id: 83, badge: "NEW", rating: 4.6, sports: "VOLLEYBALL", name: "Gurugram Volleyball Arena", location: "Gurugram, Delhi-NCR", image: "/assets/venues/turf-5.webp" },
-  { id: 84, badge: "PROMOTED", rating: 4.5, sports: "PADEL", name: "Gurugram Padel Arena", location: "Gurugram, Delhi-NCR", image: "/assets/venues/turf-1.webp" },
-  { id: 85, badge: "POPULAR", rating: 4.2, sports: "FOOTBALL", name: "Noida Football Arena", location: "Noida, Delhi-NCR", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 86, badge: "FAST FILLING", rating: 4.5, sports: "CRICKET", name: "Noida Cricket Box", location: "Noida, Delhi-NCR", image: "/assets/venues/new_cricket_turf_2.png" },
-  { id: 87, badge: "PROMOTED", rating: 4.6, sports: "BADMINTON", name: "Noida Badminton Arena", location: "Noida, Delhi-NCR", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 88, badge: "POPULAR", rating: 4.2, sports: "LAWN TENNIS", name: "Noida Lawn tennis Arena", location: "Noida, Delhi-NCR", image: "/assets/venues/turf-4.webp" },
-  { id: 89, badge: "PROMOTED", rating: 4.5, sports: "VOLLEYBALL", name: "Noida Volleyball Arena", location: "Noida, Delhi-NCR", image: "/assets/venues/turf-5.webp" },
-  { id: 90, badge: "NEW", rating: 4.8, sports: "PADEL", name: "Noida Padel Arena", location: "Noida, Delhi-NCR", image: "/assets/venues/turf-4.webp" },
-  { id: 91, badge: "PROMOTED", rating: 4.2, sports: "FOOTBALL", name: "Dwarka Football Arena", location: "Dwarka, Delhi-NCR", image: "/assets/venues/new_football_turf.png" },
-  { id: 92, badge: "TOP RATED", rating: 5.0, sports: "CRICKET", name: "Dwarka Cricket Box", location: "Dwarka, Delhi-NCR", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 93, badge: "FAST FILLING", rating: 4.8, sports: "BADMINTON", name: "Dwarka Badminton Arena", location: "Dwarka, Delhi-NCR", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 94, badge: "POPULAR", rating: 4.5, sports: "LAWN TENNIS", name: "Dwarka Lawn tennis Arena", location: "Dwarka, Delhi-NCR", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 95, badge: "FAST FILLING", rating: 4.9, sports: "VOLLEYBALL", name: "Dwarka Volleyball Arena", location: "Dwarka, Delhi-NCR", image: "/assets/venues/turf-5.webp" },
-  { id: 96, badge: "TOP RATED", rating: 4.5, sports: "PADEL", name: "Dwarka Padel Arena", location: "Dwarka, Delhi-NCR", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 97, badge: "TOP RATED", rating: 5.0, sports: "FOOTBALL", name: "Rohini Football Arena", location: "Rohini, Delhi-NCR", image: "/assets/venues/turf-1.webp" },
-  { id: 98, badge: "TOP RATED", rating: 4.9, sports: "CRICKET", name: "Rohini Cricket Box", location: "Rohini, Delhi-NCR", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 99, badge: "POPULAR", rating: 5.0, sports: "BADMINTON", name: "Rohini Badminton Arena", location: "Rohini, Delhi-NCR", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 100, badge: "NEW", rating: 4.9, sports: "LAWN TENNIS", name: "Rohini Lawn tennis Arena", location: "Rohini, Delhi-NCR", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 101, badge: "FAST FILLING", rating: 4.8, sports: "VOLLEYBALL", name: "Rohini Volleyball Arena", location: "Rohini, Delhi-NCR", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 102, badge: "TOP RATED", rating: 4.4, sports: "PADEL", name: "Rohini Padel Arena", location: "Rohini, Delhi-NCR", image: "/assets/venues/turf-4.webp" },
-  { id: 103, badge: "NEW", rating: 4.2, sports: "FOOTBALL", name: "Koramangala Football Arena", location: "Koramangala, Bengaluru", image: "/assets/venues/elite_turf_football.png" },
-  { id: 104, badge: "TOP RATED", rating: 4.4, sports: "CRICKET", name: "Koramangala Cricket Box", location: "Koramangala, Bengaluru", image: "/assets/venues/metro_sports_park_cricket.jpg" },
-  { id: 105, badge: "FAST FILLING", rating: 4.4, sports: "BADMINTON", name: "Koramangala Badminton Arena", location: "Koramangala, Bengaluru", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 106, badge: "TOP RATED", rating: 4.5, sports: "LAWN TENNIS", name: "Koramangala Lawn tennis Arena", location: "Koramangala, Bengaluru", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 107, badge: "NEW", rating: 4.7, sports: "VOLLEYBALL", name: "Koramangala Volleyball Arena", location: "Koramangala, Bengaluru", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 108, badge: "FAST FILLING", rating: 4.7, sports: "PADEL", name: "Koramangala Padel Arena", location: "Koramangala, Bengaluru", image: "/assets/venues/turf-1.webp" },
-  { id: 109, badge: "NEW", rating: 4.5, sports: "FOOTBALL", name: "Indiranagar Football Arena", location: "Indiranagar, Bengaluru", image: "/assets/venues/turf-1.webp" },
-  { id: 110, badge: "NEW", rating: 5.0, sports: "CRICKET", name: "Indiranagar Cricket Box", location: "Indiranagar, Bengaluru", image: "/assets/venues/metro_sports_park_cricket.jpg" },
-  { id: 111, badge: "NEW", rating: 4.4, sports: "BADMINTON", name: "Indiranagar Badminton Arena", location: "Indiranagar, Bengaluru", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 112, badge: "FEATURED", rating: 4.9, sports: "LAWN TENNIS", name: "Indiranagar Lawn tennis Arena", location: "Indiranagar, Bengaluru", image: "/assets/venues/turf-6.webp" },
-  { id: 113, badge: "FAST FILLING", rating: 5.0, sports: "VOLLEYBALL", name: "Indiranagar Volleyball Arena", location: "Indiranagar, Bengaluru", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 114, badge: "FEATURED", rating: 4.7, sports: "PADEL", name: "Indiranagar Padel Arena", location: "Indiranagar, Bengaluru", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 115, badge: "TOP RATED", rating: 4.8, sports: "FOOTBALL", name: "HSR Layout Football Arena", location: "HSR Layout, Bengaluru", image: "/assets/venues/new_football_turf.png" },
-  { id: 116, badge: "NEW", rating: 4.8, sports: "CRICKET", name: "HSR Layout Cricket Box", location: "HSR Layout, Bengaluru", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 117, badge: "FEATURED", rating: 4.6, sports: "BADMINTON", name: "HSR Layout Badminton Arena", location: "HSR Layout, Bengaluru", image: "/assets/venues/turf-3.webp" },
-  { id: 118, badge: "NEW", rating: 4.6, sports: "LAWN TENNIS", name: "HSR Layout Lawn tennis Arena", location: "HSR Layout, Bengaluru", image: "/assets/venues/turf-6.webp" },
-  { id: 119, badge: "TOP RATED", rating: 4.9, sports: "VOLLEYBALL", name: "HSR Layout Volleyball Arena", location: "HSR Layout, Bengaluru", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 120, badge: "PROMOTED", rating: 4.7, sports: "PADEL", name: "HSR Layout Padel Arena", location: "HSR Layout, Bengaluru", image: "/assets/venues/turf-1.webp" },
-  { id: 121, badge: "FAST FILLING", rating: 4.5, sports: "FOOTBALL", name: "Whitefield Football Arena", location: "Whitefield, Bengaluru", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 122, badge: "TOP RATED", rating: 4.9, sports: "CRICKET", name: "Whitefield Cricket Box", location: "Whitefield, Bengaluru", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 123, badge: "TOP RATED", rating: 4.7, sports: "BADMINTON", name: "Whitefield Badminton Arena", location: "Whitefield, Bengaluru", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 124, badge: "NEW", rating: 4.8, sports: "LAWN TENNIS", name: "Whitefield Lawn tennis Arena", location: "Whitefield, Bengaluru", image: "/assets/venues/turf-4.webp" },
-  { id: 125, badge: "PROMOTED", rating: 4.5, sports: "VOLLEYBALL", name: "Whitefield Volleyball Arena", location: "Whitefield, Bengaluru", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 126, badge: "POPULAR", rating: 4.5, sports: "PADEL", name: "Whitefield Padel Arena", location: "Whitefield, Bengaluru", image: "/assets/venues/turf-1.webp" },
-  { id: 127, badge: "PROMOTED", rating: 4.8, sports: "FOOTBALL", name: "Jayanagar Football Arena", location: "Jayanagar, Bengaluru", image: "/assets/venues/champions_sports_arena_football.jpg" },
-  { id: 128, badge: "POPULAR", rating: 4.2, sports: "CRICKET", name: "Jayanagar Cricket Box", location: "Jayanagar, Bengaluru", image: "/assets/venues/turf-2.webp" },
-  { id: 129, badge: "FEATURED", rating: 4.3, sports: "BADMINTON", name: "Jayanagar Badminton Arena", location: "Jayanagar, Bengaluru", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 130, badge: "FEATURED", rating: 4.7, sports: "LAWN TENNIS", name: "Jayanagar Lawn tennis Arena", location: "Jayanagar, Bengaluru", image: "/assets/venues/turf-6.webp" },
-  { id: 131, badge: "POPULAR", rating: 4.2, sports: "VOLLEYBALL", name: "Jayanagar Volleyball Arena", location: "Jayanagar, Bengaluru", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 132, badge: "TOP RATED", rating: 4.2, sports: "PADEL", name: "Jayanagar Padel Arena", location: "Jayanagar, Bengaluru", image: "/assets/venues/turf-4.webp" },
-  { id: 133, badge: "PROMOTED", rating: 4.5, sports: "FOOTBALL", name: "Malleswaram Football Arena", location: "Malleswaram, Bengaluru", image: "/assets/venues/turf-1.webp" },
-  { id: 134, badge: "TOP RATED", rating: 4.5, sports: "CRICKET", name: "Malleswaram Cricket Box", location: "Malleswaram, Bengaluru", image: "/assets/venues/turf-2.webp" },
-  { id: 135, badge: "FAST FILLING", rating: 4.6, sports: "BADMINTON", name: "Malleswaram Badminton Arena", location: "Malleswaram, Bengaluru", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 136, badge: "FAST FILLING", rating: 4.4, sports: "LAWN TENNIS", name: "Malleswaram Lawn tennis Arena", location: "Malleswaram, Bengaluru", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 137, badge: "FEATURED", rating: 4.5, sports: "VOLLEYBALL", name: "Malleswaram Volleyball Arena", location: "Malleswaram, Bengaluru", image: "/assets/venues/turf-5.webp" },
-  { id: 138, badge: "NEW", rating: 4.4, sports: "PADEL", name: "Malleswaram Padel Arena", location: "Malleswaram, Bengaluru", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 139, badge: "POPULAR", rating: 4.7, sports: "FOOTBALL", name: "Electronic City Football Arena", location: "Electronic City, Bengaluru", image: "/assets/venues/elite_turf_football.png" },
-  { id: 140, badge: "TOP RATED", rating: 4.5, sports: "CRICKET", name: "Electronic City Cricket Box", location: "Electronic City, Bengaluru", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 141, badge: "NEW", rating: 4.2, sports: "BADMINTON", name: "Electronic City Badminton Arena", location: "Electronic City, Bengaluru", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 142, badge: "POPULAR", rating: 4.9, sports: "LAWN TENNIS", name: "Electronic City Lawn tennis Arena", location: "Electronic City, Bengaluru", image: "/assets/venues/turf-6.webp" },
-  { id: 143, badge: "TOP RATED", rating: 4.4, sports: "VOLLEYBALL", name: "Electronic City Volleyball Arena", location: "Electronic City, Bengaluru", image: "/assets/venues/turf-5.webp" },
-  { id: 144, badge: "FEATURED", rating: 4.8, sports: "PADEL", name: "Electronic City Padel Arena", location: "Electronic City, Bengaluru", image: "/assets/venues/turf-4.webp" },
-  { id: 145, badge: "POPULAR", rating: 4.4, sports: "FOOTBALL", name: "Yelahanka Football Arena", location: "Yelahanka, Bengaluru", image: "/assets/venues/new_football_turf.png" },
-  { id: 146, badge: "TOP RATED", rating: 5.0, sports: "CRICKET", name: "Yelahanka Cricket Box", location: "Yelahanka, Bengaluru", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 147, badge: "PROMOTED", rating: 5.0, sports: "BADMINTON", name: "Yelahanka Badminton Arena", location: "Yelahanka, Bengaluru", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 148, badge: "TOP RATED", rating: 4.6, sports: "LAWN TENNIS", name: "Yelahanka Lawn tennis Arena", location: "Yelahanka, Bengaluru", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 149, badge: "POPULAR", rating: 4.4, sports: "VOLLEYBALL", name: "Yelahanka Volleyball Arena", location: "Yelahanka, Bengaluru", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 411, badge: "POPULAR", rating: 4.3, sports: "BADMINTON", name: "Edappally Badminton Arena", location: "Edappally, Kochi", image: "/assets/venues/new_badminton_turf.png" },
-  { id: 412, badge: "FAST FILLING", rating: 4.3, sports: "LAWN TENNIS", name: "Edappally Lawn tennis Arena", location: "Edappally, Kochi", image: "/assets/venues/turf-4.webp" },
-  { id: 413, badge: "PROMOTED", rating: 4.5, sports: "VOLLEYBALL", name: "Edappally Volleyball Arena", location: "Edappally, Kochi", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 414, badge: "NEW", rating: 4.9, sports: "PADEL", name: "Edappally Padel Arena", location: "Edappally, Kochi", image: "/assets/venues/turf-1.webp" },
-  { id: 415, badge: "PROMOTED", rating: 4.8, sports: "FOOTBALL", name: "Fort Kochi Football Arena", location: "Fort Kochi, Kochi", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 416, badge: "FEATURED", rating: 4.5, sports: "CRICKET", name: "Fort Kochi Cricket Box", location: "Fort Kochi, Kochi", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 417, badge: "POPULAR", rating: 4.6, sports: "BADMINTON", name: "Fort Kochi Badminton Arena", location: "Fort Kochi, Kochi", image: "/assets/venues/turf-3.webp" },
-  { id: 418, badge: "FEATURED", rating: 4.6, sports: "LAWN TENNIS", name: "Fort Kochi Lawn tennis Arena", location: "Fort Kochi, Kochi", image: "/assets/venues/turf-4.webp" },
-  { id: 419, badge: "PROMOTED", rating: 4.3, sports: "VOLLEYBALL", name: "Fort Kochi Volleyball Arena", location: "Fort Kochi, Kochi", image: "/assets/venues/turf-5.webp" },
-  { id: 420, badge: "PROMOTED", rating: 4.5, sports: "PADEL", name: "Fort Kochi Padel Arena", location: "Fort Kochi, Kochi", image: "/assets/venues/turf-4.webp" },
-  { id: 421, badge: "NEW", rating: 4.2, sports: "FOOTBALL", name: "MG Road Football Arena", location: "MG Road, Kochi", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 422, badge: "FAST FILLING", rating: 4.6, sports: "CRICKET", name: "MG Road Cricket Box", location: "MG Road, Kochi", image: "/assets/venues/turf-2.webp" },
-  { id: 423, badge: "POPULAR", rating: 4.9, sports: "BADMINTON", name: "MG Road Badminton Arena", location: "MG Road, Kochi", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 424, badge: "TOP RATED", rating: 4.9, sports: "LAWN TENNIS", name: "MG Road Lawn tennis Arena", location: "MG Road, Kochi", image: "/assets/venues/turf-4.webp" },
-  { id: 425, badge: "PROMOTED", rating: 4.4, sports: "VOLLEYBALL", name: "MG Road Volleyball Arena", location: "MG Road, Kochi", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 426, badge: "NEW", rating: 4.6, sports: "PADEL", name: "MG Road Padel Arena", location: "MG Road, Kochi", image: "/assets/venues/turf-1.webp" },
-  { id: 427, badge: "FEATURED", rating: 4.7, sports: "FOOTBALL", name: "Kakkanad Football Arena", location: "Kakkanad, Kochi", image: "/assets/venues/turf-1.webp" },
-  { id: 428, badge: "POPULAR", rating: 4.6, sports: "CRICKET", name: "Kakkanad Cricket Box", location: "Kakkanad, Kochi", image: "/assets/venues/new_cricket_turf_2.png" },
-  { id: 429, badge: "FAST FILLING", rating: 4.3, sports: "BADMINTON", name: "Kakkanad Badminton Arena", location: "Kakkanad, Kochi", image: "/assets/venues/turf-3.webp" },
-  { id: 430, badge: "POPULAR", rating: 4.6, sports: "LAWN TENNIS", name: "Kakkanad Lawn tennis Arena", location: "Kakkanad, Kochi", image: "/assets/venues/turf-6.webp" },
-  { id: 431, badge: "PROMOTED", rating: 4.8, sports: "VOLLEYBALL", name: "Kakkanad Volleyball Arena", location: "Kakkanad, Kochi", image: "/assets/venues/turf-5.webp" },
-  { id: 432, badge: "FAST FILLING", rating: 4.6, sports: "PADEL", name: "Kakkanad Padel Arena", location: "Kakkanad, Kochi", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 433, badge: "TOP RATED", rating: 4.8, sports: "FOOTBALL", name: "Palarivattom Football Arena", location: "Palarivattom, Kochi", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 434, badge: "NEW", rating: 4.7, sports: "CRICKET", name: "Palarivattom Cricket Box", location: "Palarivattom, Kochi", image: "/assets/venues/new_cricket_turf.png" },
-  { id: 435, badge: "PROMOTED", rating: 4.9, sports: "BADMINTON", name: "Palarivattom Badminton Arena", location: "Palarivattom, Kochi", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 436, badge: "NEW", rating: 4.7, sports: "LAWN TENNIS", name: "Palarivattom Lawn tennis Arena", location: "Palarivattom, Kochi", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 437, badge: "POPULAR", rating: 4.6, sports: "VOLLEYBALL", name: "Palarivattom Volleyball Arena", location: "Palarivattom, Kochi", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 438, badge: "FEATURED", rating: 4.5, sports: "PADEL", name: "Palarivattom Padel Arena", location: "Palarivattom, Kochi", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 439, badge: "TOP RATED", rating: 4.3, sports: "FOOTBALL", name: "Marine Drive Football Arena", location: "Marine Drive, Kochi", image: "/assets/venues/champions_sports_arena_football.jpg" },
-  { id: 440, badge: "NEW", rating: 4.3, sports: "CRICKET", name: "Marine Drive Cricket Box", location: "Marine Drive, Kochi", image: "/assets/venues/new_cricket_turf_2.png" },
-  { id: 441, badge: "NEW", rating: 4.8, sports: "BADMINTON", name: "Marine Drive Badminton Arena", location: "Marine Drive, Kochi", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 442, badge: "FEATURED", rating: 4.3, sports: "LAWN TENNIS", name: "Marine Drive Lawn tennis Arena", location: "Marine Drive, Kochi", image: "/assets/venues/new_tennis_turf.png" },
-  { id: 443, badge: "TOP RATED", rating: 4.9, sports: "VOLLEYBALL", name: "Marine Drive Volleyball Arena", location: "Marine Drive, Kochi", image: "/assets/venues/turf-5.webp" },
-  { id: 444, badge: "FEATURED", rating: 4.7, sports: "PADEL", name: "Marine Drive Padel Arena", location: "Marine Drive, Kochi", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 445, badge: "FAST FILLING", rating: 4.6, sports: "FOOTBALL", name: "Vyttila Football Arena", location: "Vyttila, Kochi", image: "/assets/venues/new_football_turf_2.png" },
-  { id: 446, badge: "NEW", rating: 4.3, sports: "CRICKET", name: "Vyttila Cricket Box", location: "Vyttila, Kochi", image: "/assets/venues/turf-2.webp" },
-  { id: 447, badge: "FAST FILLING", rating: 4.3, sports: "BADMINTON", name: "Vyttila Badminton Arena", location: "Vyttila, Kochi", image: "/assets/venues/grand_playfield_badminton.png" },
-  { id: 448, badge: "FEATURED", rating: 4.2, sports: "LAWN TENNIS", name: "Vyttila Lawn tennis Arena", location: "Vyttila, Kochi", image: "/assets/venues/turf-4.webp" },
-  { id: 449, badge: "FAST FILLING", rating: 4.6, sports: "VOLLEYBALL", name: "Vyttila Volleyball Arena", location: "Vyttila, Kochi", image: "/assets/venues/new_volleyball_turf.png" },
-  { id: 450, badge: "TOP RATED", rating: 4.7, sports: "PADEL", name: "Vyttila Padel Arena", location: "Vyttila, Kochi", image: "/assets/venues/turf-1.webp" },
-];
+export const demoVenues = [];
 
 function CustomSelect({ value, onChange, options, variant = "default" }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -371,27 +182,80 @@ export function VenueBooking() {
     }
   }, [location.state?.sport]);
 
+  const [turfs, setTurfs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadTurfs() {
+      try {
+        setIsLoading(true);
+        const data = await adminApi.getAll("turfs");
+        setTurfs(data || []);
+      } catch (err) {
+        console.error("Error loading turfs from MySQL database:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadTurfs();
+  }, []);
+
+  const dynamicVenues = useMemo(() => {
+    return turfs.map((t) => ({
+      id: t.id,
+      name: t.name,
+      location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Arena"),
+      price: Number(t.price || t.price_per_hour || 1500),
+      rating: Number(t.rating || 4.8),
+      sports: (t.sport_type || t.sportType || "Football").toUpperCase(),
+      image: t.image_url || t.image || "/assets/venues/turf-1.webp",
+      badge: t.status === "Active" ? "VERIFIED" : "FEATURED",
+      reviews: Number(t.reviews ?? t.reviews_count ?? 35),
+      status: t.status || "Active",
+      display_order: Number(t.display_order || 0),
+      all_display_order: Number(t.all_display_order || 0),
+      description: t.description,
+      amenities: t.amenities,
+      rules: t.rules,
+    }));
+  }, [turfs]);
+
   const sportsList = ["All Sports", "Football", "Cricket", "Badminton", "Tennis", "Basketball", "Volleyball", "Padel"];
   const citiesList = ["All Cities", "Mumbai", "Delhi-NCR", "Bengaluru", "Hyderabad", "Chandigarh", "Ahmedabad", "Pune", "Chennai", "Kolkata", "Kochi"];
 
-  const filteredVenues = demoVenues.filter((venue) => {
+  const filteredVenues = dynamicVenues.filter((venue) => {
     const matchSport = selectedSport === "All Sports" || venue.sports.toLowerCase().includes(selectedSport.toLowerCase());
     const matchLocation = selectedLocation === "All Cities" || venue.location.toLowerCase().includes(selectedLocation.toLowerCase());
     return matchSport && matchLocation;
   });
 
-  const sortedVenues = [...filteredVenues].sort((a, b) => {
-    if (sortField === "Price") {
-      const priceA = a.price || (800 + (a.id * 130) % 1000);
-      const priceB = b.price || (800 + (b.id * 130) % 1000);
-      return sortByPrice === "Low to High" ? priceA - priceB : priceB - priceA;
-    } else {
-      return sortByRating === "Low to High" ? a.rating - b.rating : b.rating - a.rating;
-    }
-  });
+  // Recommended Venues (Section #1): Sorted by display_order set in Dashboard (or by most reviews if default)
+  const premiumVenues = useMemo(() => {
+    return [...filteredVenues].sort((a, b) => {
+      const hasOrderA = a.display_order > 0;
+      const hasOrderB = b.display_order > 0;
+      if (hasOrderA && hasOrderB) {
+        return a.display_order - b.display_order;
+      }
+      if (hasOrderA) return -1;
+      if (hasOrderB) return 1;
+      return b.reviews - a.reviews;
+    });
+  }, [filteredVenues]);
 
-  const premiumVenues = sortedVenues.filter(v => v.rating >= 4.7 || ["PROMOTED", "FEATURED", "TOP RATED"].includes(v.badge));
-  const otherVenues = sortedVenues.filter(v => !(v.rating >= 4.7 || ["PROMOTED", "FEATURED", "TOP RATED"].includes(v.badge)));
+  // All Venues (Section #2): Sorted by all_display_order set in Dashboard (or by most reviews if default)
+  const otherVenues = useMemo(() => {
+    return [...filteredVenues].sort((a, b) => {
+      const hasOrderA = a.all_display_order > 0;
+      const hasOrderB = b.all_display_order > 0;
+      if (hasOrderA && hasOrderB) {
+        return a.all_display_order - b.all_display_order;
+      }
+      if (hasOrderA) return -1;
+      if (hasOrderB) return 1;
+      return b.reviews - a.reviews;
+    });
+  }, [filteredVenues]);
 
   const scrollLeft1 = () => {
     if (scrollRef1.current) {
