@@ -95,9 +95,10 @@ export function RegisterPage() {
       return;
     }
     try {
-      const res = await adminApi.checkExists({ email: emailVal.trim() });
+      const accountType = (formData.role === "owner" || initialType === "owner" || isOwnerRoute) ? "turf-owner" : "player";
+      const res = await adminApi.checkExists({ email: emailVal.trim(), accountType });
       if (res.exists && res.field === "email") {
-        setEmailExistsError("An account with this email address already exists. Please log in instead.");
+        setEmailExistsError("An account with this email address already exists for this portal. Please log in instead.");
       } else {
         setEmailExistsError("");
       }
@@ -112,9 +113,10 @@ export function RegisterPage() {
       return;
     }
     try {
-      const res = await adminApi.checkExists({ phone: phoneVal.trim() });
+      const accountType = (formData.role === "owner" || initialType === "owner" || isOwnerRoute) ? "turf-owner" : "player";
+      const res = await adminApi.checkExists({ phone: phoneVal.trim(), accountType });
       if (res.exists && res.field === "phone") {
-        setPhoneExistsError("This mobile number is already registered. Please log in instead.");
+        setPhoneExistsError("This mobile number is already registered for this portal. Please log in instead.");
       } else {
         setPhoneExistsError("");
       }
@@ -300,7 +302,7 @@ export function RegisterPage() {
         if (formData.role === "owner") {
           navigate("/admin-panel");
         } else {
-          navigate("/community");
+          navigate("/");
         }
       }, 1500);
     } else {

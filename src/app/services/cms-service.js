@@ -318,8 +318,12 @@ export const cmsService = {
   },
 
   // Community Feed Posts
-  getPosts: async () => {
-    const res = await fetch(`${API_BASE}/posts`);
+  getPosts: async (user) => {
+    const params = new URLSearchParams();
+    if (user?.id !== undefined && user?.id !== null) params.set("userId", user.id);
+    if (user?.email) params.set("email", user.email);
+    const query = params.toString();
+    const res = await fetch(`${API_BASE}/posts${query ? `?${query}` : ""}`);
     const data = await res.json();
     return data.data || [];
   },
@@ -332,6 +336,46 @@ export const cmsService = {
     });
     const data = await res.json();
     if (!data.success) throw new Error(data.error || "Failed to create community post");
+    return data.data;
+  },
+
+  togglePostLike: async (id, user) => {
+    const res = await fetch(`${API_BASE}/posts/${id}/like`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user?.id, email: user?.email }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || "Failed to update like");
+    return data.data;
+  },
+
+  getPostComments: async (id) => {
+    const res = await fetch(`${API_BASE}/posts/${id}/comments`);
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || "Failed to load comments");
+    return data.data || [];
+  },
+
+  addPostComment: async (id, user, text) => {
+    const res = await fetch(`${API_BASE}/posts/${id}/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user?.id, email: user?.email, text }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || "Failed to add comment");
+    return data.data;
+  },
+
+  recordPostShare: async (id, user, platform) => {
+    const res = await fetch(`${API_BASE}/posts/${id}/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user?.id, email: user?.email, platform }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || "Failed to record share");
     return data.data;
   },
 

@@ -11,6 +11,8 @@ import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import { Bot, Send, MapPin, Trophy, Users, Sparkles } from "lucide-react";
 import { Container } from "../components/ui/container";
+import { useAuth } from "../providers/auth-provider";
+import { aiAssistantService } from "../services/ai-assistant.service";
 
 const suggestions = [
   "Find cricket venues near me",
@@ -21,95 +23,79 @@ const suggestions = [
 
 const initialMessages = [
   {
-    id: 1,
+    id: "welcome",
     type: "bot",
-    content: "Hello! I'm your AI Sports Assistant. How can I help you today?",
-    suggestions: suggestions,
+    content: "Hello! I can check live SportXClub venues, games, tournaments, players, and your profile activity. What would you like to find?",
+    suggestions,
   },
 ];
 
+const features = [
+  { icon: MapPin, title: "Venue Suggestions", description: "Search active venues" },
+  { icon: Trophy, title: "Tournament Info", description: "See live events and games" },
+  { icon: Users, title: "Player Matching", description: "Find active players" },
+  { icon: Sparkles, title: "Smart Tips", description: "Get sports guidance" },
+];
+
 export function AISportsAssistant() {
+  const { currentUser } = useAuth();
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSend = () => {
-    const currentInput = input.trim();
-    if (!currentInput) return;
+  const handleSend = async (value = input) => {
+    const currentInput = value.trim();
+    if (!currentInput || isLoading) return;
 
-    // Add user message
-    const userMessage = {
-      id: Date.now(),
-      type: "user",
-      content: currentInput,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((previous) => [
+      ...previous,
+      { id: `user-${Date.now()}`, type: "user", content: currentInput },
+    ]);
     setInput("");
+    setIsLoading(true);
 
-    // Simulate AI response with a short delay
-    setTimeout(() => {
-      const botMessage = {
-        id: Date.now() + 1,
-        type: "bot",
-        content: `I found several options for "${currentInput}". Here are some recommendations:
-
-1. **Elite Sports Arena** - 1.2 km away
-   • Rating: 4.9/5 • ₹800/hour
-   • Available today at 6 PM
-
-2. **Champions Sports Complex** - 2.5 km away
-   • Rating: 4.8/5 • ₹600/hour
-   • Available today at 7 PM
-
-3. **Ace Tennis Academy** - 3.8 km away
-   • Rating: 4.7/5 • ₹500/hour
-   • Available tomorrow at 8 AM
-
-Would you like to book any of these venues?`,
-      };
-      setMessages((prev) => [...prev, botMessage]);
-    }, 800);
+    try {
+      const answer = await aiAssistantService.chat({ message: currentInput, user: currentUser });
+      setMessages((previous) => [
+        ...previous,
+        {
+          id: `bot-${Date.now()}`,
+          type: "bot",
+          content: answer.content,
+          suggestions: answer.suggestions,
+        },
+      ]);
+    } catch (error) {
+      setMessages((previous) => [
+        ...previous,
+        {
+          id: `error-${Date.now()}`,
+          type: "bot",
+          content: error.message || "I could not reach the live SportXClub data. Please try again.",
+          suggestions,
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Container className="space-y-6">
-      {/* Header */}
       <div className="text-center">
         <div className="flex justify-center mb-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent">
             <Bot className="h-8 w-8 text-white" />
           </div>
         </div>
-        <h1 className="text-3xl ">AI Sports Assistant</h1>
+        <h1 className="text-3xl">AI Sports Assistant</h1>
         <p className="text-muted-foreground mt-1">
-          Get personalized recommendations for venues, players, and tournaments
+          Get answers from SportXClub&apos;s live venues, games, players, and tournaments
         </p>
       </div>
 
-      {/* Features */}
       <div className="grid md:grid-cols-4 gap-4">
-        {[
-          {
-            icon: MapPin,
-            title: "Venue Suggestions",
-            description: "Find perfect venues",
-          },
-          {
-            icon: Trophy,
-            title: "Tournament Info",
-            description: "Get tournament details",
-          },
-          {
-            icon: Users,
-            title: "Player Matching",
-            description: "Connect with players",
-          },
-          {
-            icon: Sparkles,
-            title: "Smart Tips",
-            description: "Improve your game",
-          },
-        ].map((feature) => {
+        {features.map((feature) => {
           const Icon = feature.icon;
           return (
             <Card key={feature.title} className="border-border/50">
@@ -119,17 +105,14 @@ Would you like to book any of these venues?`,
                     <Icon className="h-5 w-5 text-primary" />
                   </div>
                 </div>
-                <p className=" text-sm mb-1">{feature.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {feature.description}
-                </p>
+                <p className="text-sm mb-1">{feature.title}</p>
+                <p className="text-xs text-muted-foreground">{feature.description}</p>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Chat Interface */}
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -138,14 +121,11 @@ Would you like to book any of these venues?`,
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Messages */}
           <div className="space-y-4 min-h-[400px] max-h-[500px] overflow-y-auto">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex gap-3 ${
-                  message.type === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex gap-3 ${message.type === "user" ? "justify-end" : "justify-start"}`}
               >
                 {message.type === "bot" && (
                   <Avatar className="h-8 w-8">
@@ -169,7 +149,7 @@ Would you like to book any of these venues?`,
                           key={suggestion}
                           variant="outline"
                           className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                          onClick={() => setInput(suggestion)}
+                          onClick={() => handleSend(suggestion)}
                         >
                           {suggestion}
                         </Badge>
@@ -186,79 +166,46 @@ Would you like to book any of these venues?`,
                 )}
               </div>
             ))}
+            {isLoading && (
+              <div className="flex gap-3 justify-start">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    <Bot className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="rounded-lg bg-muted p-4 text-muted-foreground">
+                  Checking live SportXClub data...
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Input */}
           <div className="flex gap-2">
             <Input
-              placeholder="Ask me anything about sports..."
+              placeholder="Ask about venues, games, players, or tournaments..."
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => event.key === "Enter" && handleSend()}
+              disabled={isLoading}
               className="flex-1"
             />
-
-            <Button onClick={handleSend} className="gap-2">
+            <Button onClick={() => handleSend()} className="gap-2" disabled={isLoading}>
               <Send className="h-4 w-4" />
               Send
             </Button>
           </div>
 
-          {/* Quick Actions */}
           <div className="flex flex-wrap gap-2 pt-4 border-t border-border/50">
-            <p className="text-sm text-muted-foreground w-full mb-2">
-              Quick Actions:
-            </p>
+            <p className="text-sm text-muted-foreground w-full mb-2">Quick Actions:</p>
             {suggestions.map((suggestion) => (
               <Badge
                 key={suggestion}
                 variant="outline"
                 className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                onClick={() => setInput(suggestion)}
+                onClick={() => handleSend(suggestion)}
               >
                 {suggestion}
               </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* AI Insights */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle>Personalized Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
-            {[
-              {
-                title: "Peak Booking Time",
-                value: "6-8 PM",
-                description: "Best availability during weekdays",
-              },
-              {
-                title: "Recommended Sport",
-                value: "Cricket",
-                description: "Based on your activity",
-              },
-              {
-                title: "Savings This Month",
-                value: "₹450",
-                description: "Through AI recommendations",
-              },
-            ].map((insight) => (
-              <div
-                key={insight.title}
-                className="p-4 rounded-lg border border-border/50 bg-muted/30"
-              >
-                <p className="text-sm text-muted-foreground mb-2">
-                  {insight.title}
-                </p>
-                <p className="text-2xl  mb-1">{insight.value}</p>
-                <p className="text-xs text-muted-foreground">
-                  {insight.description}
-                </p>
-              </div>
             ))}
           </div>
         </CardContent>

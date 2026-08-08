@@ -88,7 +88,7 @@ export function EditProfilePage() {
     // Premium simulated delay
     await new Promise((resolve) => setTimeout(resolve, 1000));
     
-    const result = updateUser({
+    const result = await updateUser({
       fullName,
       city,
       phone,

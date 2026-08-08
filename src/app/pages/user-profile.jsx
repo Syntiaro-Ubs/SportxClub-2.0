@@ -1,902 +1,262 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { motion } from "motion/react";
 import {
-  Bell,
+  Ban,
   Bookmark,
-  ChevronRight,
-  CreditCard,
+  Calendar,
+  Coffee,
   Edit,
-  Heart,
-  HelpCircle,
+  Flame,
+  History,
   LogOut,
   MapPin,
   Medal,
-  Settings,
-  Ticket,
+  MessageSquare,
+  QrCode,
+  Share2,
+  ShoppingBag,
   Trophy,
   Wallet,
-  QrCode,
-  Coffee,
-  Share2,
-  Ban,
-  Play,
-  Flame,
-  CheckCircle2,
-  UserPlus,
-  ShoppingBag,
-  Calendar,
-  Check,
-  Minus,
-  History,
-  MessageSquare,
-  Clock,
-  Lock,
-  MessageCircle,
-  ArrowLeft,
-  Edit3,
-  Target,
-  TrendingUp,
-  Award,
-  Zap
 } from "lucide-react";
-
-import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Container } from "../components/ui/container";
-import { useAuth } from "../providers/auth-provider";
-import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { Progress } from "../components/ui/progress";
+import { useAuth } from "../providers/auth-provider";
+import { profileService } from "../services/profile.service";
+import { toast } from "sonner";
 
-const sportsOptions = [
-  { id: "football", name: "Football", emoji: "⚽" },
-  { id: "cricket", name: "Cricket", emoji: "🏏" },
-  { id: "badminton", name: "Badminton", emoji: "🏸" },
-  { id: "tennis", name: "Tennis", emoji: "🎾" },
-  { id: "basketball", name: "Basketball", emoji: "🏀" },
-  { id: "swimming", name: "Swimming", emoji: "🏊" },
-  { id: "gym", name: "Gym & Fitness", emoji: "🏋️" },
-  { id: "volleyball", name: "Volleyball", emoji: "🏐" },
-];
+const sportsOptions = ["football", "cricket", "badminton", "tennis", "basketball", "swimming", "gym", "volleyball"];
 
 const getInitials = (name) => {
-  if (!name) return "RV";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
+  if (!name) return "?";
+  return name.split(/\s+/).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
 };
 
 const getHandle = (user) => {
-  if (!user) return "@rohanv";
-  if (user.fullName) {
-    return "@" + user.fullName.toLowerCase().replace(/\s+/g, "");
-  }
-  if (user.email) {
-    return "@" + user.email.split("@")[0];
-  }
-  return "@user";
+  if (user?.fullName) return `@${user.fullName.toLowerCase().replace(/\s+/g, "")}`;
+  if (user?.email) return `@${user.email.split("@")[0]}`;
+  return "";
 };
 
-const getMappedSports = (selectedSports) => {
-  if (!selectedSports || selectedSports.length === 0) {
-    return ["Cricket", "Football", "Tennis"];
-  }
-  return selectedSports.map((id) => {
-    const found = sportsOptions.find((s) => s.id === id);
-    return found ? found.name : id.charAt(0).toUpperCase() + id.slice(1);
-  });
+const getSportName = (sport) => {
+  const normalized = String(sport || "").toLowerCase();
+  const known = sportsOptions.find((item) => item === normalized);
+  return known ? known[0].toUpperCase() + known.slice(1) : String(sport || "");
 };
 
-const achievements = [
-  { title: "100 Matches", icon: Trophy, color: "text-emerald-600" },
-  { title: "Top Scorer", icon: Medal, color: "text-emerald-600" },
-  { title: "Team Captain", icon: Bookmark, color: "text-emerald-600" },
-];
+const formatDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString(undefined, { dateStyle: "medium" });
+};
 
-const matchHistory = [
-  {
-    id: 1,
-    venue: "Elite Sports Arena",
-    sport: "Cricket",
-    date: "Jun 15, 2026",
-    result: "Won",
-    score: "156/4 vs 142/8",
-  },
-  {
-    id: 2,
-    venue: "Champions Complex",
-    sport: "Football",
-    date: "Jun 12, 2026",
-    result: "Won",
-    score: "3-1",
-  },
-  {
-    id: 3,
-    venue: "Ace Tennis Academy",
-    sport: "Tennis",
-    date: "Jun 10, 2026",
-    result: "Lost",
-    score: "6-4, 4-6, 5-7",
-  },
-];
+const formatDateTime = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+};
 
-const shopItems = [
-  {
-    id: 1,
-    name: "SportX Pro Grip Socks",
-    price: 350,
-    image: "https://images.unsplash.com/photo-1511886929837-354d827aae26?q=80&w=1080",
-  },
-  {
-    id: 2,
-    name: "Elite Match Ball",
-    price: 1200,
-    image: "https://images.unsplash.com/photo-1551958219-acbc608c6377?q=80&w=1080",
-  },
-  {
-    id: 3,
-    name: "SportX Water Bottle 1L",
-    price: 450,
-    image: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?q=80&w=1080",
-  },
-  {
-    id: 4,
-    name: "Premium Wrist Bands",
-    price: 250,
-    image: "https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?q=80&w=1080",
-  },
-];
-
-const amenitiesList = [
-  {
-    id: "bibs",
-    name: "Training Bibs (Set of 10)",
-    price: 150,
-    image: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=150",
-    label: "Neon mesh bibs",
-  },
-  {
-    id: "drinks",
-    name: "Energy Drinks (x4)",
-    price: 200,
-    image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=150",
-    label: "Chilled Gatorade",
-  },
-  {
-    id: "shoes",
-    name: "Pro Soccer Cleats (Rent)",
-    price: 250,
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150",
-    label: "Nike sizes 7-11",
-  },
-];
-
-function ConfettiCelebration({ active }) {
-  if (!active) return null;
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {[...Array(60)].map((_, i) => {
-        const left = Math.random() * 100;
-        const delay = Math.random() * 1.5;
-        const duration = 1.5 + Math.random() * 2;
-        const color = ["#059669", "#FFD700", "#FF4500", "#00BFFF", "#FF69B4", "#8A2BE2"][Math.floor(Math.random() * 6)];
-        const size = 6 + Math.random() * 8;
-        return (
-          <motion.div
-            key={i}
-            initial={{ y: -20, x: `${left}vw`, opacity: 1, rotate: 0 }}
-            animate={{
-              y: "105vh",
-              x: `${left + (Math.random() * 14 - 7)}vw`,
-              rotate: 360,
-              opacity: 0
-            }}
-            transition={{
-              duration: duration,
-              delay: delay,
-              ease: "easeOut"
-            }}
-            style={{
-              position: "absolute",
-              width: size,
-              height: size,
-              backgroundColor: color,
-              borderRadius: Math.random() > 0.5 ? "50%" : "0%",
-              top: 0,
-            }}
-          />
-        );
-      })}
-    </div>
-  );
+function EmptyState({ children }) {
+  return <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">{children}</p>;
 }
-
 
 export function UserProfile() {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [txHistoryOpen, setTxHistoryOpen] = useState(false);
+  const [addonsOpen, setAddonsOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const refreshProfile = useCallback(async () => {
+    if (!currentUser) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      setProfile(await profileService.get(currentUser));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => refreshProfile(), 0);
+    return () => clearTimeout(timer);
+  }, [refreshProfile]);
+
+  const user = profile?.user || currentUser;
+  const achievements = useMemo(() => {
+    if (!user) return [];
+    const values = [{ title: `${user.gamesPlayed || 0} Matches`, icon: Trophy }];
+    if (user.isTopScorer) values.push({ title: "Top Scorer", icon: Medal });
+    if (user.isTeamCaptain) values.push({ title: "Team Captain", icon: Bookmark });
+    return values;
+  }, [user]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  // Shared state values
-  const [walletBalance, setWalletBalance] = useState(1200);
-  const [topUpOpen, setTopUpOpen] = useState(false);
-  const [txHistoryOpen, setTxHistoryOpen] = useState(false);
-  const [transactions, setTransactions] = useState([
-    { id: "tx-1", type: "Refund", label: "Match Booking Cancelled", amount: 150, date: "Today, 9:30 AM", status: "Success", isCredit: true },
-    { id: "tx-2", type: "Pro Shop", label: "SportX Water Bottle 1L", amount: 450, date: "Yesterday, 2:15 PM", status: "Success", isCredit: false },
-    { id: "tx-3", type: "Booking", label: "Split Share - Elite Turf Arena", amount: 150, date: "Jul 11, 2026", status: "Success", isCredit: false },
-    { id: "tx-4", type: "Top Up", label: "Wallet Direct UPI Topup", amount: 1000, date: "Jul 10, 2026", status: "Success", isCredit: true },
-    { id: "tx-5", type: "Rent", label: "Addon - Pro Soccer Cleats", amount: 250, date: "Jul 09, 2026", status: "Success", isCredit: false },
-  ]);
-
-  const [playerXp, setPlayerXp] = useState(8450);
-  const [matchStatus, setMatchStatus] = useState("CONFIRMED");
-  const [selectedAmenities, setSelectedAmenities] = useState([]);
-  const [addonsPaid, setAddonsPaid] = useState(false);
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [addonsOpen, setAddonsOpen] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
-
-  const [playerPayments, setPlayerPayments] = useState({
-    0: true, // You (Host)
-    1: false, // Player 2
-    2: false, // Player 3
-  });
-
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [purchasedItemId, setPurchasedItemId] = useState(null);
-
-  // Auto Payment Simulator Trigger (Teammates pay)
-  useEffect(() => {
-    if (matchStatus === "CONFIRMED") {
-      const timer = setTimeout(() => {
-        setPlayerPayments(prev => ({
-          ...prev,
-          1: true,
-          2: true,
-        }));
-      }, 8000);
-      return () => clearTimeout(timer);
+  const handleTopUp = async () => {
+    const amount = Number(topUpAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter a valid amount.");
+      return;
     }
-  }, [matchStatus]);
-
-
-
-  const handleCancelBooking = () => {
-    if (matchStatus === "CONFIRMED") {
-      setWalletBalance((prev) => prev + 150);
-      setMatchStatus("CANCELLED");
-      setCancelOpen(false);
-
-      const newTx = {
-        id: "tx-" + Date.now(),
-        type: "Refund",
-        label: "Refund - Booking Cancelled SX-92841",
-        amount: 150,
-        date: "Today, Just Now",
-        status: "Success",
-        isCredit: true,
-      };
-      setTransactions(prev => [newTx, ...prev]);
-      toast.success("Booking cancelled. ₹150 refunded to wallet.");
+    try {
+      setProfile(await profileService.topUp(currentUser, amount));
+      setTopUpAmount("");
+      setTopUpOpen(false);
+      toast.success("Wallet top-up recorded successfully.");
+    } catch (requestError) {
+      toast.error(requestError.message);
     }
   };
 
-  const handlePayAddons = () => {
-    const total = selectedAmenities.reduce((acc, id) => {
-      const item = amenitiesList.find((x) => x.id === id);
-      return acc + (item ? item.price : 0);
-    }, 0);
-    if (walletBalance >= total) {
-      setWalletBalance((prev) => prev - total);
-      setAddonsPaid(true);
+  const handlePurchase = async (productId, successMessage) => {
+    try {
+      setProfile(await profileService.purchase(currentUser, productId));
+      toast.success(successMessage);
+    } catch (requestError) {
+      toast.error(requestError.message);
+    } finally {
+      setSelectedProductId(null);
+    }
+  };
 
-      const newTx = {
-        id: "tx-" + Date.now(),
-        type: "Rent",
-        label: "Reserved Addons (Drinks/Bibs/Cleats)",
-        amount: total,
-        date: "Today, Just Now",
-        status: "Success",
-        isCredit: false,
-      };
-      setTransactions(prev => [newTx, ...prev]);
-      toast.success("Add-ons reserved and paid successfully!");
-
-      setTimeout(() => {
-        setAddonsOpen(false);
-      }, 1500);
-    } else {
-      toast.error("Insufficient wallet balance. Please top up.");
+  const handleCancelBooking = async () => {
+    if (!profile?.activeBooking) return;
+    try {
+      setProfile(await profileService.cancelBooking(currentUser, profile.activeBooking.id));
+      setCancelOpen(false);
+      toast.success("Booking cancelled and refund recorded in the database.");
+    } catch (requestError) {
+      toast.error(requestError.message);
     }
   };
 
   const handleCopyLink = () => {
+    if (!profile?.activeBooking?.booking_code) return;
+    navigator.clipboard.writeText(`${window.location.origin}/payment/split/${profile.activeBooking.booking_code}`);
     setCopiedLink(true);
-    navigator.clipboard.writeText("https://payment.sportx.club/split/SX-92841");
-    toast.success("Split payment link copied!");
+    toast.success("Booking link copied.");
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  const displayName = currentUser?.fullName || "Rohan Verma";
-  const displayHandle = getHandle(currentUser);
-  const displayCity = currentUser?.city ? `${currentUser.city}, India` : "Mumbai, India";
-  const displayInitials = getInitials(currentUser?.fullName);
-  const displaySports = getMappedSports(currentUser?.selectedSports);
+  if (!currentUser) {
+    return <Container className="py-16 text-center"><EmptyState>Please sign in to view your player account.</EmptyState></Container>;
+  }
+
+  if (loading) {
+    return <Container className="py-16 text-center"><EmptyState>Loading your account data...</EmptyState></Container>;
+  }
+
+  if (error) {
+    return <Container className="py-16 text-center space-y-4"><EmptyState>{error}</EmptyState><Button onClick={refreshProfile}>Retry</Button></Container>;
+  }
+
+  const displayName = user?.fullName || "";
+  const xp = Number(user?.xp || 0);
+  const level = Math.floor(xp / 1000) + 1;
+  const xpToNextLevel = Math.max((level * 1000) - xp, 0);
+  const matchHistory = profile?.matchHistory || [];
+  const products = profile?.shopItems || [];
+  const activeBooking = profile?.activeBooking;
 
   return (
-    <>
-      <ConfettiCelebration active={showConfetti} />
-
-      {/* Dialog Modals */}
+    <Container className="px-0 sm:px-6 py-2 sm:py-6 space-y-6 sm:space-y-8 max-w-4xl w-full">
       <Dialog open={txHistoryOpen} onOpenChange={setTxHistoryOpen}>
         <DialogContent className="bg-background border-border text-foreground sm:max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-foreground">
-              <Wallet className="h-5 w-5 text-emerald-600" /> Wallet Transactions
-            </DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Wallet className="h-5 w-5 text-emerald-600" /> Wallet Transactions</DialogTitle></DialogHeader>
           <div className="space-y-3 py-4">
-            {transactions.length > 0 ? (
-              transactions.map((tx) => (
-                <div key={tx.id} className="flex justify-between items-center bg-card p-3.5 border border-border/60 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold ${tx.isCredit ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                      }`}>
-                      {tx.isCredit ? "+" : "-"}
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-xs leading-tight">{tx.label}</p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{tx.date} • {tx.type}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`font-mono font-bold text-sm ${tx.isCredit ? "text-emerald-400" : "text-foreground"}`}>
-                      {tx.isCredit ? "+" : "-"}₹{tx.amount}
-                    </span>
-                    <span className="block text-[8px] text-emerald-400 font-bold uppercase tracking-wider mt-0.5">
-                      {tx.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-center py-6 text-muted-foreground text-sm">No transactions found.</p>
-            )}
+            {profile?.transactions?.length ? profile.transactions.map((tx) => (
+              <div key={tx.id} className="flex justify-between items-center bg-card p-3.5 border border-border/60 rounded-2xl">
+                <div><p className="font-semibold text-xs">{tx.label}</p><p className="text-[10px] text-muted-foreground mt-1">{formatDateTime(tx.createdAt)} · {tx.type}</p></div>
+                <div className="text-right"><span className={tx.isCredit ? "text-emerald-500 font-bold" : "font-bold"}>{tx.isCredit ? "+" : "-"}₹{tx.amount}</span><span className="block text-[9px] text-emerald-500 uppercase">{tx.status}</span></div>
+              </div>
+            )) : <EmptyState>No transactions recorded for this account.</EmptyState>}
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={topUpOpen} onOpenChange={setTopUpOpen}>
         <DialogContent className="bg-background border-border text-foreground sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Top Up Wallet</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-3 gap-3 py-4">
-            {[500, 1000, 2000].map((amt) => (
-              <Button
-                key={amt}
-                variant="outline"
-                className="border-border bg-card hover:bg-muted text-foreground"
-                onClick={() => {
-                  setWalletBalance((prev) => prev + amt);
-                  const newTx = {
-                    id: "tx-" + Date.now(),
-                    type: "Top Up",
-                    label: `Wallet UPI Topup`,
-                    amount: amt,
-                    date: "Today, Just Now",
-                    status: "Success",
-                    isCredit: true,
-                  };
-                  setTransactions(prev => [newTx, ...prev]);
-                  setTopUpOpen(false);
-                  toast.success(`Successfully added ₹${amt} to your wallet!`);
-                }}
-              >
-                ₹{amt}
-              </Button>
-            ))}
-          </div>
-          <Input
-            id="customTopupVal"
-            placeholder="Enter custom amount"
-            className="bg-card border-border text-foreground rounded-xl"
-            type="number"
-          />
-          <Button
-            className="w-full bg-emerald-600 text-black hover:bg-[#5ce630] font-bold rounded-xl mt-4 h-11 cursor-pointer"
-            onClick={() => {
-              const customVal = parseInt(document.getElementById("customTopupVal")?.value);
-              if (!customVal || customVal <= 0) {
-                toast.error("Please enter a valid amount.");
-                return;
-              }
-              setWalletBalance((prev) => prev + customVal);
-              const newTx = {
-                id: "tx-" + Date.now(),
-                type: "Top Up",
-                label: `Custom Wallet Topup`,
-                amount: customVal,
-                date: "Today, Just Now",
-                status: "Success",
-                isCredit: true,
-              };
-              setTransactions(prev => [newTx, ...prev]);
-              setTopUpOpen(false);
-              toast.success(`Successfully added ₹${customVal} to your wallet!`);
-            }}
-          >
-            Proceed to Pay
-          </Button>
+          <DialogHeader><DialogTitle>Top Up Wallet</DialogTitle></DialogHeader>
+          <Input type="number" min="1" value={topUpAmount} onChange={(event) => setTopUpAmount(event.target.value)} placeholder="Enter amount" />
+          <DialogFooter><Button onClick={handleTopUp}>Record Top Up</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={addonsOpen} onOpenChange={setAddonsOpen}>
         <DialogContent className="bg-background border-border text-foreground sm:max-w-md max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-bold text-xl">
-              <Coffee className="h-5 w-5 text-amber-500" /> Pre-Book Accessories
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground text-left mt-1">
-              Select any additional gear or drinks to be kept ready at the turf reception.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            {amenitiesList.map((item) => {
-              const isSelected = selectedAmenities.includes(item.id);
-              return (
-                <div key={item.id} className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${isSelected ? "border-amber-500/40 bg-amber-500/5" : "border-border bg-card"
-                  }`}>
-                  <div className="flex items-center gap-3">
-                    <div className="h-14 w-14 bg-muted rounded-xl overflow-hidden shrink-0">
-                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div className="text-left">
-                      <p className="font-semibold text-xs leading-tight text-foreground">{item.name}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1">{item.label}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0 space-y-1.5">
-                    <p className="font-mono text-sm font-bold text-foreground">₹{item.price}</p>
-                    <Button
-                      size="sm"
-                      disabled={addonsPaid}
-                      onClick={() => setSelectedAmenities(prev =>
-                        prev.includes(item.id) ? prev.filter(x => x !== item.id) : [...prev, item.id]
-                      )}
-                      className={`h-7 px-3 text-[10px] rounded-lg font-bold border ${isSelected ? "bg-amber-500 text-black border-none" : "border-border bg-transparent text-foreground"
-                        }`}
-                    >
-                      {isSelected ? "Selected" : "Add"}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Coffee className="h-5 w-5 text-amber-500" /> Available Add-ons</DialogTitle><DialogDescription>Choose an item from the products stored in the database.</DialogDescription></DialogHeader>
+          <div className="space-y-3 py-4">
+            {products.length ? products.map((item) => (
+              <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border p-3">
+                <div className="flex items-center gap-3"><img src={item.image} alt={item.name} className="h-12 w-12 rounded-xl object-cover" /><div><p className="text-xs font-semibold">{item.name}</p><p className="text-xs text-emerald-600">₹{item.price}</p></div></div>
+                <Button size="sm" disabled={selectedProductId === item.id} onClick={() => handlePurchase(item.id, "Add-on purchase recorded in the database.")}>{selectedProductId === item.id ? "Processing" : "Buy"}</Button>
+              </div>
+            )) : <EmptyState>No add-ons are currently available.</EmptyState>}
           </div>
-
-          <DialogFooter className="border-t border-border/40 pt-4 flex-col gap-3">
-            <div className="flex justify-between items-center text-xs w-full">
-              <span className="text-muted-foreground">Total Add-on Cost:</span>
-              <span className="font-mono font-bold text-sm text-foreground">
-                ₹{selectedAmenities.reduce((tot, id) => tot + (amenitiesList.find(x => x.id === id)?.price || 0), 0)}
-              </span>
-            </div>
-            <Button
-              className="w-full h-11 bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:opacity-95 rounded-xl font-bold text-xs cursor-pointer"
-              disabled={selectedAmenities.length === 0 || addonsPaid}
-              onClick={handlePayAddons}
-            >
-              {addonsPaid ? "✓ Reserved & Paid" : `Confirm & Pay from Wallet (₹${selectedAmenities.reduce((tot, id) => tot + (amenitiesList.find(x => x.id === id)?.price || 0), 0)})`}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="bg-background border-border text-foreground sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-bold text-xl">
-              <Ban className="h-5 w-5 text-red-500" /> Cancel Slot Booking
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground text-left mt-1">
-              Are you sure you want to cancel your slot reservation for today's match?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4 space-y-3 text-left">
-            <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-xl text-xs text-red-400 leading-relaxed">
-              <strong>Notice:</strong> Cancelling within 4 hours of match time incurs a minor convenience fee deduction. A refund of <strong>₹150</strong> will be credited directly to your SportX wallet.
-            </div>
-          </div>
-          <DialogFooter className="flex gap-2">
-            <Button variant="outline" className="flex-1 rounded-xl h-10 text-xs" onClick={() => setCancelOpen(false)}>
-              Keep Booking
-            </Button>
-            <Button variant="destructive" className="flex-1 rounded-xl h-10 text-xs" onClick={handleCancelBooking}>
-              Confirm Cancel
-            </Button>
-          </DialogFooter>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Ban className="h-5 w-5 text-red-500" /> Cancel Booking</DialogTitle><DialogDescription>This changes the booking and wallet records in the database.</DialogDescription></DialogHeader>
+          <DialogFooter><Button variant="outline" onClick={() => setCancelOpen(false)}>Keep Booking</Button><Button variant="destructive" onClick={handleCancelBooking}>Confirm Cancel</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Main Consolidated Profile Page Layout */}
-      <Container className="px-0 sm:px-6 py-2 sm:py-6 space-y-6 sm:space-y-8 max-w-4xl w-full">
-        {/* 1. Profile Header with Avatar, Sports & XP Progress */}
-        <Card className="rounded-none sm:rounded-2xl border-x-0 sm:border-x border-border/50 bg-gradient-to-br from-primary/5 via-card to-card overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-600/5 blur-[80px] pointer-events-none" />
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col gap-6 md:flex-row md:items-start justify-between">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-                <Avatar className="h-24 w-24 border border-primary/15 bg-background shadow-inner">
-                  <AvatarImage src={currentUser?.profilePicture} className="object-cover" />
-                  <AvatarFallback className="bg-primary/10 text-2xl text-primary font-black">
-                    {displayInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="space-y-1">
-                  <p className="text-xs uppercase tracking-[0.24em] text-primary font-bold">Athlete Profile</p>
-                  <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-1">{displayName}</h1>
-                  <p className="text-sm text-muted-foreground">{displayHandle}</p>
-                  <div className="mt-3 flex items-center justify-center sm:justify-start gap-2 text-muted-foreground text-xs font-semibold">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    {displayCity} • Active since May 2025
-                  </div>
-                  <div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-1.5">
-                    {displaySports.map((sport) => (
-                      <Badge key={sport} variant="outline" className="text-[10px] py-0.5 px-2.5 rounded-full border-border/80 text-muted-foreground font-semibold">
-                        {sport}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* XP Progression Card */}
-              <div className="bg-background/50 border border-border/60 rounded-2xl p-4 w-full md:w-80 space-y-3 relative z-10 text-left">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-foreground font-semibold flex items-center gap-1.5">
-                    <Flame className="h-4 w-4 text-emerald-600" /> LEVEL 14 STRIKER
-                  </span>
-                  <span className="text-emerald-600 font-mono font-bold">
-                    {playerXp} / 10000 XP
-                  </span>
-                </div>
-                <Progress value={(playerXp / 10000) * 100} className="h-2 bg-muted" indicatorColor="bg-emerald-600" />
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>LVL 14</span>
-                  <span>LVL 15 (Earn +1550 XP to Level Up)</span>
-                </div>
-              </div>
+      <Card className="rounded-none sm:rounded-2xl border-x-0 sm:border-x border-border/50 bg-gradient-to-br from-primary/5 via-card to-card">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col gap-6 md:flex-row md:items-start justify-between">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+              <Avatar className="h-24 w-24 border border-primary/15 bg-background"><AvatarImage src={user?.profilePicture} className="object-cover" /><AvatarFallback className="bg-primary/10 text-2xl text-primary font-black">{getInitials(displayName)}</AvatarFallback></Avatar>
+              <div className="space-y-1"><p className="text-xs uppercase tracking-[0.24em] text-primary font-bold">Athlete Profile</p><h1 className="text-2xl font-black text-slate-900 dark:text-white">{displayName}</h1><p className="text-sm text-muted-foreground">{getHandle(user)}</p><div className="mt-3 flex items-center justify-center sm:justify-start gap-2 text-muted-foreground text-xs font-semibold"><MapPin className="h-4 w-4 text-primary" />{user?.city || ""}{user?.joinedDate ? ` · Active since ${formatDate(user.joinedDate)}` : ""}</div><div className="mt-4 flex flex-wrap justify-center sm:justify-start gap-1.5">{(user?.selectedSports || []).map((sport) => <Badge key={sport} variant="outline" className="text-[10px] rounded-full">{getSportName(sport)}</Badge>)}</div></div>
             </div>
-
-            {/* Logout button at header level */}
-            <div className="mt-6 flex justify-end gap-2 border-t border-border/40 pt-4">
-              <Link to="/edit-profile">
-                <Button size="sm" variant="outline" className="text-xs rounded-xl gap-1">
-                  <Edit className="h-3.5 w-3.5" /> Edit Profile
-                </Button>
-              </Link>
-              <Button size="sm" variant="destructive" className="text-xs rounded-xl gap-1 cursor-pointer" onClick={handleLogout}>
-                <LogOut className="h-3.5 w-3.5" /> Logout
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 2. Interactive Wallet Banner */}
-        <div className="bg-gradient-to-br from-card to-card/95 border-y sm:border border-border shadow-sm rounded-none sm:rounded-[24px] p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden text-left">
-          <div className="absolute right-0 top-0 w-44 h-44 bg-emerald-600/5 blur-[60px] pointer-events-none" />
-          <div className="flex items-center gap-4 z-10">
-            <div className="bg-emerald-600/10 p-3.5 rounded-2xl border border-emerald-600/20 text-emerald-600">
-              <Wallet className="h-7 w-7" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">SportX Wallet Balance</p>
-              <h2 className="text-3xl font-extrabold tracking-tight text-foreground mt-0.5">₹{walletBalance}</h2>
-            </div>
+            <div className="bg-background/50 border border-border/60 rounded-2xl p-4 w-full md:w-80 space-y-3 text-left"><div className="flex justify-between items-center text-xs"><span className="font-semibold flex items-center gap-1.5"><Flame className="h-4 w-4 text-emerald-600" /> LEVEL {level}</span><span className="text-emerald-600 font-mono font-bold">{xp} XP</span></div><Progress value={xp % 1000 / 10} className="h-2 bg-muted" indicatorColor="bg-emerald-600" /><div className="flex justify-between text-[10px] text-muted-foreground"><span>LVL {level}</span><span>{xpToNextLevel ? `${xpToNextLevel} XP to next level` : "Level ready"}</span></div></div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold md:max-w-xs z-10">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 shrink-0" />
-            UPI & Card top-ups enabled. 100% refund-safe.
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0 z-10">
-            <Button variant="outline" className="w-full sm:w-auto rounded-2xl border-border px-6 h-12 text-sm font-semibold bg-muted/20 hover:bg-muted text-foreground cursor-pointer" onClick={() => setTxHistoryOpen(true)}>
-              <History className="h-4 w-4 mr-2" /> Transaction History
-            </Button>
-            <Button className="w-full sm:w-auto rounded-2xl border border-emerald-600 bg-transparent text-emerald-600 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] px-6 h-12 text-sm font-bold cursor-pointer transition-all" onClick={() => setTopUpOpen(true)}>
-              + Top Up Wallet
-            </Button>
-          </div>
-        </div>
+          <div className="mt-6 flex justify-end gap-2 border-t border-border/40 pt-4"><Link to="/edit-profile"><Button size="sm" variant="outline" className="text-xs rounded-xl gap-1"><Edit className="h-3.5 w-3.5" /> Edit Profile</Button></Link><Button size="sm" variant="destructive" className="text-xs rounded-xl gap-1" onClick={handleLogout}><LogOut className="h-3.5 w-3.5" /> Logout</Button></div>
+        </CardContent>
+      </Card>
 
-        {/* 3. Achievements Badge List */}
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 px-3 sm:px-0">
-          {achievements.map((achievement) => {
-            const Icon = achievement.icon;
-            return (
-              <div key={achievement.title} className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-4 shadow-sm text-left">
-                <div className="flex h-12 w-12 items-center justify-center">
-                  <Icon className={`h-6 w-6 ${achievement.color}`} />
-                </div>
-                <p className="font-bold text-sm text-foreground">{achievement.title}</p>
-              </div>
-            );
-          })}
-        </div>
+      <div className="bg-gradient-to-br from-card to-card/95 border-y sm:border border-border shadow-sm rounded-none sm:rounded-[24px] p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 text-left"><div className="flex items-center gap-4"><div className="bg-emerald-600/10 p-3.5 rounded-2xl border border-emerald-600/20 text-emerald-600"><Wallet className="h-7 w-7" /></div><div><p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">SportX Wallet Balance</p><h2 className="text-3xl font-extrabold">₹{profile?.walletBalance || 0}</h2></div></div><div className="flex flex-col sm:flex-row gap-3"><Button variant="outline" className="rounded-2xl h-12" onClick={() => setTxHistoryOpen(true)}><History className="h-4 w-4 mr-2" /> Transaction History</Button><Button className="rounded-2xl h-12 bg-transparent text-emerald-600 border border-emerald-600 hover:bg-emerald-50" onClick={() => setTopUpOpen(true)}>+ Top Up Wallet</Button></div></div>
 
-        <hr className="border-border/60" />
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-3 px-3 sm:px-0">{achievements.map(({ title, icon: Icon }) => <div key={title} className="flex items-center gap-3 rounded-2xl border border-border/40 bg-card p-4 shadow-sm text-left"><div className="flex h-12 w-12 items-center justify-center"><Icon className="h-6 w-6 text-emerald-600" /></div><p className="font-bold text-sm">{title}</p></div>)}</div>
 
-        {/* 4. Active Match Center (Stacked) */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-black text-left flex items-center gap-2 text-slate-800 dark:text-white">
-            <Calendar className="h-5 w-5 text-primary" /> Active Match Center
-          </h2>
-          {matchStatus === "CONFIRMED" ? (
-            <div className="bg-gradient-to-br from-card to-card/95 border border-border shadow-md rounded-[24px] overflow-hidden flex flex-col md:flex-row text-left">
-              {/* Image Block */}
-              <div className="relative w-full md:w-1/3 min-h-[200px] overflow-hidden p-3 shrink-0">
-                <div className="relative w-full h-full rounded-2xl overflow-hidden min-h-[180px]">
-                  <img src="https://images.unsplash.com/photo-1459865264687-595d652de67e?q=80&w=1080" alt="Venue" className="w-full h-full object-cover opacity-75 mix-blend-luminosity absolute inset-0" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4 z-10 space-y-1">
-                    <Badge className="bg-emerald-600 text-black font-bold text-[9px] py-0.5 px-2.5 rounded-full border-0">5-a-side Football</Badge>
-                    <h3 className="text-base font-black text-white leading-tight">Elite Turf Arena</h3>
-                    <p className="text-emerald-600 font-mono font-bold text-xs flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Today, 6:00 PM</p>
-                  </div>
-                </div>
-              </div>
-              {/* Actions & Details Grid */}
-              <div className="w-full md:w-2/3 p-6 flex flex-col justify-between space-y-6">
-                <div className="flex items-center justify-between border-b border-border/40 pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-emerald-600/10 p-2.5 rounded-full border border-emerald-600/20 text-emerald-600"><Trophy className="h-5 w-5" /></div>
-                    <div>
-                      <h4 className="font-bold text-foreground text-sm leading-tight">7-a-side Football Friendly</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Booking ID: SX-92841</p>
-                    </div>
-                  </div>
-                  <span className="text-emerald-600 font-black tracking-wider text-xs uppercase">CONFIRMED</span>
-                </div>
+      <hr className="border-border/60" />
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {/* Entry Pass Trigger */}
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <div className="relative overflow-hidden rounded-2xl border border-border bg-card hover:border-emerald-600/50 transition-all cursor-pointer group h-32 flex flex-col justify-between select-none shadow-sm shadow-emerald-600/5">
-                        <div className="w-full h-18 relative overflow-hidden bg-muted">
-                          <img src="https://images.unsplash.com/photo-1569025690938-a00729c9e1f9?q=80&w=300" alt="Pass" className="w-full h-full object-cover opacity-100 group-hover:scale-105 transition-transform duration-300" />
-                          <div className="absolute top-2 right-2 z-20 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border text-emerald-600 group-hover:bg-emerald-600 group-hover:text-black transition-colors"><QrCode className="h-4 w-4" /></div>
-                        </div>
-                        <div className="p-2.5 bg-card border-t border-border/40 text-left">
-                          <span className="block text-xs font-bold text-foreground">Entry Pass</span>
-                        </div>
-                      </div>
-                    </DialogTrigger>
-                    <DialogContent className="bg-white text-black sm:max-w-xs text-center border-0 p-8 rounded-2xl">
-                      <div className="space-y-4">
-                        <h3 className="font-bold text-xl uppercase tracking-wider">{displayName}</h3>
-                        <div className="bg-zinc-100 p-4 rounded-2xl mx-auto w-fit"><QrCode className="h-40 w-40 text-black" /></div>
-                        <p className="text-sm font-semibold text-muted-foreground">Scan at Elite Turf Arena gate</p>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+      <div className="space-y-4"><h2 className="text-xl font-black text-left flex items-center gap-2"><Calendar className="h-5 w-5 text-primary" /> Active Match Center</h2>{activeBooking ? <div className="bg-card border border-border shadow-md rounded-[24px] overflow-hidden flex flex-col md:flex-row text-left"><div className="relative w-full md:w-1/3 min-h-[200px] p-3"><div className="relative w-full h-full rounded-2xl overflow-hidden min-h-[180px]"><img src={activeBooking.turf_image} alt={activeBooking.turf_name} className="w-full h-full object-cover absolute inset-0" /><div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" /><div className="absolute bottom-4 left-4 right-4 z-10 space-y-1"><Badge className="bg-emerald-600 text-black font-bold text-[9px] rounded-full">{activeBooking.sport || "Sports booking"}</Badge><h3 className="text-base font-black text-white">{activeBooking.turf_name}</h3><p className="text-emerald-400 font-mono font-bold text-xs">{formatDate(activeBooking.date)} · {activeBooking.time_slot || activeBooking.slot_time}</p></div></div></div><div className="w-full md:w-2/3 p-6 flex flex-col justify-between space-y-6"><div className="flex items-center justify-between border-b border-border/40 pb-4"><div className="flex items-center gap-3"><div className="bg-emerald-600/10 p-2.5 rounded-full text-emerald-600"><Trophy className="h-5 w-5" /></div><div><h4 className="font-bold text-sm">{activeBooking.sport || "Sports"} booking</h4><p className="text-xs text-muted-foreground mt-0.5">Booking ID: {activeBooking.booking_code || activeBooking.id}</p></div></div><span className="text-emerald-600 font-black text-xs uppercase">{activeBooking.status}</span></div><div className="grid grid-cols-2 sm:grid-cols-4 gap-4"><div className="rounded-2xl border border-border bg-card p-3 h-32 flex flex-col justify-between"><QrCode className="h-5 w-5 text-emerald-600" /><span className="text-xs font-bold">Entry Pass</span></div><div onClick={() => setAddonsOpen(true)} className="rounded-2xl border border-border bg-card p-3 h-32 flex flex-col justify-between cursor-pointer"><Coffee className="h-5 w-5 text-amber-500" /><span className="text-xs font-bold">Add-ons</span></div><div onClick={handleCopyLink} className="rounded-2xl border border-border bg-card p-3 h-32 flex flex-col justify-between cursor-pointer"><Share2 className="h-5 w-5 text-emerald-500" /><span className="text-xs font-bold">{copiedLink ? "Copied" : "Copy Link"}</span></div><div onClick={() => setCancelOpen(true)} className="rounded-2xl border border-border bg-card p-3 h-32 flex flex-col justify-between cursor-pointer"><Ban className="h-5 w-5 text-red-500" /><span className="text-xs font-bold">Cancel Slot</span></div></div></div></div> : <EmptyState>No active bookings are linked to this account.</EmptyState>}</div>
 
-                  {/* Add-ons Trigger */}
-                  <div onClick={() => setAddonsOpen(true)} className="relative overflow-hidden rounded-2xl border border-border bg-card hover:border-amber-500/50 transition-all cursor-pointer group h-32 flex flex-col justify-between select-none shadow-sm shadow-amber-500/5">
-                    <div className="w-full h-18 relative overflow-hidden bg-muted">
-                      <img src="https://images.unsplash.com/photo-1571008887538-b36bb32f4571?q=80&w=300" alt="Amenities" className="w-full h-full object-cover opacity-100 group-hover:scale-105 transition-transform duration-300" />
-                      <div className="absolute top-2 right-2 z-20 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border text-amber-500 group-hover:bg-amber-500 group-hover:text-black transition-colors"><Coffee className="h-4 w-4" /></div>
-                    </div>
-                    <div className="p-2.5 bg-card border-t border-border/40 text-left">
-                      <span className="block text-xs font-bold text-foreground">Add-ons</span>
-                    </div>
-                  </div>
+      <hr className="border-border/60" />
 
-                  {/* Split Status Tracker */}
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <div className="relative overflow-hidden rounded-2xl border border-border bg-card hover:border-emerald-500/50 transition-all cursor-pointer group h-32 flex flex-col justify-between select-none shadow-sm shadow-emerald-500/5">
-                        <div className="w-full h-18 relative overflow-hidden bg-muted">
-                          <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=300" alt="Split" className="w-full h-full object-cover opacity-100 group-hover:scale-105 transition-transform duration-300" />
-                          <div className="absolute top-2 right-2 z-20 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border text-emerald-500 group-hover:bg-emerald-500 group-hover:text-black transition-colors"><Share2 className="h-4 w-4" /></div>
-                        </div>
-                        <div className="p-2.5 bg-card border-t border-border/40 text-left">
-                          <span className="block text-xs font-bold text-foreground">Split Tracker</span>
-                        </div>
-                      </div>
-                    </DialogTrigger>
-                    <DialogContent className="bg-background border-border text-foreground sm:max-w-md max-h-[85vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center justify-between text-xl font-bold">
-                          <span>Split Tracker Status</span>
-                          <Button variant="outline" size="sm" onClick={handleCopyLink} className="h-8 rounded-lg text-xs font-bold border-border cursor-pointer">
-                            {copiedLink ? "Copied" : "Copy Split Link"}
-                          </Button>
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-3 py-4">
-                        {["You (Host)", "Vikram M. (2)", "Arjun K. (3)"].map((name, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-3.5 rounded-2xl bg-card border border-border/60">
-                            <span className="text-xs font-bold">{name}</span>
-                            {playerPayments[idx] ? (
-                              <Badge className="bg-emerald-500/10 text-emerald-500 font-extrabold text-[10px] border-none px-2.5 py-1 rounded-full">Paid</Badge>
-                            ) : (
-                              <Badge className="bg-amber-500/10 text-amber-500 font-bold text-[10px] border-none px-2.5 py-1 rounded-full">Pending</Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+      <div className="space-y-4"><h2 className="text-xl font-black text-left flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-primary" /> Pro Shop Merchandise</h2><div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 text-left">{products.length ? products.map((item) => <div key={item.id} className="border border-border/80 bg-card rounded-2xl p-4 flex flex-col justify-between space-y-4"><div className="h-32 w-full bg-muted rounded-xl overflow-hidden"><img src={item.image} alt={item.name} className="h-full w-full object-cover" /></div><div><h5 className="font-bold text-sm line-clamp-1">{item.name}</h5><p className="text-base font-extrabold text-emerald-600 mt-1">₹{item.price}</p></div><Button size="sm" className="w-full" disabled={selectedProductId === item.id} onClick={() => { setSelectedProductId(item.id); handlePurchase(item.id, "Purchase recorded in the database."); }}>{selectedProductId === item.id ? "Processing" : "Purchase Item"}</Button></div>) : <div className="sm:col-span-2 lg:col-span-4"><EmptyState>No merchandise is currently available.</EmptyState></div>}</div></div>
 
-                  {/* Cancel Booking card */}
-                  <div onClick={() => setCancelOpen(true)} className="relative overflow-hidden rounded-2xl border border-border bg-card hover:border-red-500/50 transition-all cursor-pointer group h-32 flex flex-col justify-between select-none shadow-sm shadow-red-500/5">
-                    <div className="w-full h-18 relative overflow-hidden bg-muted">
-                      <img src="https://images.unsplash.com/photo-1589487391730-58f20eb2c308?q=80&w=300" alt="Cancel" className="w-full h-full object-cover opacity-100 group-hover:scale-105 transition-transform duration-300" />
-                      <div className="absolute top-2 right-2 z-20 bg-background/95 backdrop-blur-md p-1.5 rounded-lg border border-border text-red-500 group-hover:bg-red-500 group-hover:text-black transition-colors"><Ban className="h-4 w-4" /></div>
-                    </div>
-                    <div className="p-2.5 bg-card border-t border-border/40 text-left">
-                      <span className="block text-xs font-bold text-foreground">Cancel Slot</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <Card className="border-border/50 p-8 text-center text-muted-foreground text-sm">
-              Active slot reservation has been cancelled. Refunded ₹150 to your wallet.
-            </Card>
-          )}
-        </div>
+      <hr className="border-border/60" />
 
-        <hr className="border-border/60" />
+      <div className="space-y-4"><h2 className="text-xl font-black text-left flex items-center gap-2"><History className="h-5 w-5 text-primary" /> Match Logs & History</h2><div className="grid grid-cols-1 md:grid-cols-2 gap-4">{matchHistory.length ? matchHistory.map((match) => { const isWon = String(match.result || "").toLowerCase() === "won"; return <div key={match.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border bg-card/60 shadow-sm text-left gap-4 ${isWon ? "border-l-4 border-l-emerald-600" : "border-l-4 border-l-rose-500"}`}><div className="flex items-center gap-4"><div className="h-12 w-12 rounded-xl flex items-center justify-center font-bold text-xs bg-primary/10 text-primary border">{String(match.sport || "").substring(0, 2).toUpperCase()}</div><div><div className="flex items-center gap-2 flex-wrap"><h4 className="font-extrabold text-sm">{match.venue}</h4><Badge variant="outline" className="text-[9px]">{match.sport}</Badge></div><div className="flex items-center gap-1.5 text-xs text-muted-foreground"><Calendar className="h-3.5 w-3.5" />{formatDate(match.matchDate)}</div></div></div><div className="flex items-center justify-between sm:justify-end gap-6"><div className="text-right"><p className="text-[10px] text-muted-foreground uppercase tracking-widest">Match Score</p><p className="font-mono text-sm font-extrabold">{match.score || "—"}</p></div><Badge className={isWon ? "bg-emerald-500/10 text-emerald-600" : "bg-rose-500/10 text-rose-600"}>{match.result || "Recorded"}</Badge></div></div>; }) : <div className="md:col-span-2"><EmptyState>No match history is stored for this account.</EmptyState></div>}</div></div>
 
-        {/* 6. Pro Shop Merchandise */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-black text-left flex items-center gap-2 text-slate-800 dark:text-white">
-            <ShoppingBag className="h-5 w-5 text-primary" /> Pro Shop Merchandise
-          </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 text-left">
-            {shopItems.map((item) => (
-              <div key={item.id} className="border border-border/80 bg-card rounded-2xl p-4 flex flex-col justify-between space-y-4 hover:border-emerald-600/30 transition-all">
-                <div className="h-32 w-full bg-muted rounded-xl overflow-hidden shadow-inner">
-                  <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
-                </div>
-                <div>
-                  <h5 className="font-bold text-sm text-foreground line-clamp-1">{item.name}</h5>
-                  <p className="text-base font-extrabold text-emerald-600 mt-1">₹{item.price}</p>
-                </div>
-                <Button size="sm" className="w-full bg-white border border-slate-200 text-slate-900 hover:bg-transparent hover:border-emerald-500 hover:text-emerald-500 hover:shadow-[0_0_8px_rgba(16,185,129,0.4)] rounded-xl font-bold h-10 cursor-pointer transition-all duration-200" onClick={() => {
-                  setPurchasedItemId(item.id);
-                  setWalletBalance(prev => {
-                    if (prev >= item.price) {
-                      toast.success(`Purchased ${item.name}!`);
-                      return prev - item.price;
-                    }
-                    toast.error("Insufficient wallet balance.");
-                    return prev;
-                  });
-                }}>
-                  Purchase Item
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
+      <hr className="border-border/60" />
 
-        <hr className="border-border/60" />
-
-        {/* 8. Match Logs / History */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-black text-left flex items-center gap-2 text-slate-800 dark:text-white">
-            <History className="h-5 w-5 text-primary" /> Match Logs & History
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {matchHistory.map((match) => {
-              const isWon = match.result === "Won";
-              const sportColors = {
-                Cricket: { bg: "bg-amber-500/10 text-amber-500 border-amber-500/20" },
-                Football: { bg: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" },
-                Tennis: { bg: "bg-sky-500/10 text-sky-500 border-sky-500/20" },
-              };
-              const colors = sportColors[match.sport] || { bg: "bg-primary/10 text-primary border-primary/20" };
-
-              return (
-                <div
-                  key={match.id}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border border-border/50 bg-card/60 backdrop-blur-sm shadow-sm transition-all duration-300 hover:scale-[1.01] hover:shadow-md hover:border-border text-left gap-4 relative overflow-hidden ${isWon ? "border-l-4 border-l-emerald-600" : "border-l-4 border-l-rose-500"
-                    }`}
-                >
-                  {/* Left Column: Sport Icon + Details */}
-                  <div className="flex items-center gap-4">
-                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${colors.bg} border`}>
-                      {match.sport.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-extrabold text-sm text-slate-800 dark:text-white leading-tight">
-                          {match.venue}
-                        </h4>
-                        <Badge variant="outline" className={`text-[9px] font-bold tracking-wider py-0.5 px-2 rounded-md ${colors.bg}`}>
-                          {match.sport}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5" />
-                        <span>{match.date}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Result + Score details */}
-                  <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0 border-border/40">
-                    <div className="text-left sm:text-right space-y-0.5">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Match Score</p>
-                      <p className="font-mono text-sm font-extrabold text-slate-800 dark:text-white">
-                        {match.score}
-                      </p>
-                    </div>
-
-                    <div className="shrink-0">
-                      <Badge
-                        className={`text-xs font-black px-3.5 py-1.5 rounded-xl border-0 ${isWon
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 hover:bg-emerald-500/15"
-                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/15"
-                          }`}
-                      >
-                        {isWon ? "✓ WON" : "✗ LOST"}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <hr className="border-border/60" />
-
-        {/* 9. Teammate Reviews */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-black text-left flex items-center gap-2 text-slate-800 dark:text-white">
-            <MessageSquare className="h-5 w-5 text-primary" /> Teammate Reviews & Ratings
-          </h2>
-          <Card className="border-border/50 bg-card">
-            <CardContent className="space-y-4 p-6">
-              {[
-                { from: "Rahul Sharma", rating: 5, comment: "Great player! Excellent teamwork and sportsmanship.", date: "2 weeks ago" },
-                { from: "Priya Patel", rating: 5, comment: "Very skilled and reliable. Would play with again!", date: "1 month ago" },
-              ].map((review, i) => (
-                <div key={i} className="border-b border-border/50 pb-4 last:border-0 text-left space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <p className="font-bold text-sm text-foreground">{review.from}</p>
-                    <div className="flex gap-1">
-                      {Array.from({ length: review.rating }).map((_, sIdx) => (
-                        <Trophy key={sIdx} className="h-4 w-4 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{review.comment}</p>
-                  <p className="text-[10px] text-muted-foreground/60">{review.date}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-      </Container>
-    </>
+      <div className="space-y-4"><h2 className="text-xl font-black text-left flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" /> Teammate Reviews & Ratings</h2><Card className="border-border/50 bg-card"><CardContent className="space-y-4 p-6">{profile?.reviews?.length ? profile.reviews.map((review) => <div key={review.id} className="border-b border-border/50 pb-4 last:border-0 text-left space-y-1.5"><div className="flex items-center justify-between"><p className="font-bold text-sm">{review.reviewer}</p><div className="flex gap-1">{Array.from({ length: Number(review.rating || 0) }).map((_, index) => <Trophy key={index} className="h-4 w-4 fill-amber-400 text-amber-400" />)}</div></div><p className="text-xs text-muted-foreground">{review.comment}</p><p className="text-[10px] text-muted-foreground/60">{formatDateTime(review.createdAt)}</p></div>) : <EmptyState>No teammate reviews are stored for this account.</EmptyState>}</CardContent></Card></div>
+    </Container>
   );
 }

@@ -17,6 +17,8 @@ const ALLOWED_ENTITIES = {
   reports: "reports",
   notifications: "notifications",
   staff: "staff",
+  tournaments: "tournaments",
+  "tournament-teams": "tournament_teams",
 };
 
 // Auth endpoints extracted to server/routes/auth.js
@@ -70,6 +72,105 @@ router.get("/admin/:entity", async (req, res) => {
 
   try {
     const pool = getPool();
+    const { ownerEmail, ownerName } = req.query;
+
+    if (ownerEmail || ownerName) {
+      const cleanEmail = String(ownerEmail || "").trim().toLowerCase();
+      const cleanName = String(ownerName || "").trim().toLowerCase();
+
+      if (entity === "turfs") {
+        const [rows] = await pool.query(
+          `SELECT * FROM turfs 
+           WHERE (LOWER(owner_email) = ? AND ? != '') 
+              OR (LOWER(owner_name) = ? AND ? != '')
+           ORDER BY id DESC`,
+          [cleanEmail, cleanEmail, cleanName, cleanName]
+        );
+        return res.json({ success: true, data: rows });
+      }
+
+      if (entity === "bookings") {
+        const [rows] = await pool.query(
+          `SELECT b.* FROM bookings b
+           INNER JOIN turfs t ON LOWER(t.name) = LOWER(b.turf_name)
+           WHERE (LOWER(t.owner_email) = ? AND ? != '') 
+              OR (LOWER(t.owner_name) = ? AND ? != '')
+           ORDER BY b.id DESC`,
+          [cleanEmail, cleanEmail, cleanName, cleanName]
+        );
+        return res.json({ success: true, data: rows });
+      }
+
+      if (entity === "payments") {
+        const [rows] = await pool.query(
+          `SELECT p.* FROM payments p
+           INNER JOIN bookings b ON (LOWER(b.booking_code) = LOWER(p.booking_id) OR b.id = p.booking_id)
+           INNER JOIN turfs t ON LOWER(t.name) = LOWER(b.turf_name)
+           WHERE (LOWER(t.owner_email) = ? AND ? != '') 
+              OR (LOWER(t.owner_name) = ? AND ? != '')
+           ORDER BY p.id DESC`,
+          [cleanEmail, cleanEmail, cleanName, cleanName]
+        );
+        return res.json({ success: true, data: rows });
+      }
+
+      if (entity === "reviews") {
+        const [rows] = await pool.query(
+          `SELECT r.* FROM reviews r
+           INNER JOIN turfs t ON LOWER(t.name) = LOWER(r.turf_name)
+           WHERE (LOWER(t.owner_email) = ? AND ? != '') 
+              OR (LOWER(t.owner_name) = ? AND ? != '')
+           ORDER BY r.id DESC`,
+          [cleanEmail, cleanEmail, cleanName, cleanName]
+        );
+        return res.json({ success: true, data: rows });
+      }
+
+      if (entity === "staff") {
+        const [rows] = await pool.query(
+          `SELECT s.* FROM staff s
+           INNER JOIN turfs t ON LOWER(t.name) = LOWER(s.turf)
+           WHERE (LOWER(t.owner_email) = ? AND ? != '') 
+              OR (LOWER(t.owner_name) = ? AND ? != '')
+           ORDER BY s.id DESC`,
+          [cleanEmail, cleanEmail, cleanName, cleanName]
+        );
+        return res.json({ success: true, data: rows });
+      }
+
+      if (entity === "turf-owners") {
+        const [rows] = await pool.query(
+          `SELECT * FROM turf_owners 
+           WHERE (LOWER(email) = ? AND ? != '') 
+              OR (LOWER(name) = ? AND ? != '')
+           ORDER BY id DESC`,
+          [cleanEmail, cleanEmail, cleanName, cleanName]
+        );
+        return res.json({ success: true, data: rows });
+      }
+
+      if (entity === "tournaments") {
+        const [rows] = await pool.query(
+          `SELECT * FROM tournaments 
+           WHERE (LOWER(organizer_email) = ? AND ? != '') 
+              OR (LOWER(organizer_name) = ? AND ? != '')
+           ORDER BY id DESC`,
+          [cleanEmail, cleanEmail, cleanName, cleanName]
+        );
+        return res.json({ success: true, data: rows });
+      }
+
+      if (entity === "tournament-teams") {
+        const [rows] = await pool.query(
+          `SELECT * FROM tournament_teams 
+           WHERE (LOWER(organizer_email) = ? AND ? != '') 
+           ORDER BY id DESC`,
+          [cleanEmail, cleanEmail]
+        );
+        return res.json({ success: true, data: rows });
+      }
+    }
+
     const [rows] = await pool.query(`SELECT * FROM \`${tableName}\` ORDER BY id DESC`);
     return res.json({ success: true, data: rows });
   } catch (err) {

@@ -110,7 +110,7 @@ export function PlayerLoginPage() {
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userName", res.user.fullName ? res.user.fullName.split(" ")[0] : "Player");
         setTimeout(() => {
-          navigate("/community");
+          navigate("/");
         }, 800);
       } else {
         toast.error(res.error || "Invalid email or password");
@@ -138,7 +138,7 @@ export function PlayerLoginPage() {
     setShowCustomGoogleInput(false);
     try {
       setIsFetchingAccounts(true);
-      const accs = await adminApi.getAccounts();
+      const accs = await adminApi.getAccounts("player");
       setDbAccounts(accs || []);
     } catch (e) {
       console.error("Failed loading accounts:", e);
@@ -168,7 +168,7 @@ export function PlayerLoginPage() {
           toast.success(`Welcome back, ${result.user.fullName}! Logged in via Google.`);
         }
         setTimeout(() => {
-          navigate("/community");
+          navigate("/");
         }, 800);
       } else {
         toast.error(result.error || "Google Auth failed");
@@ -480,10 +480,12 @@ export function PlayerLoginPage() {
               <span className="text-sm font-medium text-slate-300">Sign in with Google</span>
             </div>
             <button
+              type="button"
               onClick={() => setIsGoogleModalOpen(false)}
-              className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+              aria-label="Close modal"
+              className="z-50 flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:text-white bg-white/5 hover:bg-white/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 stroke-[2]" />
             </button>
           </div>
 

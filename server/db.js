@@ -66,11 +66,23 @@ async function createTables() {
       role VARCHAR(50) DEFAULT 'Player',
       phone VARCHAR(50),
       city VARCHAR(100),
+      bio TEXT,
+      selected_sports TEXT,
       status VARCHAR(50) DEFAULT 'Active',
       games_played INT DEFAULT 0,
       bookings INT DEFAULT 0,
       joined_date VARCHAR(50),
-      avatar VARCHAR(500),
+      avatar LONGTEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS player_accounts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      profile_user_id INT NOT NULL UNIQUE,
+      full_name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      status VARCHAR(50) DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
@@ -84,6 +96,16 @@ async function createTables() {
       total_turfs INT DEFAULT 0,
       earnings VARCHAR(50) DEFAULT '₹0',
       joined_date VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS turf_owner_accounts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      owner_profile_id INT NOT NULL UNIQUE,
+      full_name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      status VARCHAR(50) DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
@@ -208,6 +230,55 @@ async function createTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
+    `CREATE TABLE IF NOT EXISTS player_wallets (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL UNIQUE,
+      balance DECIMAL(10,2) NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS wallet_transactions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      label VARCHAR(255) NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      status VARCHAR(50) DEFAULT 'Success',
+      is_credit TINYINT(1) DEFAULT 0,
+      reference_key VARCHAR(100) UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS player_matches (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      booking_id INT,
+      venue VARCHAR(255) NOT NULL,
+      sport VARCHAR(100),
+      match_date VARCHAR(50),
+      result VARCHAR(50),
+      score VARCHAR(100),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS player_reviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      player_id INT NOT NULL,
+      reviewer_id INT,
+      rating INT DEFAULT 5,
+      comment TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS player_stats (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL UNIQUE,
+      xp INT DEFAULT 0,
+      is_top_scorer TINYINT(1) DEFAULT 0,
+      is_team_captain TINYINT(1) DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`,
+
     `CREATE TABLE IF NOT EXISTS reports (
       id INT AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(255),
@@ -241,6 +312,17 @@ async function createTables() {
       password VARCHAR(255) NOT NULL,
       email VARCHAR(255) NOT NULL,
       role VARCHAR(50) DEFAULT 'Admin',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS admin_accounts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      cms_user_id INT UNIQUE,
+      username VARCHAR(100) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      role VARCHAR(50) DEFAULT 'Admin',
+      status VARCHAR(50) DEFAULT 'Active',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
@@ -361,6 +443,7 @@ async function createTables() {
 
     `CREATE TABLE IF NOT EXISTS cms_posts (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      author_user_id INT,
       author VARCHAR(255) NOT NULL,
       author_avatar LONGTEXT,
       time VARCHAR(100) DEFAULT 'Just now',
@@ -373,6 +456,73 @@ async function createTables() {
       badge VARCHAR(100) DEFAULT 'Community',
       is_active TINYINT(1) DEFAULT 1,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS community_post_likes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      post_id INT NOT NULL,
+      user_id INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_post_like (post_id, user_id)
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS wallet_transactions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      wallet_id INT NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      description TEXT,
+      reference_key VARCHAR(100) UNIQUE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS tournaments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      sport VARCHAR(100),
+      location VARCHAR(255),
+      start_date VARCHAR(100),
+      teams INT DEFAULT 16,
+      matches INT DEFAULT 24,
+      prize VARCHAR(100) DEFAULT '₹50,000',
+      status VARCHAR(50) DEFAULT 'Registration Open',
+      organizer_name VARCHAR(255),
+      organizer_email VARCHAR(255),
+      image_url LONGTEXT,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS tournament_teams (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      tournament_id INT,
+      tournament_name VARCHAR(255),
+      team_name VARCHAR(255) NOT NULL,
+      captain_name VARCHAR(255),
+      captain_email VARCHAR(255),
+      members_count INT DEFAULT 11,
+      sport VARCHAR(100),
+      status VARCHAR(50) DEFAULT 'Pending',
+      organizer_email VARCHAR(255),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS community_comments (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      post_id INT NOT NULL,
+      user_id INT NOT NULL,
+      author_name VARCHAR(255) NOT NULL,
+      author_avatar LONGTEXT,
+      comment_text TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS community_post_shares (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      post_id INT NOT NULL,
+      user_id INT NOT NULL,
+      platform VARCHAR(50) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 
@@ -383,6 +533,9 @@ async function createTables() {
   // Run migrations for existing table columns
   try {
     await conn.query("ALTER TABLE turfs MODIFY COLUMN image_url LONGTEXT;");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN owner_email VARCHAR(255);");
   } catch (e) {}
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN description LONGTEXT;");
@@ -406,7 +559,29 @@ async function createTables() {
     await conn.query("ALTER TABLE banners MODIFY COLUMN image_url LONGTEXT;");
   } catch (e) {}
   try {
+    await conn.query("ALTER TABLE tournaments ADD COLUMN turf_name VARCHAR(255);");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE tournaments ADD COLUMN turf_id INT;");
+  } catch (e) {}
+  try {
     await conn.query("ALTER TABLE bookings ADD COLUMN sport VARCHAR(100);");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE users ADD COLUMN bio TEXT;");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE users ADD COLUMN selected_sports TEXT;");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE users MODIFY COLUMN avatar LONGTEXT;");
+  } catch (e) {}
+
+  try {
+    await conn.query("ALTER TABLE wallet_transactions ADD COLUMN reference_key VARCHAR(100) UNIQUE;");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE cms_posts ADD COLUMN author_user_id INT;");
   } catch (e) {}
 
   console.log("Database schema checked/created successfully.");
@@ -702,6 +877,22 @@ async function seedData() {
       ('Sneha Reddy', '2 days ago', 'Tennis coaching session was absolutely amazing! Improved my backhand significantly. Highly recommend Ace Tennis Academy!', NULL, 89, 15, 5, 'review', 'Review', 1)
     `);
   }
+
+  // Keep authentication identities in their own account tables. Existing profile
+  // tables remain the source of domain data, while these tables are the only
+  // tables used to authenticate each account type.
+  await conn.query(`
+    INSERT IGNORE INTO player_accounts (profile_user_id, full_name, email, password, status)
+    SELECT id, full_name, email, password, COALESCE(status, 'Active')
+    FROM users
+    WHERE LOWER(COALESCE(role, 'player')) NOT IN ('admin', 'owner', 'turf owner', 'staff')
+  `);
+
+  await conn.query(`
+    INSERT IGNORE INTO admin_accounts (cms_user_id, username, password, email, role, status)
+    SELECT id, username, password, email, role, 'Active'
+    FROM cms_users
+  `);
 
   console.log("Database seeded successfully!");
 }

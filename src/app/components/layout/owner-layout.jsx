@@ -100,26 +100,35 @@ export function OwnerLayout() {
       return next;
     });
   };
-
   const handleTestModeToggle = (checked) => {
     setIsTestMode(checked);
     localStorage.setItem("ownerTestMode", checked ? "true" : "false");
   };
 
-  // Create a local override state for demo purposes (when not logged in)
-  const [demoProfile, setDemoProfile] = useState(() => {
-    return JSON.parse(localStorage.getItem("mockOwnerProfile")) || null;
+  const [storedProfile] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("turfOwnerUser") || "null");
+    } catch (error) {
+      return null;
+    }
   });
 
-  const activeProfile = currentUser || demoProfile || {};
+  const activeProfile = currentUser || storedProfile || {};
+  const setDemoProfile = () => {};
 
   const ownerName = activeProfile.fullName || "Ujwal Bramhnote";
   const ownerEmail = activeProfile.email || "owner@sportxclub.com";
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/admin-login");
   };
+
+  useEffect(() => {
+    if (!activeProfile || !activeProfile.email) {
+      navigate("/admin-login", { replace: true });
+    }
+  }, [activeProfile, navigate]);
 
   const visibleNavigation = useMemo(() => {
     if (!activeProfile) return ownerNavigation;

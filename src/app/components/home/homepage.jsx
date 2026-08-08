@@ -41,6 +41,7 @@ import { Badge } from "../ui/badge";
 import { adminApi } from "../../services/admin-api";
 import { cmsService } from "../../services/cms-service";
 import { LocationModal } from "./LocationModal";
+import { detectUserCity } from "../../utils/location";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import {
@@ -401,6 +402,23 @@ export function Navbar() {
     window.addEventListener("preferredCityChanged", handleCityChange);
     return () =>
       window.removeEventListener("preferredCityChanged", handleCityChange);
+  }, []);
+
+  // Auto-detect user location when website opens
+  useEffect(() => {
+    const savedCity = localStorage.getItem("preferred-city");
+    if (!savedCity) {
+      detectUserCity().then((detected) => {
+        if (detected) {
+          localStorage.setItem("preferred-city", detected);
+          setActiveCity(detected);
+          window.dispatchEvent(
+            new CustomEvent("preferredCityChanged", { detail: detected })
+          );
+          toast.success(`Location auto-detected: ${detected}`);
+        }
+      });
+    }
   }, []);
 
 
@@ -1627,16 +1645,40 @@ export function SportsCategories() {
   useEffect(() => {
     async function fetchSports() {
       try {
-        const data = await cmsService.getSports();
-        if (data && data.length > 0) {
-          const mapped = data.map((s) => ({
+        const [cmsData, turfsData] = await Promise.all([
+          cmsService.getSports().catch(() => []),
+          adminApi.getAll("turfs").catch(() => []),
+        ]);
+
+        let mapped = [];
+        if (cmsData && cmsData.length > 0) {
+          mapped = cmsData.map((s) => ({
             name: s.name,
-            count: s.description || "1,200+ venues",
+            count: s.description || "Venues available",
             image: s.image_url || asset("/venues/new_football_turf_2.png"),
             icon: s.icon,
           }));
-          setDynamicSports(mapped);
+        } else {
+          mapped = [...sports];
         }
+
+        // Merge any new sports added in MySQL turfs
+        if (turfsData && turfsData.length > 0) {
+          const names = new Set(mapped.map((s) => s.name.toLowerCase()));
+          turfsData.forEach((t) => {
+            const sportName = t.sport_type || t.sportType;
+            if (sportName && !names.has(sportName.toLowerCase())) {
+              names.add(sportName.toLowerCase());
+              mapped.push({
+                name: sportName,
+                count: "Active Turf Arenas",
+                image: t.image_url || t.image || asset("/venues/turf-1.webp"),
+              });
+            }
+          });
+        }
+
+        setDynamicSports(mapped);
       } catch (err) {
         console.error("Failed fetching dynamic CMS sports cards:", err);
       }

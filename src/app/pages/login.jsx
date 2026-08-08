@@ -146,7 +146,7 @@ export function LoginPage() {
     setShowCustomGoogleInput(false);
     try {
       setIsFetchingAccounts(true);
-      const accs = await adminApi.getAccounts();
+      const accs = await adminApi.getAccounts(loginType === "owner" ? "turf-owner" : "player");
       setDbAccounts(accs || []);
     } catch (e) {
       console.error("Failed loading accounts:", e);
@@ -178,12 +178,10 @@ export function LoginPage() {
         }
         setIsSuccess(true);
         setTimeout(() => {
-          if (result.user.role === "owner" || loginType === "owner") {
+          if (result.user.accountType === "turf-owner") {
             navigate("/admin-panel");
-          } else if (result.user.role === "admin") {
-            navigate("/site-maker");
           } else {
-            navigate("/community");
+            navigate("/");
           }
         }, 1000);
       } else {
@@ -227,7 +225,11 @@ export function LoginPage() {
     if (!isFormValid()) return;
 
     setIsSubmitting(true);
-    const result = await login(formData.email.trim(), formData.password.trim());
+    const result = await login(
+      formData.email.trim(),
+      formData.password.trim(),
+      loginType === "owner" ? "turf-owner" : "player"
+    );
 
     await new Promise((resolve) => setTimeout(resolve, 600));
     setIsSubmitting(false);
@@ -238,12 +240,10 @@ export function LoginPage() {
       toast.success(`Welcome back, ${result.user.fullName || "User"}!`);
       setIsSuccess(true);
       setTimeout(() => {
-        if (result.user.isStaff || result.user.userRole === "Staff" || result.user.role === "owner" || result.user.role === "Turf Owner" || loginType === "owner") {
+        if (result.user.accountType === "turf-owner") {
           navigate("/admin-panel");
-        } else if (result.user.role === "admin") {
-          navigate("/site-maker");
         } else {
-          navigate("/community");
+          navigate("/");
         }
       }, 1000);
     } else {
@@ -569,10 +569,12 @@ export function LoginPage() {
               <span className="text-sm font-medium text-slate-300">Sign in with Google</span>
             </div>
             <button
+              type="button"
               onClick={() => setIsGoogleModalOpen(false)}
-              className="text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+              aria-label="Close modal"
+              className="z-50 flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:text-white bg-white/5 hover:bg-white/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 stroke-[2]" />
             </button>
           </div>
 

@@ -6,9 +6,34 @@ const API_BASE = "/api";
 
 export const adminApi = {
   // Generic Entity Fetcher
-  getAll: async (entity) => {
+  getAll: async (entity, params = {}) => {
     try {
-      const res = await fetch(`${API_BASE}/admin/${entity}`);
+      const isOwnerRoute = typeof window !== "undefined" && (window.location.pathname.startsWith("/admin-panel") || window.location.pathname.startsWith("/owner"));
+
+      let activeUser = {};
+      if (isOwnerRoute) {
+        try {
+          activeUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+        } catch (e) {}
+      }
+
+      const isOwnerFiltering = isOwnerRoute && Boolean(activeUser.email || activeUser.fullName);
+      const mergedParams = {
+        ...(isOwnerFiltering ? {
+          ownerEmail: activeUser.email || "",
+          ownerName: activeUser.fullName || activeUser.name || "",
+        } : {}),
+        ...params,
+      };
+
+      const cleanParams = new URLSearchParams();
+      Object.entries(mergedParams).forEach(([k, v]) => {
+        if (v) cleanParams.append(k, v);
+      });
+
+      const query = cleanParams.toString();
+      const url = query ? `${API_BASE}/admin/${entity}?${query}` : `${API_BASE}/admin/${entity}`;
+      const res = await fetch(url);
       const json = await res.json();
       if (!json.success) throw new Error(json.error || `Failed to fetch ${entity}`);
       return json.data;
@@ -81,12 +106,12 @@ export const adminApi = {
   },
 
   // User Auth APIs
-  login: async (email, password) => {
+  login: async (email, password, accountType = "player") => {
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, accountType }),
       });
       const json = await res.json();
       return json;
@@ -111,12 +136,12 @@ export const adminApi = {
     }
   },
 
-  checkExists: async ({ email, phone }) => {
+  checkExists: async ({ email, phone, accountType = "player" }) => {
     try {
       const res = await fetch(`${API_BASE}/auth/check-exists`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, phone }),
+        body: JSON.stringify({ email, phone, accountType }),
       });
       return await res.json();
     } catch (err) {
@@ -183,14 +208,28 @@ export const adminApi = {
     }
   },
 
-  getAccounts: async () => {
+  getAccounts: async (accountType = "player") => {
     try {
-      const res = await fetch(`${API_BASE}/auth/accounts`);
+      const res = await fetch(`${API_BASE}/auth/accounts?accountType=${encodeURIComponent(accountType)}`);
       const json = await res.json();
       return json.accounts || [];
     } catch (err) {
       console.error("adminApi.getAccounts error:", err);
       return [];
+    }
+  },
+
+  updateProfile: async (userData) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/update-profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData),
+      });
+      return await res.json();
+    } catch (err) {
+      console.error("adminApi.updateProfile error:", err);
+      return { success: false, error: err.message || "Network error" };
     }
   },
 

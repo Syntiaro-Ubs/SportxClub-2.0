@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Search, MapPin, LocateFixed, ChevronDown, ChevronUp, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
+import { detectUserCity } from "../../utils/location";
 import {
   Dialog,
   DialogContent,
@@ -210,23 +211,19 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
     }
   };
 
-  const handleDetectLocation = () => {
+  const handleDetectLocation = async () => {
     setIsDetecting(true);
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setIsDetecting(false);
-          handleFinalSelect("Navi Mumbai");
-        },
-        (error) => {
-          setIsDetecting(false);
-          handleFinalSelect("Navi Mumbai");
-        },
-        { timeout: 3000 }
-      );
-    } else {
+    try {
+      const detected = await detectUserCity();
       setIsDetecting(false);
-      handleFinalSelect("Navi Mumbai");
+      if (detected) {
+        handleFinalSelect(detected);
+      } else {
+        handleFinalSelect("Mumbai");
+      }
+    } catch (e) {
+      setIsDetecting(false);
+      handleFinalSelect("Mumbai");
     }
   };
 

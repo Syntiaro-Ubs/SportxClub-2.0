@@ -442,6 +442,13 @@ export const router = createBrowserRouter([
         },
       },
       {
+        path: "/my-tournaments",
+        lazy: async () => {
+          const { MyTournamentsPage } = await import("./app/pages/my-tournaments");
+          return { Component: MyTournamentsPage };
+        },
+      },
+      {
         path: "/ai-assistant",
         lazy: async () => {
           const { AISportsAssistant } =

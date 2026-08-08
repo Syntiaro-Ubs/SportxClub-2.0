@@ -179,10 +179,10 @@ export function OwnerProfile() {
     }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     try {
       if (currentUser) {
-        updateUser(editFormData);
+        await updateUser(editFormData);
       } else {
         localStorage.setItem("mockOwnerProfile", JSON.stringify(editFormData));
         if (setDemoProfile) setDemoProfile(editFormData);

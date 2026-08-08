@@ -4,9 +4,34 @@
 const API_BASE = "/api/admin";
 
 export const turfService = {
-  getAll: async () => {
+  getAll: async (params = {}) => {
     try {
-      const response = await fetch(`${API_BASE}/turfs`);
+      const isOwnerRoute = typeof window !== "undefined" && (window.location.pathname.startsWith("/admin-panel") || window.location.pathname.startsWith("/owner"));
+
+      let activeUser = {};
+      if (isOwnerRoute) {
+        try {
+          activeUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+        } catch (e) {}
+      }
+
+      const isOwnerFiltering = isOwnerRoute && Boolean(activeUser.email || activeUser.fullName);
+      const mergedParams = {
+        ...(isOwnerFiltering ? {
+          ownerEmail: activeUser.email || "",
+          ownerName: activeUser.fullName || activeUser.name || "",
+        } : {}),
+        ...params,
+      };
+
+      const cleanParams = new URLSearchParams();
+      Object.entries(mergedParams).forEach(([k, v]) => {
+        if (v) cleanParams.append(k, v);
+      });
+
+      const query = cleanParams.toString();
+      const url = query ? `${API_BASE}/turfs?${query}` : `${API_BASE}/turfs`;
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Network response was not ok");
       const json = await response.json();
       return json.data || [];
@@ -18,10 +43,8 @@ export const turfService = {
 
   getById: async (ownerId, id) => {
     try {
-      const response = await fetch(`${API_BASE}/turfs`);
-      if (!response.ok) throw new Error("Network response was not ok");
-      const json = await response.json();
-      const item = (json.data || []).find((t) => String(t.id) === String(id));
+      const turfs = await turfService.getAll();
+      const item = (turfs || []).find((t) => String(t.id) === String(id));
       return item || null;
     } catch (error) {
       console.error("Error fetching turf details:", error);
@@ -31,6 +54,11 @@ export const turfService = {
 
   create: async (ownerId, data) => {
     try {
+      let activeUser = {};
+      try {
+        activeUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+      } catch (e) {}
+
       const payload = {
         name: data.name || "New Turf",
         location: data.location || "Location",
@@ -39,8 +67,9 @@ export const turfService = {
         rating: Number(data.rating || 4.8),
         reviews: Number(data.reviews || data.reviews_count || 25),
         status: data.status || "Active",
-        owner_name: data.owner_name || "Owner",
-        owner_phone: data.contactNumber || data.owner_phone || "",
+        owner_name: data.owner_name || activeUser.fullName || activeUser.name || "Owner",
+        owner_email: data.owner_email || activeUser.email || "",
+        owner_phone: data.contactNumber || data.owner_phone || activeUser.phone || "",
         image_url: data.image || data.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600",
         display_order: Number(data.display_order || 0),
       };

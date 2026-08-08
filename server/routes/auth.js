@@ -7,6 +7,45 @@ const router = express.Router();
 // In-memory OTP Store for password/email recovery (key: identifier -> { otp, expiresAt, user })
 const otpStore = new Map();
 
+function normalizeAccountType(value) {
+  return String(value || "player").toLowerCase() === "owner" || String(value || "").toLowerCase() === "turf-owner"
+    ? "turf-owner"
+    : "player";
+}
+
+async function accountEmailExists(pool, email, targetAccountType = "player") {
+  const cleanEmail = email.trim().toLowerCase();
+  const accType = normalizeAccountType(targetAccountType);
+  if (accType === "turf-owner") {
+    const [ownerRows] = await pool.query(
+      "SELECT id FROM turf_owners WHERE LOWER(email) = ? UNION SELECT id FROM turf_owner_accounts WHERE LOWER(email) = ? LIMIT 1",
+      [cleanEmail, cleanEmail]
+    );
+    return ownerRows.length > 0;
+  } else if (accType === "cms-admin") {
+    const [adminRows] = await pool.query(
+      "SELECT id FROM cms_users WHERE LOWER(email) = ? UNION SELECT id FROM admin_accounts WHERE LOWER(email) = ? LIMIT 1",
+      [cleanEmail, cleanEmail]
+    );
+    return adminRows.length > 0;
+  } else {
+    const [playerRows] = await pool.query(
+      "SELECT id FROM users WHERE LOWER(email) = ? UNION SELECT id FROM player_accounts WHERE LOWER(email) = ? LIMIT 1",
+      [cleanEmail, cleanEmail]
+    );
+    return playerRows.length > 0;
+  }
+}
+
+function parseSelectedSports(value) {
+  if (!value) return [];
+  try {
+    return typeof value === "string" ? JSON.parse(value) : value;
+  } catch (error) {
+    return [];
+  }
+}
+
 // Helper function to send Live HTML Email OTP via Nodemailer
 async function sendLiveEmailOtp(toEmail, otpCode, userName = "Athlete") {
   try {
@@ -73,147 +112,286 @@ async function sendLiveEmailOtp(toEmail, otpCode, userName = "Athlete") {
   }
 }
 
-// Helper function to send Live SMS OTP via Fast2SMS / Twilio Gateway
-async function sendLiveSmsOtp(phoneNumber, otpCode) {
-  try {
-    const fast2smsApiKey = process.env.FAST2SMS_API_KEY;
-    if (fast2smsApiKey && fast2smsApiKey.trim().length > 10) {
-      // Call Fast2SMS Bulk SMS API for Indian mobile numbers
-      const response = await fetch("https://www.fast2sms.com/dev/bulkV2", {
-        method: "POST",
-        headers: {
-          authorization: fast2smsApiKey.trim(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          variables_values: otpCode,
-          route: "otp",
-          numbers: phoneNumber,
-        }),
-      });
-      const data = await response.json();
-      console.log(`[FAST2SMS DISPATCH] Real SMS sent to ${phoneNumber}:`, data);
-      return { success: data.return === true };
-    }
-
-    console.log(`================================================================`);
-    console.log(`[MOBILE SMS OTP LOG] Mobile: ${phoneNumber} | OTP CODE: ${otpCode}`);
-    console.log(`(Add FAST2SMS_API_KEY in server/.env to send real SMS directly to phones)`);
-    console.log(`================================================================`);
-    return { success: true };
-  } catch (err) {
-    console.warn(`[SMS DISPATCH NOTICE] ${err.message}`);
-    return { success: false, error: err.message };
-  }
+// Helper function for static Mobile SMS OTP (FAST2SMS API integration removed)
+async function sendStaticSmsOtp(phoneNumber, otpCode = "123456") {
+  console.log(`================================================================`);
+  console.log(`[MOBILE SMS OTP - STATIC MODE] Mobile: ${phoneNumber} | Static OTP Code: ${otpCode}`);
+  console.log(`================================================================`);
+  return { success: true };
 }
 
-// ----------------------------------------------------
-// 1. User Registration
-// ----------------------------------------------------
+// Account-type-specific registration.
 router.post("/register", async (req, res) => {
   try {
     const pool = getPool();
-    const { fullName, email, password, role = "Player", phone = "", city = "" } = req.body;
-
+    const { fullName, email, password, role = "Player", phone = "", city = "", bio = "", selectedSports = [], profilePicture, avatar } = req.body;
     if (!email || !password || !fullName) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
+    const accountType = String(role).toLowerCase() === "owner" ? "turf-owner" : "player";
 
-    const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (existing.length > 0) {
-      return res.status(400).json({ success: false, error: "Email is already registered" });
+    if (await accountEmailExists(pool, email, accountType)) {
+      return res.status(400).json({ success: false, error: "Email is already registered for this account type" });
     }
 
     const joinedDate = new Date().toISOString().split("T")[0];
-    const avatar = `https://i.pravatar.cc/150?u=${encodeURIComponent(email)}`;
+    const avatarUrl = profilePicture || avatar || null;
 
-    const [result] = await pool.query(
-      `INSERT INTO users (full_name, email, password, role, phone, city, status, joined_date, avatar)
-       VALUES (?, ?, ?, ?, ?, ?, 'Active', ?, ?)`,
-      [fullName, email, password, role, phone, city, joinedDate, avatar]
+    if (accountType === "turf-owner") {
+      const [ownerResult] = await pool.query(
+        `INSERT INTO turf_owners (name, email, phone, city, status, total_turfs, earnings, joined_date)
+         VALUES (?, ?, ?, ?, 'Active', 0, '₹0', ?)`,
+        [fullName, email.trim().toLowerCase(), phone, city, joinedDate]
+      );
+      await pool.query(
+        `INSERT INTO turf_owner_accounts (owner_profile_id, full_name, email, password, status)
+         VALUES (?, ?, ?, ?, 'Active')`,
+        [ownerResult.insertId, fullName, email.trim().toLowerCase(), password]
+      );
+      return res.json({
+        success: true,
+        user: {
+          id: ownerResult.insertId,
+          accountId: ownerResult.insertId,
+          fullName,
+          email: email.trim().toLowerCase(),
+          role: "owner",
+          accountType,
+          phone,
+          city,
+          status: "Active",
+        },
+      });
+    }
+
+    const sportsStr = Array.isArray(selectedSports) ? JSON.stringify(selectedSports) : (selectedSports || "[]");
+    const [profileResult] = await pool.query(
+      `INSERT INTO users (full_name, email, password, role, phone, city, bio, selected_sports, status, joined_date, avatar)
+       VALUES (?, ?, ?, 'Player', ?, ?, ?, ?, 'Active', ?, ?)`,
+      [fullName, email.trim().toLowerCase(), password, phone, city, bio, sportsStr, joinedDate, avatarUrl]
+    );
+    await pool.query(
+      `INSERT INTO player_accounts (profile_user_id, full_name, email, password, status)
+       VALUES (?, ?, ?, ?, 'Active')`,
+      [profileResult.insertId, fullName, email.trim().toLowerCase(), password]
+    );
+    return res.json({
+      success: true,
+      user: {
+        id: profileResult.insertId,
+        accountId: profileResult.insertId,
+        fullName,
+        email: email.trim().toLowerCase(),
+        role: "Player",
+        accountType: "player",
+        phone,
+        city,
+        bio,
+        selectedSports: Array.isArray(selectedSports) ? selectedSports : [],
+        status: "Active",
+        avatar: avatarUrl,
+        profilePicture: avatarUrl,
+      },
+    });
+  } catch (err) {
+    console.error("Account registration error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const pool = getPool();
+    const { email, password } = req.body;
+    const accountType = normalizeAccountType(req.body?.accountType);
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: "Email/Username and password are required" });
+    }
+
+    if (accountType === "turf-owner") {
+      const [rows] = await pool.query(
+        `SELECT oa.id AS account_id, oa.owner_profile_id, oa.email, oa.full_name, oa.status AS account_status,
+                o.phone, o.city, o.status, o.total_turfs, o.earnings
+         FROM turf_owner_accounts oa
+         LEFT JOIN turf_owners o ON o.id = oa.owner_profile_id
+         WHERE LOWER(oa.email) = LOWER(?) AND oa.password = ? AND LOWER(oa.status) = 'active'
+         LIMIT 1`,
+        [email.trim(), password.trim()]
+      );
+      if (!rows[0]) return res.status(401).json({ success: false, error: "Invalid turf-owner email or password" });
+      const owner = rows[0];
+      return res.json({
+        success: true,
+        user: {
+          id: owner.owner_profile_id,
+          accountId: owner.account_id,
+          fullName: owner.full_name,
+          email: owner.email,
+          role: "owner",
+          accountType,
+          phone: owner.phone || "",
+          city: owner.city || "",
+          status: owner.status || owner.account_status,
+          totalTurfs: owner.total_turfs || 0,
+          earnings: owner.earnings || "₹0",
+        },
+      });
+    }
+
+    // Normal Player / User Login (Strictly queries `users` table)
+    let player = null;
+    const [userRows] = await pool.query(
+      `SELECT * FROM users WHERE (LOWER(email) = LOWER(?) OR LOWER(phone) = LOWER(?)) AND password = ? LIMIT 1`,
+      [email.trim(), email.trim(), password.trim()]
     );
 
-    const newUser = {
-      id: result.insertId,
-      fullName,
-      email,
-      role,
-      phone,
-      city,
-      status: "Active",
-      avatar,
-    };
+    if (userRows.length > 0) {
+      player = userRows[0];
+    } else {
+      const [paRows] = await pool.query(
+        `SELECT pa.id AS account_id, pa.email, pa.full_name, pa.status AS account_status,
+                u.id AS profile_user_id, u.phone, u.city, u.bio, u.selected_sports, u.status, u.avatar,
+                u.games_played, u.bookings
+         FROM player_accounts pa
+         INNER JOIN users u ON u.id = pa.profile_user_id
+         WHERE (LOWER(pa.email) = LOWER(?) OR LOWER(u.phone) = LOWER(?)) AND pa.password = ? AND LOWER(pa.status) = 'active'
+         LIMIT 1`,
+        [email.trim(), email.trim(), password.trim()]
+      );
+      if (paRows.length > 0) {
+        const row = paRows[0];
+        player = {
+          id: row.profile_user_id,
+          full_name: row.full_name,
+          email: row.email,
+          role: "Player",
+          phone: row.phone,
+          city: row.city,
+          bio: row.bio,
+          selected_sports: row.selected_sports,
+          status: row.status || row.account_status,
+          avatar: row.avatar,
+          games_played: row.games_played,
+          bookings: row.bookings,
+        };
+      }
+    }
 
-    return res.json({ success: true, user: newUser });
+    if (!player) {
+      return res.status(401).json({ success: false, error: "Invalid player email or password" });
+    }
+
+    const avatarUrl = player.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(player.email)}`;
+    return res.json({
+      success: true,
+      user: {
+        id: player.id,
+        accountId: player.id,
+        fullName: player.full_name || player.name,
+        email: player.email,
+        role: player.role || "Player",
+        accountType: "player",
+        phone: player.phone || "",
+        city: player.city || "",
+        bio: player.bio || "",
+        selectedSports: parseSelectedSports(player.selected_sports),
+        status: player.status || "Active",
+        avatar: avatarUrl,
+        profilePicture: avatarUrl,
+        gamesPlayed: player.games_played || 0,
+        bookings: player.bookings || 0,
+      },
+    });
   } catch (err) {
-    console.error("Register Error:", err);
+    console.error("Account login error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
 // ----------------------------------------------------
-// 2. User & Staff Login
+// Update User Profile Endpoint (Save to MySQL Database)
 // ----------------------------------------------------
-router.post("/login", async (req, res) => {
+router.put("/update-profile", async (req, res) => {
   try {
     const pool = getPool();
-    const { email, password } = req.body;
+    const { id, email, fullName, phone, city, bio, selectedSports, profilePicture, avatar } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ success: false, error: "Email/Username and password are required" });
+    if (!id && !email) {
+      return res.status(400).json({ success: false, error: "User ID or Email is required" });
     }
 
-    let [rows] = await pool.query(
-      "SELECT id, full_name, email, role, phone, city, status, avatar FROM users WHERE LOWER(email) = LOWER(?) AND password = ?",
-      [email.trim(), password.trim()]
-    );
+    const sportsStr = Array.isArray(selectedSports) ? JSON.stringify(selectedSports) : (selectedSports || "[]");
+    const avatarUrl = profilePicture || avatar || null;
 
-    let staffRecord = null;
-    const [staffRows] = await pool.query(
-      "SELECT * FROM staff WHERE LOWER(email) = LOWER(?) AND password = ?",
-      [email.trim(), password.trim()]
-    );
+    let updateQuery = `
+      UPDATE users 
+      SET full_name = COALESCE(?, full_name),
+          phone = COALESCE(?, phone),
+          city = COALESCE(?, city),
+          bio = COALESCE(?, bio),
+          selected_sports = COALESCE(?, selected_sports)
+    `;
+    const updateParams = [
+      fullName || null,
+      phone || null,
+      city || null,
+      bio || null,
+      sportsStr
+    ];
 
-    if (staffRows.length > 0) {
-      staffRecord = staffRows[0];
+    if (avatarUrl) {
+      updateQuery += `, avatar = ?`;
+      updateParams.push(avatarUrl);
     }
 
-    if (rows.length === 0 && !staffRecord) {
-      return res.status(401).json({ success: false, error: "Invalid email or password" });
+    if (id) {
+      updateQuery += ` WHERE id = ?`;
+      updateParams.push(id);
+    } else {
+      updateQuery += ` WHERE LOWER(email) = LOWER(?)`;
+      updateParams.push(email.trim());
     }
 
-    let permissions = null;
-    let assignedTurf = null;
+    await pool.query(updateQuery, updateParams);
 
-    if (staffRecord) {
-      assignedTurf = staffRecord.turf || (staffRecord.turfs ? JSON.parse(staffRecord.turfs)[0] : null);
-      try {
-        permissions = typeof staffRecord.permissions === "string" ? JSON.parse(staffRecord.permissions) : staffRecord.permissions;
-      } catch (e) {
-        permissions = staffRecord.permissions;
+    // Fetch updated user row from MySQL
+    const selectQuery = id ? "SELECT * FROM users WHERE id = ?" : "SELECT * FROM users WHERE LOWER(email) = LOWER(?)";
+    const selectParam = id || email.trim();
+    const [rows] = await pool.query(selectQuery, [selectParam]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: "User record not found" });
+    }
+
+    const updatedRow = rows[0];
+    let parsedSports = [];
+    try {
+      if (updatedRow.selected_sports) {
+        parsedSports = typeof updatedRow.selected_sports === "string" ? JSON.parse(updatedRow.selected_sports) : (updatedRow.selected_sports || []);
       }
-    }
+    } catch (e) {}
 
-    const userObj = rows[0] || {};
+    const finalAvatar = updatedRow.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(updatedRow.email)}`;
 
-    const user = {
-      id: userObj.id || staffRecord.id,
-      fullName: userObj.full_name || `${staffRecord.first_name || ''} ${staffRecord.last_name || ''}`.trim(),
-      email: userObj.email || staffRecord.email,
-      role: staffRecord ? staffRecord.role : (userObj.role || "User"),
-      userRole: staffRecord ? "Staff" : (userObj.role || "Player"),
-      phone: userObj.phone || staffRecord.phone,
-      city: userObj.city || "Mumbai",
-      status: staffRecord ? (staffRecord.is_active ? "Active" : "Inactive") : (userObj.status || "Active"),
-      avatar: userObj.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(email)}`,
-      permissions: permissions,
-      assignedTurf: assignedTurf,
-      isStaff: !!staffRecord,
+    const updatedUser = {
+      id: updatedRow.id,
+      fullName: updatedRow.full_name,
+      email: updatedRow.email,
+      role: updatedRow.role,
+      phone: updatedRow.phone || "",
+      city: updatedRow.city || "",
+      bio: updatedRow.bio || "",
+      selectedSports: parsedSports,
+      status: updatedRow.status || "Active",
+      avatar: finalAvatar,
+      profilePicture: finalAvatar,
     };
 
-    return res.json({ success: true, user });
+    console.log(`[PROFILE UPDATE] MySQL User #${updatedRow.id} (${updatedRow.email}) updated successfully.`);
+
+    return res.json({ success: true, user: updatedUser });
   } catch (err) {
-    console.error("Login Error:", err);
+    console.error("Update Profile Error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -224,15 +402,13 @@ router.post("/login", async (req, res) => {
 router.post("/check-exists", async (req, res) => {
   try {
     const pool = getPool();
-    const { email, phone } = req.body;
+    const { email, phone, accountType, role, type } = req.body;
+    const targetType = normalizeAccountType(accountType || role || type);
 
     if (email && email.trim()) {
       const cleanEmail = email.trim().toLowerCase();
-      const [existingUsers] = await pool.query(
-        "SELECT id FROM users WHERE LOWER(email) = ?",
-        [cleanEmail]
-      );
-      if (existingUsers.length > 0) {
+      const exists = await accountEmailExists(pool, cleanEmail, targetType);
+      if (exists) {
         return res.json({
           exists: true,
           field: "email",
@@ -243,16 +419,30 @@ router.post("/check-exists", async (req, res) => {
 
     if (phone && phone.trim()) {
       const cleanPhone = phone.trim();
-      const [existingPhones] = await pool.query(
-        "SELECT id FROM users WHERE phone = ? AND phone != ''",
-        [cleanPhone]
-      );
-      if (existingPhones.length > 0) {
-        return res.json({
-          exists: true,
-          field: "phone",
-          message: "This mobile number is already registered. Please log in instead.",
-        });
+      if (targetType === "turf-owner") {
+        const [existingPhones] = await pool.query(
+          "SELECT id FROM turf_owners WHERE phone = ? AND phone != '' LIMIT 1",
+          [cleanPhone]
+        );
+        if (existingPhones.length > 0) {
+          return res.json({
+            exists: true,
+            field: "phone",
+            message: "This mobile number is already registered for a turf owner account. Please log in instead.",
+          });
+        }
+      } else {
+        const [existingPhones] = await pool.query(
+          "SELECT id FROM users WHERE phone = ? AND phone != '' LIMIT 1",
+          [cleanPhone]
+        );
+        if (existingPhones.length > 0) {
+          return res.json({
+            exists: true,
+            field: "phone",
+            message: "This mobile number is already registered for a player account. Please log in instead.",
+          });
+        }
       }
     }
 
@@ -287,6 +477,16 @@ router.post("/otp/request", async (req, res) => {
 
     // If not found in users, check staff table
     if (!foundUser) {
+      const [owners] = await pool.query(
+        "SELECT id, name as full_name, email, phone FROM turf_owners WHERE LOWER(email) = ? OR phone = ?",
+        [cleanInput, identifier.trim()]
+      );
+      if (owners.length > 0) {
+        foundUser = owners[0];
+      }
+    }
+
+    if (!foundUser) {
       const [staff] = await pool.query(
         "SELECT id, CONCAT(first_name, ' ', last_name) as full_name, email, phone FROM staff WHERE LOWER(email) = ? OR phone = ?",
         [cleanInput, identifier.trim()]
@@ -300,8 +500,11 @@ router.post("/otp/request", async (req, res) => {
       return res.status(404).json({ success: false, error: "No account found matching this Email or Phone number" });
     }
 
-    // Generate 6-digit OTP
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate 6-digit OTP (Random 6-digit for Email, Static "123456" for Mobile Number)
+    const isEmail = cleanInput.includes("@");
+    const generatedOtp = isEmail
+      ? Math.floor(100000 + Math.random() * 900000).toString()
+      : "123456";
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     otpStore.set(cleanInput, {
@@ -310,20 +513,21 @@ router.post("/otp/request", async (req, res) => {
       user: foundUser || { email: cleanInput, fullName: "New User" },
     });
 
-    console.log(`[LIVE OTP DISPATCH] (${mode}) For ${cleanInput} -> Code: ${generatedOtp}`);
+    console.log(`[OTP DISPATCH] (${mode}) For ${cleanInput} -> Code: ${generatedOtp}`);
 
-    // Dispatch Email or Mobile SMS OTP
-    if (cleanInput.includes("@")) {
+    // Dispatch Email or Static Mobile SMS OTP
+    if (isEmail) {
       await sendLiveEmailOtp(cleanInput, generatedOtp, foundUser?.full_name || "Athlete");
     } else {
-      await sendLiveSmsOtp(cleanInput, generatedOtp);
+      await sendStaticSmsOtp(cleanInput, generatedOtp);
     }
 
     return res.json({
       success: true,
-      message: cleanInput.includes("@")
+      otp: generatedOtp,
+      message: isEmail
         ? `Verification code sent to your Gmail inbox!`
-        : `SMS verification code dispatched to your mobile number!`,
+        : `Static OTP code (123456) generated for mobile number!`,
       user: foundUser ? {
         id: foundUser.id,
         fullName: foundUser.full_name,
@@ -348,7 +552,19 @@ router.post("/otp/verify", async (req, res) => {
     }
 
     const cleanInput = identifier.trim().toLowerCase();
+    const isEmail = cleanInput.includes("@");
     const record = otpStore.get(cleanInput);
+
+    // Static OTP check for mobile numbers: "123456" is always accepted for mobile numbers
+    if (!isEmail && otp.trim() === "123456") {
+      const userObj = record?.user || { phone: cleanInput, fullName: "User" };
+      if (record) otpStore.delete(cleanInput);
+      return res.json({
+        success: true,
+        message: "Mobile static OTP verified successfully!",
+        user: userObj,
+      });
+    }
 
     if (!record) {
       return res.status(400).json({ success: false, error: "No active OTP request found for this account" });
@@ -362,6 +578,8 @@ router.post("/otp/verify", async (req, res) => {
     if (record.otp !== otp.trim()) {
       return res.status(400).json({ success: false, error: "Incorrect OTP code. Please check and try again." });
     }
+
+    otpStore.delete(cleanInput);
 
     return res.json({
       success: true,
@@ -387,9 +605,13 @@ router.post("/otp/reset-password", async (req, res) => {
     }
 
     const cleanInput = identifier.trim().toLowerCase();
+    const isEmail = cleanInput.includes("@");
     const record = otpStore.get(cleanInput);
 
-    if (!record || record.otp !== otp.trim() || Date.now() > record.expiresAt) {
+    const isStaticMobile = !isEmail && otp.trim() === "123456";
+    const isValidRecord = record && record.otp === otp.trim() && Date.now() <= record.expiresAt;
+
+    if (!isStaticMobile && !isValidRecord) {
       return res.status(400).json({ success: false, error: "Invalid or expired OTP session" });
     }
 
@@ -405,7 +627,7 @@ router.post("/otp/reset-password", async (req, res) => {
       [newPassword.trim(), cleanInput, identifier.trim()]
     );
 
-    otpStore.delete(cleanInput);
+    if (record) otpStore.delete(cleanInput);
 
     return res.json({
       success: true,
@@ -413,6 +635,92 @@ router.post("/otp/reset-password", async (req, res) => {
     });
   } catch (err) {
     console.error("Reset Password Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/google", async (req, res) => {
+  try {
+    const pool = getPool();
+    const { email, fullName, avatar, role = "Player" } = req.body;
+    if (!email) return res.status(400).json({ success: false, error: "Google email address is required" });
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = fullName?.trim() || cleanEmail.split("@")[0];
+    const cleanAvatar = avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(cleanEmail)}`;
+    const accountType = String(role).toLowerCase() === "owner" ? "turf-owner" : "player";
+
+    if (accountType === "turf-owner") {
+      const [existing] = await pool.query(
+        `SELECT oa.id AS account_id, oa.owner_profile_id, oa.email, oa.full_name, o.phone, o.city, o.status
+         FROM turf_owner_accounts oa LEFT JOIN turf_owners o ON o.id = oa.owner_profile_id
+         WHERE LOWER(oa.email) = ? LIMIT 1`,
+        [cleanEmail]
+      );
+      if (existing[0]) {
+        const owner = existing[0];
+        return res.json({ success: true, isNewUser: false, user: {
+          id: owner.owner_profile_id, accountId: owner.account_id, fullName: owner.full_name,
+          email: owner.email, role: "owner", accountType, phone: owner.phone || "", city: owner.city || "",
+          status: owner.status || "Active",
+        } });
+      }
+      if (await accountEmailExists(pool, cleanEmail)) {
+        return res.status(409).json({ success: false, error: "This email belongs to a different account type." });
+      }
+      const [ownerResult] = await pool.query(
+        `INSERT INTO turf_owners (name, email, phone, city, status, total_turfs, earnings, joined_date)
+         VALUES (?, ?, '', 'Mumbai', 'Active', 0, '₹0', ?)`,
+        [cleanName, cleanEmail, new Date().toISOString().split("T")[0]]
+      );
+      await pool.query(
+        `INSERT INTO turf_owner_accounts (owner_profile_id, full_name, email, password, status)
+         VALUES (?, ?, ?, 'google_auth_user', 'Active')`,
+        [ownerResult.insertId, cleanName, cleanEmail]
+      );
+      return res.json({ success: true, isNewUser: true, user: {
+        id: ownerResult.insertId, accountId: ownerResult.insertId, fullName: cleanName, email: cleanEmail,
+        role: "owner", accountType, phone: "", city: "Mumbai", status: "Active", avatar: cleanAvatar,
+      } });
+    }
+
+    const [existing] = await pool.query(
+      `SELECT pa.id AS account_id, pa.email, pa.full_name, u.id AS profile_user_id, u.phone, u.city,
+              u.bio, u.selected_sports, u.status, u.avatar
+       FROM player_accounts pa INNER JOIN users u ON u.id = pa.profile_user_id
+       WHERE LOWER(pa.email) = ? LIMIT 1`,
+      [cleanEmail]
+    );
+    if (existing[0]) {
+      const player = existing[0];
+      const avatarUrl = player.avatar || cleanAvatar;
+      return res.json({ success: true, isNewUser: false, user: {
+        id: player.profile_user_id, accountId: player.account_id, fullName: player.full_name,
+        email: player.email, role: "Player", accountType, phone: player.phone || "", city: player.city || "",
+        bio: player.bio || "", selectedSports: parseSelectedSports(player.selected_sports),
+        status: player.status || "Active", avatar: avatarUrl, profilePicture: avatarUrl,
+      } });
+    }
+    if (await accountEmailExists(pool, cleanEmail)) {
+      return res.status(409).json({ success: false, error: "This email belongs to a different account type." });
+    }
+    const [profileResult] = await pool.query(
+      `INSERT INTO users (full_name, email, password, role, phone, city, status, joined_date, avatar)
+       VALUES (?, ?, 'google_auth_user', 'Player', '', 'Mumbai', 'Active', ?, ?)`,
+      [cleanName, cleanEmail, new Date().toISOString().split("T")[0], cleanAvatar]
+    );
+    await pool.query(
+      `INSERT INTO player_accounts (profile_user_id, full_name, email, password, status)
+       VALUES (?, ?, ?, 'google_auth_user', 'Active')`,
+      [profileResult.insertId, cleanName, cleanEmail]
+    );
+    return res.json({ success: true, isNewUser: true, user: {
+      id: profileResult.insertId, accountId: profileResult.insertId, fullName: cleanName, email: cleanEmail,
+      role: "Player", accountType, phone: "", city: "Mumbai", status: "Active", avatar: cleanAvatar,
+      profilePicture: cleanAvatar,
+    } });
+  } catch (err) {
+    console.error("Account Google auth error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -435,13 +743,20 @@ router.post("/google", async (req, res) => {
 
     // 1. Check if email already exists in MySQL users table
     const [existingUsers] = await pool.query(
-      "SELECT id, full_name, email, role, phone, city, status, avatar FROM users WHERE LOWER(email) = ?",
+      "SELECT * FROM users WHERE LOWER(email) = ?",
       [cleanEmail]
     );
 
     if (existingUsers.length > 0) {
       // User already exists in database -> Open account
       const existingUser = existingUsers[0];
+      let selectedSports = [];
+      try {
+        if (existingUser.selected_sports) {
+          selectedSports = typeof existingUser.selected_sports === "string" ? JSON.parse(existingUser.selected_sports) : (existingUser.selected_sports || []);
+        }
+      } catch (e) {}
+
       const user = {
         id: existingUser.id,
         fullName: existingUser.full_name,
@@ -449,8 +764,11 @@ router.post("/google", async (req, res) => {
         role: existingUser.role || role,
         phone: existingUser.phone || "",
         city: existingUser.city || "Mumbai",
+        bio: existingUser.bio || "",
+        selectedSports: selectedSports,
         status: existingUser.status || "Active",
         avatar: existingUser.avatar || cleanAvatar,
+        profilePicture: existingUser.avatar || cleanAvatar,
       };
 
       console.log(`[GOOGLE AUTH] Account exists in MySQL database for ${cleanEmail}. Logging in.`);
@@ -486,18 +804,26 @@ router.post("/google", async (req, res) => {
   }
 });
 
-// ----------------------------------------------------
-// 7. Get Accounts List for Google Account Selector
-// ----------------------------------------------------
 router.get("/accounts", async (req, res) => {
   try {
     const pool = getPool();
+    const accountType = normalizeAccountType(req.query?.accountType);
+    if (accountType === "turf-owner") {
+      const [rows] = await pool.query(
+        `SELECT oa.id AS account_id, oa.full_name AS name, oa.email, o.city, o.status, 'turf-owner' AS account_type
+         FROM turf_owner_accounts oa LEFT JOIN turf_owners o ON o.id = oa.owner_profile_id
+         WHERE LOWER(oa.status) = 'active' ORDER BY oa.id DESC LIMIT 8`
+      );
+      return res.json({ success: true, accounts: rows });
+    }
     const [rows] = await pool.query(
-      "SELECT id, full_name as name, email, avatar, role FROM users ORDER BY id DESC LIMIT 8"
+      `SELECT id AS account_id, full_name AS name, email, avatar, city, role, 'player' AS account_type
+       FROM users
+       WHERE LOWER(status) = 'active' ORDER BY id DESC LIMIT 8`
     );
     return res.json({ success: true, accounts: rows });
   } catch (err) {
-    console.error("Fetch Google Accounts Error:", err);
+    console.error("Fetch account list error:", err);
     return res.status(500).json({ success: false, accounts: [] });
   }
 });
