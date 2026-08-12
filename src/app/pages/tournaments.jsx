@@ -45,12 +45,12 @@ import { toast } from "sonner";
 import { adminApi } from "../services/admin-api";
 import { openMapLocation } from "../utils/location";
 
-const fixtures = [
+const defaultFixtures = [
   {
     id: 1,
     team1: "Mumbai Warriors",
     team2: "Delhi Strikers",
-    date: "Jun 18, 2026",
+    match_date: "Jun 18, 2026",
     time: "6:00 PM",
     venue: "Elite Sports Arena",
     status: "Upcoming",
@@ -59,7 +59,7 @@ const fixtures = [
     id: 2,
     team1: "Chennai Champions",
     team2: "Kolkata Knights",
-    date: "Jun 19, 2026",
+    match_date: "Jun 19, 2026",
     time: "7:00 PM",
     venue: "Champions Complex",
     status: "Upcoming",
@@ -73,6 +73,7 @@ export function Tournaments() {
   const [tournamentsList, setTournamentsList] = useState([]);
   const [turfsList, setTurfsList] = useState([]);
   const [allTeams, setAllTeams] = useState([]);
+  const [fixturesList, setFixturesList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusTab, setStatusTab] = useState("all");
@@ -107,14 +108,16 @@ export function Tournaments() {
   const fetchTournaments = async () => {
     try {
       setIsLoading(true);
-      const [tData, turfsData, teamsData] = await Promise.all([
+      const [tData, turfsData, teamsData, fixData] = await Promise.all([
         adminApi.getAll("tournaments").catch(() => []),
         adminApi.getAll("turfs").catch(() => []),
         adminApi.getAll("tournament-teams").catch(() => []),
+        adminApi.getAll("tournament-fixtures").catch(() => []),
       ]);
       setTournamentsList(tData || []);
       setTurfsList(turfsData || []);
       setAllTeams(teamsData || []);
+      setFixturesList(fixData && fixData.length > 0 ? fixData : defaultFixtures);
     } catch (err) {
       console.error("Failed to fetch tournaments from MySQL:", err);
     } finally {
@@ -853,8 +856,8 @@ export function Tournaments() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
-              {fixtures.length > 0 ? (
-                fixtures.map((fixture) => (
+              {fixturesList.length > 0 ? (
+                fixturesList.map((fixture) => (
                   <div
                     key={fixture.id}
                     className="p-4 rounded-xl border border-border/20 bg-muted/20 space-y-4"

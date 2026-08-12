@@ -19,6 +19,7 @@ const ALLOWED_ENTITIES = {
   staff: "staff",
   tournaments: "tournaments",
   "tournament-teams": "tournament_teams",
+  "tournament-fixtures": "tournament_fixtures",
 };
 
 // Auth endpoints extracted to server/routes/auth.js

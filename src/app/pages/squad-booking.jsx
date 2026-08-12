@@ -369,7 +369,7 @@ export function SquadBookingPage() {
                       <RadioGroupItem value="upi" id="pay-upi" className="border-slate-300 dark:border-white/20 text-emerald-600 focus:ring-emerald-600 accent-emerald-600" />
                       <div>
                         <p className="font-semibold text-sm text-slate-900 dark:text-white">UPI Payments</p>
-                        <p className="text-[10px] text-slate-500 dark:text-white/50">Google Pay, PhonePe, Paytm</p>
+                        <p className="text-[10px] text-slate-500 dark:text-white/50">Google Pay, UPI Apps, Paytm</p>
                       </div>
                     </div>
                     <Smartphone className={`h-5 w-5 ${paymentMethod === "upi" ? "text-emerald-600 dark:text-emerald-600" : "text-slate-400 dark:text-white/40"}`} />

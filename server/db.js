@@ -178,11 +178,16 @@ async function createTables() {
     `CREATE TABLE IF NOT EXISTS payments (
       id INT AUTO_INCREMENT PRIMARY KEY,
       transaction_id VARCHAR(100),
+      merchant_transaction_id VARCHAR(100),
+      provider_reference_id VARCHAR(100),
       user_name VARCHAR(255),
+      user_email VARCHAR(255),
+      turf_name VARCHAR(255),
       amount DECIMAL(10,2),
       method VARCHAR(50),
       status VARCHAR(50) DEFAULT 'Success',
       date VARCHAR(50),
+      payment_details TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
@@ -507,6 +512,18 @@ async function createTables() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
+    `CREATE TABLE IF NOT EXISTS tournament_fixtures (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      team1 VARCHAR(255) NOT NULL,
+      team2 VARCHAR(255) NOT NULL,
+      match_date VARCHAR(100),
+      time VARCHAR(100),
+      venue VARCHAR(255),
+      status VARCHAR(50) DEFAULT 'Upcoming',
+      tournament_id INT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
     `CREATE TABLE IF NOT EXISTS community_comments (
       id INT AUTO_INCREMENT PRIMARY KEY,
       post_id INT NOT NULL,
@@ -582,6 +599,29 @@ async function createTables() {
   } catch (e) {}
   try {
     await conn.query("ALTER TABLE cms_posts ADD COLUMN author_user_id INT;");
+  } catch (e) {}
+
+  try {
+    await conn.query("ALTER TABLE payments ADD COLUMN merchant_transaction_id VARCHAR(100);");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE payments ADD COLUMN provider_reference_id VARCHAR(100);");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE payments ADD COLUMN user_email VARCHAR(255);");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE payments ADD COLUMN turf_name VARCHAR(255);");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE payments ADD COLUMN payment_details TEXT;");
+  } catch (e) {}
+
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN slot_time VARCHAR(100);");
+  } catch (e) {}
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN time_slot VARCHAR(100);");
   } catch (e) {}
 
   console.log("Database schema checked/created successfully.");
@@ -875,6 +915,17 @@ async function seedData() {
       ('Priya Patel', '5 hours ago', 'Looking for badminton players for a friendly match this Saturday at Champions Sports Complex. Who is in?', NULL, 42, 18, 3, 'event', 'Friendly Match', 1),
       ('Arjun Malhotra', '1 day ago', 'Just completed my 100th match on SportXClub! Thank you to this amazing community for making sports accessible to everyone! ⚽', 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=1080', 234, 45, 12, 'milestone', 'Milestone', 1),
       ('Sneha Reddy', '2 days ago', 'Tennis coaching session was absolutely amazing! Improved my backhand significantly. Highly recommend Ace Tennis Academy!', NULL, 89, 15, 5, 'review', 'Review', 1)
+    `);
+  }
+
+  // Seed Tournament Fixtures if empty
+  const [tFixtures] = await conn.query("SELECT COUNT(*) as count FROM tournament_fixtures");
+  if (tFixtures[0].count === 0) {
+    await conn.query(`
+      INSERT INTO tournament_fixtures (team1, team2, match_date, time, venue, status)
+      VALUES 
+      ('Mumbai Warriors', 'Delhi Strikers', 'Jun 18, 2026', '6:00 PM', 'Elite Sports Arena', 'Upcoming'),
+      ('Chennai Champions', 'Kolkata Knights', 'Jun 19, 2026', '7:00 PM', 'Champions Complex', 'Upcoming')
     `);
   }
 

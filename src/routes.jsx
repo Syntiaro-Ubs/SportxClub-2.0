@@ -66,6 +66,7 @@ export const router = createBrowserRouter([
       return { Component: OwnerSetupPage };
     },
   },
+
   {
     path: "/site-maker",
     element: <AdminLayout />,
@@ -414,9 +415,13 @@ export const router = createBrowserRouter([
       },
       {
         path: "/payment",
+        element: <Navigate to="/payment-status" replace />,
+      },
+      {
+        path: "/payment-status",
         lazy: async () => {
-          const { Payment } = await import("./app/pages/payment");
-          return { Component: Payment };
+          const { PaymentStatus } = await import("./app/payment/payment-status");
+          return { Component: PaymentStatus };
         },
       },
       {

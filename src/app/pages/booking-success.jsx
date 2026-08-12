@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -18,26 +18,30 @@ import { jsPDF } from "jspdf";
 import { GlobalFooter } from "../components/layout/GlobalFooter";
 
 export function BookingSuccess() {
-  // Read saved booking info
-  let bookingData = null;
-  try {
-    const saved = sessionStorage.getItem("sportxclub_last_booking");
-    if (saved) {
-      bookingData = JSON.parse(saved);
+  const location = useLocation();
+
+  // Read saved booking info from location state or session storage
+  let bookingData = location.state || null;
+  if (!bookingData) {
+    try {
+      const saved = sessionStorage.getItem("sportxclub_booking") || sessionStorage.getItem("sportxclub_last_booking");
+      if (saved) {
+        bookingData = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error("Error reading booking details:", e);
     }
-  } catch (e) {
-    console.error("Error reading booking details:", e);
   }
 
-  // Fallback defaults matching the user screen screenshot exactly
-  const isSplit = bookingData ? bookingData.paymentMode === "split" : true;
-  const costPerPlayer = bookingData ? bookingData.costPerPlayer : 600;
-  const totalPrice = bookingData ? bookingData.totalPrice : 1200;
-  const dateStr = bookingData ? bookingData.selectedDate : "June 18, 2026";
-  const timeStr = bookingData ? `${bookingData.startTime} (${bookingData.playHours} hr)` : "6:00 PM - 7:00 PM";
-  const venueName = bookingData ? bookingData.venue.name : "Elite Sports Arena";
-  const venueAddress = bookingData ? bookingData.venue.location : "123 Sports Complex, MG Road, Mumbai";
-  const members = bookingData ? bookingData.squadLobby.members : [
+  // Fallback defaults with safe optional chaining
+  const isSplit = bookingData ? bookingData.paymentMode === "split" : false;
+  const costPerPlayer = bookingData?.costPerPlayer || bookingData?.price || 600;
+  const totalPrice = bookingData?.totalPrice || bookingData?.price || 1200;
+  const dateStr = bookingData?.selectedDate || bookingData?.date || "June 18, 2026";
+  const timeStr = bookingData?.startTime ? `${bookingData.startTime} (${bookingData.playHours || 1} hr)` : (bookingData?.time || "6:00 PM - 7:00 PM");
+  const venueName = typeof bookingData?.venue === "object" ? (bookingData.venue.name || "Elite Sports Arena") : (bookingData?.venue || "Elite Sports Arena");
+  const venueAddress = typeof bookingData?.venue === "object" ? (bookingData.venue.location || "123 Sports Complex, MG Road, Mumbai") : (bookingData?.location || "123 Sports Complex, MG Road, Mumbai");
+  const members = bookingData?.squadLobby?.members || [
     { id: "m1", name: "You (Host)", role: "host" },
     { id: "m2", name: "Priya Patel", role: "member" },
   ];

@@ -33,7 +33,8 @@ import {
   RotateCcw,
   Save,
   Search,
-  Shield
+  Shield,
+  Clock
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -50,9 +51,9 @@ export function CMSDashboard() {
   const navigate = useNavigate();
   const params = useParams();
 
-  // Active view tab ('home-page', 'turfs', 'community', 'team')
+  // Active view tab ('home-page', 'turfs', 'tournaments', 'community', 'team')
   const currentView = params.view || "home-page";
-  const validViews = ["home-page", "turfs", "community", "team"];
+  const validViews = ["home-page", "turfs", "tournaments", "community", "team"];
   const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : "home-page");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -80,7 +81,46 @@ export function CMSDashboard() {
   const [eventsList, setEventsList] = useState([]);
   const [postsList, setPostsList] = useState([]);
   const [postSearchQuery, setPostSearchQuery] = useState("");
+
+  // Tournaments & Fixtures Data States
+  const [cmsTournaments, setCmsTournaments] = useState([]);
+  const [cmsFixtures, setCmsFixtures] = useState([]);
+  const [cmsTeams, setCmsTeams] = useState([]);
+  const [tournSearchQuery, setTournSearchQuery] = useState("");
+  const [fixtureSearchQuery, setFixtureSearchQuery] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
+
+  // Tournament Modal States
+  const [isCmsTournamentModalOpen, setIsCmsTournamentModalOpen] = useState(false);
+  const [editingCmsTournament, setEditingCmsTournament] = useState(null);
+  const [cmsTournamentForm, setCmsTournamentForm] = useState({
+    name: "",
+    sport: "Cricket",
+    teams: 16,
+    matches: 24,
+    start_date: "",
+    prize: "₹50,000",
+    location: "Mumbai",
+    turf_name: "",
+    status: "Registration Open",
+    organizer_name: "Admin Organizer",
+    organizer_email: "cms@sportxclub.com",
+    image_url: "https://images.unsplash.com/photo-1594470117722-de4b9a02ebed?w=1080",
+    description: "",
+  });
+
+  // Match Day Fixture Modal States
+  const [isFixtureModalOpen, setIsFixtureModalOpen] = useState(false);
+  const [editingFixture, setEditingFixture] = useState(null);
+  const [fixtureForm, setFixtureForm] = useState({
+    team1: "",
+    team2: "",
+    match_date: "Jun 20, 2026",
+    time: "6:00 PM",
+    venue: "Elite Sports Arena",
+    status: "Upcoming",
+  });
 
   // Community Post Modal State
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
@@ -217,7 +257,7 @@ export function CMSDashboard() {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [sec, ban, spo, fac, faq, trfs, off, gal, why, evts, psts] = await Promise.all([
+      const [sec, ban, spo, fac, faq, trfs, off, gal, why, evts, psts, tourns, fixs, tms] = await Promise.all([
         cmsService.getSections().catch(() => []),
         cmsService.getBanners().catch(() => []),
         cmsService.getSports().catch(() => []),
@@ -229,6 +269,9 @@ export function CMSDashboard() {
         cmsService.getWhyCards().catch(() => []),
         cmsService.getEvents().catch(() => []),
         cmsService.getPosts().catch(() => []),
+        adminApi.getAll("tournaments").catch(() => []),
+        adminApi.getAll("tournament-fixtures").catch(() => []),
+        adminApi.getAll("tournament-teams").catch(() => []),
       ]);
       setSections(sec);
       setBanners(ban);
@@ -266,6 +309,9 @@ export function CMSDashboard() {
       setWhyCards(why);
       setEventsList(evts);
       setPostsList(psts);
+      setCmsTournaments(tourns || []);
+      setCmsFixtures(fixs || []);
+      setCmsTeams(tms || []);
     } catch (err) {
       console.error("Failed loading CMS Console data:", err);
     } finally {
@@ -758,10 +804,165 @@ export function CMSDashboard() {
     }
   };
 
+  // Tournament Handlers for CMS
+  const handleOpenAddCmsTournament = () => {
+    setEditingCmsTournament(null);
+    setCmsTournamentForm({
+      name: "",
+      sport: "Cricket",
+      teams: 16,
+      matches: 24,
+      start_date: "Jun 20, 2026",
+      prize: "₹50,000",
+      location: "Mumbai",
+      turf_name: "",
+      status: "Registration Open",
+      organizer_name: "Admin Organizer",
+      organizer_email: "cms@sportxclub.com",
+      image_url: "https://images.unsplash.com/photo-1594470117722-de4b9a02ebed?w=1080",
+      description: "",
+    });
+    setIsCmsTournamentModalOpen(true);
+  };
+
+  const handleOpenEditCmsTournament = (t) => {
+    setEditingCmsTournament(t);
+    setCmsTournamentForm({
+      name: t.name || t.title || "",
+      sport: t.sport || "Cricket",
+      teams: t.teams || 16,
+      matches: t.matches || 24,
+      start_date: t.start_date || t.startDate || "",
+      prize: t.prize || "₹50,000",
+      location: t.location || "Mumbai",
+      turf_name: t.turf_name || "",
+      status: t.status || "Registration Open",
+      organizer_name: t.organizer_name || "Admin",
+      organizer_email: t.organizer_email || "",
+      image_url: t.image_url || t.image || "",
+      description: t.description || "",
+    });
+    setIsCmsTournamentModalOpen(true);
+  };
+
+  const handleSaveCmsTournament = async (e) => {
+    e.preventDefault();
+    try {
+      if (!cmsTournamentForm.name || !cmsTournamentForm.start_date) {
+        toast.error("Tournament title and start date are required");
+        return;
+      }
+      if (editingCmsTournament) {
+        await adminApi.update("tournaments", editingCmsTournament.id, cmsTournamentForm);
+        toast.success(`Tournament "${cmsTournamentForm.name}" updated successfully!`);
+      } else {
+        await adminApi.create("tournaments", cmsTournamentForm);
+        toast.success(`New Tournament "${cmsTournamentForm.name}" published!`);
+      }
+      setIsCmsTournamentModalOpen(false);
+      setEditingCmsTournament(null);
+      loadDashboardData();
+    } catch (err) {
+      toast.error(err.message || "Failed saving tournament");
+    }
+  };
+
+  const handleDeleteCmsTournament = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete tournament "${name}"?`)) return;
+    try {
+      await adminApi.delete("tournaments", id);
+      toast.success("Tournament deleted successfully");
+      loadDashboardData();
+    } catch (err) {
+      toast.error("Failed deleting tournament");
+    }
+  };
+
+  const handleQuickStatusChange = async (t, newStatus) => {
+    try {
+      await adminApi.update("tournaments", t.id, { ...t, status: newStatus });
+      toast.success(`Status updated to "${newStatus}" for ${t.name || t.title}`);
+      loadDashboardData();
+    } catch (err) {
+      toast.error("Failed updating status");
+    }
+  };
+
+  // Match Day Fixture Handlers
+  const handleOpenAddFixture = () => {
+    setEditingFixture(null);
+    setFixtureForm({
+      team1: "",
+      team2: "",
+      match_date: "Jun 20, 2026",
+      time: "6:00 PM",
+      venue: "Elite Sports Arena",
+      status: "Upcoming",
+    });
+    setIsFixtureModalOpen(true);
+  };
+
+  const handleOpenEditFixture = (f) => {
+    setEditingFixture(f);
+    setFixtureForm({
+      team1: f.team1 || "",
+      team2: f.team2 || "",
+      match_date: f.match_date || f.date || "",
+      time: f.time || "6:00 PM",
+      venue: f.venue || "",
+      status: f.status || "Upcoming",
+    });
+    setIsFixtureModalOpen(true);
+  };
+
+  const handleSaveFixture = async (e) => {
+    e.preventDefault();
+    try {
+      if (!fixtureForm.team1 || !fixtureForm.team2 || !fixtureForm.venue) {
+        toast.error("Team names and venue location are required");
+        return;
+      }
+      if (editingFixture) {
+        await adminApi.update("tournament-fixtures", editingFixture.id, fixtureForm);
+        toast.success("Match Day Fixture updated!");
+      } else {
+        await adminApi.create("tournament-fixtures", fixtureForm);
+        toast.success("New Match Day Fixture added!");
+      }
+      setIsFixtureModalOpen(false);
+      setEditingFixture(null);
+      loadDashboardData();
+    } catch (err) {
+      toast.error(err.message || "Failed saving match fixture");
+    }
+  };
+
+  const handleDeleteFixture = async (id) => {
+    if (!window.confirm("Delete this match fixture?")) return;
+    try {
+      await adminApi.delete("tournament-fixtures", id);
+      toast.success("Match fixture deleted!");
+      loadDashboardData();
+    } catch (err) {
+      toast.error("Failed deleting fixture");
+    }
+  };
+
+  const handleUpdateTeamStatus = async (teamId, status) => {
+    try {
+      await adminApi.update("tournament-teams", teamId, { status });
+      toast.success(`Team registration marked as ${status}`);
+      loadDashboardData();
+    } catch (err) {
+      toast.error("Failed updating team application");
+    }
+  };
+
   // Dashboard Sidebar Navigation Options
   const menuItems = [
     { key: "home-page", label: "Home Page", icon: Home },
     { key: "turfs", label: "Turfs", icon: MapPin },
+    { key: "tournaments", label: "Tournaments Page", icon: Trophy },
     { key: "community", label: "Community Feed", icon: MessageSquare },
     { key: "team", label: "Team Management", icon: Users },
   ];
@@ -840,6 +1041,8 @@ export function CMSDashboard() {
               ? "Team & Admin Management"
               : activeView === "community"
               ? "Community Feed Management"
+              : activeView === "tournaments"
+              ? "Leagues & Tournaments Page Management"
               : activeView === "turfs"
               ? "Turfs Management & Rearrange"
               : "Home Page Management"}
@@ -2051,6 +2254,382 @@ export function CMSDashboard() {
             </div>
           )}
 
+          {/* TOURNAMENTS MANAGEMENT VIEW */}
+          {activeView === "tournaments" && (
+            <div className="space-y-8 max-w-7xl mx-auto">
+              {/* Page Top Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-5">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-1 border border-emerald-200">
+                    <Trophy className="w-3.5 h-3.5" />
+                    Public Tournaments Page Customizer
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight text-[#0f172a]">
+                    Leagues & Tournaments Management
+                  </h2>
+                  <p className="text-xs text-[#64748b] mt-0.5">
+                    Create, edit, publish tournaments, manage match day fixtures, and approve team roster applications live on <code className="bg-[#f1f5f9] px-1 py-0.5 rounded">/tournaments</code>.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() => window.open("/tournaments", "_blank")}
+                    variant="outline"
+                    className="border-[#cbd5e1] text-[#334155] text-xs font-bold h-10 rounded-xl"
+                  >
+                    <Eye className="w-4 h-4 mr-1.5 text-emerald-600" />
+                    View Live /tournaments
+                  </Button>
+                  <Button
+                    onClick={handleOpenAddCmsTournament}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 px-4 rounded-xl shadow-md gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create Tournament
+                  </Button>
+                </div>
+              </div>
+
+              {/* Metric Overview Stat Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Total Tournaments</p>
+                      <h3 className="text-2xl font-black text-[#0f172a] mt-0.5">{cmsTournaments.length}</h3>
+                    </div>
+                    <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                      <Trophy className="w-5 h-5" />
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Active / Open</p>
+                      <h3 className="text-2xl font-black text-emerald-600 mt-0.5">
+                        {cmsTournaments.filter(t => (t.status || "").toLowerCase().includes("open") || (t.status || "").toLowerCase().includes("active")).length}
+                      </h3>
+                    </div>
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                      <Zap className="w-5 h-5" />
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Match Day Fixtures</p>
+                      <h3 className="text-2xl font-black text-blue-600 mt-0.5">{cmsFixtures.length}</h3>
+                    </div>
+                    <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                  </div>
+                </Card>
+
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Applied Teams</p>
+                      <h3 className="text-2xl font-black text-purple-600 mt-0.5">{cmsTeams.length}</h3>
+                    </div>
+                    <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                      <Users className="w-5 h-5" />
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* SECTION 1: TOURNAMENTS DIRECTORY MANAGER */}
+              <section className="bg-white border border-[#e2e8f0] rounded-3xl p-6 shadow-xs space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-4">
+                  <div>
+                    <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-amber-500" />
+                      Live Tournaments & Leagues Catalog
+                    </h3>
+                    <p className="text-xs text-[#64748b]">
+                      Manage all tournament cards displayed on the public page. Edit prize pools, start dates, locations, max teams & status.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
+                      <Input
+                        value={tournSearchQuery}
+                        onChange={(e) => setTournSearchQuery(e.target.value)}
+                        placeholder="Search by title, sport or location..."
+                        className="pl-9 h-9 w-64 text-xs bg-[#f8fafc] border-[#cbd5e1] rounded-xl"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleOpenAddCmsTournament}
+                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs h-9 rounded-xl px-4 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Tournament
+                    </Button>
+                  </div>
+                </div>
+
+                {cmsTournaments.filter(t => 
+                  (t.name || t.title || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
+                  (t.sport || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
+                  (t.location || "").toLowerCase().includes(tournSearchQuery.toLowerCase())
+                ).length === 0 ? (
+                  <div className="text-center py-12 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]">
+                    <Trophy className="w-10 h-10 mx-auto text-[#cbd5e1] mb-2" />
+                    <p className="font-extrabold text-sm text-[#334155]">No tournaments found</p>
+                    <p className="text-xs text-[#64748b] mt-0.5">Click "Add Tournament" above to create one!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {cmsTournaments
+                      .filter(t => 
+                        (t.name || t.title || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
+                        (t.sport || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
+                        (t.location || "").toLowerCase().includes(tournSearchQuery.toLowerCase())
+                      )
+                      .map((t) => (
+                        <div
+                          key={t.id}
+                          className="border border-[#e2e8f0] rounded-2xl overflow-hidden bg-white hover:border-emerald-500/50 transition-all shadow-xs flex flex-col justify-between"
+                        >
+                          <div className="p-5 space-y-4">
+                            <div className="flex items-start gap-4">
+                              <img
+                                src={t.image_url || t.image || "https://images.unsplash.com/photo-1594470117722-de4b9a02ebed?w=600"}
+                                alt={t.name || t.title}
+                                className="w-24 h-24 rounded-xl object-cover shrink-0 border border-[#e2e8f0]"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold">
+                                    {t.sport || "Cricket"}
+                                  </Badge>
+                                  <select
+                                    value={t.status || "Registration Open"}
+                                    onChange={(e) => handleQuickStatusChange(t, e.target.value)}
+                                    className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border border-[#cbd5e1] bg-[#f8fafc] text-[#0f172a] cursor-pointer"
+                                  >
+                                    <option value="Registration Open">Registration Open</option>
+                                    <option value="Active">Active / Ongoing</option>
+                                    <option value="Upcoming">Upcoming</option>
+                                    <option value="Completed">Completed</option>
+                                  </select>
+                                </div>
+                                <h4 className="font-extrabold text-base text-[#0f172a] truncate">
+                                  {t.name || t.title}
+                                </h4>
+                                <p className="text-xs text-[#64748b] truncate mt-0.5 flex items-center gap-1">
+                                  <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  {t.turf_name ? `${t.turf_name}, ${t.location}` : (t.location || "Mumbai")}
+                                </p>
+                                <div className="flex items-center gap-3 text-xs text-[#334155] font-semibold mt-2">
+                                  <span>📅 {t.start_date || t.startDate || "TBD"}</span>
+                                  <span>🏆 {t.prize || t.prize_pool || "₹50,000"}</span>
+                                  <span>👥 Max {t.teams || 16} Teams</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="bg-[#f8fafc] border-t border-[#e2e8f0] px-5 py-3 flex items-center justify-between text-xs">
+                            <span className="text-[#64748b] font-medium">
+                              Organizer: <strong className="text-[#0f172a]">{t.organizer_name || "Admin"}</strong>
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleOpenEditCmsTournament(t)}
+                                className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-3 rounded-lg cursor-pointer"
+                              >
+                                <Edit2 className="w-3.5 h-3.5 mr-1 text-[#0f172a]" /> Edit
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteCmsTournament(t.id, t.name || t.title)}
+                                className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50 rounded-lg cursor-pointer"
+                                title="Delete Tournament"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </section>
+
+              {/* SECTION 2: MATCH DAY FIXTURES MANAGER */}
+              <section className="bg-white border border-[#e2e8f0] rounded-3xl p-6 shadow-xs space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-4">
+                  <div>
+                    <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-emerald-600" />
+                      Match Day Fixtures Manager (Next Fixtures Sidebar)
+                    </h3>
+                    <p className="text-xs text-[#64748b]">
+                      Manage scheduled matches displayed in the "Match Day" sidebar on <code className="bg-[#f1f5f9] px-1 py-0.5 rounded">/tournaments</code>.
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handleOpenAddFixture}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-9 rounded-xl px-4 gap-1.5 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Match Fixture
+                  </Button>
+                </div>
+
+                {cmsFixtures.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]">
+                    <Clock className="w-9 h-9 mx-auto text-[#cbd5e1] mb-2" />
+                    <p className="font-extrabold text-sm text-[#334155]">No match fixtures configured</p>
+                    <p className="text-xs text-[#64748b]">Add team matchups to show up on the public Match Day sidebar.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {cmsFixtures.map((fix) => (
+                      <div
+                        key={fix.id}
+                        className="border border-[#e2e8f0] rounded-2xl p-4 bg-white shadow-xs space-y-3 relative hover:border-emerald-500/50 transition-all"
+                      >
+                        <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-2">
+                          <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold">
+                            {fix.status || "Upcoming"}
+                          </Badge>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleOpenEditFixture(fix)}
+                              className="p-1 text-[#64748b] hover:text-[#0f172a] rounded-lg transition-colors cursor-pointer"
+                              title="Edit Fixture"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFixture(fix.id)}
+                              className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Fixture"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-center gap-2 py-1">
+                          <div className="flex-1">
+                            <p className="text-xs font-black text-[#0f172a] leading-tight">{fix.team1}</p>
+                          </div>
+                          <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                            VS
+                          </span>
+                          <div className="flex-1">
+                            <p className="text-xs font-black text-[#0f172a] leading-tight">{fix.team2}</p>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-[#f1f5f9] text-[11px] text-[#64748b] flex items-center justify-between font-medium">
+                          <span>🕒 {fix.time || "6:00 PM"} ({fix.match_date || fix.date || "Today"})</span>
+                          <span className="truncate max-w-[120px] font-bold text-[#334155]" title={fix.venue}>
+                            📍 {fix.venue}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* SECTION 3: REGISTERED TEAMS & APPLICATIONS */}
+              <section className="bg-white border border-[#e2e8f0] rounded-3xl p-6 shadow-xs space-y-6">
+                <div className="border-b border-[#f1f5f9] pb-4">
+                  <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
+                    <Users className="w-5 h-5 text-purple-600" />
+                    Enrolled Teams & Tournament Rosters
+                  </h3>
+                  <p className="text-xs text-[#64748b]">
+                    Review and approve team applications submitted by player captains for all tournaments.
+                  </p>
+                </div>
+
+                {cmsTeams.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]">
+                    <Users className="w-9 h-9 mx-auto text-[#cbd5e1] mb-2" />
+                    <p className="font-extrabold text-sm text-[#334155]">No registered teams yet</p>
+                    <p className="text-xs text-[#64748b]">Team applications submitted by players will appear here for admin review.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-[#e2e8f0] rounded-2xl">
+                    <table className="w-full text-left text-xs text-[#334155]">
+                      <thead className="bg-[#f8fafc] text-[#0f172a] font-extrabold uppercase text-[10px] tracking-wider border-b border-[#e2e8f0]">
+                        <tr>
+                          <th className="p-3.5">Team Name</th>
+                          <th className="p-3.5">Tournament</th>
+                          <th className="p-3.5">Captain Details</th>
+                          <th className="p-3.5">Roster Size</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#f1f5f9]">
+                        {cmsTeams.map((team) => (
+                          <tr key={team.id} className="hover:bg-[#f8fafc] transition-colors">
+                            <td className="p-3.5 font-extrabold text-[#0f172a]">{team.team_name}</td>
+                            <td className="p-3.5 font-bold text-emerald-600">{team.tournament_name || `Tournament #${team.tournament_id}`}</td>
+                            <td className="p-3.5">
+                              <div className="font-semibold text-[#0f172a]">{team.captain_name || "N/A"}</div>
+                              <div className="text-[10px] text-[#64748b]">{team.captain_email || ""}</div>
+                            </td>
+                            <td className="p-3.5 font-semibold">{team.members_count || 11} Players</td>
+                            <td className="p-3.5">
+                              <Badge
+                                className={`text-[10px] font-extrabold px-2.5 py-0.5 ${
+                                  (team.status || "").toLowerCase() === "approved"
+                                    ? "bg-emerald-100 text-emerald-800 border-none"
+                                    : (team.status || "").toLowerCase() === "rejected"
+                                    ? "bg-red-100 text-red-800 border-none"
+                                    : "bg-amber-100 text-amber-800 border-none"
+                                }`}
+                              >
+                                {team.status || "Pending"}
+                              </Badge>
+                            </td>
+                            <td className="p-3.5 text-right space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateTeamStatus(team.id, "Approved")}
+                                className="h-7 text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 px-2 rounded-lg cursor-pointer"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateTeamStatus(team.id, "Rejected")}
+                                className="h-7 text-[10px] font-extrabold text-red-600 border-red-200 hover:bg-red-50 px-2 rounded-lg cursor-pointer"
+                              >
+                                Reject
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+
           {/* TEAM MANAGEMENT VIEW */}
           {activeView === "team" && (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -2681,6 +3260,228 @@ export function CMSDashboard() {
             <DialogFooter className="pt-2">
               <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
                 {editingPost ? "Update Community Post" : "Publish Post"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 12. CMS Tournament Add / Edit Modal */}
+      <Dialog open={isCmsTournamentModalOpen} onOpenChange={setIsCmsTournamentModalOpen}>
+        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              {editingCmsTournament ? "Edit Tournament Details" : "Create New Tournament"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveCmsTournament} className="space-y-4 pt-2">
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-[#334155]">Tournament Title</Label>
+              <Input
+                required
+                value={cmsTournamentForm.name}
+                onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, name: e.target.value })}
+                placeholder="e.g. Summer Futsal Championship 2026"
+                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Sport Type</Label>
+                <select
+                  value={cmsTournamentForm.sport}
+                  onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, sport: e.target.value })}
+                  className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-xs text-[#0f172a] rounded-xl p-2.5 font-semibold"
+                >
+                  <option value="Cricket">Cricket</option>
+                  <option value="Football">Football</option>
+                  <option value="Basketball">Basketball</option>
+                  <option value="Tennis">Tennis</option>
+                  <option value="Badminton">Badminton</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Status</Label>
+                <select
+                  value={cmsTournamentForm.status}
+                  onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, status: e.target.value })}
+                  className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-xs text-[#0f172a] rounded-xl p-2.5 font-semibold"
+                >
+                  <option value="Registration Open">Registration Open</option>
+                  <option value="Active">Active / Ongoing</option>
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Start Date</Label>
+                <Input
+                  required
+                  value={cmsTournamentForm.start_date}
+                  onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, start_date: e.target.value })}
+                  placeholder="Jun 20, 2026"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Prize Pool</Label>
+                <Input
+                  value={cmsTournamentForm.prize}
+                  onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, prize: e.target.value })}
+                  placeholder="₹50,000"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Max Teams</Label>
+                <Input
+                  type="number"
+                  value={cmsTournamentForm.teams}
+                  onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, teams: Number(e.target.value) })}
+                  placeholder="16"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Location / City</Label>
+                <Input
+                  value={cmsTournamentForm.location}
+                  onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, location: e.target.value })}
+                  placeholder="e.g. Mumbai"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-[#334155]">Nearby Turf Arena (Optional)</Label>
+              <select
+                value={cmsTournamentForm.turf_name}
+                onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, turf_name: e.target.value })}
+                className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-xs text-[#0f172a] rounded-xl p-2.5 font-semibold"
+              >
+                <option value="">-- Choose Turf Arena --</option>
+                {recommendedTurfs.map((t) => (
+                  <option key={t.id} value={t.name}>
+                    📍 {t.name} ({t.location || "Mumbai"})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-[#334155]">Cover Image URL</Label>
+              <Input
+                value={cmsTournamentForm.image_url}
+                onChange={(e) => setCmsTournamentForm({ ...cmsTournamentForm, image_url: e.target.value })}
+                placeholder="https://images.unsplash.com/..."
+                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
+                {editingCmsTournament ? "Update Tournament" : "Publish Tournament"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 13. Match Day Fixture Add / Edit Modal */}
+      <Dialog open={isFixtureModalOpen} onOpenChange={setIsFixtureModalOpen}>
+        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
+              <Clock className="w-5 h-5 text-emerald-600" />
+              {editingFixture ? "Edit Match Day Fixture" : "Add Match Day Fixture"}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveFixture} className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Team 1 Name</Label>
+                <Input
+                  required
+                  value={fixtureForm.team1}
+                  onChange={(e) => setFixtureForm({ ...fixtureForm, team1: e.target.value })}
+                  placeholder="e.g. Mumbai Warriors"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Team 2 Name</Label>
+                <Input
+                  required
+                  value={fixtureForm.team2}
+                  onChange={(e) => setFixtureForm({ ...fixtureForm, team2: e.target.value })}
+                  placeholder="e.g. Delhi Strikers"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Match Date</Label>
+                <Input
+                  required
+                  value={fixtureForm.match_date}
+                  onChange={(e) => setFixtureForm({ ...fixtureForm, match_date: e.target.value })}
+                  placeholder="Jun 20, 2026"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Match Time</Label>
+                <Input
+                  required
+                  value={fixtureForm.time}
+                  onChange={(e) => setFixtureForm({ ...fixtureForm, time: e.target.value })}
+                  placeholder="6:00 PM"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-[#334155]">Venue Arena</Label>
+              <Input
+                required
+                value={fixtureForm.venue}
+                onChange={(e) => setFixtureForm({ ...fixtureForm, venue: e.target.value })}
+                placeholder="e.g. Elite Sports Arena"
+                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-[#334155]">Status</Label>
+              <select
+                value={fixtureForm.status}
+                onChange={(e) => setFixtureForm({ ...fixtureForm, status: e.target.value })}
+                className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-xs text-[#0f172a] rounded-xl p-2.5 font-semibold"
+              >
+                <option value="Upcoming">Upcoming</option>
+                <option value="Live">Live / Playing</option>
+                <option value="Finished">Finished</option>
+              </select>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
+                {editingFixture ? "Update Match Fixture" : "Save Match Fixture"}
               </Button>
             </DialogFooter>
           </form>

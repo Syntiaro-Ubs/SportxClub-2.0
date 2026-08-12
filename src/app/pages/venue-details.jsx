@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation, useParams } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "../providers/auth-provider";
 import { useTheme } from "next-themes";
+import { phonepeService } from "../payment/phonepe-service";
 import {
   ArrowRight,
   Calendar,
@@ -1530,24 +1531,46 @@ export function VenueDetails() {
                       toast.error("Please sign in first to continue booking.");
                       navigate("/login");
                     } else {
-                      sessionStorage.setItem(
-                        "sportxclub_booking",
-                        JSON.stringify({
-                          venue: venue.name,
-                          image: venue.image || gallery[0],
-                          sport: selectedSport,
-                          date: selectedDate,
-                          time: formatSlotRange(
-                            getStartHour(startTime),
-                            playHours,
-                          ),
-                          price: getSlotPrice(
-                            getStartHour(startTime),
-                            playHours,
-                          ),
-                        }),
-                      );
-                      navigate("/payment");
+                      const computedPrice = getSlotPrice(getStartHour(startTime), playHours);
+                      const formattedSlotTime = formatSlotRange(getStartHour(startTime), playHours);
+                      const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
+                        ? venue.image
+                        : asset("/venues/turf-1.webp");
+
+                      const bookingPayload = {
+                        venue: venue.name,
+                        image: safeImage,
+                        location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
+                        sport: selectedSport,
+                        date: selectedDate,
+                        time: formattedSlotTime,
+                        price: computedPrice,
+                        userName: currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
+                        userEmail: currentUser?.email || 'user@sportxclub.com',
+                        venueId: venue.id,
+                      };
+
+                      try {
+                        sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+                        sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+                        sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+                      } catch (e) {
+                        console.warn("Storage note:", e.message);
+                      }
+
+                      toast.loading("Connecting to PhonePe Business Gateway...", { id: "phonepe-init" });
+                      phonepeService.initiatePayment(bookingPayload).then((res) => {
+                        toast.dismiss("phonepe-init");
+                        if (res.success && res.redirectUrl) {
+                          window.location.href = res.redirectUrl;
+                        } else {
+                          navigate(`/payment-status?status=SUCCESS&merchantTransactionId=${res.merchantTransactionId || 'M22W_TEST'}`);
+                        }
+                      }).catch((err) => {
+                        toast.dismiss("phonepe-init");
+                        toast.error("Failed initiating PhonePe payment. Redirecting to status...");
+                        navigate(`/payment-status?status=FAILED`);
+                      });
                     }
                   }}
                   className={cn(
