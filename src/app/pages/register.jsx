@@ -159,16 +159,15 @@ export function RegisterPage() {
   };
 
   // Basic Validations
-  const getPasswordStrength = () => {
-    const pwd = formData.password;
-    if (!pwd) return 0;
-    let score = 0;
-    if (pwd.length >= 6) score += 1;
-    if (/[A-Z]/.test(pwd)) score += 1;
-    if (/[0-9]/.test(pwd)) score += 1;
-    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
-    return score;
+  const passwordChecks = {
+    length: formData.password.length >= 8,
+    uppercase: /[A-Z]/.test(formData.password),
+    lowercase: /[a-z]/.test(formData.password),
+    number: /[0-9]/.test(formData.password),
+    special: /[^A-Za-z0-9]/.test(formData.password),
   };
+
+  const isPasswordStrong = Object.values(passwordChecks).every(Boolean);
 
   const isStep1Valid = () => {
     return (
@@ -185,7 +184,7 @@ export function RegisterPage() {
 
   const isStep2Valid = () => {
     const isPasswordValid =
-      formData.password.length >= 6 &&
+      isPasswordStrong &&
       formData.password === formData.confirmPassword;
 
     if (formData.role === "athlete") {
@@ -677,6 +676,25 @@ export function RegisterPage() {
                             )}
                           </button>
                         </div>
+                        {formData.password && (
+                          <div className="pt-1.5 space-y-1 font-normal tracking-tight" style={{ fontSize: "10px", lineHeight: "12px" }}>
+                            <p className={cn("flex items-center gap-1.5 transition-colors", passwordChecks.length ? "text-emerald-500" : "text-muted-foreground")}>
+                              <Check className={cn("h-3 w-3 transition-opacity shrink-0", passwordChecks.length ? "opacity-100 stroke-[3]" : "opacity-40")} /> Minimum 8 characters
+                            </p>
+                            <p className={cn("flex items-center gap-1.5 transition-colors", passwordChecks.uppercase ? "text-emerald-500" : "text-muted-foreground")}>
+                              <Check className={cn("h-3 w-3 transition-opacity shrink-0", passwordChecks.uppercase ? "opacity-100 stroke-[3]" : "opacity-40")} /> At least 1 uppercase letter (A-Z)
+                            </p>
+                            <p className={cn("flex items-center gap-1.5 transition-colors", passwordChecks.lowercase ? "text-emerald-500" : "text-muted-foreground")}>
+                              <Check className={cn("h-3 w-3 transition-opacity shrink-0", passwordChecks.lowercase ? "opacity-100 stroke-[3]" : "opacity-40")} /> At least 1 lowercase letter (a-z)
+                            </p>
+                            <p className={cn("flex items-center gap-1.5 transition-colors", passwordChecks.number ? "text-emerald-500" : "text-muted-foreground")}>
+                              <Check className={cn("h-3 w-3 transition-opacity shrink-0", passwordChecks.number ? "opacity-100 stroke-[3]" : "opacity-40")} /> At least 1 number (0-9)
+                            </p>
+                            <p className={cn("flex items-center gap-1.5 transition-colors", passwordChecks.special ? "text-emerald-500" : "text-muted-foreground")}>
+                              <Check className={cn("h-3 w-3 transition-opacity shrink-0", passwordChecks.special ? "opacity-100 stroke-[3]" : "opacity-40")} /> At least 1 special character (@, #, etc.)
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">

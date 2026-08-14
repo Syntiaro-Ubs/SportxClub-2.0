@@ -244,7 +244,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
           "max-w-4xl w-[95vw] p-6 sm:p-8 rounded-3xl overflow-hidden transition-colors duration-300 max-h-[90vh] flex flex-col gap-6",
           "!top-[10%] !translate-y-0",
           isDark
-            ? "bg-[#0d0f15] border-white/10 text-white shadow-2xl"
+            ? "bg-[#0d0f15] dark:bg-[#0d0f15] border-white/10 text-white shadow-2xl"
             : "bg-white border-slate-200 text-slate-900 shadow-2xl"
         )}
       >

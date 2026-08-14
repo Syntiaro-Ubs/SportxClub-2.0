@@ -607,7 +607,8 @@ export function OwnerReport() {
           {/* Download CSV / Excel */}
           <Button
             onClick={exportToCSV}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+            variant="outline"
+            className="border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-transparent hover:border-emerald-700 hover:text-emerald-700 font-bold text-xs h-9 rounded-md shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
           >
             <FileSpreadsheet className="w-4 h-4" />
             Export CSV / Excel
@@ -617,7 +618,7 @@ export function OwnerReport() {
           <Button
             onClick={handlePrintReport}
             variant="outline"
-            className="border-slate-300 dark:border-slate-700 hover:border-emerald-500 text-foreground font-bold text-xs h-9 rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
+            className="border-slate-300 dark:border-slate-700 hover:border-emerald-500 text-foreground font-bold text-xs h-9 rounded-md shadow-xs transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Printer className="w-4 h-4 text-emerald-500" />
             Print / PDF Statement
@@ -910,23 +911,23 @@ export function OwnerReport() {
               <TableHeader className="bg-muted/40 text-[11px] uppercase tracking-wider">
                 {reportType === "schedule" ? (
                   <TableRow>
-                    <TableHead className="text-center font-extrabold">Turf ID</TableHead>
-                    <TableHead className="text-center font-extrabold">Turf Name</TableHead>
-                    <TableHead className="text-center font-extrabold">Location & Sport</TableHead>
-                    <TableHead className="text-center font-extrabold">Operating Date</TableHead>
-                    <TableHead className="text-center font-extrabold">Operating Hours</TableHead>
-                    <TableHead className="text-center font-extrabold">Status</TableHead>
-                    <TableHead className="text-center font-extrabold">Remarks / Reason</TableHead>
+                    <TableHead className="text-left font-extrabold">Turf ID</TableHead>
+                    <TableHead className="text-left font-extrabold">Turf Name</TableHead>
+                    <TableHead className="text-left font-extrabold">Location & Sport</TableHead>
+                    <TableHead className="text-left font-extrabold">Operating Date</TableHead>
+                    <TableHead className="text-left font-extrabold">Operating Hours</TableHead>
+                    <TableHead className="text-left font-extrabold">Status</TableHead>
+                    <TableHead className="text-left font-extrabold">Remarks / Reason</TableHead>
                   </TableRow>
                 ) : (
                   <TableRow>
-                    <TableHead className="text-center font-extrabold">Transaction ID</TableHead>
-                    <TableHead className="text-center font-extrabold">Player / Customer</TableHead>
-                    <TableHead className="text-center font-extrabold">Turf & Sport</TableHead>
-                    <TableHead className="text-center font-extrabold">Date & Time</TableHead>
-                    <TableHead className="text-center font-extrabold">Amount</TableHead>
-                    <TableHead className="text-center font-extrabold">Method</TableHead>
-                    <TableHead className="text-center font-extrabold">Status</TableHead>
+                    <TableHead className="text-left font-extrabold">Transaction ID</TableHead>
+                    <TableHead className="text-left font-extrabold">Player / Customer</TableHead>
+                    <TableHead className="text-left font-extrabold">Turf & Sport</TableHead>
+                    <TableHead className="text-left font-extrabold">Date & Time</TableHead>
+                    <TableHead className="text-left font-extrabold">Amount</TableHead>
+                    <TableHead className="text-left font-extrabold">Method</TableHead>
+                    <TableHead className="text-left font-extrabold">Status</TableHead>
                   </TableRow>
                 )}
               </TableHeader>
@@ -935,50 +936,50 @@ export function OwnerReport() {
                   <TableRow key={trx.id} className="hover:bg-muted/30 transition-colors">
                     {reportType === "schedule" ? (
                       <>
-                        <TableCell className="font-mono text-xs font-bold text-center">{trx.id}</TableCell>
-                        <TableCell className="font-bold text-xs text-center">{trx.turfName}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex flex-col items-center justify-center text-center">
+                        <TableCell className="font-mono text-xs font-bold text-left">{trx.id}</TableCell>
+                        <TableCell className="font-bold text-xs text-left">{trx.turfName}</TableCell>
+                        <TableCell className="text-left">
+                          <div className="flex flex-col items-start justify-start text-left">
                             <span className="text-xs font-semibold">{trx.location}</span>
                             <span className="text-[10px] text-muted-foreground font-semibold">{trx.sport}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs font-semibold text-center">{trx.date}</TableCell>
-                        <TableCell className="text-xs font-mono font-bold text-center">{trx.operatingHours}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center text-center">
+                        <TableCell className="text-xs font-semibold text-left">{trx.date}</TableCell>
+                        <TableCell className="text-xs font-mono font-bold text-left">{trx.operatingHours}</TableCell>
+                        <TableCell className="text-left">
+                          <div className="flex justify-start text-left">
                             {getStatusBadge(trx.status)}
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground font-medium text-center">{trx.reason}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground font-medium text-left">{trx.reason}</TableCell>
                       </>
                     ) : (
                       <>
-                        <TableCell className="font-mono text-xs font-bold text-center">{trx.id}</TableCell>
-                        <TableCell className="font-semibold text-center text-xs">{trx.player}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex flex-col items-center justify-center text-center">
+                        <TableCell className="font-mono text-xs font-bold text-left">{trx.id}</TableCell>
+                        <TableCell className="font-semibold text-left text-xs">{trx.player}</TableCell>
+                        <TableCell className="text-left">
+                          <div className="flex flex-col items-start justify-start text-left">
                             <span className="text-xs font-bold">{trx.turf}</span>
                             <span className="text-[10px] text-muted-foreground font-semibold">{trx.sport}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex flex-col items-center justify-center text-center">
+                        <TableCell className="text-left">
+                          <div className="flex flex-col items-start justify-start text-left">
                             <span className="text-xs font-semibold">{trx.date}</span>
                             <span className="text-[10px] text-muted-foreground font-semibold">{trx.time}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-bold text-xs text-center">
-                          <span className="flex items-center justify-center">
+                        <TableCell className="font-bold text-xs text-left">
+                          <span className="flex items-center justify-start">
                             <IndianRupee className="w-3.5 h-3.5 mr-0.5 stroke-[2.5]" />
                             {trx.amount}
                           </span>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground font-semibold text-center">
+                        <TableCell className="text-xs text-muted-foreground font-semibold text-left">
                           {trx.paymentMethod}
                         </TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex justify-center text-center">
+                        <TableCell className="text-left">
+                          <div className="flex justify-start text-left">
                             {getStatusBadge(trx.status)}
                           </div>
                         </TableCell>

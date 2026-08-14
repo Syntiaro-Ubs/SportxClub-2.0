@@ -381,7 +381,7 @@ export function Tournaments() {
             if (!open) setEditingTournament(null);
           }}>
             <DialogTrigger asChild>
-              <Button size="default" className="shadow-md shadow-primary/20 h-9 rounded-xl font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 cursor-pointer">
+              <Button size="default" className="h-9 rounded-xl font-bold text-xs bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-[#0f172a] hover:border-emerald-600 dark:hover:border-emerald-500 gap-1.5 cursor-pointer shadow-sm">
                 <Plus className="h-3.5 w-3.5" />
                 Organize Tournament
               </Button>
@@ -807,11 +807,11 @@ export function Tournaments() {
                                 className={`px-5 gap-1.5 group/btn font-bold text-xs rounded-xl h-8 transition-all ${
                                   isFull
                                     ? "bg-slate-400 dark:bg-slate-700 text-white cursor-not-allowed opacity-80 shadow-none"
-                                    : "shadow-md shadow-emerald-600/20 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                                    : "bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-[#0f172a] hover:border-emerald-600 dark:hover:border-emerald-500 cursor-pointer shadow-sm"
                                 }`}
                               >
                                 {isFull ? "Tournament Full" : "Join Now"}
-                                {!isFull && <ChevronRight className="h-3.5 w-3.5 group-hover/btn:translate-x-1 transition-transform" />}
+                                {!isFull && <ChevronRight className="h-3.5 w-3.5 text-slate-900 dark:text-white group-hover/btn:translate-x-1 group-hover/btn:text-emerald-600 dark:group-hover/btn:text-emerald-500 transition-all" />}
                               </Button>
                             </div>
                           </div>

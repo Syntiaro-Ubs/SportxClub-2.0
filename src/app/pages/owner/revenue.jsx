@@ -278,14 +278,14 @@ export function Revenue() {
           <p className="text-xs text-muted-foreground">Financial breakdown synced with MySQL database (`sportxclub`).</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchRevenueData} className="gap-2 text-xs font-bold rounded-xl">
+          <Button variant="outline" size="sm" onClick={fetchRevenueData} className="gap-2 text-xs font-bold rounded-md">
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => toast.info("Exporting financial report...")}
-            className="gap-2 text-xs font-bold rounded-xl border-slate-300 dark:border-slate-700"
+            className="gap-2 text-xs font-bold rounded-md border-slate-300 dark:border-slate-700"
           >
             <Download className="h-3.5 w-3.5" /> Export Report
           </Button>
@@ -467,12 +467,12 @@ export function Revenue() {
                 placeholder="Search transaction ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 rounded-xl bg-background/60 border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs w-full font-medium"
+                className="pl-8 h-8 rounded-md bg-background/60 border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs w-full font-medium"
               />
             </div>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[110px] h-8 rounded-xl border border-slate-300 dark:border-slate-700/80 text-xs font-medium px-2.5">
+              <SelectTrigger className="w-[110px] h-8 rounded-md border border-slate-300 dark:border-slate-700/80 text-xs font-medium px-2.5">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -487,37 +487,37 @@ export function Revenue() {
 
         <CardContent className="p-0">
           <div className="w-full overflow-x-auto scrollbar-visible pb-2">
-            <table className="w-full min-w-[750px] text-center border-collapse">
+            <table className="w-full min-w-[750px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground">
-                  <th className="px-3 py-2.5 text-center">Transaction ID</th>
-                  <th className="px-3 py-2.5 text-center">Date</th>
-                  <th className="px-3 py-2.5 text-center">Facility / Source</th>
-                  <th className="px-3 py-2.5 text-center">Amount</th>
-                  <th className="px-3 py-2.5 text-center">Method</th>
-                  <th className="px-3 py-2.5 text-center">Status</th>
+                  <th className="px-4 py-2.5 text-left">Transaction ID</th>
+                  <th className="px-4 py-2.5 text-left">Date</th>
+                  <th className="px-4 py-2.5 text-left">Facility / Source</th>
+                  <th className="px-4 py-2.5 text-left">Amount</th>
+                  <th className="px-4 py-2.5 text-left">Method</th>
+                  <th className="px-4 py-2.5 text-left">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30 text-xs">
                 {currentTransactions.length > 0 ? (
                   currentTransactions.map((tx) => (
                     <tr key={tx.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="px-3 py-3 font-mono text-[11px] font-bold text-foreground text-center">
+                      <td className="px-4 py-3 font-mono text-[11px] font-bold text-foreground text-left">
                         #{tx.id}
                       </td>
-                      <td className="px-3 py-3 text-center text-muted-foreground font-semibold">
+                      <td className="px-4 py-3 text-left text-muted-foreground font-semibold">
                         {tx.date}
                       </td>
-                      <td className="px-3 py-3 text-center font-bold text-foreground">
+                      <td className="px-4 py-3 text-left font-bold text-foreground">
                         {tx.source}
                       </td>
-                      <td className="px-3 py-3 text-center font-bold text-foreground">
+                      <td className="px-4 py-3 text-left font-bold text-foreground">
                         ₹{tx.amount.toLocaleString()}
                       </td>
-                      <td className="px-3 py-3 text-center font-semibold text-muted-foreground uppercase text-[10px]">
+                      <td className="px-4 py-3 text-left font-semibold text-muted-foreground uppercase text-[10px]">
                         {tx.method}
                       </td>
-                      <td className="px-3 py-3 text-center">
+                      <td className="px-4 py-3 text-left">
                         <Badge
                           className={`text-[9px] font-bold rounded-md px-2 py-0.5 ${
                             tx.status === "completed" || tx.status === "success" || tx.status === "settled"

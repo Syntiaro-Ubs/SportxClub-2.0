@@ -126,13 +126,12 @@ export function AdminReviews() {
                       <TableCell className="text-xs max-w-xs text-muted-foreground italic">"{r.comment}"</TableCell>
                       <TableCell>
                         <Select value={r.status} onValueChange={(val) => handleStatusChange(r.id, val)}>
-                          <SelectTrigger className={`w-[120px] h-8 text-xs border ${
-                            r.status === "Approved"
+                          <SelectTrigger className={`w-[120px] h-8 text-xs border ${r.status === "Approved"
                               ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
                               : r.status === "Pending"
-                              ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                              : "bg-destructive/10 text-destructive border-destructive/20"
-                          }`}>
+                                ? "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                                : "bg-destructive/10 text-destructive border-destructive/20"
+                            }`}>
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>

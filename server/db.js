@@ -2,7 +2,7 @@ import mysql from "mysql2/promise";
 
 const DB_HOST = process.env.DB_HOST || "localhost";
 const DB_USER = process.env.DB_USER || "root";
-const DB_PASSWORD = process.env.DB_PASSWORD || "root";
+const DB_PASSWORD = process.env.DB_PASSWORD || "Samir@2002";
 const DB_NAME = process.env.DB_NAME || "sportxclub";
 const DB_PORT = process.env.DB_PORT || 3306;
 
@@ -550,79 +550,79 @@ async function createTables() {
   // Run migrations for existing table columns
   try {
     await conn.query("ALTER TABLE turfs MODIFY COLUMN image_url LONGTEXT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN owner_email VARCHAR(255);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN description LONGTEXT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN amenities TEXT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN rules TEXT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN display_order INT DEFAULT 0;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN all_display_order INT DEFAULT 0;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN reviews INT DEFAULT 25;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE banners MODIFY COLUMN image_url LONGTEXT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE tournaments ADD COLUMN turf_name VARCHAR(255);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE tournaments ADD COLUMN turf_id INT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN sport VARCHAR(100);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE users ADD COLUMN bio TEXT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE users ADD COLUMN selected_sports TEXT;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE users MODIFY COLUMN avatar LONGTEXT;");
-  } catch (e) {}
+  } catch (e) { }
 
   try {
     await conn.query("ALTER TABLE wallet_transactions ADD COLUMN reference_key VARCHAR(100) UNIQUE;");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE cms_posts ADD COLUMN author_user_id INT;");
-  } catch (e) {}
+  } catch (e) { }
 
   try {
     await conn.query("ALTER TABLE payments ADD COLUMN merchant_transaction_id VARCHAR(100);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE payments ADD COLUMN provider_reference_id VARCHAR(100);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE payments ADD COLUMN user_email VARCHAR(255);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE payments ADD COLUMN turf_name VARCHAR(255);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE payments ADD COLUMN payment_details TEXT;");
-  } catch (e) {}
+  } catch (e) { }
 
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN slot_time VARCHAR(100);");
-  } catch (e) {}
+  } catch (e) { }
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN time_slot VARCHAR(100);");
-  } catch (e) {}
+  } catch (e) { }
 
   console.log("Database schema checked/created successfully.");
 }
