@@ -5,6 +5,7 @@ import { useAuth } from "../providers/auth-provider";
 import { useTheme } from "next-themes";
 import { phonepeService } from "../payment/phonepe-service";
 import {
+  ArrowLeft,
   ArrowRight,
   Calendar,
   Check,
@@ -29,6 +30,9 @@ import {
   Maximize2,
   ChevronLeft,
   ChevronRight,
+  ThumbsUp,
+  MessageSquare,
+  Flag,
 } from "lucide-react";
 
 import { Badge } from "../components/ui/badge";
@@ -244,6 +248,27 @@ export function VenueDetails() {
   const [cancelledSlots, setCancelledSlots] = useState([]);
   const [sortBy, setSortBy] = useState("recent");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
+  const [likedReviews, setLikedReviews] = useState(new Set());
+
+  const handleLikeReview = (idx) => {
+    setLikedReviews((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(idx)) {
+        newSet.delete(idx);
+      } else {
+        newSet.add(idx);
+      }
+      return newSet;
+    });
+  };
+
+  const handleReplyReview = (idx) => {
+    toast.success("Reply dialog opened!");
+  };
+
+  const handleReportReview = (idx) => {
+    toast.info("Review reported to admins.");
+  };
   const [showAllSlots, setShowAllSlots] = useState(false);
   const [dbBookings, setDbBookings] = useState([]);
 
@@ -587,11 +612,16 @@ export function VenueDetails() {
 
       <style>{marqueeHorizontalStyle}</style>
 
-      <div className="mx-auto max-w-[1440px] px-4 pt-0 pb-2 sm:px-6 lg:px-8 lg:pt-4 lg:pb-0 lg:h-[calc(100vh-56px)]">
+      <div className="mx-auto max-w-[1440px] px-4 pt-0 pb-2 sm:px-6 lg:px-8 lg:pt-4 lg:pb-0">
+        <div className="mb-4 pt-2">
+          <button onClick={() => navigate(-1)} className="flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer text-slate-900 dark:text-white border-none bg-transparent w-fit">
+            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
+          </button>
+        </div>
         {/* Main 12-Column Layout Section */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start lg:h-full">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Left Column: Hero Photo, Venue Overview, Amenities, Map, Reviews */}
-          <div className="contents lg:block lg:col-span-6 xl:col-span-7 lg:space-y-8 lg:h-full lg:overflow-y-auto lg:pr-2 lg:pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="contents lg:block lg:col-span-6 xl:col-span-7 lg:space-y-8 lg:pr-2 lg:pb-6">
             {/* Unified Photo Gallery Container */}
             <div className="flex flex-col gap-3 w-full order-1 lg:order-none">
               {/* Main Hero Photo (Spans 1 column on desktop) */}
@@ -944,7 +974,7 @@ export function VenueDetails() {
                     <div
                       key={idx}
                       className={cn(
-                        "rounded-2xl border p-4 space-y-2 transition-colors shadow-sm",
+                        "rounded-xl border p-3 space-y-1.5 transition-colors shadow-sm",
                         isDark
                           ? "border-white/5 bg-white/[0.03]"
                           : "border-slate-200 bg-white hover:bg-slate-50/30",
@@ -998,6 +1028,42 @@ export function VenueDetails() {
                       >
                         "{rev.comment}"
                       </p>
+
+                      {/* Review Action Buttons */}
+                      <div className="flex items-center justify-end gap-3 pt-2">
+                        <button
+                          onClick={() => handleLikeReview(idx)}
+                          className={cn(
+                            "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                            likedReviews.has(idx)
+                              ? "text-emerald-600"
+                              : isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                          )}
+                        >
+                          <ThumbsUp className={cn("h-3.5 w-3.5", likedReviews.has(idx) ? "fill-emerald-600" : "")} />
+                          Like
+                        </button>
+                        <button
+                          onClick={() => handleReplyReview(idx)}
+                          className={cn(
+                            "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                            isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                          )}
+                        >
+                          <MessageSquare className="h-3.5 w-3.5" />
+                          Reply
+                        </button>
+                        <button
+                          onClick={() => handleReportReview(idx)}
+                          className={cn(
+                            "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                            isDark ? "text-white/30 hover:text-rose-400" : "text-slate-300 hover:text-rose-500"
+                          )}
+                        >
+                          <Flag className="h-3 w-3" />
+                          Report
+                        </button>
+                      </div>
                     </div>
                   ))}
 
@@ -1039,7 +1105,7 @@ export function VenueDetails() {
           </div>
 
           {/* Right Column: High-Converting Interactive Slot Booking Widget */}
-          <div className="w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 lg:h-full lg:pl-1 lg:pb-6 space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 lg:sticky lg:top-24 lg:pl-1 lg:pb-6 space-y-6">
             <Card
               className={cn(
                 "rounded-xl border shadow-2xl relative z-20 transition-colors duration-300",
@@ -1079,14 +1145,6 @@ export function VenueDetails() {
                   <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[620px]">
                     {/* 1. Sport Select */}
                     <div className="space-y-1 min-w-0">
-                      <label
-                        className={cn(
-                          "text-xs font-semibold tracking-wide block truncate",
-                          isDark ? "text-white/70" : "text-slate-700"
-                        )}
-                      >
-                        1. Sport
-                      </label>
                       <Select value={selectedSport} onValueChange={setSelectedSport}>
                         <SelectTrigger
                           className={cn(
@@ -1108,14 +1166,6 @@ export function VenueDetails() {
 
                     {/* 2. Date Select + Interactive Calendar Trigger */}
                     <div className="space-y-1 relative min-w-0">
-                      <label
-                        className={cn(
-                          "text-xs font-semibold tracking-wide block truncate",
-                          isDark ? "text-white/70" : "text-slate-700"
-                        )}
-                      >
-                        2. Select Date
-                      </label>
                       <div className="relative flex items-center">
                         <Select
                           value={selectedDate}
@@ -1273,14 +1323,6 @@ export function VenueDetails() {
 
                     {/* 3. Duration Select & Direct Manual Input */}
                     <div className="space-y-1 min-w-0">
-                      <label
-                        className={cn(
-                          "text-xs font-semibold tracking-wide block truncate",
-                          isDark ? "text-white/70" : "text-slate-700"
-                        )}
-                      >
-                        3. Duration
-                      </label>
                       <div
                         className={cn(
                           "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all flex items-center justify-between px-2 sm:px-3 shadow-xs relative",

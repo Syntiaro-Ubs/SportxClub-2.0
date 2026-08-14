@@ -449,10 +449,14 @@ export function Navbar() {
     { label: "Events", to: "/community" },
     { label: "Coaching", to: "/ai-assistant" },
     { label: "Tournaments", to: "/tournaments" },
-    {
-      label: "Admin Login",
-      to: "/admin-login",
-    },
+    ...(!isLoggedIn
+      ? [
+          {
+            label: "Admin Login",
+            to: "/admin-login",
+          },
+        ]
+      : []),
   ];
 
   return (
