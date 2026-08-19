@@ -8,13 +8,30 @@ const identityParams = (user) => {
 };
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-  });
-  const data = await response.json();
-  if (!response.ok || !data.success) throw new Error(data.error || "Profile request failed");
-  return data;
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+    });
+    const text = await response.text();
+    let data = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = null;
+      }
+    }
+    if (!response.ok || !data?.success) {
+      throw new Error(data?.error || `Server error (${response.status}: ${response.statusText || "Request failed"})`);
+    }
+    return data;
+  } catch (err) {
+    if (err.name === "TypeError" && err.message.includes("fetch")) {
+      throw new Error("Unable to connect to backend server. Please make sure the server is running.");
+    }
+    throw err;
+  }
 }
 
 export const profileService = {

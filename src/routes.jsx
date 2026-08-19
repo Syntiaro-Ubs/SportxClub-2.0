@@ -21,6 +21,13 @@ export const router = createBrowserRouter([
         element: <LandingPage />,
       },
       {
+        path: "/dashboard/login",
+        lazy: async () => {
+          const { CMSLoginPage } = await import("./app/pages/cms/login");
+          return { Component: CMSLoginPage };
+        },
+      },
+      {
         path: "/dashboard",
         lazy: async () => {
           const { CMSDashboard } = await import("./app/pages/cms/dashboard");
@@ -32,13 +39,6 @@ export const router = createBrowserRouter([
         lazy: async () => {
           const { CMSDashboard } = await import("./app/pages/cms/dashboard");
           return { Component: CMSDashboard };
-        },
-      },
-      {
-        path: "/dashboard/login",
-        lazy: async () => {
-          const { CMSLoginPage } = await import("./app/pages/cms/login");
-          return { Component: CMSLoginPage };
         },
       },
       {

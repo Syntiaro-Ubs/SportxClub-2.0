@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams, Link } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -34,7 +34,22 @@ import {
   Save,
   Search,
   Shield,
-  Clock
+  Clock,
+  Key,
+  Mail,
+  Phone,
+  UserPlus,
+  Check,
+  X,
+  ShieldCheck,
+  ShieldAlert,
+  Lock,
+  RefreshCw,
+  Sliders,
+  Filter,
+  CheckSquare,
+  Square,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -42,19 +57,127 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../components/ui/dialog";
 import { cmsService } from "../../services/cms-service";
 import { adminApi } from "../../services/admin-api";
 import { turfService } from "../../services/turf.service";
+
+export const CONSOLE_MODULES = [
+  {
+    key: "home-page",
+    label: "Home Page CMS",
+    description: "Manage Hero Banners, Sports, Facilities, FAQs, Offers, Why Cards, & Gallery.",
+    icon: Home,
+    tag: "CMS Content",
+    color: "text-blue-600 bg-blue-50 border-blue-200",
+  },
+  {
+    key: "turfs",
+    label: "Turfs Management",
+    description: "Add venues, update hourly rates, manage status, and rearrange display order.",
+    icon: MapPin,
+    tag: "Venues",
+    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  },
+  {
+    key: "tournaments",
+    label: "Tournaments & Leagues",
+    description: "Organize tournaments, generate fixtures, and review team applications.",
+    icon: Trophy,
+    tag: "Competitions",
+    color: "text-amber-600 bg-amber-50 border-amber-200",
+  },
+  {
+    key: "community",
+    label: "Community Feed",
+    description: "Moderate community posts, manage player interactions, and filter content.",
+    icon: MessageSquare,
+    tag: "Moderation",
+    color: "text-purple-600 bg-purple-50 border-purple-200",
+  },
+  {
+    key: "team",
+    label: "Team & Admin Management",
+    description: "Create console accounts, assign custom permissions, and control dashboard logins.",
+    icon: Users,
+    tag: "Administration",
+    color: "text-rose-600 bg-rose-50 border-rose-200",
+  },
+];
+
+export const ROLE_PRESETS = {
+  "Super Admin": {
+    label: "Super Admin",
+    description: "Full unrestricted access to all 5 console modules and user management.",
+    permissions: ["home-page", "turfs", "tournaments", "community", "team"],
+    badgeClass: "bg-purple-100 text-purple-700 border-purple-200",
+  },
+  "Manager": {
+    label: "Console Manager",
+    description: "Access to manage home page, turfs, tournaments, and community feed.",
+    permissions: ["home-page", "turfs", "tournaments", "community"],
+    badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
+  },
+  "Editor": {
+    label: "Content Editor",
+    description: "Access to edit home page sections and moderate community discussions.",
+    permissions: ["home-page", "community"],
+    badgeClass: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  },
+  "Turf Manager": {
+    label: "Turf Manager",
+    description: "Access to manage venue listings, pricing, and home page featured turfs.",
+    permissions: ["turfs", "home-page"],
+    badgeClass: "bg-teal-100 text-teal-700 border-teal-200",
+  },
+  "Tournament Coordinator": {
+    label: "Tournament Coordinator",
+    description: "Access to create and run tournament brackets, fixtures, and team rosters.",
+    permissions: ["tournaments"],
+    badgeClass: "bg-amber-100 text-amber-700 border-amber-200",
+  },
+  "Community Moderator": {
+    label: "Community Moderator",
+    description: "Access to review, moderate, and manage community player feed posts.",
+    permissions: ["community"],
+    badgeClass: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  },
+  "Custom": {
+    label: "Custom Access",
+    description: "Select individual module permissions tailored for this console account.",
+    permissions: [],
+    badgeClass: "bg-slate-100 text-slate-700 border-slate-200",
+  },
+};
 
 export function CMSDashboard() {
   const navigate = useNavigate();
   const params = useParams();
 
+  // Current Logged-in Console User & Permissions
+  const [currentCmsUser, setCurrentCmsUser] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem("sportx_cms_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const userPermissions = useMemo(() => {
+    if (!currentCmsUser) return ["home-page", "turfs", "tournaments", "community", "team"];
+    if (currentCmsUser.role === "Super Admin" || currentCmsUser.role === "Admin") {
+      return ["home-page", "turfs", "tournaments", "community", "team"];
+    }
+    return Array.isArray(currentCmsUser.permissions) && currentCmsUser.permissions.length > 0
+      ? currentCmsUser.permissions
+      : ["home-page"];
+  }, [currentCmsUser]);
+
   // Active view tab ('home-page', 'turfs', 'tournaments', 'community', 'team')
-  const currentView = params.view || "home-page";
+  const currentView = params.view || (userPermissions[0] || "home-page");
   const validViews = ["home-page", "turfs", "tournaments", "community", "team"];
-  const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : "home-page");
+  const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : (userPermissions[0] || "home-page"));
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   useEffect(() => {
@@ -63,7 +186,23 @@ export function CMSDashboard() {
     }
   }, [params.view]);
 
+  // Permission guard: If user navigates to an unauthorized view, redirect to first allowed view
+  useEffect(() => {
+    if (currentCmsUser && userPermissions.length > 0) {
+      if (!userPermissions.includes(activeView)) {
+        const fallback = userPermissions[0] || "home-page";
+        setActiveView(fallback);
+        navigate(`/dashboard/${fallback}`, { replace: true });
+        toast.error(`Access restricted: You do not have permission for '${activeView}'.`);
+      }
+    }
+  }, [activeView, userPermissions, currentCmsUser, navigate]);
+
   const handleNavClick = (viewKey) => {
+    if (!userPermissions.includes(viewKey)) {
+      toast.error("You do not have permission to access this module.");
+      return;
+    }
     setActiveView(viewKey);
     navigate(`/dashboard/${viewKey}`);
   };
@@ -81,6 +220,27 @@ export function CMSDashboard() {
   const [eventsList, setEventsList] = useState([]);
   const [postsList, setPostsList] = useState([]);
   const [postSearchQuery, setPostSearchQuery] = useState("");
+
+  // Team Management Data States
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [teamSearchQuery, setTeamSearchQuery] = useState("");
+  const [teamRoleFilter, setTeamRoleFilter] = useState("all");
+  const [teamStatusFilter, setTeamStatusFilter] = useState("all");
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [editingTeamMember, setEditingTeamMember] = useState(null);
+  const [isSavingTeam, setIsSavingTeam] = useState(false);
+  const [showModalPassword, setShowModalPassword] = useState(false);
+  const [revealedPasswords, setRevealedPasswords] = useState({});
+  const [teamForm, setTeamForm] = useState({
+    full_name: "",
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "Editor",
+    status: "Active",
+    permissions: ["home-page", "community"],
+  });
 
   // Tournaments & Fixtures Data States
   const [cmsTournaments, setCmsTournaments] = useState([]);
@@ -257,7 +417,7 @@ export function CMSDashboard() {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [sec, ban, spo, fac, faq, trfs, off, gal, why, evts, psts, tourns, fixs, tms] = await Promise.all([
+      const [sec, ban, spo, fac, faq, trfs, off, gal, why, evts, psts, tourns, fixs, tms, team] = await Promise.all([
         cmsService.getSections().catch(() => []),
         cmsService.getBanners().catch(() => []),
         cmsService.getSports().catch(() => []),
@@ -272,12 +432,14 @@ export function CMSDashboard() {
         adminApi.getAll("tournaments").catch(() => []),
         adminApi.getAll("tournament-fixtures").catch(() => []),
         adminApi.getAll("tournament-teams").catch(() => []),
+        cmsService.getTeamMembers().catch(() => []),
       ]);
       setSections(sec);
       setBanners(ban);
       setSports(spo);
       setFacilities(fac);
       setFaqs(faq);
+      setTeamMembers(team || []);
 
       // Process turfs: Initialize both Recommended Venues and All Venues lists
       let processedTurfs = trfs || [];
@@ -319,6 +481,15 @@ export function CMSDashboard() {
     }
   };
 
+  const loadTeamMembers = async () => {
+    try {
+      const members = await cmsService.getTeamMembers();
+      setTeamMembers(members || []);
+    } catch (err) {
+      console.error("Failed loading console team members:", err);
+    }
+  };
+
   useEffect(() => {
     const token = sessionStorage.getItem("sportx_cms_token");
     if (!token) {
@@ -333,6 +504,158 @@ export function CMSDashboard() {
     sessionStorage.removeItem("sportx_cms_user");
     toast.info("Signed out from SportX Console");
     navigate("/dashboard/login");
+  };
+
+  // Team Management Handlers
+  const handleOpenAddTeamMember = () => {
+    setEditingTeamMember(null);
+    setTeamForm({
+      full_name: "",
+      username: "",
+      email: "",
+      phone: "",
+      password: "",
+      role: "Editor",
+      status: "Active",
+      permissions: ["home-page", "community"],
+    });
+    setShowModalPassword(false);
+    setIsTeamModalOpen(true);
+  };
+
+  const handleOpenEditTeamMember = (member) => {
+    setEditingTeamMember(member);
+    setTeamForm({
+      full_name: member.full_name || "",
+      username: member.username || "",
+      email: member.email || "",
+      phone: member.phone || "",
+      password: member.password || "",
+      role: member.role || "Editor",
+      status: member.status || "Active",
+      permissions: Array.isArray(member.permissions) ? member.permissions : [],
+    });
+    setShowModalPassword(false);
+    setIsTeamModalOpen(true);
+  };
+
+  const handleRoleChange = (newRole) => {
+    const preset = ROLE_PRESETS[newRole];
+    setTeamForm((prev) => ({
+      ...prev,
+      role: newRole,
+      permissions: preset && newRole !== "Custom" ? preset.permissions : prev.permissions,
+    }));
+  };
+
+  const handleTogglePermission = (permKey) => {
+    setTeamForm((prev) => {
+      const exists = prev.permissions.includes(permKey);
+      const nextPerms = exists
+        ? prev.permissions.filter((k) => k !== permKey)
+        : [...prev.permissions, permKey];
+      return {
+        ...prev,
+        permissions: nextPerms,
+        role: prev.role === "Super Admin" && nextPerms.length < 5 ? "Custom" : prev.role,
+      };
+    });
+  };
+
+  const handleSelectAllPermissions = () => {
+    setTeamForm((prev) => ({
+      ...prev,
+      permissions: CONSOLE_MODULES.map((m) => m.key),
+      role: prev.role === "Custom" ? "Super Admin" : prev.role,
+    }));
+  };
+
+  const handleClearAllPermissions = () => {
+    setTeamForm((prev) => ({
+      ...prev,
+      permissions: [],
+      role: "Custom",
+    }));
+  };
+
+  const handleSaveTeamMember = async (e) => {
+    e.preventDefault();
+    if (!teamForm.full_name?.trim() || !teamForm.username?.trim() || !teamForm.email?.trim()) {
+      toast.error("Please fill in full name, username, and email.");
+      return;
+    }
+    if (!editingTeamMember && !teamForm.password?.trim()) {
+      toast.error("A secure password is required for new console accounts.");
+      return;
+    }
+    if (teamForm.permissions.length === 0) {
+      toast.error("Please assign at least one console module permission.");
+      return;
+    }
+
+    try {
+      setIsSavingTeam(true);
+      if (editingTeamMember) {
+        const updated = await cmsService.updateTeamMember(editingTeamMember.id, teamForm);
+        toast.success("Console account updated successfully!");
+        if (currentCmsUser && currentCmsUser.id === editingTeamMember.id) {
+          const updatedUser = {
+            ...currentCmsUser,
+            fullName: updated.full_name || updated.fullName,
+            username: updated.username,
+            email: updated.email,
+            role: updated.role,
+            status: updated.status,
+            permissions: updated.permissions,
+            phone: updated.phone,
+          };
+          sessionStorage.setItem("sportx_cms_user", JSON.stringify(updatedUser));
+          setCurrentCmsUser(updatedUser);
+        }
+      } else {
+        await cmsService.createTeamMember(teamForm);
+        toast.success("New console user account created successfully!");
+      }
+      setIsTeamModalOpen(false);
+      setEditingTeamMember(null);
+      loadTeamMembers();
+    } catch (err) {
+      toast.error(err.message || "Failed saving console account.");
+    } finally {
+      setIsSavingTeam(false);
+    }
+  };
+
+  const handleToggleMemberStatus = async (member) => {
+    if (member.username?.toLowerCase() === "admin" && member.status === "Active") {
+      toast.error("The primary 'admin' account cannot be deactivated.");
+      return;
+    }
+    const nextStatus = member.status === "Active" ? "Inactive" : "Active";
+    try {
+      await cmsService.toggleTeamMemberStatus(member.id, nextStatus);
+      toast.success(`Account for ${member.full_name} is now ${nextStatus}.`);
+      loadTeamMembers();
+    } catch (err) {
+      toast.error(err.message || "Failed to update account status.");
+    }
+  };
+
+  const handleDeleteTeamMember = async (member) => {
+    if (member.username?.toLowerCase() === "admin") {
+      toast.error("The primary 'admin' account cannot be deleted.");
+      return;
+    }
+    if (!window.confirm(`Delete console account "${member.full_name} (@${member.username})"? They will no longer be able to log in to this dashboard.`)) {
+      return;
+    }
+    try {
+      await cmsService.deleteTeamMember(member.id);
+      toast.success("Console account deleted successfully.");
+      loadTeamMembers();
+    } catch (err) {
+      toast.error(err.message || "Failed deleting account.");
+    }
   };
 
   // Popular Sports Cards Handlers
@@ -958,14 +1281,19 @@ export function CMSDashboard() {
     }
   };
 
-  // Dashboard Sidebar Navigation Options
-  const menuItems = [
-    { key: "home-page", label: "Home Page", icon: Home },
-    { key: "turfs", label: "Turfs", icon: MapPin },
-    { key: "tournaments", label: "Tournaments Page", icon: Trophy },
-    { key: "community", label: "Community Feed", icon: MessageSquare },
-    { key: "team", label: "Team Management", icon: Users },
-  ];
+  // Dynamic Dashboard Sidebar Navigation Options (Filtered by granted permissions)
+  const menuItems = useMemo(() => {
+    const allItems = [
+      { key: "home-page", label: "Home Page", icon: Home },
+      { key: "turfs", label: "Turfs", icon: MapPin },
+      { key: "tournaments", label: "Tournaments Page", icon: Trophy },
+      { key: "community", label: "Community Feed", icon: MessageSquare },
+      { key: "team", label: "Team Management", icon: Users },
+    ];
+    if (!currentCmsUser) return allItems;
+    if (currentCmsUser.role === "Super Admin" || currentCmsUser.role === "Admin") return allItems;
+    return allItems.filter((item) => userPermissions.includes(item.key));
+  }, [currentCmsUser, userPermissions]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] flex font-sans antialiased">
@@ -987,7 +1315,7 @@ export function CMSDashboard() {
           )}
         </div>
 
-        {/* Sidebar Nav (Home Page, Turfs, Team Management) */}
+        {/* Sidebar Nav (Filtered by Permissions) */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -1052,7 +1380,7 @@ export function CMSDashboard() {
             <Button
               onClick={() => window.open("/", "_blank")}
               variant="outline"
-              className="border-[#cbd5e1] hover:border-[#0f172a] text-[#334155] text-xs font-bold h-9 rounded-xl shadow-xs"
+              className="border-[#cbd5e1] hover:border-[#0f172a] text-[#334155] text-xs font-bold h-9 rounded-xl shadow-xs cursor-pointer"
             >
               <Globe className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
               Live Website
@@ -1070,11 +1398,15 @@ export function CMSDashboard() {
 
             <div className="flex items-center gap-3 select-none">
               <div className="text-right hidden sm:block">
-                <div className="text-xs font-extrabold text-[#0f172a] leading-none">admin</div>
-                <div className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider mt-0.5">SYSTEM ADMIN</div>
+                <div className="text-xs font-extrabold text-[#0f172a] leading-none">
+                  {currentCmsUser?.fullName || currentCmsUser?.username || "Admin"}
+                </div>
+                <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-0.5">
+                  {currentCmsUser?.role || "SYSTEM ADMIN"}
+                </div>
               </div>
-              <div className="h-9 w-9 rounded-full bg-[#f1f5f9] border border-[#cbd5e1] flex items-center justify-center text-[#475569]">
-                <User className="w-4 h-4" />
+              <div className="h-9 w-9 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-black text-xs shadow-xs">
+                {(currentCmsUser?.fullName || currentCmsUser?.username || "A").charAt(0).toUpperCase()}
               </div>
             </div>
           </div>
@@ -2632,28 +2964,396 @@ export function CMSDashboard() {
 
           {/* TEAM MANAGEMENT VIEW */}
           {activeView === "team" && (
-            <div className="space-y-6 max-w-7xl mx-auto">
-              <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
+            <div className="space-y-8 max-w-7xl mx-auto">
+              {/* Header & Primary CTA */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-6">
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-[#0f172a]">Team & Admin Management</h2>
-                  <p className="text-xs text-[#64748b]">Manage administrator accounts and platform roles.</p>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
+                      Access Control & Permissions
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight text-[#0f172a] mt-1">
+                    Console User Accounts & Permissions
+                  </h2>
+                  <p className="text-xs text-[#64748b] mt-0.5">
+                    Create console user accounts with custom module permissions. Data is stored in the dedicated <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold">dashboard_users</code> table for console dashboard logins only.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={loadTeamMembers}
+                    variant="outline"
+                    className="h-10 border-[#cbd5e1] text-[#334155] font-bold text-xs rounded-xl hover:border-[#0f172a] cursor-pointer"
+                    title="Reload Team List"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                    Refresh
+                  </Button>
+
+                  <Button
+                    onClick={handleOpenAddTeamMember}
+                    className="h-10 bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02]"
+                  >
+                    <UserPlus className="w-4 h-4 mr-2 text-emerald-400" />
+                    Add Console User
+                  </Button>
                 </div>
               </div>
 
-              <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-6">
-                <div className="flex items-center justify-between border-b border-[#e2e8f0] pb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-bold">
-                      A
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-sm text-[#0f172a]">admin (System Administrator)</h3>
-                      <p className="text-xs text-[#64748b]">cms@sportxclub.com • Full Access Control</p>
-                    </div>
+              {/* KPI Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
+                    <Users className="w-6 h-6" />
                   </div>
-                  <Badge className="bg-[#dcfce7] text-[#16a34a] border-none font-bold">Active Admin</Badge>
+                  <div>
+                    <div className="text-[11px] font-extrabold text-[#94a3b8] uppercase tracking-wider">Total Console Users</div>
+                    <div className="text-2xl font-black text-[#0f172a]">{teamMembers.length}</div>
+                    <div className="text-[10px] font-bold text-[#64748b] mt-0.5">Dedicated console logins</div>
+                  </div>
+                </Card>
+
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                    <UserCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-extrabold text-[#94a3b8] uppercase tracking-wider">Active Staff Accounts</div>
+                    <div className="text-2xl font-black text-emerald-600">
+                      {teamMembers.filter((m) => m.status === "Active").length}
+                    </div>
+                    <div className="text-[10px] font-bold text-[#64748b] mt-0.5">Authorized for login</div>
+                  </div>
+                </Card>
+
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-extrabold text-[#94a3b8] uppercase tracking-wider">Super Administrators</div>
+                    <div className="text-2xl font-black text-blue-600">
+                      {teamMembers.filter((m) => m.role === "Super Admin" || m.role === "Admin").length}
+                    </div>
+                    <div className="text-[10px] font-bold text-[#64748b] mt-0.5">Full 5-module control</div>
+                  </div>
+                </Card>
+
+                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                    <Layers className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-extrabold text-[#94a3b8] uppercase tracking-wider">Permission Modules</div>
+                    <div className="text-2xl font-black text-amber-600">5 Modules</div>
+                    <div className="text-[10px] font-bold text-[#64748b] mt-0.5">Granular access control</div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Filters & Search Toolbar */}
+              <div className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3" />
+                  <Input
+                    type="text"
+                    value={teamSearchQuery}
+                    onChange={(e) => setTeamSearchQuery(e.target.value)}
+                    placeholder="Search by full name, username, email, phone..."
+                    className="pl-10 h-10 bg-[#f8fafc] border-[#cbd5e1] rounded-xl text-xs text-[#0f172a] font-medium"
+                  />
+                  {teamSearchQuery && (
+                    <button
+                      onClick={() => setTeamSearchQuery("")}
+                      className="absolute right-3 top-3 text-[#94a3b8] hover:text-[#0f172a] text-xs cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-              </Card>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Filter className="w-3.5 h-3.5 text-[#64748b]" />
+                    <span className="text-xs font-bold text-[#475569]">Role:</span>
+                    <select
+                      value={teamRoleFilter}
+                      onChange={(e) => setTeamRoleFilter(e.target.value)}
+                      className="bg-[#f8fafc] border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-xl px-3 py-2 cursor-pointer focus:outline-none focus:border-[#0f172a]"
+                    >
+                      <option value="all">All Roles ({teamMembers.length})</option>
+                      <option value="Super Admin">Super Admin</option>
+                      <option value="Manager">Manager</option>
+                      <option value="Editor">Editor</option>
+                      <option value="Turf Manager">Turf Manager</option>
+                      <option value="Tournament Coordinator">Tournament Coordinator</option>
+                      <option value="Community Moderator">Community Moderator</option>
+                      <option value="Custom">Custom</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-[#475569]">Status:</span>
+                    <select
+                      value={teamStatusFilter}
+                      onChange={(e) => setTeamStatusFilter(e.target.value)}
+                      className="bg-[#f8fafc] border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-xl px-3 py-2 cursor-pointer focus:outline-none focus:border-[#0f172a]"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="Active">Active Only</option>
+                      <option value="Inactive">Inactive Only</option>
+                    </select>
+                  </div>
+
+                  {(teamSearchQuery || teamRoleFilter !== "all" || teamStatusFilter !== "all") && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setTeamSearchQuery("");
+                        setTeamRoleFilter("all");
+                        setTeamStatusFilter("all");
+                      }}
+                      className="text-xs text-red-600 hover:bg-red-50 font-bold h-9 px-2.5 rounded-xl cursor-pointer"
+                    >
+                      Reset Filters
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Console Users List / Cards */}
+              <div className="space-y-4">
+                {teamMembers
+                  .filter((m) => {
+                    const q = teamSearchQuery.trim().toLowerCase();
+                    const matchQuery =
+                      !q ||
+                      (m.full_name && m.full_name.toLowerCase().includes(q)) ||
+                      (m.username && m.username.toLowerCase().includes(q)) ||
+                      (m.email && m.email.toLowerCase().includes(q)) ||
+                      (m.phone && m.phone.toLowerCase().includes(q));
+                    const matchRole = teamRoleFilter === "all" || m.role === teamRoleFilter;
+                    const matchStatus = teamStatusFilter === "all" || m.status === teamStatusFilter;
+                    return matchQuery && matchRole && matchStatus;
+                  })
+                  .map((member) => {
+                    const perms = Array.isArray(member.permissions) ? member.permissions : [];
+                    const isFullAdmin = member.role === "Super Admin" || perms.length === 5;
+                    const isSelf = currentCmsUser && currentCmsUser.id === member.id;
+                    const isPrimaryAdmin = member.username?.toLowerCase() === "admin";
+
+                    return (
+                      <Card
+                        key={member.id}
+                        className={`bg-white border transition-all duration-200 rounded-2xl shadow-xs overflow-hidden ${
+                          member.status === "Active"
+                            ? "border-[#e2e8f0] hover:border-[#cbd5e1]"
+                            : "border-red-200/60 bg-slate-50/50 opacity-80"
+                        }`}
+                      >
+                        <div className="p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                          {/* Left: User Identity & Avatar */}
+                          <div className="flex items-start gap-4 min-w-0 lg:w-1/3">
+                            <div className="relative shrink-0">
+                              <div className="h-12 w-12 rounded-2xl bg-[#0f172a] text-white flex items-center justify-center font-black text-lg shadow-sm">
+                                {(member.full_name || member.username || "U").charAt(0).toUpperCase()}
+                              </div>
+                              <span
+                                className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${
+                                  member.status === "Active" ? "bg-emerald-500" : "bg-red-500"
+                                }`}
+                                title={member.status === "Active" ? "Active Account" : "Inactive Account"}
+                              />
+                            </div>
+
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-extrabold text-sm text-[#0f172a] truncate">
+                                  {member.full_name}
+                                </h3>
+                                {isSelf && (
+                                  <Badge className="bg-emerald-100 text-emerald-700 text-[10px] font-black border-none px-1.5 py-0">
+                                    You
+                                  </Badge>
+                                )}
+                                <span
+                                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                                    ROLE_PRESETS[member.role]?.badgeClass || "bg-slate-100 text-slate-700 border-slate-200"
+                                  }`}
+                                >
+                                  {member.role || "Editor"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2 text-xs font-semibold text-[#64748b]">
+                                <span className="font-mono text-[#0f172a] bg-[#f1f5f9] px-1.5 py-0.5 rounded text-[11px]">
+                                  @{member.username}
+                                </span>
+                                <span>•</span>
+                                <span className="truncate">{member.email}</span>
+                              </div>
+
+                              {member.phone && (
+                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#64748b]">
+                                  <Phone className="w-3 h-3 text-[#94a3b8]" />
+                                  <span>{member.phone}</span>
+                                </div>
+                              )}
+
+                              {/* Password Display with Eye Toggle */}
+                              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#64748b] pt-0.5">
+                                <Key className="w-3 h-3 text-[#94a3b8]" />
+                                <span className="text-[11px] font-bold text-[#64748b]">Password:</span>
+                                <span className="font-mono text-[#0f172a] bg-[#f1f5f9] px-2 py-0.5 rounded text-[11px] font-bold">
+                                  {revealedPasswords[member.id] ? member.password : "••••••••"}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setRevealedPasswords((prev) => ({
+                                      ...prev,
+                                      [member.id]: !prev[member.id],
+                                    }))
+                                  }
+                                  className="text-[#94a3b8] hover:text-[#0f172a] p-0.5 rounded transition-colors cursor-pointer"
+                                  title={revealedPasswords[member.id] ? "Hide password" : "Show password"}
+                                >
+                                  {revealedPasswords[member.id] ? (
+                                    <EyeOff className="w-3.5 h-3.5 text-emerald-600" />
+                                  ) : (
+                                    <Eye className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Middle: Granted Permissions Badges */}
+                          <div className="flex-1 lg:border-x lg:border-[#f1f5f9] lg:px-6 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#94a3b8]">
+                                Granted Console Permissions ({perms.length}/5)
+                              </span>
+                              {isFullAdmin && (
+                                <Badge className="bg-purple-50 text-purple-700 border-purple-200 font-extrabold text-[10px]">
+                                  <ShieldCheck className="w-3 h-3 mr-1" />
+                                  Full Console Access
+                                </Badge>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap gap-1.5">
+                              {CONSOLE_MODULES.map((mod) => {
+                                const hasPerm = isFullAdmin || perms.includes(mod.key);
+                                const Icon = mod.icon;
+                                return (
+                                  <div
+                                    key={mod.key}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
+                                      hasPerm
+                                        ? mod.color
+                                        : "bg-slate-50 text-slate-400 border-slate-200 opacity-40 line-through"
+                                    }`}
+                                    title={mod.description}
+                                  >
+                                    <Icon className="w-3 h-3" />
+                                    <span>{mod.label}</span>
+                                    {hasPerm ? (
+                                      <Check className="w-3 h-3 stroke-[3]" />
+                                    ) : (
+                                      <X className="w-3 h-3" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Right: Status Toggle & Actions */}
+                          <div className="flex items-center justify-between lg:justify-end gap-3 shrink-0">
+                            {/* Status Switch */}
+                            <Button
+                              onClick={() => handleToggleMemberStatus(member)}
+                              variant="outline"
+                              disabled={isPrimaryAdmin}
+                              className={`h-9 px-3 text-xs font-extrabold rounded-xl border transition-all cursor-pointer ${
+                                member.status === "Active"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                  : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                              }`}
+                              title={isPrimaryAdmin ? "Primary admin cannot be deactivated" : "Toggle account active status"}
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full mr-1.5 ${
+                                  member.status === "Active" ? "bg-emerald-500" : "bg-red-500"
+                                }`}
+                              />
+                              {member.status === "Active" ? "Active" : "Inactive"}
+                            </Button>
+
+                            {/* Edit Button */}
+                            <Button
+                              onClick={() => handleOpenEditTeamMember(member)}
+                              variant="outline"
+                              className="h-9 px-3 text-xs font-bold text-[#0f172a] border-[#cbd5e1] hover:border-[#0f172a] rounded-xl cursor-pointer"
+                              title="Edit user & permissions"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                              Edit Permissions
+                            </Button>
+
+                            {/* Delete Button */}
+                            <Button
+                              onClick={() => handleDeleteTeamMember(member)}
+                              variant="ghost"
+                              disabled={isPrimaryAdmin}
+                              className={`h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl cursor-pointer ${
+                                isPrimaryAdmin ? "opacity-30 cursor-not-allowed" : ""
+                              }`}
+                              title={isPrimaryAdmin ? "Primary admin cannot be deleted" : "Delete console account"}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+
+                {/* Empty State */}
+                {teamMembers.filter((m) => {
+                  const q = teamSearchQuery.trim().toLowerCase();
+                  const matchQuery =
+                    !q ||
+                    (m.full_name && m.full_name.toLowerCase().includes(q)) ||
+                    (m.username && m.username.toLowerCase().includes(q)) ||
+                    (m.email && m.email.toLowerCase().includes(q)) ||
+                    (m.phone && m.phone.toLowerCase().includes(q));
+                  const matchRole = teamRoleFilter === "all" || m.role === teamRoleFilter;
+                  const matchStatus = teamStatusFilter === "all" || m.status === teamStatusFilter;
+                  return matchQuery && matchRole && matchStatus;
+                }).length === 0 && (
+                  <Card className="bg-white border border-dashed border-[#cbd5e1] rounded-3xl p-12 text-center space-y-3">
+                    <div className="h-12 w-12 rounded-full bg-slate-100 text-[#64748b] flex items-center justify-center mx-auto">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <h3 className="font-extrabold text-base text-[#0f172a]">No Console Accounts Found</h3>
+                    <p className="text-xs text-[#64748b] max-w-sm mx-auto">
+                      No team members matched your search or active filters. Try adjusting your query or click below to add a new account.
+                    </p>
+                    <Button
+                      onClick={handleOpenAddTeamMember}
+                      className="bg-[#0f172a] text-white text-xs font-extrabold h-9 px-4 rounded-xl cursor-pointer"
+                    >
+                      <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                      Add New Console User
+                    </Button>
+                  </Card>
+                )}
+              </div>
             </div>
           )}
         </main>
@@ -3482,6 +4182,262 @@ export function CMSDashboard() {
             <DialogFooter className="pt-2">
               <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
                 {editingFixture ? "Update Match Fixture" : "Save Match Fixture"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 9. Console Team Member & Permissions Add / Edit Modal */}
+      <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
+        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-3xl max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+          <DialogHeader className="border-b border-[#f1f5f9] pb-4">
+            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+              <ShieldCheck className="w-5 h-5" />
+              <span className="text-[10px] font-extrabold uppercase tracking-widest">
+                SPORTX Console Access Control
+              </span>
+            </div>
+            <DialogTitle className="text-lg font-black text-[#0f172a]">
+              {editingTeamMember ? "Edit Console Account & Permissions" : "Create New Console User Account"}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748b]">
+              Console user credentials are stored in the dedicated <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono font-bold">dashboard_users</code> table and can only be used to log into this dashboard.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveTeamMember} className="space-y-6 pt-3">
+            {/* Account Credentials */}
+            <div className="space-y-4">
+              <div className="text-xs font-black uppercase tracking-wider text-[#94a3b8] flex items-center gap-2">
+                <User className="w-3.5 h-3.5 text-[#64748b]" />
+                1. Account Credentials & Contact
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-extrabold text-[#334155]">Full Name *</Label>
+                  <Input
+                    required
+                    value={teamForm.full_name}
+                    onChange={(e) => setTeamForm({ ...teamForm, full_name: e.target.value })}
+                    placeholder="e.g. Vikram Sharma"
+                    className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold h-10 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-extrabold text-[#334155]">Username *</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-xs font-mono font-bold text-[#94a3b8]">@</span>
+                    <Input
+                      required
+                      value={teamForm.username}
+                      onChange={(e) => setTeamForm({ ...teamForm, username: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
+                      placeholder="vikram_turf"
+                      className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold pl-7 h-10 rounded-xl"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-extrabold text-[#334155]">Email Address *</Label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
+                    <Input
+                      type="email"
+                      required
+                      value={teamForm.email}
+                      onChange={(e) => setTeamForm({ ...teamForm, email: e.target.value })}
+                      placeholder="vikram@sportxclub.com"
+                      className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold pl-9 h-10 rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-extrabold text-[#334155]">Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
+                    <Input
+                      value={teamForm.phone}
+                      onChange={(e) => setTeamForm({ ...teamForm, phone: e.target.value })}
+                      placeholder="+91 98765 43210"
+                      className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold pl-9 h-10 rounded-xl"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-extrabold text-[#334155]">
+                      {editingTeamMember ? "User Password" : "Login Password *"}
+                    </Label>
+                    {editingTeamMember && (
+                      <span className="text-[10px] font-bold text-emerald-600">
+                        Current password loaded
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
+                    <Input
+                      type={showModalPassword ? "text" : "password"}
+                      required={!editingTeamMember}
+                      value={teamForm.password}
+                      onChange={(e) => setTeamForm({ ...teamForm, password: e.target.value })}
+                      placeholder={editingTeamMember ? "User password" : "Create a password"}
+                      className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold pl-9 pr-10 h-10 rounded-xl"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowModalPassword(!showModalPassword)}
+                      className="absolute right-3 top-2.5 text-[#94a3b8] hover:text-[#0f172a] p-1 rounded-md transition-colors cursor-pointer"
+                      title={showModalPassword ? "Hide password" : "Show password"}
+                    >
+                      {showModalPassword ? (
+                        <EyeOff className="w-4 h-4 text-emerald-600" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-extrabold text-[#334155]">Account Status</Label>
+                  <select
+                    value={teamForm.status}
+                    onChange={(e) => setTeamForm({ ...teamForm, status: e.target.value })}
+                    disabled={editingTeamMember?.username?.toLowerCase() === "admin"}
+                    className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-xs text-[#0f172a] font-bold rounded-xl h-10 px-3 cursor-pointer"
+                  >
+                    <option value="Active">Active (Can Sign In)</option>
+                    <option value="Inactive">Inactive (Sign In Blocked)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Role & Preset Selection */}
+            <div className="space-y-3 pt-2 border-t border-[#f1f5f9]">
+              <div className="text-xs font-black uppercase tracking-wider text-[#94a3b8] flex items-center gap-2">
+                <Shield className="w-3.5 h-3.5 text-[#64748b]" />
+                2. Select Staff Role & Permission Preset
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-extrabold text-[#334155]">Console Role</Label>
+                <select
+                  value={teamForm.role}
+                  onChange={(e) => handleRoleChange(e.target.value)}
+                  className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-xs font-extrabold text-[#0f172a] rounded-xl h-10 px-3 cursor-pointer focus:border-[#0f172a]"
+                >
+                  <option value="Super Admin">Super Admin — Full 5-Module Control</option>
+                  <option value="Manager">Manager — Home Page, Turfs, Tournaments, Community</option>
+                  <option value="Editor">Content Editor — Home Page & Community</option>
+                  <option value="Turf Manager">Turf Manager — Turfs & Home Page</option>
+                  <option value="Tournament Coordinator">Tournament Coordinator — Tournaments & Fixtures</option>
+                  <option value="Community Moderator">Community Moderator — Community Feed Only</option>
+                  <option value="Custom">Custom — Manually Toggle Permissions</option>
+                </select>
+                <p className="text-[11px] text-[#64748b] font-medium">
+                  {ROLE_PRESETS[teamForm.role]?.description || "Choose tailored module permissions below."}
+                </p>
+              </div>
+            </div>
+
+            {/* Granular Module Permissions Checklist */}
+            <div className="space-y-3 pt-2 border-t border-[#f1f5f9]">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-black uppercase tracking-wider text-[#94a3b8] flex items-center gap-2">
+                  <Key className="w-3.5 h-3.5 text-[#64748b]" />
+                  3. Granular Console Module Permissions ({teamForm.permissions.length}/5)
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllPermissions}
+                    className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 cursor-pointer"
+                  >
+                    Select All
+                  </button>
+                  <span className="text-[#cbd5e1]">|</span>
+                  <button
+                    type="button"
+                    onClick={handleClearAllPermissions}
+                    className="text-[11px] font-extrabold text-slate-500 hover:text-slate-800 cursor-pointer"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2.5">
+                {CONSOLE_MODULES.map((mod) => {
+                  const isChecked = teamForm.permissions.includes(mod.key);
+                  const Icon = mod.icon;
+
+                  return (
+                    <div
+                      key={mod.key}
+                      onClick={() => handleTogglePermission(mod.key)}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                        isChecked
+                          ? "bg-slate-50 border-[#0f172a] shadow-xs"
+                          : "bg-white border-[#e2e8f0] hover:border-[#cbd5e1] opacity-75"
+                      }`}
+                    >
+                      <div className="pt-0.5">
+                        {isChecked ? (
+                          <div className="h-5 w-5 rounded-md bg-[#0f172a] text-white flex items-center justify-center">
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </div>
+                        ) : (
+                          <div className="h-5 w-5 rounded-md border-2 border-[#cbd5e1] bg-white" />
+                        )}
+                      </div>
+
+                      <div className="h-9 w-9 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center shrink-0 shadow-xs">
+                        <Icon className="w-4 h-4 text-[#0f172a]" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-xs text-[#0f172a]">{mod.label}</span>
+                          <span className="text-[10px] font-bold text-[#64748b] bg-slate-100 px-1.5 py-0.2 rounded">
+                            {mod.tag}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#64748b] font-medium mt-0.5">{mod.description}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <DialogFooter className="border-t border-[#f1f5f9] pt-4 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsTeamModalOpen(false)}
+                className="h-10 text-xs font-bold border-[#cbd5e1] text-[#334155] rounded-xl cursor-pointer"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingTeam}
+                className="h-10 bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs px-6 rounded-xl cursor-pointer shadow-md"
+              >
+                {isSavingTeam ? "Saving Account..." : editingTeamMember ? "Update Console Account" : "Create Console User"}
               </Button>
             </DialogFooter>
           </form>

@@ -1,14 +1,34 @@
 import crypto from "crypto";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// ES modules evaluate imported files before server.js runs dotenv.config().
+// Load this module's environment file here so payment credentials are available
+// when PHONEPE_CONFIG is created.
+const currentFile = fileURLToPath(import.meta.url);
+const currentDir = path.dirname(currentFile);
+dotenv.config({ path: path.resolve(currentDir, "../.env") });
 
 export const PHONEPE_CONFIG = {
-  CLIENT_ID: process.env.PHONEPE_CLIENT_ID || "M22W57IMFZ6JF_2512041158",
-  CLIENT_SECRET: process.env.PHONEPE_CLIENT_SECRET || "NzQ5Mzc5MDYtNjJmOC00NTYzLWFkODAtMzJlOTc4MjU2Yjk1",
-  CLIENT_VERSION: process.env.PHONEPE_CLIENT_VERSION || "1",
+  // Both names are supported: SportXClub's CLIENT_* names and PhonePe's
+  // standard MERCHANT_ID / SALT_KEY / SALT_INDEX names used by AmeyaNewYork.
+  CLIENT_ID: (process.env.PHONEPE_CLIENT_ID || process.env.PHONEPE_MERCHANT_ID || "").trim(),
+  CLIENT_SECRET: (process.env.PHONEPE_CLIENT_SECRET || process.env.PHONEPE_SALT_KEY || "").trim(),
+  CLIENT_VERSION: (process.env.PHONEPE_CLIENT_VERSION || process.env.PHONEPE_SALT_INDEX || "").trim(),
   ENV: process.env.PHONEPE_ENV || "SANDBOX",
   HOST: process.env.PHONEPE_ENV === "PRODUCTION"
     ? "https://api.phonepe.com/apis/hermes"
     : "https://api-preprod.phonepe.com/apis/pg-sandbox",
 };
+
+export function hasPhonePeCredentials() {
+  return Boolean(
+    PHONEPE_CONFIG.CLIENT_ID &&
+    PHONEPE_CONFIG.CLIENT_SECRET &&
+    PHONEPE_CONFIG.CLIENT_VERSION
+  );
+}
 
 /**
  * Utility to calculate X-VERIFY header for PhonePe PG API

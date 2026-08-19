@@ -25,7 +25,6 @@ export function PaymentStatus() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const statusParam = searchParams.get("status") || "SUCCESS";
   const merchantTxnId = searchParams.get("merchantTransactionId") || searchParams.get("txnId") || `M22W_${Date.now()}`;
 
   const [isLoading, setIsLoading] = useState(true);
@@ -34,15 +33,13 @@ export function PaymentStatus() {
   // Read saved booking payload
   let bookingData = null;
   try {
-    const saved = sessionStorage.getItem("sportxclub_pending_booking") || sessionStorage.getItem("sportxclub_booking");
+    const saved = sessionStorage.getItem("sportxclub_last_booking") || sessionStorage.getItem("sportxclub_pending_booking") || sessionStorage.getItem("sportxclub_booking");
     if (saved) {
       bookingData = JSON.parse(saved);
     }
   } catch (e) {
     console.error("Error parsing pending booking data:", e);
   }
-
-  const isSuccess = statusParam === "SUCCESS" || statusParam === "COMPLETED";
 
   const venueName = typeof bookingData?.venue === "object" ? (bookingData.venue.name || "Elite Sports Arena") : (bookingData?.venue || "Elite Sports Arena");
   const venueAddress = typeof bookingData?.venue === "object" ? (bookingData.venue.location || "123 Sports Complex, MG Road, Mumbai") : (bookingData?.location || "123 Sports Complex, MG Road, Mumbai");
@@ -55,13 +52,15 @@ export function PaymentStatus() {
     async function verify() {
       setIsLoading(true);
       try {
+        const phonePeStatus = await phonepeService.getPaymentStatus(merchantTxnId);
+        const isPaid = phonePeStatus.paymentStatus === "PAYMENT_SUCCESS";
         const result = await phonepeService.verifyPayment(
           merchantTxnId,
-          isSuccess ? "SUCCESS" : "FAILED",
+          isPaid ? "SUCCESS" : "FAILED",
           bookingData || { venue: venueName, date: dateStr, time: timeStr, price, sport: sportStr }
         );
         setVerificationResult(result);
-        if (isSuccess) {
+        if (isPaid) {
           toast.success("PhonePe Payment Verified & Booking Saved!");
         } else {
           toast.error("Payment Failed. Slot was not reserved.");
@@ -73,7 +72,9 @@ export function PaymentStatus() {
       }
     }
     verify();
-  }, [merchantTxnId, statusParam]);
+  }, [merchantTxnId]);
+
+  const isSuccess = verificationResult?.status === "Success";
 
   const handleDownloadReceipt = () => {
     const loadingToastId = toast.loading("Generating receipt PDF...");

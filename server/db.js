@@ -1,8 +1,17 @@
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import mysql from "mysql2/promise";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config();
 
 const DB_HOST = process.env.DB_HOST || "localhost";
 const DB_USER = process.env.DB_USER || "root";
-const DB_PASSWORD = process.env.DB_PASSWORD || "";
+const DB_PASSWORD = process.env.DB_PASSWORD || "root";
 const DB_NAME = process.env.DB_NAME || "sportxclub";
 const DB_PORT = process.env.DB_PORT || 3306;
 
@@ -308,6 +317,22 @@ async function createTables() {
     `CREATE TABLE IF NOT EXISTS site_settings (
       setting_key VARCHAR(100) PRIMARY KEY,
       setting_value TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS dashboard_users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      full_name VARCHAR(255) NOT NULL,
+      username VARCHAR(100) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      role VARCHAR(50) DEFAULT 'Editor',
+      status VARCHAR(50) DEFAULT 'Active',
+      permissions TEXT,
+      phone VARCHAR(50),
+      avatar LONGTEXT,
+      last_login TIMESTAMP NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )`,
 
@@ -623,6 +648,18 @@ async function createTables() {
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN time_slot VARCHAR(100);");
   } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN user_phone VARCHAR(50);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN turf_id INT;");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN sport VARCHAR(100);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN payment_type VARCHAR(50) DEFAULT 'UPI';");
+  } catch (e) { }
 
   console.log("Database schema checked/created successfully.");
 }
@@ -789,6 +826,22 @@ async function seedData() {
       ('Weekend Tournament Special', 'Register your team for the Mumbai Football Championship!', 'All Users', 'Sent', '2026-08-03 10:00 AM'),
       ('System Maintenance', 'App maintenance scheduled for midnight 2 AM.', 'Turf Owners', 'Sent', '2026-08-02 04:00 PM')
     `);
+  }
+
+  // Seed Dashboard Console Users if empty
+  const [dashUsers] = await conn.query("SELECT COUNT(*) as count FROM dashboard_users");
+  if (dashUsers[0].count === 0) {
+    const fullPermissions = JSON.stringify(["home-page", "turfs", "tournaments", "community", "team"]);
+    const editorPermissions = JSON.stringify(["home-page", "community"]);
+    const turfPermissions = JSON.stringify(["turfs", "home-page"]);
+
+    await conn.query(`
+      INSERT INTO dashboard_users (full_name, username, password, email, role, status, permissions, phone)
+      VALUES 
+      ('System Administrator', 'admin', 'admin123', 'cms@sportxclub.com', 'Super Admin', 'Active', ?, '+91 98765 43210'),
+      ('Content Manager', 'editor', 'editor123', 'editor@sportxclub.com', 'Editor', 'Active', ?, '+91 98765 43211'),
+      ('Turf Operations Lead', 'turfops', 'turf123', 'turfs@sportxclub.com', 'Turf Manager', 'Active', ?, '+91 98765 43212')
+    `, [fullPermissions, editorPermissions, turfPermissions]);
   }
 
   // Seed CMS Admin User if empty

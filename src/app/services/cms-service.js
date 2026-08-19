@@ -397,4 +397,54 @@ export const cmsService = {
     const data = await res.json();
     return data;
   },
+
+  // Team & Console User Management
+  getTeamMembers: async () => {
+    const res = await fetch(`${API_BASE}/team`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to load team members");
+    return data.data;
+  },
+
+  createTeamMember: async (userData) => {
+    const res = await fetch(`${API_BASE}/team`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to create console user");
+    return data.data;
+  },
+
+  updateTeamMember: async (id, userData) => {
+    const res = await fetch(`${API_BASE}/team/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to update console user");
+    return data.data;
+  },
+
+  deleteTeamMember: async (id) => {
+    const res = await fetch(`${API_BASE}/team/${id}`, {
+      method: "DELETE",
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to delete console user");
+    return data;
+  },
+
+  toggleTeamMemberStatus: async (id, status) => {
+    const res = await fetch(`${API_BASE}/team/${id}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to update user status");
+    return data;
+  },
 };

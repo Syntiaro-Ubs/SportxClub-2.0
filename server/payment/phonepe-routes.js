@@ -1,6 +1,6 @@
 import express from "express";
 import { getPool } from "../db.js";
-import { PHONEPE_CONFIG, calculateXVerify } from "./phonepe-config.js";
+import { PHONEPE_CONFIG, calculateXVerify, hasPhonePeCredentials } from "./phonepe-config.js";
 
 const router = express.Router();
 
@@ -10,6 +10,13 @@ const router = express.Router();
  */
 router.post("/initiate", async (req, res) => {
   try {
+    if (!hasPhonePeCredentials()) {
+      return res.status(500).json({
+        success: false,
+        message: "PhonePe credentials are missing. Configure PHONEPE_CLIENT_ID, PHONEPE_CLIENT_SECRET, and PHONEPE_CLIENT_VERSION in server/.env.",
+      });
+    }
+
     const { amount, userEmail, userName, turfName, date, time, sport, venueId } = req.body;
 
     const numericAmount = parseFloat(amount) || 1200;
@@ -38,27 +45,37 @@ router.post("/initiate", async (req, res) => {
 
     console.log(`[PhonePe Business PG] Initiating Transaction: ${merchantTransactionId} for ₹${numericAmount}`);
 
-    let phonePeRedirectUrl = null;
+    const response = await fetch(`${PHONEPE_CONFIG.HOST}${apiPath}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-VERIFY": xVerify,
+        "X-MERCHANT-ID": PHONEPE_CONFIG.CLIENT_ID,
+      },
+      body: JSON.stringify({ request: base64Payload }),
+    });
 
-    try {
-      const response = await fetch(`${PHONEPE_CONFIG.HOST}${apiPath}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-VERIFY": xVerify,
-          "X-MERCHANT-ID": PHONEPE_CONFIG.CLIENT_ID,
-        },
-        body: JSON.stringify({ request: base64Payload }),
-      });
+    const responseData = await response.json();
+    console.log("[PhonePe PG Response]:", responseData);
 
-      const responseData = await response.json();
-      console.log("[PhonePe PG Response]:", responseData);
-
-      if (responseData.success && responseData.data?.instrumentResponse?.redirectInfo?.url) {
-        phonePeRedirectUrl = responseData.data.instrumentResponse.redirectInfo.url;
+    if (!response.ok || !responseData.success) {
+      let errorMessage = responseData.message || "PhonePe could not create the payment.";
+      if (responseData.code === "KEY_NOT_CONFIGURED") {
+        errorMessage = "PhonePe Key not found for merchant. In SANDBOX mode, use official UAT credentials (PGTESTPAYUAT86). If using live credentials, set PHONEPE_ENV=PRODUCTION with your live Salt Key in server/.env.";
       }
-    } catch (apiErr) {
-      console.warn("[PhonePe PG Sandbox Note]:", apiErr.message);
+      return res.status(response.status || 502).json({
+        success: false,
+        message: errorMessage,
+        code: responseData.code,
+      });
+    }
+
+    const phonePeRedirectUrl = responseData.data?.instrumentResponse?.redirectInfo?.url;
+    if (!phonePeRedirectUrl) {
+      return res.status(502).json({
+        success: false,
+        message: "PhonePe did not return a checkout URL.",
+      });
     }
 
     return res.json({
@@ -66,9 +83,8 @@ router.post("/initiate", async (req, res) => {
       merchantTransactionId,
       amount: numericAmount,
       clientId: PHONEPE_CONFIG.CLIENT_ID,
-      // If direct PhonePe sandbox URL is returned, use it; otherwise fallback to test simulator URL
-      redirectUrl: phonePeRedirectUrl || `http://localhost:5173/payment-status?status=SUCCESS&merchantTransactionId=${merchantTransactionId}`,
-      simulatorUrl: `http://localhost:5173/payment-status?merchantTransactionId=${merchantTransactionId}`,
+      // This is the hosted PhonePe checkout URL. Never replace it with a local success page.
+      redirectUrl: phonePeRedirectUrl,
     });
   } catch (error) {
     console.error("PhonePe Initiate Error:", error);
@@ -76,6 +92,57 @@ router.post("/initiate", async (req, res) => {
       success: false,
       message: "Failed to initiate PhonePe payment.",
       error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/payment/phonepe/status/:merchantTransactionId
+ * Gets the final transaction state directly from PhonePe after its redirect.
+ */
+router.get("/status/:merchantTransactionId", async (req, res) => {
+  try {
+    if (!hasPhonePeCredentials()) {
+      return res.status(500).json({
+        success: false,
+        message: "PhonePe credentials are missing from server/.env.",
+      });
+    }
+
+    const { merchantTransactionId } = req.params;
+    const apiPath = `/pg/v1/status/${PHONEPE_CONFIG.CLIENT_ID}/${merchantTransactionId}`;
+    const xVerify = calculateXVerify("", apiPath);
+
+    const response = await fetch(`${PHONEPE_CONFIG.HOST}${apiPath}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-VERIFY": xVerify,
+        "X-MERCHANT-ID": PHONEPE_CONFIG.CLIENT_ID,
+      },
+    });
+    const responseData = await response.json();
+    console.log("[PhonePe PG Status Response]:", responseData);
+
+    if (!response.ok || !responseData.success) {
+      return res.status(response.status || 502).json({
+        success: false,
+        message: responseData.message || "PhonePe payment-status check failed.",
+        code: responseData.code,
+      });
+    }
+
+    return res.json({
+      success: true,
+      paymentStatus: responseData.code,
+      message: responseData.message,
+      data: responseData.data,
+    });
+  } catch (error) {
+    console.error("PhonePe Status Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Could not check the PhonePe payment status.",
     });
   }
 });
@@ -91,12 +158,13 @@ router.post("/verify", async (req, res) => {
 
     const isSuccess = status === "SUCCESS" || status === "COMPLETED";
 
-    const userEmail = bookingPayload?.userEmail || "user@sportxclub.com";
-    const userName = bookingPayload?.userName || "SportX Player";
-    const turfName = bookingPayload?.venue || bookingPayload?.turfName || "Elite Sports Arena";
+    const userEmail = bookingPayload?.userEmail || bookingPayload?.email || "user@sportxclub.com";
+    const userName = bookingPayload?.userName || bookingPayload?.name || "SportX Player";
+    const turfName = typeof bookingPayload?.venue === "object" ? (bookingPayload.venue?.name || "Elite Sports Arena") : (bookingPayload?.venue || bookingPayload?.turfName || "Elite Sports Arena");
+    const turfId = bookingPayload?.venueId || bookingPayload?.turf_id || (typeof bookingPayload?.venue === "object" ? bookingPayload.venue?.id : null);
     const numericAmount = parseFloat(bookingPayload?.price || bookingPayload?.amount || 1200);
     const dateStr = bookingPayload?.date || bookingPayload?.selectedDate || new Date().toISOString().split("T")[0];
-    const timeStr = bookingPayload?.time || "6:00 PM - 7:00 PM";
+    const timeStr = bookingPayload?.time || bookingPayload?.time_slot || bookingPayload?.slot_time || "6:00 PM - 7:00 PM";
     const sportName = bookingPayload?.sport || "Football";
 
     const providerRefId = `T260812${Math.floor(100000000 + Math.random() * 900000000)}`;
@@ -137,27 +205,41 @@ router.post("/verify", async (req, res) => {
       try {
         const bookingSql = `
           INSERT INTO bookings 
-          (turf_name, user_name, user_email, date, time_slot, sport, amount, payment_status, booking_code, created_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+          (booking_code, user_name, user_email, turf_name, turf_id, sport, date, time_slot, slot_time, amount, status, payment_method, payment_type, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         `;
         const bookingCode = `SX-${Date.now().toString().slice(-6)}`;
         const [bookingResult] = await pool.query(bookingSql, [
-          turfName,
+          bookingCode,
           userName,
           userEmail,
+          turfName,
+          turfId || null,
+          sportName,
           dateStr,
           timeStr,
-          sportName,
+          timeStr,
           numericAmount,
-          "Paid",
-          bookingCode,
+          "Confirmed",
+          "PhonePe Business PG",
+          "UPI",
         ]);
         bookingId = bookingResult.insertId;
+
+        // Also increment booking count on player user profile
+        try {
+          await pool.query(
+            "UPDATE users SET bookings = COALESCE(bookings, 0) + 1 WHERE LOWER(email) = LOWER(?)",
+            [userEmail]
+          );
+        } catch (uErr) {
+          console.warn("[User Booking Count Update Note]:", uErr.message);
+        }
       } catch (bErr) {
-        console.warn("[PhonePe Booking Table Sync Note]:", bErr.message);
+        console.error("[PhonePe Booking Table Sync Error]:", bErr);
       }
 
-      console.log(`[PhonePe Payment & Booking Saved to DB] Transaction ID: ${providerRefId}`);
+      console.log(`[PhonePe Payment & Booking Saved to DB] Transaction ID: ${providerRefId}, Booking ID: ${bookingId}`);
 
       return res.json({
         success: true,

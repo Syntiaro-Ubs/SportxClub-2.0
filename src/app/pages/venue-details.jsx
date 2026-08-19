@@ -1606,7 +1606,7 @@ export function VenueDetails() {
                         if (res.success && res.redirectUrl) {
                           window.location.href = res.redirectUrl;
                         } else {
-                          navigate(`/payment-status?status=SUCCESS&merchantTransactionId=${res.merchantTransactionId || 'M22W_TEST'}`);
+                          toast.error(res.message || "PhonePe could not start the payment. Please try again.");
                         }
                       }).catch((err) => {
                         toast.dismiss("phonepe-init");

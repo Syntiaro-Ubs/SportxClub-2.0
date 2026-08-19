@@ -12,6 +12,7 @@ import galleryRoutes from "./gallery.js";
 import whyCardsRoutes from "./why_cards.js";
 import eventsRoutes from "./events.js";
 import postsRoutes from "./posts.js";
+import teamRoutes from "./team.js";
 
 const router = express.Router();
 
@@ -27,5 +28,6 @@ router.use("/gallery", galleryRoutes);
 router.use("/why-cards", whyCardsRoutes);
 router.use("/events", eventsRoutes);
 router.use("/posts", postsRoutes);
+router.use("/team", teamRoutes);
 
 export default router;

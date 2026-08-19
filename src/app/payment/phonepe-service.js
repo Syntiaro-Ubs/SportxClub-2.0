@@ -53,6 +53,18 @@ export const phonepeService = {
   },
 
   /**
+   * Get the actual payment state from PhonePe. Do not trust URL query parameters.
+   */
+  getPaymentStatus: async (merchantTransactionId) => {
+    const response = await fetch(`${API_BASE}/status/${encodeURIComponent(merchantTransactionId)}`);
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "Could not verify the PhonePe payment.");
+    }
+    return data;
+  },
+
+  /**
    * Fetch PhonePe Payment History from MySQL Database
    */
   getHistory: async (email) => {
