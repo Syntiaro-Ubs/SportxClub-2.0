@@ -220,7 +220,7 @@ export function VenueDetails() {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const [startTime, setStartTime] = useState("18:00");
+  const [startTime, setStartTime] = useState(null);
   const [playHours, setPlayHours] = useState(1);
   const [tempDuration, setTempDuration] = useState("1");
 
@@ -417,6 +417,7 @@ export function VenueDetails() {
   };
 
   const getSlotPrice = (startHour, hours) => {
+    if (startHour === null || startHour === undefined || isNaN(startHour)) return 0;
     let total = 0;
     for (let i = 0; i < hours; i++) {
       const checkHour = startHour + i;
@@ -432,7 +433,11 @@ export function VenueDetails() {
     return total;
   };
 
-  const getStartHour = (timeStr) => parseInt(timeStr.split(":")[0]);
+  const getStartHour = (timeStr) => {
+    if (!timeStr || typeof timeStr !== "string") return null;
+    const parsed = parseInt(timeStr.split(":")[0], 10);
+    return isNaN(parsed) ? null : parsed;
+  };
   const hourToTimeStr = (hour) => `${hour.toString().padStart(2, "0")}:00`;
 
   const isOverlapping = (startHour) => {
@@ -446,20 +451,32 @@ export function VenueDetails() {
 
   const isOutOfBounds = (startHour) => startHour + playHours > 23;
 
+  const selectedStartHour = startTime ? getStartHour(startTime) : null;
+  const isSlotSelected = useMemo(() => {
+    if (selectedStartHour === null) return false;
+    const matchingSlot = timeSlots.find((s) => s.startHour === selectedStartHour);
+    if (!matchingSlot) return false;
+    const isBooked = !!matchingSlot.bookedBy && !cancelledSlots.includes(selectedStartHour);
+    const overlaps = isOverlapping(selectedStartHour);
+    const outOfBounds = isOutOfBounds(selectedStartHour);
+    return !isBooked && !overlaps && !outOfBounds;
+  }, [selectedStartHour, timeSlots, cancelledSlots, playHours]);
+
   useEffect(() => {
-    const currentHour = getStartHour(startTime);
-    if (isOverlapping(currentHour) || isOutOfBounds(currentHour)) {
-      const firstAvailable = timeSlots.find(
+    if (startTime) {
+      const currentHour = getStartHour(startTime);
+      const isValid = currentHour !== null && timeSlots.some(
         (s) =>
-          !s.bookedBy &&
+          s.startHour === currentHour &&
+          (!s.bookedBy || cancelledSlots.includes(s.startHour)) &&
           !isOverlapping(s.startHour) &&
-          !isOutOfBounds(s.startHour),
+          !isOutOfBounds(s.startHour)
       );
-      if (firstAvailable) {
-        setStartTime(hourToTimeStr(firstAvailable.startHour));
+      if (!isValid) {
+        setStartTime(null);
       }
     }
-  }, [playHours]);
+  }, [selectedDate, playHours, timeSlots, cancelledSlots]);
 
   const handleFavoriteClick = () => {
     setIsFavorite(!isFavorite);
@@ -1418,7 +1435,6 @@ export function VenueDetails() {
                         const overlaps = isOverlapping(slotHour);
                         const outOfBounds = isOutOfBounds(slotHour);
                         const cannotSelect = isBooked || overlaps || outOfBounds;
-                        const selectedStartHour = getStartHour(startTime);
                         const isSelected = selectedStartHour !== null && slotHour === selectedStartHour;
                         const slotPrice = getSlotPrice(slotHour, playHours);
 
@@ -1427,7 +1443,10 @@ export function VenueDetails() {
                             key={slotHour}
                             type="button"
                             disabled={cannotSelect}
-                            onClick={() => !cannotSelect && setStartTime(hourToTimeStr(slotHour))}
+                            onClick={() => {
+                              if (cannotSelect) return;
+                              setStartTime(isSelected ? null : hourToTimeStr(slotHour));
+                            }}
                             className={cn(
                               "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative",
                               !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
@@ -1557,69 +1576,93 @@ export function VenueDetails() {
                     <span
                       className={cn(
                         "text-xl font-black",
-                        isDark ? "text-white" : "text-emerald-600",
+                        isSlotSelected
+                          ? isDark ? "text-white" : "text-emerald-600"
+                          : isDark ? "text-white/40" : "text-slate-400",
                       )}
                     >
-                      <span className="rupee-symbol">₹</span>{getSlotPrice(getStartHour(startTime), playHours)}
+                      {isSlotSelected ? (
+                        <>
+                          <span className="rupee-symbol">₹</span>{getSlotPrice(selectedStartHour, playHours)}
+                        </>
+                      ) : (
+                        <span className="text-sm font-semibold text-muted-foreground">
+                          <span className="rupee-symbol">₹</span>0
+                        </span>
+                      )}
                     </span>
                   </div>
+                  {!isSlotSelected && (
+                    <p className="text-[11px] font-medium text-amber-500/90 dark:text-amber-400/90 flex items-center gap-1">
+                      <span>⚠️</span> Please select an available time slot
+                    </p>
+                  )}
                 </div>
 
                 {/* CTA Button */}
                 <Button
                   variant="outline"
+                  disabled={!isSlotSelected}
                   onClick={() => {
+                    if (!isSlotSelected || selectedStartHour === null) {
+                      toast.error("Please select an available time slot first.");
+                      return;
+                    }
                     if (!currentUser) {
                       toast.error("Please sign in first to continue booking.");
                       navigate("/login");
-                    } else {
-                      const computedPrice = getSlotPrice(getStartHour(startTime), playHours);
-                      const formattedSlotTime = formatSlotRange(getStartHour(startTime), playHours);
-                      const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
-                        ? venue.image
-                        : asset("/venues/turf-1.webp");
-
-                      const bookingPayload = {
-                        venue: venue.name,
-                        image: safeImage,
-                        location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
-                        sport: selectedSport,
-                        date: selectedDate,
-                        time: formattedSlotTime,
-                        price: computedPrice,
-                        userName: currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
-                        userEmail: currentUser?.email || 'user@sportxclub.com',
-                        venueId: venue.id,
-                      };
-
-                      try {
-                        sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
-                        sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
-                        sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
-                      } catch (e) {
-                        console.warn("Storage note:", e.message);
-                      }
-
-                      toast.loading("Connecting to PhonePe Business Gateway...", { id: "phonepe-init" });
-                      phonepeService.initiatePayment(bookingPayload).then((res) => {
-                        toast.dismiss("phonepe-init");
-                        if (res.success && res.redirectUrl) {
-                          window.location.href = res.redirectUrl;
-                        } else {
-                          toast.error(res.message || "PhonePe could not start the payment. Please try again.");
-                        }
-                      }).catch((err) => {
-                        toast.dismiss("phonepe-init");
-                        toast.error("Failed initiating PhonePe payment. Redirecting to status...");
-                        navigate(`/payment-status?status=FAILED`);
-                      });
+                      return;
                     }
+                    const computedPrice = getSlotPrice(selectedStartHour, playHours);
+                    const formattedSlotTime = formatSlotRange(selectedStartHour, playHours);
+                    const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
+                      ? venue.image
+                      : asset("/venues/turf-1.webp");
+
+                    const bookingPayload = {
+                      venue: venue.name,
+                      image: safeImage,
+                      location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
+                      sport: selectedSport,
+                      date: selectedDate,
+                      time: formattedSlotTime,
+                      price: computedPrice,
+                      userName: currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
+                      userEmail: currentUser?.email || 'user@sportxclub.com',
+                      venueId: venue.id,
+                    };
+
+                    try {
+                      sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+                      sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+                      sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+                    } catch (e) {
+                      console.warn("Storage note:", e.message);
+                    }
+
+                    toast.loading("Connecting to PhonePe Business Gateway...", { id: "phonepe-init" });
+                    phonepeService.initiatePayment(bookingPayload).then((res) => {
+                      toast.dismiss("phonepe-init");
+                      if (res.success && res.redirectUrl) {
+                        window.location.href = res.redirectUrl;
+                      } else {
+                        toast.error(res.message || "PhonePe could not start the payment. Please try again.");
+                      }
+                    }).catch((err) => {
+                      toast.dismiss("phonepe-init");
+                      toast.error("Failed initiating PhonePe payment. Redirecting to status...");
+                      navigate(`/payment-status?status=FAILED`);
+                    });
                   }}
                   className={cn(
-                    "group h-11 w-fit px-6 ml-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 cursor-pointer flex items-center justify-center select-none bg-transparent border-2",
-                    isDark
-                      ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97]"
-                      : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97]",
+                    "group h-11 w-fit px-6 ml-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 flex items-center justify-center select-none border-2",
+                    isSlotSelected
+                      ? isDark
+                        ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97] cursor-pointer"
+                        : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97] cursor-pointer"
+                      : isDark
+                        ? "border-white/10 text-white/30 bg-white/[0.02] cursor-not-allowed opacity-50 pointer-events-none"
+                        : "border-slate-200 text-slate-400 bg-slate-100 cursor-not-allowed opacity-60 pointer-events-none",
                   )}
                 >
                   <span className="translate-y-[0.5px]">Proceed to payment</span>
