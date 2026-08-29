@@ -426,11 +426,10 @@ export function EditTurf() {
                         <div
                           key={item.id}
                           onClick={() => toggleAmenity(item.id)}
-                          className={`p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-1.5 select-none ${
-                            isSelected
-                              ? "border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 font-bold"
-                              : "border-slate-300/80 dark:border-slate-700/80 bg-card/40 text-muted-foreground hover:border-slate-400 hover:bg-accent/30"
-                          }`}
+                          className={`p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-1.5 select-none ${isSelected
+                            ? "border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 font-bold"
+                            : "border-slate-300/80 dark:border-slate-700/80 bg-card/40 text-muted-foreground hover:border-slate-400 hover:bg-accent/30"
+                            }`}
                         >
                           <div className="flex items-center gap-1.5 text-xs">
                             <span className="text-sm">{item.icon}</span>
@@ -539,11 +538,10 @@ export function EditTurf() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2.5 ${
-                  isDragging
-                    ? "border-emerald-500 bg-emerald-500/10"
-                    : "border-emerald-500/40 hover:bg-emerald-500/5"
-                }`}
+                className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2.5 ${isDragging
+                  ? "border-emerald-500 bg-emerald-500/10"
+                  : "border-emerald-500/40 hover:bg-emerald-500/5"
+                  }`}
               >
                 <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-500">
                   <Upload className="h-7 w-7" />
