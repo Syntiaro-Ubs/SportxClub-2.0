@@ -357,7 +357,9 @@ export function OwnerProfile() {
                 <div className="flex items-center gap-2 text-violet-600 dark:text-violet-400 font-bold text-xs">
                   <Hash className="h-4 w-4" /> Customer ID
                 </div>
-                <p className="text-sm font-extrabold font-mono text-foreground">2607 0001</p>
+                <p className="text-sm font-extrabold font-mono text-foreground">
+                  {currentUser?.ownerId ? `${currentUser.ownerId.slice(0, 4)} ${currentUser.ownerId.slice(4)}` : "Not Assigned"}
+                </p>
               </div>
             </div>
 

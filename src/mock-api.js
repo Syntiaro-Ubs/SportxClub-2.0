@@ -435,10 +435,5 @@ window.fetch = async (input, init) => {
     );
   }
 
-  // Fallback for any other API owner endpoints
-  if (url.includes("/api/owner")) {
-    return new Response(JSON.stringify([]), { status: 200 });
-  }
-
   return originalFetch(input, init);
 };

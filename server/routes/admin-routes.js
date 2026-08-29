@@ -1,7 +1,63 @@
 import express from "express";
 import { getPool } from "../db.js";
+import nodemailer from "nodemailer";
 
 const router = express.Router();
+
+async function sendOnboardingStatusEmail(toEmail, ownerName, status) {
+  try {
+    const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+    const smtpPort = parseInt(process.env.SMTP_PORT || "587");
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (!smtpUser || !smtpPass) return; // Skip if no email config
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+      tls: { rejectUnauthorized: false },
+    });
+
+    const isApproved = status.toLowerCase() === "approved";
+    const title = isApproved ? "Application Approved!" : "Application Status Update";
+    const message = isApproved
+      ? "Congratulations! Your Turf Owner application has been reviewed and <strong>Approved</strong>. You can now log into the SportXClub Turf Owner Dashboard to manage your turfs."
+      : "Thank you for applying to be a Turf Owner on SportXClub. Unfortunately, your recent application has been <strong>Rejected</strong> at this time. Please contact our support team for more details.";
+
+    const htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background-color: #0d1117; border-radius: 20px; color: #ffffff; border: 1px solid #21262d;">
+        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #21262d;">
+          <h1 style="color: ${isApproved ? '#10b981' : '#f43f5e'}; font-size: 30px; font-weight: 900; margin: 0; letter-spacing: -0.5px;">SportXClub</h1>
+          <p style="color: #8b949e; font-size: 11px; margin-top: 4px; font-weight: 700; letter-spacing: 2px;">TURF OWNER ONBOARDING</p>
+        </div>
+        
+        <div style="padding: 24px 0;">
+          <h2 style="font-size: 18px; color: #f0f6fc; margin-bottom: 12px;">Hello ${ownerName},</h2>
+          <p style="color: #c9d1d9; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            ${message}
+          </p>
+        </div>
+        
+        <div style="border-top: 1px solid #21262d; pt: 16px; text-align: center; color: #8b949e; font-size: 11px;">
+          <p>© 2026 SportXClub. All rights reserved.</p>
+        </div>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: `"SportXClub Admin" <${smtpUser}>`,
+      to: toEmail,
+      subject: `[SportXClub] Turf Application ${isApproved ? 'Approved' : 'Rejected'}`,
+      html: htmlContent,
+    });
+    console.log(`[NODEMAILER] Onboarding status (${status}) email sent to ${toEmail}`);
+  } catch (err) {
+    console.error(`[NODEMAILER] Failed to send onboarding status to ${toEmail}:`, err.message);
+  }
+}
 
 const ALLOWED_ENTITIES = {
   users: "users",
@@ -34,7 +90,7 @@ router.get("/admin/dashboard/stats", async (req, res) => {
     const [[turfsCount]] = await pool.query("SELECT COUNT(*) as count FROM turfs");
     const [[gamesCount]] = await pool.query("SELECT COUNT(*) as count FROM games WHERE status = 'Open'");
     const [[revenueSum]] = await pool.query("SELECT COALESCE(SUM(amount), 0) as sum FROM payments WHERE status = 'Success'");
-    
+
     const [recentUsers] = await pool.query("SELECT full_name, created_at FROM users ORDER BY id DESC LIMIT 3");
     const [recentTurfs] = await pool.query("SELECT name, created_at FROM turfs ORDER BY id DESC LIMIT 3");
     const [recentGames] = await pool.query("SELECT title, created_at FROM games ORDER BY id DESC LIMIT 3");
@@ -55,6 +111,103 @@ router.get("/admin/dashboard/stats", async (req, res) => {
     });
   } catch (err) {
     console.error("Stats Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ----------------------------------------------------
+// TURF OWNER ONBOARDING
+// ----------------------------------------------------
+router.get("/admin/onboarding", async (req, res) => {
+  try {
+    const pool = getPool();
+    const [pendingOwners] = await pool.query(
+      "SELECT * FROM turf_owners ORDER BY id DESC"
+    );
+
+    const mappedData = pendingOwners.map(owner => {
+      let setupData = {};
+      try {
+        if (owner.setup_data) {
+          let parsed = owner.setup_data;
+          while (typeof parsed === 'string') {
+            try {
+              parsed = JSON.parse(parsed);
+            } catch (e) {
+              break; // Stop parsing if it's not valid JSON anymore
+            }
+          }
+          if (parsed && typeof parsed === 'object') {
+            setupData = parsed;
+          }
+        }
+      } catch (e) {
+        console.error("Failed parsing setup_data for owner", owner.id, e);
+      }
+
+      return {
+        id: owner.id,
+        ownerId: owner.owner_id,
+        personal: {
+          fullName: owner.name,
+          email: owner.email,
+          ...setupData.personal
+        },
+        business: {
+          ownerName: owner.name,
+          phone: owner.phone,
+          email: owner.email,
+          ...setupData.business
+        },
+        location: {
+          city: owner.city,
+          address: owner.city,
+          ...setupData.location
+        },
+        turf: setupData.turf || {},
+        pricing: setupData.pricing || {},
+        images: setupData.images || {},
+        identity: setupData.identity || {},
+        bank: setupData.bank || {},
+        status: owner.status,
+        createdAt: owner.created_at || owner.joined_date
+      };
+    });
+
+    return res.json({ success: true, data: mappedData });
+  } catch (err) {
+    console.error("Onboarding Fetch Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put("/admin/onboarding/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const pool = getPool();
+
+    if (String(status).toLowerCase() === "approved") {
+      await pool.query("UPDATE turf_owners SET status = 'Approved' WHERE id = ?", [id]);
+      await pool.query("UPDATE turf_owner_accounts SET status = 'Active' WHERE owner_profile_id = ?", [id]);
+    } else if (String(status).toLowerCase() === "rejected") {
+      await pool.query("UPDATE turf_owners SET status = 'Rejected' WHERE id = ?", [id]);
+      await pool.query("UPDATE turf_owner_accounts SET status = 'Rejected' WHERE owner_profile_id = ?", [id]);
+    }
+
+    // Send email notification to turf owner
+    try {
+      const [ownerRows] = await pool.query("SELECT email, name FROM turf_owners WHERE id = ?", [id]);
+      if (ownerRows.length > 0 && ownerRows[0].email) {
+        await sendOnboardingStatusEmail(ownerRows[0].email, ownerRows[0].name || "Turf Owner", status);
+      }
+    } catch (e) {
+      console.error("Failed to send onboarding status email", e);
+    }
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("Onboarding Update Error:", err);
     return res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -105,8 +258,7 @@ router.get("/admin/:entity", async (req, res) => {
       if (entity === "payments") {
         const [rows] = await pool.query(
           `SELECT p.* FROM payments p
-           INNER JOIN bookings b ON (LOWER(b.booking_code) = LOWER(p.booking_id) OR b.id = p.booking_id)
-           INNER JOIN turfs t ON LOWER(t.name) = LOWER(b.turf_name)
+           INNER JOIN turfs t ON LOWER(t.name) = LOWER(p.turf_name)
            WHERE (LOWER(t.owner_email) = ? AND ? != '') 
               OR (LOWER(t.owner_name) = ? AND ? != '')
            ORDER BY p.id DESC`,

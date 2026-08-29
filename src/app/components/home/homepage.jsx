@@ -451,11 +451,11 @@ export function Navbar() {
     { label: "Tournaments", to: "/tournaments" },
     ...(!isLoggedIn
       ? [
-          {
-            label: "Admin Login",
-            to: "/admin-login",
-          },
-        ]
+        {
+          label: "Admin Login",
+          to: "/admin-login",
+        },
+      ]
       : []),
   ];
 

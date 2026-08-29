@@ -61,7 +61,7 @@ export function RegisterPage() {
     role: initialType, // athlete | owner | admin
     selectedSports: [],
     skillLevel: "Intermediate", // Beginner | Intermediate | Pro
-    city: "Mumbai",
+    city: "",
     phone: "",
     otp: "",
     address: "",
@@ -71,6 +71,7 @@ export function RegisterPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [generatedOwnerId, setGeneratedOwnerId] = useState("");
 
   // Email verification states
   const [emailOtpSent, setEmailOtpSent] = useState(false);
@@ -80,14 +81,10 @@ export function RegisterPage() {
   const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
   const [generatedEmailOtp, setGeneratedEmailOtp] = useState("");
 
-  // Phone verification states
-  const [phoneOtp, setPhoneOtp] = useState("");
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
-  const [phoneVerified, setPhoneVerified] = useState(false);
+  // Phone states
   const [phoneOtpError, setPhoneOtpError] = useState("");
   const [phoneExistsError, setPhoneExistsError] = useState("");
-  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
-  const [generatedPhoneOtp, setGeneratedPhoneOtp] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
 
   const checkEmailAvailability = async (emailVal) => {
     if (!emailVal || !emailVal.includes("@")) {
@@ -177,8 +174,7 @@ export function RegisterPage() {
       !emailExistsError &&
       emailVerified &&
       formData.phone.length >= 10 &&
-      !phoneExistsError &&
-      phoneVerified
+      !phoneExistsError
     );
   };
 
@@ -237,45 +233,11 @@ export function RegisterPage() {
     }
   };
 
-  const sendPhoneOtp = async () => {
-    if (formData.phone.length < 10 || phoneExistsError) return;
-    try {
-      setIsSendingPhoneOtp(true);
-      setPhoneOtpError("");
-      const res = await adminApi.requestOtp(formData.phone.trim(), "register");
-      if (res.success) {
-        setPhoneOtpSent(true);
-        toast.success(`SMS verification code sent to ${formData.phone}!`, { duration: 6000 });
-      } else {
-        setPhoneOtpError(res.error || "Failed sending SMS OTP");
-      }
-    } catch (e) {
-      setPhoneOtpError("Failed requesting OTP");
-    } finally {
-      setIsSendingPhoneOtp(false);
-    }
-  };
-
-  const verifyPhoneOtp = async () => {
-    if (!phoneOtp.trim()) return;
-    try {
-      const res = await adminApi.verifyOtp(formData.phone.trim(), phoneOtp.trim());
-      if (res.success) {
-        setPhoneVerified(true);
-        setPhoneOtpError("");
-        toast.success("Phone number verified successfully!");
-      } else {
-        setPhoneOtpError(res.error || "Invalid verification code");
-      }
-    } catch (e) {
-      setPhoneOtpError("Invalid verification code");
-    }
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!emailVerified || !phoneVerified) {
-      toast.error("Please verify both email and phone number first.");
+    if (!emailVerified) {
+      toast.error("Please verify your email address first.");
       return;
     }
 
@@ -296,14 +258,10 @@ export function RegisterPage() {
 
     if (result.success) {
       setIsSuccess(true);
-      toast.success("Account created successfully in database!");
-      setTimeout(() => {
-        if (formData.role === "owner") {
-          navigate("/admin-panel");
-        } else {
-          navigate("/");
-        }
-      }, 1500);
+      if (formData.role === "owner" && result.user?.ownerId) {
+        setGeneratedOwnerId(result.user.ownerId);
+      }
+      toast.success("Registration submitted successfully!");
     } else {
       toast.error(result.error || "Registration failed");
     }
@@ -337,9 +295,9 @@ export function RegisterPage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
-              className="text-center py-8 space-y-6"
+              className="text-center space-y-6 flex flex-col justify-center h-full max-w-md mx-auto"
             >
-              <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center relative">
+              <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center relative mb-2">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -355,29 +313,42 @@ export function RegisterPage() {
                 <div className="absolute inset-0 rounded-full border border-emerald-500/30 animate-ping opacity-45 pointer-events-none" />
               </div>
 
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Registration Complete!
+              <div className="space-y-3 mb-6">
+                <h1 className="text-[28px] text-slate-900 font-medium tracking-tight">
+                  Registration Completed!
                 </h1>
-                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  Welcome aboard, {formData.firstName}. Creating your
-                  personalized sports dashboard...
+                <p className="text-slate-600 text-[15px] max-w-xs mx-auto leading-relaxed">
+                  Welcome aboard, {formData.firstName}. Please proceed to complete the Turf Onboarding Process.
                 </p>
               </div>
 
-              <div className="pt-4">
+              {/* ID Box Layout matching screenshot */}
+              <div className="p-8 border border-slate-200 bg-[#f8fafc] rounded-[24px] text-center mb-8 mx-auto w-[90%] shadow-sm">
+                <p className="text-[12px] text-slate-500 font-semibold uppercase tracking-widest mb-6">
+                  YOUR ASSIGNED TURF OWNER ID
+                </p>
+
+                <div className="flex items-center justify-center w-full max-w-[280px] mx-auto h-[72px] bg-white rounded-2xl shadow-[-10px_12px_24px_rgba(0,0,0,0.04)] border border-slate-100 mb-6">
+                  <p className="text-[32px] font-medium text-slate-900 tracking-[0.2em] font-mono ml-[0.2em]">
+                    {generatedOwnerId}
+                  </p>
+                </div>
+
+                <p className="text-[13px] text-slate-500 max-w-[250px] mx-auto leading-relaxed">
+                  Please save this ID. It has been generated securely for your records.
+                </p>
+              </div>
+
+              <div className="pt-2">
                 <Button
                   onClick={() => {
                     localStorage.setItem("isLoggedIn", "true");
-                    localStorage.setItem(
-                      "userName",
-                      formData.firstName,
-                    );
-                    navigate("/");
+                    localStorage.setItem("userName", formData.firstName);
+                    navigate("/owner-setup");
                   }}
-                  className="w-full h-11 rounded-full bg-primary text-primary-foreground font-bold shadow-lg shadow-primary/10 hover:shadow-primary/25 transition-all cursor-pointer"
+                  className="w-full h-14 rounded-full bg-[#059669] text-white text-[16px] font-medium hover:bg-[#047857] transition-all shadow-lg shadow-[#059669]/20"
                 >
-                  Go to Home Now
+                  Complete Turf Setup
                 </Button>
               </div>
             </motion.div>
@@ -396,7 +367,7 @@ export function RegisterPage() {
                   <p className="text-xs text-primary dark:text-white font-semibold">
                     Step {step} of 2
                   </p>
-                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                  <h1 className="text-lg font-bold tracking-tight sm:text-xl">
                     {step === 1 && (formData.role === "owner" ? "Turf Owner Signup" : "Create Account")}
                     {step === 2 && "Setup Profile"}
                   </h1>
@@ -552,10 +523,9 @@ export function RegisterPage() {
                             id="phone"
                             name="phone"
                             type="tel"
-                            disabled={phoneVerified}
                             placeholder="Enter Mobile No."
                             className={cn(
-                              "pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background disabled:opacity-75 placeholder:text-xs",
+                              "pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs",
                               phoneExistsError && "border-rose-500 focus-visible:ring-rose-500"
                             )}
                             value={formData.phone}
@@ -563,22 +533,6 @@ export function RegisterPage() {
                             required
                           />
                         </div>
-                        {!phoneVerified && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={formData.phone.length < 10 || phoneOtpSent || Boolean(phoneExistsError) || isSendingPhoneOtp}
-                            onClick={sendPhoneOtp}
-                            className="h-10.5 px-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary dark:text-white text-xs transition-all shrink-0 font-bold cursor-pointer"
-                          >
-                            {isSendingPhoneOtp ? "Sending..." : phoneOtpSent ? "OTP Sent" : "Send OTP"}
-                          </Button>
-                        )}
-                        {phoneVerified && (
-                          <div className="h-10.5 px-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-white flex items-center justify-center gap-1 text-xs shrink-0 font-semibold">
-                            <Check className="h-4 w-4 stroke-[3]" /> Verified
-                          </div>
-                        )}
                       </div>
 
                       {/* INLINE ALERT FOR EXISTING PHONE */}
@@ -589,45 +543,6 @@ export function RegisterPage() {
                         </div>
                       )}
                     </div>
-
-                    {/* PHONE OTP VERIFICATION BOX */}
-                    {phoneOtpSent && !phoneVerified && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-1.5 bg-emerald-500/5 border border-emerald-500/20 p-3 rounded-xl"
-                      >
-                        <Label htmlFor="phoneOtp" className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                          Enter 6-Digit SMS Verification Code
-                        </Label>
-                        <div className="flex gap-2">
-                          <div className="relative flex-1">
-                            <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
-                            <Input
-                              id="phoneOtp"
-                              type="text"
-                              maxLength={6}
-                              placeholder="Enter OTP Code"
-                              className="pl-10 h-10.5 rounded-xl font-mono text-center tracking-[0.25em]"
-                              value={phoneOtp}
-                              onChange={(e) => setPhoneOtp(e.target.value)}
-                              required
-                            />
-                          </div>
-                          <Button
-                            type="button"
-                            disabled={phoneOtp.length !== 6}
-                            onClick={verifyPhoneOtp}
-                            className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 transition-all text-xs font-bold shrink-0 cursor-pointer"
-                          >
-                            Verify Code
-                          </Button>
-                        </div>
-                        {phoneOtpError && (
-                          <p className="text-xs text-rose-500 font-medium pt-1">{phoneOtpError}</p>
-                        )}
-                      </motion.div>
-                    )}
 
                     <div className="pt-2">
                       <Button

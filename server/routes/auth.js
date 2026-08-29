@@ -97,17 +97,20 @@ async function sendLiveEmailOtp(toEmail, otpCode, userName = "Athlete") {
       </div>
     `;
 
-    const info = await transporter.sendMail({
+    transporter.sendMail({
       from: `"SportXClub Verification" <${smtpUser}>`,
       to: toEmail,
       subject: `[SportXClub] Your Verification Code is ${otpCode}`,
       html: htmlContent,
+    }).then((info) => {
+      console.log(`[NODEMAILER] Live Email OTP dispatched to ${toEmail} (MessageId: ${info.messageId})`);
+    }).catch((error) => {
+      console.warn(`[NODEMAILER DISPATCH] Email OTP notice for ${toEmail}: ${error.message}`);
     });
 
-    console.log(`[NODEMAILER] Live Email OTP dispatched to ${toEmail} (MessageId: ${info.messageId})`);
-    return { success: true, messageId: info.messageId };
+    return { success: true };
   } catch (error) {
-    console.warn(`[NODEMAILER DISPATCH] Email OTP notice for ${toEmail}: ${error.message}`);
+    console.warn(`[NODEMAILER SETUP] ${error.message}`);
     return { success: false, error: error.message };
   }
 }
@@ -138,30 +141,62 @@ router.post("/register", async (req, res) => {
     const avatarUrl = profilePicture || avatar || null;
 
     if (accountType === "turf-owner") {
-      const [ownerResult] = await pool.query(
-        `INSERT INTO turf_owners (name, email, phone, city, status, total_turfs, earnings, joined_date)
-         VALUES (?, ?, ?, ?, 'Active', 0, '₹0', ?)`,
-        [fullName, email.trim().toLowerCase(), phone, city, joinedDate]
-      );
-      await pool.query(
-        `INSERT INTO turf_owner_accounts (owner_profile_id, full_name, email, password, status)
-         VALUES (?, ?, ?, ?, 'Active')`,
-        [ownerResult.insertId, fullName, email.trim().toLowerCase(), password]
-      );
-      return res.json({
-        success: true,
-        user: {
-          id: ownerResult.insertId,
-          accountId: ownerResult.insertId,
-          fullName,
-          email: email.trim().toLowerCase(),
-          role: "owner",
-          accountType,
-          phone,
-          city,
-          status: "Active",
-        },
-      });
+      const yy = joinedDate.substring(2, 4);
+      const mm = joinedDate.substring(5, 7);
+      const prefix = `${yy}${mm}`;
+
+      const connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      try {
+        const [latest] = await connection.query(
+          `SELECT owner_id FROM turf_owners WHERE owner_id LIKE ? ORDER BY owner_id DESC LIMIT 1 FOR UPDATE`,
+          [`${prefix}%`]
+        );
+
+        let seq = 1;
+        if (latest.length > 0 && latest[0].owner_id) {
+          const lastSeq = parseInt(latest[0].owner_id.slice(-4), 10);
+          if (!isNaN(lastSeq)) {
+            seq = lastSeq + 1;
+          }
+        }
+        const ownerIdStr = `${prefix}${String(seq).padStart(4, '0')}`;
+
+        const [ownerResult] = await connection.query(
+          `INSERT INTO turf_owners (owner_id, name, email, phone, city, status, total_turfs, earnings, joined_date)
+           VALUES (?, ?, ?, ?, ?, 'Pending', 0, '₹0', ?)`,
+          [ownerIdStr, fullName, email.trim().toLowerCase(), phone, city, joinedDate]
+        );
+        await connection.query(
+          `INSERT INTO turf_owner_accounts (owner_profile_id, owner_id, full_name, email, password, status)
+           VALUES (?, ?, ?, ?, ?, 'Pending')`,
+          [ownerResult.insertId, ownerIdStr, fullName, email.trim().toLowerCase(), password]
+        );
+
+        await connection.commit();
+        connection.release();
+
+        return res.json({
+          success: true,
+          user: {
+            id: ownerResult.insertId,
+            accountId: ownerResult.insertId,
+            ownerId: ownerIdStr,
+            fullName,
+            email: email.trim().toLowerCase(),
+            role: "owner",
+            accountType,
+            phone,
+            city,
+            status: "Pending",
+          },
+        });
+      } catch (err) {
+        await connection.rollback();
+        connection.release();
+        throw err;
+      }
     }
 
     const sportsStr = Array.isArray(selectedSports) ? JSON.stringify(selectedSports) : (selectedSports || "[]");
@@ -211,20 +246,21 @@ router.post("/login", async (req, res) => {
     if (accountType === "turf-owner") {
       const [rows] = await pool.query(
         `SELECT oa.id AS account_id, oa.owner_profile_id, oa.email, oa.full_name, oa.status AS account_status,
-                o.phone, o.city, o.status, o.total_turfs, o.earnings
+                o.owner_id, o.phone, o.city, o.status, o.total_turfs, o.earnings
          FROM turf_owner_accounts oa
          LEFT JOIN turf_owners o ON o.id = oa.owner_profile_id
-         WHERE LOWER(oa.email) = LOWER(?) AND oa.password = ? AND LOWER(oa.status) = 'active'
+         WHERE (LOWER(oa.email) = LOWER(?) OR o.owner_id = ?) AND oa.password = ? AND LOWER(oa.status) = 'active'
          LIMIT 1`,
-        [email.trim(), password.trim()]
+        [email.trim(), email.trim(), password.trim()]
       );
-      if (!rows[0]) return res.status(401).json({ success: false, error: "Invalid turf-owner email or password" });
+      if (!rows[0]) return res.status(401).json({ success: false, error: "Invalid turf-owner credentials" });
       const owner = rows[0];
       return res.json({
         success: true,
         user: {
           id: owner.owner_profile_id,
           accountId: owner.account_id,
+          ownerId: owner.owner_id,
           fullName: owner.full_name,
           email: owner.email,
           role: "owner",
@@ -369,7 +405,7 @@ router.put("/update-profile", async (req, res) => {
       if (updatedRow.selected_sports) {
         parsedSports = typeof updatedRow.selected_sports === "string" ? JSON.parse(updatedRow.selected_sports) : (updatedRow.selected_sports || []);
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const finalAvatar = updatedRow.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(updatedRow.email)}`;
 
@@ -659,18 +695,20 @@ router.post("/google", async (req, res) => {
       );
       if (existing[0]) {
         const owner = existing[0];
-        return res.json({ success: true, isNewUser: false, user: {
-          id: owner.owner_profile_id, accountId: owner.account_id, fullName: owner.full_name,
-          email: owner.email, role: "owner", accountType, phone: owner.phone || "", city: owner.city || "",
-          status: owner.status || "Active",
-        } });
+        return res.json({
+          success: true, isNewUser: false, user: {
+            id: owner.owner_profile_id, accountId: owner.account_id, fullName: owner.full_name,
+            email: owner.email, role: "owner", accountType, phone: owner.phone || "", city: owner.city || "",
+            status: owner.status || "Active",
+          }
+        });
       }
       if (await accountEmailExists(pool, cleanEmail)) {
         return res.status(409).json({ success: false, error: "This email belongs to a different account type." });
       }
       const [ownerResult] = await pool.query(
         `INSERT INTO turf_owners (name, email, phone, city, status, total_turfs, earnings, joined_date)
-         VALUES (?, ?, '', 'Mumbai', 'Active', 0, '₹0', ?)`,
+         VALUES (?, ?, '', '', 'Active', 0, '₹0', ?)`,
         [cleanName, cleanEmail, new Date().toISOString().split("T")[0]]
       );
       await pool.query(
@@ -678,10 +716,12 @@ router.post("/google", async (req, res) => {
          VALUES (?, ?, ?, 'google_auth_user', 'Active')`,
         [ownerResult.insertId, cleanName, cleanEmail]
       );
-      return res.json({ success: true, isNewUser: true, user: {
-        id: ownerResult.insertId, accountId: ownerResult.insertId, fullName: cleanName, email: cleanEmail,
-        role: "owner", accountType, phone: "", city: "Mumbai", status: "Active", avatar: cleanAvatar,
-      } });
+      return res.json({
+        success: true, isNewUser: true, user: {
+          id: ownerResult.insertId, accountId: ownerResult.insertId, fullName: cleanName, email: cleanEmail,
+          role: "owner", accountType, phone: "", city: "", status: "Active", avatar: cleanAvatar,
+        }
+      });
     }
 
     const [existing] = await pool.query(
@@ -694,19 +734,21 @@ router.post("/google", async (req, res) => {
     if (existing[0]) {
       const player = existing[0];
       const avatarUrl = player.avatar || cleanAvatar;
-      return res.json({ success: true, isNewUser: false, user: {
-        id: player.profile_user_id, accountId: player.account_id, fullName: player.full_name,
-        email: player.email, role: "Player", accountType, phone: player.phone || "", city: player.city || "",
-        bio: player.bio || "", selectedSports: parseSelectedSports(player.selected_sports),
-        status: player.status || "Active", avatar: avatarUrl, profilePicture: avatarUrl,
-      } });
+      return res.json({
+        success: true, isNewUser: false, user: {
+          id: player.profile_user_id, accountId: player.account_id, fullName: player.full_name,
+          email: player.email, role: "Player", accountType, phone: player.phone || "", city: player.city || "",
+          bio: player.bio || "", selectedSports: parseSelectedSports(player.selected_sports),
+          status: player.status || "Active", avatar: avatarUrl, profilePicture: avatarUrl,
+        }
+      });
     }
     if (await accountEmailExists(pool, cleanEmail)) {
       return res.status(409).json({ success: false, error: "This email belongs to a different account type." });
     }
     const [profileResult] = await pool.query(
       `INSERT INTO users (full_name, email, password, role, phone, city, status, joined_date, avatar)
-       VALUES (?, ?, 'google_auth_user', 'Player', '', 'Mumbai', 'Active', ?, ?)`,
+       VALUES (?, ?, 'google_auth_user', 'Player', '', '', 'Active', ?, ?)`,
       [cleanName, cleanEmail, new Date().toISOString().split("T")[0], cleanAvatar]
     );
     await pool.query(
@@ -714,11 +756,13 @@ router.post("/google", async (req, res) => {
        VALUES (?, ?, ?, 'google_auth_user', 'Active')`,
       [profileResult.insertId, cleanName, cleanEmail]
     );
-    return res.json({ success: true, isNewUser: true, user: {
-      id: profileResult.insertId, accountId: profileResult.insertId, fullName: cleanName, email: cleanEmail,
-      role: "Player", accountType, phone: "", city: "Mumbai", status: "Active", avatar: cleanAvatar,
-      profilePicture: cleanAvatar,
-    } });
+    return res.json({
+      success: true, isNewUser: true, user: {
+        id: profileResult.insertId, accountId: profileResult.insertId, fullName: cleanName, email: cleanEmail,
+        role: "Player", accountType, phone: "", city: "", status: "Active", avatar: cleanAvatar,
+        profilePicture: cleanAvatar,
+      }
+    });
   } catch (err) {
     console.error("Account Google auth error:", err);
     return res.status(500).json({ success: false, error: err.message });
@@ -755,7 +799,7 @@ router.post("/google", async (req, res) => {
         if (existingUser.selected_sports) {
           selectedSports = typeof existingUser.selected_sports === "string" ? JSON.parse(existingUser.selected_sports) : (existingUser.selected_sports || []);
         }
-      } catch (e) {}
+      } catch (e) { }
 
       const user = {
         id: existingUser.id,
@@ -763,7 +807,7 @@ router.post("/google", async (req, res) => {
         email: existingUser.email,
         role: existingUser.role || role,
         phone: existingUser.phone || "",
-        city: existingUser.city || "Mumbai",
+        city: existingUser.city || "",
         bio: existingUser.bio || "",
         selectedSports: selectedSports,
         status: existingUser.status || "Active",
@@ -781,7 +825,7 @@ router.post("/google", async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO users (full_name, email, password, role, phone, city, status, joined_date, avatar)
-       VALUES (?, ?, ?, ?, '', 'Mumbai', 'Active', ?, ?)`,
+       VALUES (?, ?, ?, ?, '', '', 'Active', ?, ?)`,
       [cleanName, cleanEmail, defaultPassword, role, joinedDate, cleanAvatar]
     );
 
@@ -791,7 +835,7 @@ router.post("/google", async (req, res) => {
       email: cleanEmail,
       role: role,
       phone: "",
-      city: "Mumbai",
+      city: "",
       status: "Active",
       avatar: cleanAvatar,
     };
@@ -825,6 +869,67 @@ router.get("/accounts", async (req, res) => {
   } catch (err) {
     console.error("Fetch account list error:", err);
     return res.status(500).json({ success: false, accounts: [] });
+  }
+});
+router.post("/owner/setup", async (req, res) => {
+  try {
+    const pool = getPool();
+    console.log("OWNER SETUP REQUEST", {
+      bodyKeys: Object.keys(req.body || {}),
+      ownerId: req.body?.ownerId,
+      setupDataType: typeof req.body?.setupData,
+      setupDataKeys:
+        req.body?.setupData &&
+        typeof req.body.setupData === "object"
+          ? Object.keys(req.body.setupData)
+          : []
+    });
+
+    const ownerId = req.body.ownerId || req.body.owner_id || req.body.id;
+    const setupData = req.body.setupData || req.body.formData || req.body.form_data || req.body.data;
+
+    if (!ownerId || !setupData) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing ownerId or setupData",
+        received: {
+          hasOwnerId: Boolean(ownerId),
+          hasSetupData: Boolean(setupData)
+        }
+      });
+    }
+
+    // Save setup_data to turf_owners
+    await pool.query(
+      `UPDATE turf_owners SET setup_data = ? WHERE owner_id = ? OR id = ?`,
+      [JSON.stringify(setupData), ownerId, ownerId]
+    );
+
+    // Save to turf_onboarding_requests
+    const [owners] = await pool.query(
+      `SELECT email FROM turf_owners WHERE owner_id = ? OR id = ?`,
+      [ownerId, ownerId]
+    );
+
+    if (owners.length > 0) {
+      const ownerEmail = owners[0].email;
+      
+      const requestId = `ONB-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 8)
+        .toUpperCase()}`;
+
+      await pool.query(
+        `INSERT INTO turf_onboarding_requests (id, owner_id, owner_email, form_data, status)
+         VALUES (?, ?, ?, ?, 'pending')`,
+        [requestId, ownerId, ownerEmail, JSON.stringify(setupData)]
+      );
+    }
+
+    return res.json({ success: true, message: "Profile submitted successfully" });
+  } catch (err) {
+    console.error("Owner Setup Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

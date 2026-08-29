@@ -368,14 +368,14 @@ export function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[12px] font-medium text-foreground">Email Address or Username</Label>
+                <Label htmlFor="email" className="text-[12px] font-medium text-foreground">{loginType === "owner" ? "Email or Turf Owner ID" : "Email Address, Phone or Username"}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <Input
                     id="email"
                     name="email"
                     type="text"
-                    placeholder="Enter your email or phone"
+                    placeholder={loginType === "owner" ? "Enter your email or Turf Owner ID" : "Enter your email or phone"}
                     className="pl-11 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -387,30 +387,6 @@ export function LoginPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-[12px] font-medium text-foreground">Password</Label>
-                  <div className="flex items-center">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsForgotModalOpen(true);
-                        setForgotStep(1);
-                        setForgotMode("password");
-                      }}
-                      className="text-[12px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline transition-colors cursor-pointer"
-                    >
-                      Forgot password?
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsForgotModalOpen(true);
-                        setForgotStep(1);
-                        setForgotMode("email");
-                      }}
-                      className="text-[10px] text-muted-foreground hover:text-foreground underline ml-2 cursor-pointer"
-                    >
-                      Forgot email?
-                    </button>
-                  </div>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
@@ -434,6 +410,19 @@ export function LoginPage() {
                     ) : (
                       <Eye className="h-5 w-5" strokeWidth={1.5} />
                     )}
+                  </button>
+                </div>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotModalOpen(true);
+                      setForgotStep(1);
+                      setForgotMode("password");
+                    }}
+                    className="text-[12px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline transition-colors cursor-pointer"
+                  >
+                    Forgot password?
                   </button>
                 </div>
               </div>

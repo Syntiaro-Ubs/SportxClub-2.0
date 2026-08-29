@@ -61,6 +61,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { cmsService } from "../../services/cms-service";
 import { adminApi } from "../../services/admin-api";
 import { turfService } from "../../services/turf.service";
+import { TurfOnboardingView } from "./turf-onboarding-view";
 
 export const CONSOLE_MODULES = [
   {
@@ -70,6 +71,14 @@ export const CONSOLE_MODULES = [
     icon: Home,
     tag: "CMS Content",
     color: "text-blue-600 bg-blue-50 border-blue-200",
+  },
+  {
+    key: "onboarding",
+    label: "Turf Onboarding Requests",
+    description: "Review, verify, and approve new turf listings submitted by owners.",
+    icon: CheckSquare,
+    tag: "Approvals",
+    color: "text-indigo-600 bg-indigo-50 border-indigo-200",
   },
   {
     key: "turfs",
@@ -108,14 +117,14 @@ export const CONSOLE_MODULES = [
 export const ROLE_PRESETS = {
   "Super Admin": {
     label: "Super Admin",
-    description: "Full unrestricted access to all 5 console modules and user management.",
-    permissions: ["home-page", "turfs", "tournaments", "community", "team"],
+    description: "Full unrestricted access to all console modules and user management.",
+    permissions: ["home-page", "onboarding", "turfs", "tournaments", "community", "team"],
     badgeClass: "bg-purple-100 text-purple-700 border-purple-200",
   },
   "Manager": {
     label: "Console Manager",
-    description: "Access to manage home page, turfs, tournaments, and community feed.",
-    permissions: ["home-page", "turfs", "tournaments", "community"],
+    description: "Access to manage home page, onboarding, turfs, tournaments, and community feed.",
+    permissions: ["home-page", "onboarding", "turfs", "tournaments", "community"],
     badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
   },
   "Editor": {
@@ -165,18 +174,18 @@ export function CMSDashboard() {
   });
 
   const userPermissions = useMemo(() => {
-    if (!currentCmsUser) return ["home-page", "turfs", "tournaments", "community", "team"];
+    if (!currentCmsUser) return ["home-page", "onboarding", "turfs", "tournaments", "community", "team"];
     if (currentCmsUser.role === "Super Admin" || currentCmsUser.role === "Admin") {
-      return ["home-page", "turfs", "tournaments", "community", "team"];
+      return ["home-page", "onboarding", "turfs", "tournaments", "community", "team"];
     }
     return Array.isArray(currentCmsUser.permissions) && currentCmsUser.permissions.length > 0
       ? currentCmsUser.permissions
       : ["home-page"];
   }, [currentCmsUser]);
 
-  // Active view tab ('home-page', 'turfs', 'tournaments', 'community', 'team')
+  // Active view tab
   const currentView = params.view || (userPermissions[0] || "home-page");
-  const validViews = ["home-page", "turfs", "tournaments", "community", "team"];
+  const validViews = ["home-page", "onboarding", "turfs", "tournaments", "community", "team"];
   const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : (userPermissions[0] || "home-page"));
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -1285,6 +1294,7 @@ export function CMSDashboard() {
   const menuItems = useMemo(() => {
     const allItems = [
       { key: "home-page", label: "Home Page", icon: Home },
+      { key: "onboarding", label: "Onboarding Requests", icon: CheckSquare },
       { key: "turfs", label: "Turfs", icon: MapPin },
       { key: "tournaments", label: "Tournaments Page", icon: Trophy },
       { key: "community", label: "Community Feed", icon: MessageSquare },
@@ -1367,6 +1377,8 @@ export function CMSDashboard() {
           <h1 className="text-xl font-extrabold tracking-tight text-[#0f172a]">
             {activeView === "team"
               ? "Team & Admin Management"
+              : activeView === "onboarding"
+              ? "Turf Onboarding Requests"
               : activeView === "community"
               ? "Community Feed Management"
               : activeView === "tournaments"
@@ -2423,6 +2435,11 @@ export function CMSDashboard() {
                 </div>
               </section>
             </div>
+          )}
+
+          {/* TURF ONBOARDING REQUESTS VIEW */}
+          {activeView === "onboarding" && (
+            <TurfOnboardingView />
           )}
 
           {/* COMMUNITY FEED MANAGEMENT VIEW */}

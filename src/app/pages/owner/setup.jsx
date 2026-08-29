@@ -33,15 +33,54 @@ const STEPS = [
 const SPORTS = ["Football", "Cricket", "Badminton", "Tennis", "Basketball", "Swimming", "Volleyball", "Table Tennis"];
 const FACILITIES = ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Changing Room", "Seating Area", "Cafeteria", "Equipment Rental", "First Aid", "CCTV", "WiFi"];
 
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      data: reader.result
+    });
+    reader.onerror = error => reject(error);
+  });
+};
+
 const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, files = [] }) => {
+  const inputRef = React.useRef(null);
+
+  const handleFileChange = async (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      if (multiple) {
+        const filePromises = Array.from(e.target.files).map(f => fileToBase64(f));
+        const base64Files = await Promise.all(filePromises);
+        base64Files.forEach(f => onUpload(f));
+      } else {
+        const base64File = await fileToBase64(e.target.files[0]);
+        onUpload(base64File);
+      }
+    }
+    // Reset input so the same file can be uploaded again if removed
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
   return (
     <div className="space-y-2">
       {label && <Label className="text-sm font-semibold">{label}</Label>}
+      <input
+        type="file"
+        ref={inputRef}
+        onChange={handleFileChange}
+        className="hidden"
+        multiple={multiple}
+        accept="image/*,.pdf"
+      />
 
       {!multiple && !file && (
         <div
           className="border-2 border-dashed border-border rounded-xl p-4 py-3 flex flex-col items-center justify-center bg-background/30 hover:bg-background/80 transition-colors cursor-pointer group"
-          onClick={() => onUpload({ name: `uploaded_file_${Date.now()}.png` })}
+          onClick={() => inputRef.current?.click()}
         >
           <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
             <UploadCloud className="h-4 w-4 text-primary" />
@@ -72,7 +111,7 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
         <div className="space-y-3">
           <div
             className="border-2 border-dashed border-border rounded-xl p-6 flex flex-col items-center justify-center bg-background/30 hover:bg-background/80 transition-colors cursor-pointer group"
-            onClick={() => onUpload({ name: `gallery_image_${Date.now()}.png` })}
+            onClick={() => inputRef.current?.click()}
           >
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <UploadCloud className="h-5 w-5 text-primary" />
@@ -102,7 +141,8 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
 
 export function OwnerSetupPage() {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
+  const { turfOwnerUser } = useAuth();
+  const currentUser = turfOwnerUser;
 
   const [currentStep, setCurrentStep] = useState(2);
   const [completedSteps, setCompletedSteps] = useState([1]);
@@ -110,28 +150,81 @@ export function OwnerSetupPage() {
   const [status, setStatus] = useState("draft"); // draft, pending, approved, rejected, corrections
   const [adminFeedback, setAdminFeedback] = useState(null);
 
+  const getStorageKey = () => {
+    if (!currentUser?.id && !currentUser?.ownerId) return null;
+    return `turfSetup_v2_${currentUser.id || currentUser.ownerId}`;
+  };
+
+  const getEmptyState = () => ({
+    personal: { fullName: currentUser?.fullName || "", dob: "", gender: "", profilePhoto: null, address: "", city: "", state: "", pincode: "" },
+    business: { businessName: "", ownerName: "", businessType: "", gst: "", tradeLicense: null, yearsInBusiness: "", email: "", phone: "" },
+    identity: { aadhaarFront: null, aadhaarBack: null, panCard: null, electricBill: null, rentalAgreement: null },
+    turf: { name: "", sports: [], turfType: "", groundCount: "", groundSize: "", surfaceType: "", description: "" },
+    location: { address: "", landmark: "", city: "", state: "", pincode: "", facilities: [] },
+    images: { cover: null, gallery: [], promoVideo: null },
+    pricing: { openingTime: "", closingTime: "", slotDuration: "", weekdayPrice: "", weekendPrice: "", holidayPrice: "", peakPrice: "", advanceBookingLimit: "", cancellationPolicy: "" },
+    bank: { accountName: "", bankName: "", accountNumber: "", confirmAccountNumber: "", ifsc: "", upi: "", cancelledCheque: null }
+  });
+
   const loadInitialState = () => {
-    const saved = localStorage.getItem("ownerSetupForm");
+    const key = getStorageKey();
+    if (!key) return getEmptyState();
+
+    const saved = localStorage.getItem(key);
     if (saved) {
-      try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed?.personal?.fullName === "John Owner" || !parsed?.personal?.fullName) {
+          if (parsed.personal) {
+            parsed.personal.fullName = currentUser?.fullName || "";
+          }
+        }
+        return parsed;
+      } catch (e) { console.error(e); }
     }
-    return {
-      personal: { fullName: currentUser?.fullName || "John Owner", dob: "", gender: "", profilePhoto: null, address: "", city: "", state: "", pincode: "" },
-      business: { businessName: "", ownerName: "", businessType: "", gst: "", tradeLicense: null, yearsInBusiness: "", email: "", phone: "" },
-      identity: { aadhaarFront: null, aadhaarBack: null, panCard: null, electricBill: null, rentalAgreement: null },
-      turf: { name: "", sports: [], turfType: "", groundCount: "", groundSize: "", surfaceType: "", description: "" },
-      location: { address: "", landmark: "", city: "", state: "", pincode: "", facilities: [] },
-      images: { cover: null, gallery: [], promoVideo: null },
-      pricing: { openingTime: "", closingTime: "", slotDuration: "", weekdayPrice: "", weekendPrice: "", holidayPrice: "", peakPrice: "", advanceBookingLimit: "", cancellationPolicy: "" },
-      bank: { accountName: "", bankName: "", accountNumber: "", confirmAccountNumber: "", ifsc: "", upi: "", cancelledCheque: null }
-    };
+    return getEmptyState();
   };
 
   const [formData, setFormData] = useState(loadInitialState());
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
+  // Use a ref to track the owner we are currently editing
+  // This prevents saving Owner A's stale form data into Owner B's storage key during context switches
+  const currentOwnerRef = React.useRef(currentUser?.id || currentUser?.ownerId);
 
   useEffect(() => {
-    localStorage.setItem("ownerSetupForm", JSON.stringify(formData));
-  }, [formData]);
+    const activeId = currentUser?.id || currentUser?.ownerId;
+    if (activeId && activeId === currentOwnerRef.current) {
+      const key = getStorageKey();
+      if (key) {
+        try {
+          // Strip large base64 file data to prevent QuotaExceededError
+          const storageSafeData = {
+            ...formData,
+            personal: { ...formData.personal, profilePhoto: null },
+            business: { ...formData.business, tradeLicense: null },
+            identity: { aadhaarFront: null, aadhaarBack: null, panCard: null, electricBill: null, rentalAgreement: null },
+            images: { cover: null, gallery: [], promoVideo: null },
+            bank: { ...formData.bank, cancelledCheque: null }
+          };
+          localStorage.setItem(key, JSON.stringify(storageSafeData));
+        } catch (err) {
+          console.warn("Could not save turf draft to localStorage:", err);
+        }
+      }
+    }
+  }, [formData, currentUser]);
+
+  // Reset form data if the user switches accounts without reloading the page
+  useEffect(() => {
+    const activeId = currentUser?.id || currentUser?.ownerId;
+    if (activeId !== currentOwnerRef.current) {
+      currentOwnerRef.current = activeId;
+      setFormData(loadInitialState());
+      setCurrentStep(2);
+      setCompletedSteps([1]);
+    }
+  }, [currentUser?.id, currentUser?.ownerId]);
 
   const updateSection = (section, field, value) => {
     setFormData(prev => ({
@@ -162,26 +255,68 @@ export function OwnerSetupPage() {
   };
 
   const handleSubmit = async () => {
+    if (!currentUser || (!currentUser.id && !currentUser.ownerId)) {
+      alert("Authentication error: You must be logged in to submit this form.");
+      return;
+    }
+
     setStatus("submitting");
-    await new Promise(r => setTimeout(r, 2000));
 
-    // Save to pending approvals database
-    const pendingTurfsStr = localStorage.getItem("pending_turf_approvals");
-    const pendingTurfs = pendingTurfsStr ? JSON.parse(pendingTurfsStr) : [];
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-    const newTurfData = {
-      ...formData,
-      id: "TURF" + Math.random().toString(36).substr(2, 6).toUpperCase(),
-      createdAt: new Date().toISOString(),
-      ownerId: currentUser?.id || "owner-123"
-    };
+    try {
+      console.log("ONBOARDING SUBMIT DEBUG", {
+        currentUser,
+        ownerId: currentUser?.ownerId || currentUser?.id || "",
+        setupData: formData,
+        setupDataType: typeof formData,
+        setupDataKeys: formData && typeof formData === "object"
+          ? Object.keys(formData)
+          : []
+      });
 
-    pendingTurfs.push(newTurfData);
-    localStorage.setItem("pending_turf_approvals", JSON.stringify(pendingTurfs));
+      const response = await fetch("http://localhost:5000/api/owner/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownerId: currentUser?.ownerId || currentUser?.id || "",
+          setupData: formData
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
 
-    setStatus("pending");
-    localStorage.removeItem("ownerSetupForm");
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      const text = await response.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Server returned invalid JSON: " + text.substring(0, 100));
+        alert("Server returned an invalid response. Please check if the backend is running correctly.");
+        setStatus("draft");
+        return;
+      }
+
+      if (data.success) {
+        setStatus("pending");
+        localStorage.removeItem(getStorageKey());
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { }
+      } else {
+        console.error("Failed to submit profile: ", data.error || data.message || data);
+        alert("Submission failed: " + (data.error || data.message || "Unknown error"));
+        setStatus("draft");
+      }
+    } catch (e) {
+      clearTimeout(timeoutId);
+      console.error("Network error: ", e.message);
+      if (e.name === 'AbortError') {
+        alert("The server is not responding (timeout). Please check if your backend is running on port 5000.");
+      } else {
+        alert("Network error: " + e.message + ". Make sure the backend server is running.");
+      }
+      setStatus("draft");
+    }
   };
 
 
@@ -357,7 +492,7 @@ export function OwnerSetupPage() {
               <div className="space-y-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Full Name (As per ID)</Label>
-                  <Input value={formData.personal.fullName} onChange={(e) => updateSection('personal', 'fullName', e.target.value)} placeholder="John Doe" className="h-9 rounded-xl text-sm" />
+                  <Input value={currentUser?.fullName || currentUser?.name || localStorage.getItem("userName") || ""} disabled className="h-9 rounded-xl text-sm bg-muted/50 opacity-70 cursor-not-allowed text-foreground" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -713,7 +848,7 @@ export function OwnerSetupPage() {
                 </div>
 
                 <div className="flex items-start gap-3 bg-primary/5 p-4 rounded-xl border border-primary/20">
-                  <Checkbox id="terms" className="mt-1" />
+                  <Checkbox id="terms" className="mt-1" checked={termsAccepted} onCheckedChange={setTermsAccepted} />
                   <div className="space-y-1">
                     <Label htmlFor="terms" className="text-sm font-medium leading-none">I agree to the Terms & Conditions</Label>
                     <p className="text-xs text-muted-foreground">By submitting, you confirm that all provided information is accurate and you authorize SportXClub to verify these details.</p>
@@ -744,7 +879,8 @@ export function OwnerSetupPage() {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  className="rounded-full px-8 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
+                  disabled={!termsAccepted}
+                  className="rounded-full px-8 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Submit Profile <Check className="h-4 w-4 ml-2" />
                 </Button>

@@ -46,6 +46,13 @@ export async function initDatabase() {
 
     // 3. Auto create tables
     await createTables();
+
+    // 3.5. Ensure setup_data column exists in turf_owners
+    try {
+      await pool.query("ALTER TABLE turf_owners ADD COLUMN setup_data LONGTEXT");
+    } catch (e) {
+      // Column might already exist, ignore error
+    }
     // 4. Auto seed initial demo data
     await seedData();
 
@@ -97,6 +104,7 @@ async function createTables() {
 
     `CREATE TABLE IF NOT EXISTS turf_owners (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      owner_id VARCHAR(50) UNIQUE,
       name VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       phone VARCHAR(50),
@@ -111,6 +119,7 @@ async function createTables() {
     `CREATE TABLE IF NOT EXISTS turf_owner_accounts (
       id INT AUTO_INCREMENT PRIMARY KEY,
       owner_profile_id INT NOT NULL UNIQUE,
+      owner_id VARCHAR(50),
       full_name VARCHAR(255) NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
       password VARCHAR(255) NOT NULL,
@@ -572,12 +581,23 @@ async function createTables() {
     await conn.query(sql);
   }
 
+  // Handle Schema migrations/updates safely
+  try {
+    await conn.query("ALTER TABLE turf_owner_accounts ADD COLUMN owner_id VARCHAR(50)");
+    console.log("Added owner_id column to turf_owner_accounts");
+  } catch (e) {
+    // Column already exists or table doesn't exist
+  }
+
   // Run migrations for existing table columns
   try {
     await conn.query("ALTER TABLE turfs MODIFY COLUMN image_url LONGTEXT;");
   } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN owner_email VARCHAR(255);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turf_owners ADD COLUMN owner_id VARCHAR(50) UNIQUE AFTER id;");
   } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN description LONGTEXT;");
