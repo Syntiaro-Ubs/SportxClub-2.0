@@ -32,6 +32,8 @@ import {
   ChevronRight,
   ThumbsUp,
   MessageSquare,
+  MessageSquarePlus,
+  Send,
   Flag,
 } from "lucide-react";
 
@@ -110,7 +112,7 @@ const amenities = [
   { icon: Users, label: "Coaching Pro", desc: "Certified trainers" },
 ];
 
-const reviewsList = [
+const INITIAL_REVIEWS = [
   {
     name: "Rahul Sharma",
     rating: 5,
@@ -246,6 +248,117 @@ export function VenueDetails() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [cancelledSlots, setCancelledSlots] = useState([]);
+  const [reviewsList, setReviewsList] = useState(INITIAL_REVIEWS);
+  const [reviewAuthor, setReviewAuthor] = useState(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem("playerUser") || "{}");
+      return p.name || p.fullName || localStorage.getItem("userName") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // Load reviews from DB for this venue
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDbReviews() {
+      try {
+        const res = await fetch("/api/turf/reviews");
+        if (res.ok) {
+          const json = await res.json();
+          if (isMounted && json.success && Array.isArray(json.data) && json.data.length > 0) {
+            const currentVenueName = String(venue.name || "").toLowerCase().trim();
+            const dbFormatted = json.data
+              .filter((r) => {
+                if (!currentVenueName) return true;
+                const turfName = String(r.turf_name || "").toLowerCase().trim();
+                return !turfName || turfName.includes(currentVenueName) || currentVenueName.includes(turfName);
+              })
+              .map((r) => ({
+                id: r.id,
+                name: r.user_name || "Anonymous Player",
+                rating: Number(r.rating) || 5,
+                date: r.date || "Recently",
+                daysAgo: 0,
+                comment: r.comment || "",
+              }));
+
+            if (dbFormatted.length > 0) {
+              setReviewsList((prev) => {
+                const existingComments = new Set(prev.map((p) => `${p.name}_${p.comment}`));
+                const newItems = dbFormatted.filter((d) => !existingComments.has(`${d.name}_${d.comment}`));
+                return [...newItems, ...prev];
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load DB reviews:", err);
+      }
+    }
+    loadDbReviews();
+    return () => {
+      isMounted = false;
+    };
+  }, [venue.name]);
+
+  const handleSubmitReview = async (e) => {
+    e?.preventDefault();
+    if (!reviewComment.trim()) {
+      toast.error("Please enter your review comment before submitting.");
+      return;
+    }
+
+    const authorName = reviewAuthor.trim() || "Anonymous Player";
+    setIsSubmittingReview(true);
+
+    try {
+      const payload = {
+        user_name: authorName,
+        turf_name: venue.name || "Sports Arena",
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+        date: "Just now",
+      };
+
+      await fetch("/api/turf/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const newReviewItem = {
+        name: authorName,
+        rating: reviewRating,
+        date: "Just now",
+        daysAgo: 0,
+        comment: reviewComment.trim(),
+      };
+
+      setReviewsList((prev) => [newReviewItem, ...prev]);
+      setReviewComment("");
+      setIsSubmittingReview(false);
+      toast.success("Thank you! Your review has been posted successfully.");
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      const newReviewItem = {
+        name: authorName,
+        rating: reviewRating,
+        date: "Just now",
+        daysAgo: 0,
+        comment: reviewComment.trim(),
+      };
+      setReviewsList((prev) => [newReviewItem, ...prev]);
+      setReviewComment("");
+      setIsSubmittingReview(false);
+      toast.success("Review posted successfully!");
+    }
+  };
+
   const [sortBy, setSortBy] = useState("recent");
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
   const [likedReviews, setLikedReviews] = useState(new Set());
@@ -272,17 +385,47 @@ export function VenueDetails() {
   const [showAllSlots, setShowAllSlots] = useState(false);
   const [dbBookings, setDbBookings] = useState([]);
 
-  useEffect(() => {
-    async function loadBookings() {
-      try {
-        const data = await adminApi.getAll("bookings");
-        setDbBookings(data || []);
-      } catch (err) {
-        console.error("Error loading bookings in venue-details:", err);
-      }
+  const loadBookings = async () => {
+    try {
+      const data = await adminApi.getAll("bookings");
+      setDbBookings(data || []);
+    } catch (err) {
+      console.error("Error loading bookings in venue-details:", err);
     }
+  };
+
+  useEffect(() => {
     loadBookings();
   }, []);
+
+  const handleCancelSlot = async (slot) => {
+    setCancelledSlots((prev) => [...prev, slot.startHour]);
+    const bookingId = slot.bookingId || slot.booking?.id;
+    if (bookingId) {
+      try {
+        const res = await fetch(`/api/profile/bookings/${bookingId}/cancel`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: currentUser?.id,
+            email: currentUser?.email || slot.bookedByEmail,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          toast.success("Slot booking cancelled & refunded to wallet!");
+          loadBookings();
+        } else {
+          toast.info("Slot cancelled from current view.");
+        }
+      } catch (err) {
+        console.error("Cancel slot error:", err);
+        toast.success("Slot booking cancelled.");
+      }
+    } else {
+      toast.success("Slot booking cancelled.");
+    }
+  };
 
   const isToday = selectedDate === new Date().toISOString().split("T")[0];
   const venueOpeningHour = venue.openingHour || 6;
@@ -382,12 +525,17 @@ export function VenueDetails() {
       });
 
       let bookedBy = matchingBkg ? (matchingBkg.user_name || "Booked Player") : undefined;
+      let bookedByEmail = matchingBkg ? (matchingBkg.user_email || "") : undefined;
+      let bookingId = matchingBkg ? matchingBkg.id : undefined;
 
       slots.push({
         startHour: h,
         label: formatHour(h),
         endLabel: formatHour(h + 1),
         bookedBy,
+        bookedByEmail,
+        bookingId,
+        booking: matchingBkg,
       });
     }
     return slots;
@@ -922,6 +1070,138 @@ export function VenueDetails() {
                 </div>
               </div>
 
+              {/* Interactive "Write a Review" Box */}
+              <div
+                className={cn(
+                  "p-4 sm:p-5 rounded-2xl border transition-all duration-300 shadow-sm space-y-3",
+                  isDark
+                    ? "bg-white/[0.03] border-white/10"
+                    : "bg-gradient-to-br from-slate-50 to-emerald-50/20 border-slate-200"
+                )}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-8 w-8 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs shrink-0">
+                      <MessageSquarePlus className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className={cn("text-sm font-extrabold", isDark ? "text-white" : "text-slate-900")}>
+                        Leave a Review
+                      </h4>
+                      <p className={cn("text-[11px]", isDark ? "text-white/50" : "text-slate-500")}>
+                        Share your playing experience with other athletes
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Rating Stars Selector */}
+                  <div className="flex items-center gap-1 bg-white dark:bg-white/5 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 w-fit">
+                    <span className={cn("text-[11px] font-semibold mr-1", isDark ? "text-white/60" : "text-slate-500")}>
+                      Rating:
+                    </span>
+                    {[1, 2, 3, 4, 5].map((star) => {
+                      const active = (reviewHoverRating || reviewRating) >= star;
+                      return (
+                        <button
+                          key={star}
+                          type="button"
+                          onMouseEnter={() => setReviewHoverRating(star)}
+                          onMouseLeave={() => setReviewHoverRating(0)}
+                          onClick={() => setReviewRating(star)}
+                          className="p-0.5 transition-transform hover:scale-125 cursor-pointer"
+                          title={`${star} Star${star > 1 ? "s" : ""}`}
+                        >
+                          <Star
+                            className={cn(
+                              "h-4 w-4 transition-colors",
+                              active
+                                ? "fill-amber-400 text-amber-400"
+                                : isDark ? "text-white/20" : "text-slate-300"
+                            )}
+                          />
+                        </button>
+                      );
+                    })}
+                    <span className="text-xs font-black ml-1 text-amber-500">
+                      {(reviewHoverRating || reviewRating).toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+
+                <form onSubmit={handleSubmitReview} className="space-y-3 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <div className="sm:col-span-1">
+                      <input
+                        type="text"
+                        value={reviewAuthor}
+                        onChange={(e) => setReviewAuthor(e.target.value)}
+                        placeholder="Your Name (e.g. Rahul Sharma)"
+                        className={cn(
+                          "w-full h-10 px-3 rounded-xl border text-xs font-medium outline-none transition-all",
+                          isDark
+                            ? "bg-black/30 border-white/10 text-white placeholder:text-white/40 focus:border-emerald-500"
+                            : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                        )}
+                      />
+                    </div>
+                    <div className="sm:col-span-2 flex items-center">
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {["⚽ Great Turf Quality", "💡 Excellent Floodlights", "🚗 Easy Parking", "⚡ Smooth Booking"].map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setReviewComment((prev) => prev ? `${prev} • ${tag.replace(/^[^\s]+\s/, "")}` : tag.replace(/^[^\s]+\s/, ""))}
+                            className={cn(
+                              "text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer",
+                              isDark
+                                ? "bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            )}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <textarea
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder="Write your review here... (e.g. Clean synthetic grass, well-maintained dugout, punctual slot management)"
+                      rows={3}
+                      className={cn(
+                        "w-full p-3 rounded-xl border text-xs leading-relaxed outline-none transition-all resize-none",
+                        isDark
+                          ? "bg-black/30 border-white/10 text-white placeholder:text-white/40 focus:border-emerald-500"
+                          : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                      )}
+                    />
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                    <p className={cn("text-[11px]", isDark ? "text-white/40" : "text-slate-400")}>
+                      Your review will appear immediately for other players.
+                    </p>
+
+                    <Button
+                      type="submit"
+                      disabled={isSubmittingReview || !reviewComment.trim()}
+                      className={cn(
+                        "h-9 px-5 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                        isDark
+                          ? "bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold"
+                          : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                      )}
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      {isSubmittingReview ? "Posting..." : "Post Review"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+
               {/* Review Sorting Controls - UI/UX Premium Redesign */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
                 <div className="flex items-center gap-1.5 shrink-0 select-none">
@@ -1438,6 +1718,17 @@ export function VenueDetails() {
                         const isSelected = selectedStartHour !== null && slotHour === selectedStartHour;
                         const slotPrice = getSlotPrice(slotHour, playHours);
 
+                        // Only the user who booked this slot can cancel it
+                        const currentEmail = String(currentUser?.email || "").toLowerCase().trim();
+                        const currentName = String(currentUser?.fullName || currentUser?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
+                        const bookedEmail = String(slot.bookedByEmail || slot.booking?.user_email || "").toLowerCase().trim();
+                        const bookedName = String(slot.bookedBy || slot.booking?.user_name || "").toLowerCase().trim();
+
+                        const isMyBooking = isBooked && Boolean(
+                          (currentEmail && bookedEmail && currentEmail === bookedEmail) ||
+                          (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName)))
+                        );
+
                         return (
                           <button
                             key={slotHour}
@@ -1508,7 +1799,7 @@ export function VenueDetails() {
                               {cannotSelect ? (
                                 <div className="flex flex-col items-center w-full">
                                   <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
-                                  {isBooked && (
+                                  {isBooked && isMyBooking && (
                                     <div className="flex flex-col items-center mt-1 w-full gap-0.5">
                                       <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
                                         Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
@@ -1516,7 +1807,7 @@ export function VenueDetails() {
                                       <div
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          setCancelledSlots([...cancelledSlots, slotHour]);
+                                          handleCancelSlot(slot);
                                         }}
                                         className="px-1.5 py-0.5 bg-red-500/20 text-red-600 dark:text-white rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm mt-0.5"
                                       >

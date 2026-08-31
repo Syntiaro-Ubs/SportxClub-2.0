@@ -15,23 +15,57 @@ router.get("/", async (req, res) => {
   }
 });
 
-// POST /api/cms/banners - Create a banner
+// POST /api/cms/banners - Create a banner or multiple banners
 router.post("/", async (req, res) => {
   try {
     const pool = getPool();
-    const { title, subtitle, image_url, link = "/turfs", cta_text = "Book Now", is_active = 1, display_order = 1 } = req.body;
+    const items = Array.isArray(req.body)
+      ? req.body
+      : Array.isArray(req.body.banners)
+      ? req.body.banners
+      : [req.body];
 
-    if (!title || !image_url) {
-      return res.status(400).json({ success: false, error: "Title and Image URL are required" });
+    if (!items || items.length === 0) {
+      return res.status(400).json({ success: false, error: "No banner data provided" });
     }
 
-    const [result] = await pool.query(
-      "INSERT INTO cms_banners (title, subtitle, image_url, link, cta_text, is_active, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [title, subtitle || "", image_url, link, cta_text, is_active ? 1 : 0, display_order]
-    );
+    const insertedList = [];
+    for (const item of items) {
+      const {
+        title = "SportX Hero Banner",
+        subtitle = "",
+        image_url,
+        link = "/venues",
+        cta_text = "Book Now",
+        secondary_cta_text = "Explore",
+        secondary_link = "/venues",
+        is_active = 1,
+        display_order = 1,
+      } = item;
 
-    const [inserted] = await pool.query("SELECT * FROM cms_banners WHERE id = ?", [result.insertId]);
-    return res.json({ success: true, data: inserted[0] });
+      if (!image_url) {
+        continue;
+      }
+
+      const [result] = await pool.query(
+        "INSERT INTO cms_banners (title, subtitle, image_url, link, cta_text, secondary_cta_text, secondary_link, is_active, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [title || "SportX Hero Banner", subtitle || "", image_url, link || "/venues", cta_text || "Book Now", secondary_cta_text || "Explore", secondary_link || "/venues", is_active ? 1 : 0, display_order || 1]
+      );
+
+      const [inserted] = await pool.query("SELECT * FROM cms_banners WHERE id = ?", [result.insertId]);
+      if (inserted && inserted[0]) {
+        insertedList.push(inserted[0]);
+      }
+    }
+
+    if (insertedList.length === 0) {
+      return res.status(400).json({ success: false, error: "Image URL or banner image data is required" });
+    }
+
+    return res.json({
+      success: true,
+      data: Array.isArray(req.body) || Array.isArray(req.body.banners) ? insertedList : insertedList[0],
+    });
   } catch (err) {
     console.error("Create CMS Banner Error:", err);
     return res.status(500).json({ success: false, error: err.message });
@@ -43,7 +77,7 @@ router.put("/:id", async (req, res) => {
   try {
     const pool = getPool();
     const { id } = req.params;
-    const { title, subtitle, image_url, link, cta_text, is_active, display_order } = req.body;
+    const { title, subtitle, image_url, link, cta_text, secondary_cta_text, secondary_link, is_active, display_order } = req.body;
 
     await pool.query(
       `UPDATE cms_banners SET
@@ -52,10 +86,12 @@ router.put("/:id", async (req, res) => {
        image_url = COALESCE(?, image_url),
        link = COALESCE(?, link),
        cta_text = COALESCE(?, cta_text),
+       secondary_cta_text = COALESCE(?, secondary_cta_text),
+       secondary_link = COALESCE(?, secondary_link),
        is_active = COALESCE(?, is_active),
        display_order = COALESCE(?, display_order)
        WHERE id = ?`,
-      [title, subtitle, image_url, link, cta_text, is_active, display_order, id]
+      [title, subtitle, image_url, link, cta_text, secondary_cta_text, secondary_link, is_active, display_order, id]
     );
 
     const [updated] = await pool.query("SELECT * FROM cms_banners WHERE id = ?", [id]);

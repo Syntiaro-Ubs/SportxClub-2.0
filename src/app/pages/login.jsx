@@ -67,16 +67,52 @@ export function LoginPage() {
     rememberMe: false,
   });
 
+  useEffect(() => {
+    const isOwner = location.pathname === "/admin-login" || location.pathname.startsWith("/owner");
+    setLoginType(isOwner ? "owner" : (searchParams.get("type") || "player"));
+  }, [location.pathname, location.search]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Google Account Chooser Modal State
+  // Google Account Chooser Modal State (Local Device Only)
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
-  const [dbAccounts, setDbAccounts] = useState([]);
+  const [localAccounts, setLocalAccounts] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sportx_local_google_accounts");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
   const [googleEmailInput, setGoogleEmailInput] = useState("");
   const [googleNameInput, setGoogleNameInput] = useState("");
-  const [isFetchingAccounts, setIsFetchingAccounts] = useState(false);
+
+  const saveLocalAccount = (acc) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem("sportx_local_google_accounts") || "[]");
+      const filtered = existing.filter((a) => a.email?.toLowerCase() !== acc.email?.toLowerCase());
+      const updated = [acc, ...filtered].slice(0, 5);
+      localStorage.setItem("sportx_local_google_accounts", JSON.stringify(updated));
+      setLocalAccounts(updated);
+    } catch (e) {
+      console.warn("Could not save local Google account:", e);
+    }
+  };
+
+  const removeLocalAccount = (e, emailToRemove) => {
+    e.stopPropagation();
+    try {
+      const existing = JSON.parse(localStorage.getItem("sportx_local_google_accounts") || "[]");
+      const updated = existing.filter((a) => a.email?.toLowerCase() !== emailToRemove?.toLowerCase());
+      localStorage.setItem("sportx_local_google_accounts", JSON.stringify(updated));
+      setLocalAccounts(updated);
+      toast.info("Account removed from this device.");
+    } catch (e) {
+      console.warn("Could not remove local Google account:", e);
+    }
+  };
 
   // OTP & Recovery Modal State
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -130,8 +166,19 @@ export function LoginPage() {
     };
   }, []);
 
-  const handleOpenGoogleModal = async () => {
-    // 1. Trigger Google native One-Tap prompt if available on device
+  const handleOpenGoogleModal = () => {
+    // Read only this local device's saved accounts from localStorage
+    try {
+      const saved = localStorage.getItem("sportx_local_google_accounts");
+      const list = saved ? JSON.parse(saved) : [];
+      setLocalAccounts(list);
+      setShowCustomGoogleInput(list.length === 0);
+    } catch {
+      setLocalAccounts([]);
+      setShowCustomGoogleInput(true);
+    }
+
+    // Trigger Google native prompt if available on device
     if (window.google?.accounts?.id) {
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
@@ -140,19 +187,6 @@ export function LoginPage() {
       });
     } else {
       setIsGoogleModalOpen(true);
-    }
-
-    // 2. Fetch real database accounts (No dummy static accounts)
-    setShowCustomGoogleInput(false);
-    try {
-      setIsFetchingAccounts(true);
-      const accs = await adminApi.getAccounts(loginType === "owner" ? "turf-owner" : "player");
-      setDbAccounts(accs || []);
-    } catch (e) {
-      console.error("Failed loading accounts:", e);
-      setDbAccounts([]);
-    } finally {
-      setIsFetchingAccounts(false);
     }
   };
 
@@ -171,6 +205,13 @@ export function LoginPage() {
       setIsGoogleModalOpen(false);
 
       if (result.success) {
+        // Save to this local device for easy future login
+        saveLocalAccount({
+          email: result.user?.email || email,
+          name: result.user?.fullName || fullName,
+          avatar: result.user?.avatar || avatar,
+        });
+
         if (result.isNewUser) {
           toast.success(`Google account registered in MySQL! Welcome, ${result.user.fullName}!`);
         } else {
@@ -262,9 +303,8 @@ export function LoginPage() {
       setIsOtpLoading(true);
       const res = await adminApi.requestOtp(forgotIdentifier.trim());
       if (res.success) {
-        setActiveOtpCode(res.otp);
         setRecoveredUser(res.user);
-        toast.success(`OTP Code Generated: ${res.otp}`, { duration: 10000 });
+        toast.success("Verification code sent to your email address! Please check your inbox.", { duration: 6000 });
         setForgotStep(2);
       } else {
         toast.error(res.error || "Account not found");
@@ -359,16 +399,20 @@ export function LoginPage() {
           <div className="space-y-3 pt-1">
             <div className="space-y-0.5 mb-2">
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-tight">
-                {loginType === "owner" ? "Admin Login" : "Login"}
+                {loginType === "owner" ? "Turf Owner Login" : "Player Login"}
               </h1>
               <p className="text-xs text-muted-foreground pt-1">
-                Enter your credentials below to access<br className="hidden sm:block" /> your account.
+                {loginType === "owner"
+                  ? "Enter your credentials below to access your Turf Owner dashboard."
+                  : "Enter your credentials below to access your player profile & bookings."}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[12px] font-medium text-foreground">{loginType === "owner" ? "Email or Turf Owner ID" : "Email Address, Phone or Username"}</Label>
+                <Label htmlFor="email" className="text-[12px] font-medium text-foreground">
+                  {loginType === "owner" ? "Email or Turf Owner ID" : "Email Address, Phone or Username"}
+                </Label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <Input
@@ -457,7 +501,7 @@ export function LoginPage() {
                   </div>
                 ) : (
                   <>
-                    <span>Login</span>
+                    <span>{loginType === "owner" ? "Login to Turf Owner Portal" : "Login to SportX"}</span>
                     <ChevronRight className="h-4 w-4" />
                   </>
                 )}
@@ -503,16 +547,33 @@ export function LoginPage() {
               <span>Login with Google</span>
             </Button>
 
-            <div className="text-center pt-2">
+            <div className="text-center pt-2 space-y-1.5">
               <p className="text-xs text-muted-foreground">
-                Don't have an account yet?{" "}
+                {loginType === "owner" ? "Don't have an owner account? " : "Don't have an account yet? "}
                 <Link
                   to={`/register?type=${loginType}`}
                   className="font-medium text-primary hover:underline"
                 >
-                  Sign up
+                  {loginType === "owner" ? "Register Turf" : "Sign up"}
                 </Link>
               </p>
+              <div>
+                {loginType === "owner" ? (
+                  <Link
+                    to="/login"
+                    className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Are you a Player? Click here to Login
+                  </Link>
+                ) : (
+                  <Link
+                    to="/admin-login"
+                    className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Are you a Turf Owner? Admin Login
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -533,7 +594,7 @@ export function LoginPage() {
 
       {/* Official Google Dark Mode Sign-In Modal Overlay */}
       <Dialog open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen}>
-        <DialogContent className="bg-[#1f1f1f] text-white border border-[#444746] rounded-3xl max-w-2xl p-0 overflow-hidden shadow-2xl">
+        <DialogContent className="bg-[#1f1f1f] text-white border border-[#444746] rounded-3xl max-w-2xl p-0 overflow-hidden shadow-2xl [&>button]:text-slate-400 [&>button]:bg-white/10 [&>button]:hover:bg-white/20 [&>button]:hover:text-white">
           {/* Header Bar */}
           <div className="p-6 pb-4 border-b border-[#303134] flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -557,14 +618,6 @@ export function LoginPage() {
               </svg>
               <span className="text-sm font-medium text-slate-300">Sign in with Google</span>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsGoogleModalOpen(false)}
-              aria-label="Close modal"
-              className="z-50 flex h-9 w-9 items-center justify-center rounded-full text-slate-400 hover:text-white bg-white/5 hover:bg-white/15 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-            >
-              <X className="w-5 h-5 stroke-[2]" />
-            </button>
           </div>
 
           <div className="p-8 grid md:grid-cols-2 gap-8 items-start">
@@ -582,59 +635,59 @@ export function LoginPage() {
               </p>
             </div>
 
-            {/* Right Column: Database Accounts List & Input */}
+            {/* Right Column: Local Accounts List & Input */}
             <div className="space-y-5">
-              {dbAccounts.length > 0 && (
+              {localAccounts.length > 0 && !showCustomGoogleInput ? (
                 <div className="space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Select Google Account</p>
-                  {isFetchingAccounts ? (
-                    <div className="p-4 text-center text-xs text-slate-400 animate-pulse">
-                      Checking accounts...
-                    </div>
-                  ) : (
-                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                      {dbAccounts.map((acc, idx) => (
-                        <button
-                          key={acc.email || idx}
-                          type="button"
-                          onClick={() => selectGoogleAccount(acc.email, acc.name, acc.avatar)}
-                          className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#2b2b2b] hover:bg-[#363636] border border-[#444746] transition-all cursor-pointer text-left group"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <img
-                              src={acc.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(acc.email)}`}
-                              alt={acc.name}
-                              className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20"
-                            />
-                            <div className="min-w-0 truncate">
-                              <p className="font-bold text-xs text-white truncate group-hover:text-blue-400">
-                                {acc.name}
-                              </p>
-                              <p className="text-[11px] text-slate-400 truncate">{acc.email}</p>
-                            </div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Choose an account on this device</p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {localAccounts.map((acc, idx) => (
+                      <div
+                        key={acc.email || idx}
+                        onClick={() => selectGoogleAccount(acc.email, acc.name, acc.avatar)}
+                        className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#2b2b2b] hover:bg-[#363636] border border-[#444746] transition-all cursor-pointer text-left group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={acc.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(acc.email)}`}
+                            alt={acc.name}
+                            className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20"
+                          />
+                          <div className="min-w-0 truncate">
+                            <p className="font-bold text-xs text-white truncate group-hover:text-blue-400">
+                              {acc.name}
+                            </p>
+                            <p className="text-[11px] text-slate-400 truncate">{acc.email}</p>
                           </div>
-                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full shrink-0">
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">
                             Sign In
                           </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Or Google Email Input Box */}
-              {(!showCustomGoogleInput && dbAccounts.length > 0) ? (
-                <button
-                  type="button"
-                  onClick={() => setShowCustomGoogleInput(true)}
-                  className="w-full flex items-center gap-3 p-3 rounded-2xl bg-[#2b2b2b] hover:bg-[#363636] border border-dashed border-[#444746] transition-all cursor-pointer text-left text-xs font-bold text-slate-300 hover:text-white"
-                >
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-white">
-                    +
+                          <button
+                            type="button"
+                            onClick={(e) => removeLocalAccount(e, acc.email)}
+                            title="Remove account from this device"
+                            className="text-slate-500 hover:text-red-400 p-1 rounded-lg hover:bg-white/10 transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <span>Use another account</span>
-                </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomGoogleInput(true)}
+                    className="w-full flex items-center gap-3 p-3 rounded-2xl bg-[#2b2b2b] hover:bg-[#363636] border border-dashed border-[#444746] transition-all cursor-pointer text-left text-xs font-bold text-slate-300 hover:text-white mt-2"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-white">
+                      +
+                    </div>
+                    <span>Use another account</span>
+                  </button>
+                </div>
               ) : (
                 <form onSubmit={handleCustomGoogleSubmit} className="space-y-4 pt-1">
                   <div className="space-y-1">
@@ -643,21 +696,21 @@ export function LoginPage() {
                       type="text"
                       value={googleEmailInput}
                       onChange={(e) => setGoogleEmailInput(e.target.value)}
-                      placeholder="Email or phone"
+                      placeholder="Enter your Google email"
                       className="bg-[#131314] border-[#8e918f] focus-visible:ring-blue-500 text-white text-xs h-12 rounded-xl"
                       required
                     />
                   </div>
 
                   <div className="flex items-center justify-between pt-2">
-                    {dbAccounts.length > 0 && (
+                    {localAccounts.length > 0 && (
                       <Button
                         type="button"
                         variant="ghost"
                         onClick={() => setShowCustomGoogleInput(false)}
                         className="text-blue-400 hover:text-blue-300 hover:bg-transparent text-xs font-medium p-0 h-auto"
                       >
-                        Back to list
+                        ← Back to saved accounts
                       </Button>
                     )}
 
@@ -666,7 +719,7 @@ export function LoginPage() {
                       disabled={isSubmitting}
                       className="bg-[#a8c7fa] hover:bg-[#8ab4f8] text-[#040b19] font-bold text-xs h-10 px-6 rounded-full cursor-pointer ml-auto"
                     >
-                      {isSubmitting ? "Verifying..." : "Next"}
+                      {isSubmitting ? "Signing in..." : "Next"}
                     </Button>
                   </div>
                 </form>
@@ -760,7 +813,7 @@ export function LoginPage() {
             <form onSubmit={handleVerifyOtp} className="space-y-4 pt-2">
               <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl">
                 <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">
-                  OTP Code Generated! For testing, your OTP is: <span className="underline text-sm font-black tracking-widest">{activeOtpCode}</span>
+                  Verification code dispatched to your email address. Please check your inbox.
                 </p>
               </div>
               <p className="text-xs text-muted-foreground">

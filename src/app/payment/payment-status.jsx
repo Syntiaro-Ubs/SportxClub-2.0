@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { phonepeService } from "./phonepe-service";
 import { Button } from "../components/ui/button";
@@ -29,6 +29,7 @@ export function PaymentStatus() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [verificationResult, setVerificationResult] = useState(null);
+  const verifyingRef = useRef(false);
 
   // Read saved booking payload
   let bookingData = null;
@@ -49,18 +50,51 @@ export function PaymentStatus() {
   const sportStr = bookingData?.sport || "Football";
 
   useEffect(() => {
+    if (!merchantTxnId || verifyingRef.current) return;
+    verifyingRef.current = true;
+
     async function verify() {
       setIsLoading(true);
       try {
-        const phonePeStatus = await phonepeService.getPaymentStatus(merchantTxnId);
-        const isPaid = phonePeStatus.paymentStatus === "PAYMENT_SUCCESS";
+        let isPaid = false;
+
+        try {
+          const phonePeStatus = await phonepeService.getPaymentStatus(merchantTxnId);
+          const statusUpper = String(
+            phonePeStatus?.paymentStatus ||
+            phonePeStatus?.code ||
+            phonePeStatus?.data?.responseCode ||
+            phonePeStatus?.data?.state ||
+            ""
+          ).toUpperCase();
+
+          isPaid = (
+            phonePeStatus?.success === true ||
+            statusUpper === "PAYMENT_SUCCESS" ||
+            statusUpper === "SUCCESS" ||
+            statusUpper === "COMPLETED"
+          );
+        } catch (statusErr) {
+          console.warn("Could not fetch PhonePe status from gateway API, checking query params:", statusErr);
+          const queryCode = String(
+            searchParams.get("code") ||
+            searchParams.get("responseCode") ||
+            searchParams.get("status") ||
+            ""
+          ).toUpperCase();
+          if (queryCode === "PAYMENT_SUCCESS" || queryCode === "SUCCESS" || queryCode === "COMPLETED") {
+            isPaid = true;
+          }
+        }
+
         const result = await phonepeService.verifyPayment(
           merchantTxnId,
           isPaid ? "SUCCESS" : "FAILED",
           bookingData || { venue: venueName, date: dateStr, time: timeStr, price, sport: sportStr }
         );
+
         setVerificationResult(result);
-        if (isPaid) {
+        if (result?.status === "Success" || result?.success === true || isPaid) {
           toast.success("PhonePe Payment Verified & Booking Saved!");
         } else {
           toast.error("Payment Failed. Slot was not reserved.");
@@ -74,7 +108,7 @@ export function PaymentStatus() {
     verify();
   }, [merchantTxnId]);
 
-  const isSuccess = verificationResult?.status === "Success";
+  const isSuccess = verificationResult?.status === "Success" || verificationResult?.success === true;
 
   const handleDownloadReceipt = () => {
     const loadingToastId = toast.loading("Generating receipt PDF...");

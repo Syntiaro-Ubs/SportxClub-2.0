@@ -63,4 +63,12 @@ export const profileService = {
     });
     return data.data;
   },
+
+  deleteAccount: async (user) => {
+    const data = await request("/account", {
+      method: "DELETE",
+      body: JSON.stringify({ userId: user?.id, email: user?.email }),
+    });
+    return data;
+  },
 };

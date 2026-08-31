@@ -53,6 +53,12 @@ export async function initDatabase() {
     } catch (e) {
       // Column might already exist, ignore error
     }
+    try {
+      await pool.query("ALTER TABLE cms_banners ADD COLUMN secondary_cta_text VARCHAR(100) DEFAULT 'Explore'");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE cms_banners ADD COLUMN secondary_link VARCHAR(255) DEFAULT '/venues'");
+    } catch (e) {}
     // 4. Auto seed initial demo data
     await seedData();
 
@@ -113,6 +119,7 @@ async function createTables() {
       total_turfs INT DEFAULT 0,
       earnings VARCHAR(50) DEFAULT '₹0',
       joined_date VARCHAR(50),
+      setup_data LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
@@ -574,6 +581,15 @@ async function createTables() {
       user_id INT NOT NULL,
       platform VARCHAR(50) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS turf_onboarding_requests (
+      id VARCHAR(100) PRIMARY KEY,
+      owner_id VARCHAR(50),
+      owner_email VARCHAR(255),
+      form_data LONGTEXT,
+      status VARCHAR(50) DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
   ];
 
@@ -588,6 +604,21 @@ async function createTables() {
   } catch (e) {
     // Column already exists or table doesn't exist
   }
+
+  try {
+    await conn.query("ALTER TABLE turf_owners ADD COLUMN setup_data LONGTEXT;");
+  } catch (e) { }
+
+  try {
+    await conn.query(`CREATE TABLE IF NOT EXISTS turf_onboarding_requests (
+      id VARCHAR(100) PRIMARY KEY,
+      owner_id VARCHAR(50),
+      owner_email VARCHAR(255),
+      form_data LONGTEXT,
+      status VARCHAR(50) DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+  } catch (e) { }
 
   // Run migrations for existing table columns
   try {
@@ -679,6 +710,34 @@ async function createTables() {
   } catch (e) { }
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN payment_type VARCHAR(50) DEFAULT 'UPI';");
+  } catch (e) { }
+
+  // Clean up any historical duplicate payments (same email, turf, amount, date created within 60s)
+  try {
+    await conn.query(`
+      DELETE p1 FROM payments p1
+      INNER JOIN payments p2 
+      WHERE p1.id > p2.id 
+        AND p1.user_email = p2.user_email 
+        AND p1.turf_name = p2.turf_name 
+        AND p1.amount = p2.amount 
+        AND p1.date = p2.date 
+        AND TIMESTAMPDIFF(SECOND, p2.created_at, p1.created_at) BETWEEN 0 AND 60
+    `);
+  } catch (e) { }
+
+  // Clean up any historical duplicate bookings
+  try {
+    await conn.query(`
+      DELETE b1 FROM bookings b1
+      INNER JOIN bookings b2 
+      WHERE b1.id > b2.id 
+        AND b1.user_email = b2.user_email 
+        AND b1.turf_name = b2.turf_name 
+        AND b1.date = b2.date 
+        AND (b1.time_slot = b2.time_slot OR b1.slot_time = b2.slot_time)
+        AND TIMESTAMPDIFF(SECOND, b2.created_at, b1.created_at) BETWEEN 0 AND 60
+    `);
   } catch (e) { }
 
   console.log("Database schema checked/created successfully.");
@@ -885,6 +944,19 @@ async function seedData() {
       ('why_choose_us', 'Why Play with SportXClub?', 'Built for players & turf owners with zero booking hassle.', 'WHY CHOOSE US', 1, 4),
       ('download_app', 'Get the SportXClub Mobile App', 'Instant slot booking, live tournament brackets & community lobbies in your pocket.', 'PLAY ANYTIME', 1, 5),
       ('faqs', 'Frequently Asked Questions', 'Got questions about booking, payments, or cancellations? We have answers.', 'HELP & FAQS', 1, 6)
+    `);
+  }
+
+  // Seed CMS Banners if empty
+  const [cmsBanners] = await conn.query("SELECT COUNT(*) as count FROM cms_banners");
+  if (cmsBanners[0].count === 0) {
+    await conn.query(`
+      INSERT INTO cms_banners (title, subtitle, image_url, link, cta_text, secondary_cta_text, secondary_link, is_active, display_order)
+      VALUES 
+      ('Flat 15% Cashback on Early Bird & Night Turf Bookings', 'Book verified turfs before 11 AM or after 10 PM. Instant refund-safe slots & zero extra fees.', '/assets/hero/ai_hero_1.jpg', '/venues', 'Book a Turf Now', 'Explore Passes', '/venues', 1, 1),
+      ('Never Play Short – Join Open Lobbies in Your City', 'Find available players near you or create your own open lobby. Connect, play, and rate players.', '/assets/hero/ai_hero_3.jpg', '/open-lobbies', 'Find Open Lobbies', 'Book Squad Slot', '/squad-booking', 1, 2),
+      ('SportX Club All-Access Priority Pass', 'Get up to 40% discount on regular bookings, priority slot reservation, and free cancellations.', '/assets/hero/ai_hero_4.jpg', '/venues', 'Get Club Pass', 'Learn More', '/venues', 1, 3),
+      ('FIFA-Standard Floodlit Night Turfs & Arenas', 'High-lux pro lighting, shock-pad turfing, rooftop courts, and player lounge amenities.', '/assets/hero/new_hero_5.jpg', '/venues', 'Browse All Venues', 'View Night Slots', '/venues', 1, 4)
     `);
   }
 

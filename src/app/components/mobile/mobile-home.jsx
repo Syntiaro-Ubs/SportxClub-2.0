@@ -29,6 +29,7 @@ import { useAuth } from "../../providers/auth-provider";
 import { AppDownloadCTA } from "../home/AppDownloadCTA";
 import { GlobalFooter } from "../layout/GlobalFooter";
 import { adminApi } from "../../services/admin-api";
+import { cmsService } from "../../services/cms-service";
 
 const asset = (path) => `/assets${path}`;
 
@@ -514,13 +515,32 @@ export function MobileHomePage() {
     }, 100);
   };
 
-  const bgImages = [
+  const [dynamicBanners, setDynamicBanners] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    cmsService.getBanners().then((data) => {
+      if (isMounted && Array.isArray(data) && data.length > 0) {
+        const active = data.filter((b) => b.is_active === undefined || b.is_active === 1 || b.is_active === true);
+        if (active.length > 0) {
+          setDynamicBanners(active.map((b) => b.image_url));
+        }
+      }
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const defaultBgImages = [
     "/assets/hero/slider-1.jpg",
     "/assets/hero/slider-2.jpg",
     "/assets/hero/slider-3.jpg",
     "/assets/hero/slider-4.jpg",
     "/assets/hero/slider-5.jpg",
   ];
+
+  const bgImages = dynamicBanners.length > 0 ? dynamicBanners : defaultBgImages;
 
   useEffect(() => {
     const timer = setInterval(() => {

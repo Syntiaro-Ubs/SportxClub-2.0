@@ -102,6 +102,23 @@ router.post("/initiate", async (req, res) => {
  */
 router.get("/status/:merchantTransactionId", async (req, res) => {
   try {
+    const { merchantTransactionId } = req.params;
+    const pool = getPool();
+
+    // 1. Check if already recorded as Success in MySQL payments table
+    const [existingPayments] = await pool.query(
+      "SELECT * FROM payments WHERE merchant_transaction_id = ? LIMIT 1",
+      [merchantTransactionId]
+    );
+    if (existingPayments.length > 0 && existingPayments[0].status === "Success") {
+      return res.json({
+        success: true,
+        paymentStatus: "PAYMENT_SUCCESS",
+        message: "Payment verified in database.",
+        data: existingPayments[0],
+      });
+    }
+
     if (!hasPhonePeCredentials()) {
       return res.status(500).json({
         success: false,
@@ -109,7 +126,6 @@ router.get("/status/:merchantTransactionId", async (req, res) => {
       });
     }
 
-    const { merchantTransactionId } = req.params;
     const apiPath = `/pg/v1/status/${PHONEPE_CONFIG.CLIENT_ID}/${merchantTransactionId}`;
     const xVerify = calculateXVerify("", apiPath);
 
@@ -124,18 +140,33 @@ router.get("/status/:merchantTransactionId", async (req, res) => {
     const responseData = await response.json();
     console.log("[PhonePe PG Status Response]:", responseData);
 
-    if (!response.ok || !responseData.success) {
-      return res.status(response.status || 502).json({
-        success: false,
-        message: responseData.message || "PhonePe payment-status check failed.",
-        code: responseData.code,
+    const codeUpper = String(responseData.code || "").toUpperCase();
+    const dataCodeUpper = String(responseData.data?.responseCode || "").toUpperCase();
+    const stateUpper = String(responseData.data?.state || "").toUpperCase();
+
+    const isSuccess = (
+      responseData.success === true ||
+      codeUpper === "PAYMENT_SUCCESS" ||
+      codeUpper === "SUCCESS" ||
+      dataCodeUpper === "SUCCESS" ||
+      dataCodeUpper === "PAYMENT_SUCCESS" ||
+      stateUpper === "COMPLETED" ||
+      stateUpper === "SUCCESS"
+    );
+
+    if (isSuccess) {
+      return res.json({
+        success: true,
+        paymentStatus: "PAYMENT_SUCCESS",
+        message: responseData.message || "Payment Successful",
+        data: responseData.data,
       });
     }
 
     return res.json({
-      success: true,
-      paymentStatus: responseData.code,
-      message: responseData.message,
+      success: false,
+      paymentStatus: responseData.code || "PAYMENT_FAILED",
+      message: responseData.message || "PhonePe payment not successful.",
       data: responseData.data,
     });
   } catch (error) {
@@ -143,6 +174,7 @@ router.get("/status/:merchantTransactionId", async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Could not check the PhonePe payment status.",
+      error: error.message,
     });
   }
 });
@@ -156,7 +188,8 @@ router.post("/verify", async (req, res) => {
     const { merchantTransactionId, status, bookingPayload } = req.body;
     const pool = getPool();
 
-    const isSuccess = status === "SUCCESS" || status === "COMPLETED";
+    const statusUpper = String(status || "").toUpperCase();
+    const isSuccess = statusUpper === "SUCCESS" || statusUpper === "COMPLETED" || statusUpper === "PAYMENT_SUCCESS";
 
     const userEmail = bookingPayload?.userEmail || bookingPayload?.email || "user@sportxclub.com";
     const userName = bookingPayload?.userName || bookingPayload?.name || "SportX Player";
@@ -170,6 +203,65 @@ router.post("/verify", async (req, res) => {
     const providerRefId = `T260812${Math.floor(100000000 + Math.random() * 900000000)}`;
 
     if (isSuccess) {
+      // 0. Idempotency Check: Prevent duplicate payment & booking entries
+      if (merchantTransactionId) {
+        const [existingPayments] = await pool.query(
+          `SELECT id, transaction_id, status FROM payments WHERE merchant_transaction_id = ? LIMIT 1`,
+          [merchantTransactionId]
+        );
+        if (existingPayments.length > 0) {
+          const existing = existingPayments[0];
+          if (existing.status === "Success") {
+            const [existingBookings] = await pool.query(
+              `SELECT id, booking_code FROM bookings WHERE user_email = ? AND (turf_name = ? OR turf_id = ?) AND date = ? ORDER BY id DESC LIMIT 1`,
+              [userEmail, turfName, turfId || 0, dateStr]
+            );
+            console.log(`[PhonePe Verify Idempotent Hit] Transaction ${merchantTransactionId} already processed.`);
+            return res.json({
+              success: true,
+              message: "Payment complete & booking confirmed!",
+              paymentId: existing.id,
+              bookingId: existingBookings[0]?.id || null,
+              transactionId: existing.transaction_id,
+              merchantTransactionId: merchantTransactionId,
+              status: "Success",
+            });
+          } else {
+            // Previous attempt was recorded as Failed or pending, but now verified as Success. Update it!
+            await pool.query(
+              `UPDATE payments SET status = 'Success' WHERE id = ?`,
+              [existing.id]
+            );
+          }
+        }
+      }
+
+      // Check if exact same payment was inserted in the last 2 minutes
+      const [recentDuplicate] = await pool.query(
+        `SELECT id, transaction_id, status FROM payments 
+         WHERE user_email = ? AND turf_name = ? AND amount = ? AND date = ? 
+         AND status = 'Success'
+         AND created_at >= NOW() - INTERVAL 2 MINUTE LIMIT 1`,
+        [userEmail, turfName, numericAmount, dateStr]
+      );
+      if (recentDuplicate.length > 0) {
+        const existing = recentDuplicate[0];
+        const [existingBookings] = await pool.query(
+          `SELECT id, booking_code FROM bookings WHERE user_email = ? AND turf_name = ? AND date = ? ORDER BY id DESC LIMIT 1`,
+          [userEmail, turfName, dateStr]
+        );
+        console.log(`[PhonePe Duplicate Blocked] Recent identical payment found: ${existing.transaction_id}`);
+        return res.json({
+          success: true,
+          message: "Payment complete & booking confirmed!",
+          paymentId: existing.id,
+          bookingId: existingBookings[0]?.id || null,
+          transactionId: existing.transaction_id,
+          merchantTransactionId: merchantTransactionId,
+          status: "Success",
+        });
+      }
+
       // 1. Insert Payment Record into DB
       const paymentSql = `
         INSERT INTO payments 

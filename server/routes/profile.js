@@ -260,4 +260,57 @@ router.post("/bookings/:id/cancel", async (req, res) => {
   }
 });
 
+// DELETE PLAYER ACCOUNT PERMANENTLY FROM DATABASE
+router.delete("/account", async (req, res) => {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+  try {
+    const userId = req.body?.userId || req.query?.userId;
+    const email = req.body?.email || req.query?.email;
+    const user = await findUser(connection, userId, email);
+    if (!user) {
+      return res.status(404).json({ success: false, error: "Player account not found in database." });
+    }
+
+    await connection.beginTransaction();
+
+    // 1. Delete player wallets and transactions
+    try { await connection.query("DELETE FROM wallet_transactions WHERE user_id = ?", [user.id]); } catch (e) {}
+    try { await connection.query("DELETE FROM player_wallets WHERE user_id = ?", [user.id]); } catch (e) {}
+
+    // 2. Delete player stats & matches & teammate reviews
+    try { await connection.query("DELETE FROM player_stats WHERE user_id = ?", [user.id]); } catch (e) {}
+    try { await connection.query("DELETE FROM player_matches WHERE user_id = ?", [user.id]); } catch (e) {}
+    try { await connection.query("DELETE FROM player_teammate_reviews WHERE user_id = ? OR LOWER(reviewer) = LOWER(?)", [user.id, user.full_name]); } catch (e) {}
+
+    // 3. Delete user reviews
+    try { await connection.query("DELETE FROM reviews WHERE LOWER(user_name) = LOWER(?) OR LOWER(user_email) = LOWER(?)", [user.full_name, user.email]); } catch (e) {}
+
+    // 4. Delete bookings / payments associated with user
+    try { await connection.query("DELETE FROM bookings WHERE LOWER(user_email) = LOWER(?) OR LOWER(user_name) = LOWER(?)", [user.email, user.full_name]); } catch (e) {}
+    try { await connection.query("DELETE FROM payments WHERE LOWER(user_email) = LOWER(?) OR LOWER(user_name) = LOWER(?)", [user.email, user.full_name]); } catch (e) {}
+
+    // 5. Delete tournament team registrations / notifications
+    try { await connection.query("DELETE FROM notifications WHERE user_id = ? OR LOWER(user_email) = LOWER(?)", [user.id, user.email]); } catch (e) {}
+
+    // 6. Delete user record from users table
+    await connection.query("DELETE FROM users WHERE id = ?", [user.id]);
+
+    await connection.commit();
+
+    console.log(`[Player Account Permanently Deleted from DB] ID: ${user.id}, Email: ${user.email}, Name: ${user.full_name}`);
+    return res.json({
+      success: true,
+      message: "Your account and all associated data have been permanently deleted from our database.",
+      deletedUserId: user.id,
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error("Delete Player Account Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
 export default router;

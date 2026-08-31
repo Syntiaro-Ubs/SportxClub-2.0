@@ -6,19 +6,14 @@ const router = express.Router();
 
 async function sendOnboardingStatusEmail(toEmail, ownerName, status) {
   try {
-    const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
-    const smtpPort = parseInt(process.env.SMTP_PORT || "587");
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    const smtpUser = (process.env.SMTP_USER || "").trim();
+    const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
 
     if (!smtpUser || !smtpPass) return; // Skip if no email config
 
     const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
+      service: "gmail",
       auth: { user: smtpUser, pass: smtpPass },
-      tls: { rejectUnauthorized: false },
     });
 
     const isApproved = status.toLowerCase() === "approved";

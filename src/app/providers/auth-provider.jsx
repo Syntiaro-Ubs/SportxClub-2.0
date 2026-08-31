@@ -249,8 +249,42 @@ export function AuthProvider({ children }) {
     return { success: true, user: mergedUser };
   };
 
+  const deleteAccount = async () => {
+    const active = currentUser;
+    if (!active) return { success: false, error: "No active user logged in" };
+
+    try {
+      const res = await fetch("/api/profile/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: active.id, email: active.email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to delete account from database");
+      }
+    } catch (e) {
+      console.warn("Backend account delete note:", e.message);
+    }
+
+    // Clean up local storage and session
+    setPlayerUser(null);
+    localStorage.removeItem("playerUser");
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userName");
+
+    // Also remove from local saved Google accounts if present
+    try {
+      const existing = JSON.parse(localStorage.getItem("sportx_local_google_accounts") || "[]");
+      const updated = existing.filter((a) => a.email?.toLowerCase() !== active.email?.toLowerCase());
+      localStorage.setItem("sportx_local_google_accounts", JSON.stringify(updated));
+    } catch (e) {}
+
+    return { success: true };
+  };
+
   return (
-    <AuthContext.Provider value={{ currentUser, playerUser, turfOwnerUser, cmsAdminUser, login, loginWithGoogle, register, logout, logoutOwner, updateUser }}>
+    <AuthContext.Provider value={{ currentUser, playerUser, turfOwnerUser, cmsAdminUser, login, loginWithGoogle, register, logout, logoutOwner, updateUser, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );

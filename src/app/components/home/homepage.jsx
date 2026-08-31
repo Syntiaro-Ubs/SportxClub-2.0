@@ -841,127 +841,44 @@ function StatsRow() {
   );
 }
 
-const heroSlides = [
-  {
-    id: 0,
-    image: asset("/hero/ai_hero_1.jpg"),
-    tag: "EXCLUSIVE OFFER",
-    title: "Flat 15% Cashback on Early Bird & Night Turf Bookings",
-    description: "Book verified turfs before 11 AM or after 10 PM. Instant refund-safe slots & zero extra fees.",
-    badgeText: "LIMITED TIME",
-    primaryAction: "Book a Turf Now",
-    primaryLink: "/venues",
-    secondaryAction: "Explore Passes",
-    secondaryLink: "/venues",
-  },
-  {
-    id: 2,
-    image: asset("/hero/ai_hero_3.jpg"),
-    tag: "MATCHMAKING & LOBBIES",
-    title: "Never Play Short – Join Open Lobbies in Your City",
-    description: "Find available players near you or create your own open lobby. Connect, play, and rate players.",
-    badgeText: "COMMUNITY FEATURE",
-    primaryAction: "Find Open Lobbies",
-    primaryLink: "/open-lobbies",
-    secondaryAction: "Book Squad Slot",
-    secondaryLink: "/squad-booking",
-  },
-  {
-    id: 3,
-    image: asset("/hero/ai_hero_4.jpg"),
-    tag: "CLUB PASS",
-    title: "SportX Club All-Access Priority Pass",
-    description: "Get up to 40% discount on regular bookings, priority slot reservation, and free cancellations.",
-    badgeText: "SAVINGS PASS",
-    primaryAction: "Get Club Pass",
-    primaryLink: "/venues",
-    secondaryAction: "Learn More",
-    secondaryLink: "/venues",
-  },
-  {
-    id: 4,
-    image: asset("/hero/new_hero_5.jpg"),
-    tag: "PREMIUM VENUES",
-    title: "FIFA-Standard Floodlit Night Turfs & Arenas",
-    description: "High-lux pro lighting, shock-pad turfing, rooftop courts, and player lounge amenities.",
-    badgeText: "VERIFIED ARENAS",
-    primaryAction: "Browse All Venues",
-    primaryLink: "/venues",
-    secondaryAction: "View Night Slots",
-    secondaryLink: "/venues",
-  },
-];
-
-const recommendedVenues = [
-  {
-    id: 1,
-    name: "Champions Turf & Football Arena",
-    location: "Powai, Mumbai",
-    sport: "Football • Box Cricket",
-    rating: "4.9",
-    reviews: "128",
-    price: "₹1,200",
-    unit: "/ hr",
-    badge: "PROMOTED",
-    image: asset("/venues/champions_sports_arena_football.jpg"),
-  },
-  {
-    id: 2,
-    name: "Metro Sports Pitch & Stadium",
-    location: "Bandra West, Mumbai",
-    sport: "Cricket • Football",
-    rating: "4.8",
-    reviews: "96",
-    price: "₹1,500",
-    unit: "/ hr",
-    badge: "POPULAR",
-    image: asset("/venues/metro_sports_park_cricket.jpg"),
-  },
-  {
-    id: 3,
-    name: "Grand Playfield Badminton Club",
-    location: "Andheri West, Mumbai",
-    sport: "Badminton",
-    rating: "4.9",
-    reviews: "142",
-    price: "₹600",
-    unit: "/ hr",
-    badge: "FAST FILLING",
-    image: asset("/venues/grand_playfield_badminton.png"),
-  },
-  {
-    id: 4,
-    name: "GreenPark Pro Tennis Court",
-    location: "Juhu, Mumbai",
-    sport: "Lawn Tennis",
-    rating: "4.7",
-    reviews: "64",
-    price: "₹1,000",
-    unit: "/ hr",
-    badge: "TOP RATED",
-    image: asset("/venues/new_tennis_turf.png"),
-  },
-  {
-    id: 5,
-    name: "Spike & Jump Volleyball Arena",
-    location: "South Mumbai",
-    sport: "Volleyball",
-    rating: "5.0",
-    reviews: "210",
-    price: "₹1,800",
-    unit: "/ hr",
-    badge: "FEATURED",
-    image: asset("/venues/new_volleyball_turf.png"),
-  },
-];
-
 export function HeroSection() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [dynamicBanners, setDynamicBanners] = useState([]);
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchBanners = async () => {
+      try {
+        const data = await cmsService.getBanners();
+        if (isMounted && Array.isArray(data)) {
+          const active = data.filter((b) => b.is_active === undefined || b.is_active === 1 || b.is_active === true);
+          setDynamicBanners(active);
+        }
+      } catch (err) {
+        console.warn("Failed loading dynamic hero banners:", err);
+      }
+    };
+    fetchBanners();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const activeSlides = dynamicBanners.map((b, idx) => ({
+    id: b.id || idx,
+    image: b.image_url,
+    title: b.title || "",
+    description: b.subtitle || "",
+    primaryAction: b.cta_text || "Book a Turf Now",
+    primaryLink: b.link || "/venues",
+    secondaryAction: b.secondary_cta_text || "Explore Passes",
+    secondaryLink: b.secondary_link || "/venues",
+  }));
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -970,18 +887,19 @@ export function HeroSection() {
     };
     emblaApi.on("select", onSelect);
     onSelect();
+    emblaApi.reInit();
     return () => {
       emblaApi.off("select", onSelect);
     };
-  }, [emblaApi]);
+  }, [emblaApi, activeSlides.length]);
 
   useEffect(() => {
-    if (!emblaApi || isPaused) return;
+    if (!emblaApi || isPaused || activeSlides.length <= 1) return;
     const timer = setInterval(() => {
       emblaApi.scrollNext();
     }, 5000);
     return () => clearInterval(timer);
-  }, [emblaApi, isPaused]);
+  }, [emblaApi, isPaused, activeSlides.length]);
 
   const handlePrev = () => {
     if (emblaApi) emblaApi.scrollPrev();
@@ -994,6 +912,10 @@ export function HeroSection() {
   const handleDotClick = (index) => {
     if (emblaApi) emblaApi.scrollTo(index);
   };
+
+  if (activeSlides.length === 0) {
+    return null;
+  }
 
   return (
     <section className={cn(
@@ -1020,11 +942,11 @@ export function HeroSection() {
         >
           <div className="overflow-hidden w-full cursor-grab active:cursor-grabbing" ref={emblaRef}>
             <div className="flex touch-pan-y items-center h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px]">
-              {heroSlides.map((slide, index) => {
+              {activeSlides.map((slide, index) => {
                 const isActive = currentSlide === index;
                 return (
                   <div
-                    key={index}
+                    key={slide.id || index}
                     className="relative flex-[0_0_100%] min-w-0 h-full"
                   >
                     <div className={cn(
@@ -1040,12 +962,21 @@ export function HeroSection() {
                         className="absolute inset-0 h-full w-full object-cover brightness-100 contrast-100"
                       />
 
+                      {/* Dark Gradient Overlay for High Text Readability */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent pointer-events-none z-[1]" />
 
                       {/* Banner Content (Only visible on active slide) */}
-                      <div className={cn("absolute inset-0 flex flex-col justify-end px-5 sm:px-8 md:px-10 pb-2 md:pb-4 md:max-w-xl lg:max-w-2xl z-10 transition-opacity duration-500", isActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
-                        <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-normal tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-                          {slide.title}
-                        </h1>
+                      <div className={cn("absolute inset-0 flex flex-col justify-end px-5 sm:px-8 md:px-10 pb-3 md:pb-5 md:max-w-xl lg:max-w-2xl z-10 transition-opacity duration-500", isActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+                        {slide.title && (
+                          <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-[2.3rem] font-bold tracking-tight !text-white leading-[1.18] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                            {slide.title}
+                          </h1>
+                        )}
+                        {slide.description && (
+                          <p className="text-xs sm:text-sm md:text-base !text-white font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)] mt-1.5 line-clamp-2">
+                            {slide.description}
+                          </p>
+                        )}
 
                         <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
                           <Link to={slide.primaryLink}>
@@ -1070,9 +1001,9 @@ export function HeroSection() {
 
           {/* Carousel Pagination Dots */}
           <div className="absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center justify-center gap-2 z-20">
-            {heroSlides.map((slide, idx) => (
+            {activeSlides.map((slide, idx) => (
               <button
-                key={slide.id}
+                key={slide.id || idx}
                 onClick={() => handleDotClick(idx)}
                 className={cn(
                   "h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer",

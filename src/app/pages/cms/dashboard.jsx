@@ -50,6 +50,9 @@ import {
   CheckSquare,
   Square,
   UserCheck,
+  UploadCloud,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -329,12 +332,28 @@ export function CMSDashboard() {
   });
 
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
-  const [bannerForm, setBannerForm] = useState({
+  const [selectedBannerFiles, setSelectedBannerFiles] = useState([]);
+  const [isBannerDragging, setIsBannerDragging] = useState(false);
+  const [isUploadingBanners, setIsUploadingBanners] = useState(false);
+  const [newBannerForm, setNewBannerForm] = useState({
+    title: "",
+    subtitle: "",
+  });
+
+  // Edit Banner Modal States
+  const [isEditBannerModalOpen, setIsEditBannerModalOpen] = useState(false);
+  const [editingBanner, setEditingBanner] = useState(null);
+  const [isSavingEditBanner, setIsSavingEditBanner] = useState(false);
+  const [editBannerForm, setEditBannerForm] = useState({
     title: "",
     subtitle: "",
     image_url: "",
-    link: "/turfs",
-    cta_text: "Book Now"
+    link: "/venues",
+    cta_text: "Book a Turf Now",
+    secondary_cta_text: "Explore Passes",
+    secondary_link: "/venues",
+    is_active: 1,
+    display_order: 1,
   });
 
   const [isFaqModalOpen, setIsFaqModalOpen] = useState(false);
@@ -346,7 +365,7 @@ export function CMSDashboard() {
 
   const [isTurfModalOpen, setIsTurfModalOpen] = useState(false);
   const [editingTurf, setEditingTurf] = useState(null);
-  
+
   // Section 1: Recommended Venues States
   const [recommendedTurfs, setRecommendedTurfs] = useState([]);
   const [recSearchQuery, setRecSearchQuery] = useState("");
@@ -726,15 +745,146 @@ export function CMSDashboard() {
   };
 
   // Banner Handlers
+  const handleBannerFilesSelected = (files) => {
+    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    if (validFiles.length === 0) {
+      toast.error("Please select valid image files (JPG, PNG, WEBP, etc.)");
+      return;
+    }
+
+    let processedCount = 0;
+    const newItems = [];
+
+    validFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const preview = e.target.result;
+        const rawName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+        const defaultTitle = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+
+        newItems.push({
+          id: Math.random().toString(36).substring(2, 9),
+          file,
+          preview,
+          title: newBannerForm.title?.trim() || defaultTitle || "SportX Hero Banner",
+          subtitle: newBannerForm.subtitle?.trim() || "",
+          cta_text: "Book a Turf Now",
+          link: "/venues",
+          secondary_cta_text: "Explore Passes",
+          secondary_link: "/venues",
+        });
+
+        processedCount++;
+        if (processedCount === validFiles.length) {
+          setSelectedBannerFiles((prev) => [...prev, ...newItems]);
+          toast.success(`${validFiles.length} banner image(s) selected!`);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleRemoveSelectedBanner = (indexToRemove) => {
+    setSelectedBannerFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleSaveBanner = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (selectedBannerFiles.length === 0) {
+      toast.error("Please select at least one banner image to upload.");
+      return;
+    }
+
+    setIsUploadingBanners(true);
     try {
-      await cmsService.createBanner(bannerForm);
-      toast.success("Hero Banner slide added!");
+      const bannerPayloads = selectedBannerFiles.map((item, idx) => ({
+        title: (idx === 0 && newBannerForm.title?.trim()) ? newBannerForm.title.trim() : (item.title?.trim() || newBannerForm.title?.trim() || "SportX Hero Banner"),
+        subtitle: (idx === 0 && newBannerForm.subtitle?.trim()) ? newBannerForm.subtitle.trim() : (item.subtitle?.trim() || newBannerForm.subtitle?.trim() || ""),
+        image_url: item.preview,
+        link: item.link || "/venues",
+        cta_text: item.cta_text || "Book a Turf Now",
+        secondary_cta_text: item.secondary_cta_text || "Explore Passes",
+        secondary_link: item.secondary_link || "/venues",
+        is_active: 1,
+        display_order: banners.length + idx + 1,
+      }));
+
+      await cmsService.createBanners(bannerPayloads);
+      toast.success(`${selectedBannerFiles.length} Hero Banner(s) uploaded successfully!`);
       setIsBannerModalOpen(false);
+      setSelectedBannerFiles([]);
+      setNewBannerForm({ title: "", subtitle: "" });
       loadDashboardData();
     } catch (err) {
-      toast.error(err.message || "Failed adding banner");
+      console.error("Banner upload error:", err);
+      toast.error(err.message || "Failed uploading hero banners");
+    } finally {
+      setIsUploadingBanners(false);
+    }
+  };
+
+  const handleOpenEditBanner = (ban) => {
+    setEditingBanner(ban);
+    setEditBannerForm({
+      title: ban.title || "",
+      subtitle: ban.subtitle || "",
+      image_url: ban.image_url || "",
+      link: ban.link || "/venues",
+      cta_text: ban.cta_text || "Book a Turf Now",
+      secondary_cta_text: ban.secondary_cta_text || "Explore Passes",
+      secondary_link: ban.secondary_link || "/venues",
+      is_active: ban.is_active ?? 1,
+      display_order: ban.display_order || 1,
+    });
+    setIsEditBannerModalOpen(true);
+  };
+
+  const handleEditBannerImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (JPG, PNG, WEBP).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setEditBannerForm((prev) => ({ ...prev, image_url: ev.target.result }));
+      toast.success("New banner image selected from computer!");
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const handleSaveEditBanner = async (e) => {
+    if (e) e.preventDefault();
+    if (!editingBanner) return;
+    if (!editBannerForm.image_url) {
+      toast.error("Banner image is required.");
+      return;
+    }
+
+    setIsSavingEditBanner(true);
+    try {
+      await cmsService.updateBanner(editingBanner.id, {
+        title: editBannerForm.title?.trim() || "SportX Hero Banner",
+        subtitle: editBannerForm.subtitle?.trim() || "",
+        image_url: editBannerForm.image_url,
+        link: editBannerForm.link || "/venues",
+        cta_text: editBannerForm.cta_text || "Book a Turf Now",
+        secondary_cta_text: editBannerForm.secondary_cta_text || "Explore Passes",
+        secondary_link: editBannerForm.secondary_link || "/venues",
+        is_active: editBannerForm.is_active ? 1 : 0,
+        display_order: editBannerForm.display_order || 1,
+      });
+      toast.success("Hero banner updated successfully!");
+      setIsEditBannerModalOpen(false);
+      setEditingBanner(null);
+      loadDashboardData();
+    } catch (err) {
+      console.error("Update banner error:", err);
+      toast.error(err.message || "Failed updating banner");
+    } finally {
+      setIsSavingEditBanner(false);
     }
   };
 
@@ -1309,9 +1459,8 @@ export function CMSDashboard() {
     <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] flex font-sans antialiased">
       {/* 1. Left Fixed Sidebar */}
       <aside
-        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-30 sticky top-0 h-screen ${
-          isSidebarCollapsed ? "w-20" : "w-64"
-        }`}
+        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-30 sticky top-0 h-screen ${isSidebarCollapsed ? "w-20" : "w-64"
+          }`}
       >
         {/* Brand Header */}
         <div className="h-16 px-5 border-b border-[#e2e8f0] flex items-center gap-3">
@@ -1334,11 +1483,10 @@ export function CMSDashboard() {
               <button
                 key={item.key}
                 onClick={() => handleNavClick(item.key)}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-[#e2e8f0]/60 text-[#0f172a] font-extrabold shadow-xs"
-                    : "text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9]"
-                }`}
+                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${isActive
+                  ? "bg-[#e2e8f0]/60 text-[#0f172a] font-extrabold shadow-xs"
+                  : "text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9]"
+                  }`}
                 title={isSidebarCollapsed ? item.label : undefined}
               >
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-[#0f172a]" : "text-[#64748b]"}`} />
@@ -1360,9 +1508,8 @@ export function CMSDashboard() {
 
           <button
             onClick={handleLogout}
-            className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl cursor-pointer transition-colors ${
-              isSidebarCollapsed ? "justify-center" : ""
-            }`}
+            className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl cursor-pointer transition-colors ${isSidebarCollapsed ? "justify-center" : ""
+              }`}
           >
             <LogOut className="w-4 h-4 shrink-0" />
             {!isSidebarCollapsed && <span>Sign Out</span>}
@@ -1378,19 +1525,19 @@ export function CMSDashboard() {
             {activeView === "team"
               ? "Team & Admin Management"
               : activeView === "onboarding"
-              ? "Turf Onboarding Requests"
-              : activeView === "community"
-              ? "Community Feed Management"
-              : activeView === "tournaments"
-              ? "Leagues & Tournaments Page Management"
-              : activeView === "turfs"
-              ? "Turfs Management & Rearrange"
-              : "Home Page Management"}
+                ? "Turf Onboarding Requests"
+                : activeView === "community"
+                  ? "Community Feed Management"
+                  : activeView === "tournaments"
+                    ? "Leagues & Tournaments Page Management"
+                    : activeView === "turfs"
+                      ? "Turfs Management & Rearrange"
+                      : "Home Page Management"}
           </h1>
 
           <div className="flex items-center gap-5">
             <Button
-              onClick={() => window.open("/", "_blank")}
+              onClick={() => window.open("https://sportxclub.com/", "_blank")}
               variant="outline"
               className="border-[#cbd5e1] hover:border-[#0f172a] text-[#334155] text-xs font-bold h-9 rounded-xl shadow-xs cursor-pointer"
             >
@@ -1451,37 +1598,93 @@ export function CMSDashboard() {
                   </div>
 
                   <Button
-                    onClick={() => setIsBannerModalOpen(true)}
-                    className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                    onClick={() => {
+                      setSelectedBannerFiles([]);
+                      setIsBannerModalOpen(true);
+                    }}
+                    className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs cursor-pointer"
                   >
                     <Plus className="w-4 h-4 mr-1.5" />
                     Add Hero Banner Slide
                   </Button>
                 </div>
 
-                <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
-                  {banners.map((ban) => (
-                    <Card key={ban.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-xs">
-                      <div className="h-44 relative">
-                        <img src={ban.image_url} alt={ban.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                        <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end text-white">
-                          <div>
-                            <h4 className="font-extrabold text-base">{ban.title}</h4>
-                            <p className="text-xs opacity-80">{ban.subtitle}</p>
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleDeleteBanner(ban.id)}
-                            className="bg-red-600 text-white h-8 px-3 text-xs rounded-xl cursor-pointer"
+                {banners.length === 0 ? (
+                  <div className="text-center py-12 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]/60 p-6">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                      <ImageIcon className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-sm font-black text-[#0f172a]">No custom hero banners uploaded yet</h4>
+                    <p className="text-xs text-[#64748b] max-w-sm mx-auto mt-1 mb-4">
+                      Upload banner images directly from your computer to dynamically display them in the homepage hero carousel.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setSelectedBannerFiles([]);
+                        setIsBannerModalOpen(true);
+                      }}
+                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs cursor-pointer"
+                    >
+                      <UploadCloud className="w-4 h-4 mr-1.5" />
+                      Upload Banner Images
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+                    {banners.map((ban, index) => (
+                      <div
+                        key={ban.id}
+                        className="relative rounded-2xl overflow-hidden shadow-sm border border-[#e2e8f0] bg-slate-900 group h-52 sm:h-56 flex flex-col justify-end"
+                      >
+                        <img
+                          src={ban.image_url}
+                          alt={ban.title}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent" />
+
+                        {/* Slide Number Badge */}
+                        <div className="absolute top-3.5 left-3.5 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-[11px] font-extrabold text-white border border-white/20 shadow-md">
+                          Slide #{index + 1}
+                        </div>
+
+                        {/* Quick Action Buttons directly on the banner image */}
+                        <div className="absolute bottom-3.5 right-3.5 flex items-center gap-2 z-10">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditBanner(ban)}
+                            className="h-9 px-3.5 rounded-full bg-white/95 hover:bg-white text-[#0f172a] font-bold text-xs flex items-center gap-1.5 shadow-lg backdrop-blur-md transition-all hover:scale-105 cursor-pointer border border-white/80"
+                            title="Edit Slide Text & Image"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                            <Edit2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteBanner(ban.id)}
+                            className="h-9 w-9 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 cursor-pointer border border-white/40"
+                            title="Delete Slide"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Title and Subtitle text overlay on the image */}
+                        <div className="relative p-4 pr-36 z-[5]">
+                          <h4 className="font-extrabold text-base sm:text-lg text-white leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] line-clamp-1">
+                            {ban.title}
+                          </h4>
+                          {ban.subtitle && (
+                            <p className="text-xs sm:text-sm text-white/90 font-medium line-clamp-1 mt-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                              {ban.subtitle}
+                            </p>
+                          )}
                         </div>
                       </div>
-                    </Card>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* SECTION 2: POPULAR SPORTS CAROUSEL CARDS */}
@@ -1521,13 +1724,13 @@ export function CMSDashboard() {
                             {sport.icon || "⚽"}
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                        <div className="absolute top-3 left-3">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+                        <div className="absolute top-3 left-3 z-10">
                           <span className="text-2xl drop-shadow">{sport.icon || "⚽"}</span>
                         </div>
-                        <div className="absolute bottom-3 left-3 right-3 text-white">
-                          <h4 className="font-extrabold text-base drop-shadow-md">{sport.name}</h4>
-                          <p className="text-xs text-white/80 font-medium">{sport.description || "1,200+ venues"}</p>
+                        <div className="absolute bottom-3 left-3 right-3 text-white z-10 pointer-events-none">
+                          <h4 className="font-extrabold text-base !text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] leading-tight">{sport.name}</h4>
+                          <p className="text-xs !text-white/90 font-medium drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)] mt-0.5">{sport.description || "1,200+ venues"}</p>
                         </div>
                       </div>
 
@@ -1763,10 +1966,10 @@ export function CMSDashboard() {
                       <Card key={evt.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-xs relative">
                         <div className="h-36 relative bg-slate-900">
                           <img src={evt.image_url} alt={evt.title} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                          <div className="absolute bottom-2.5 left-3 right-3 text-white">
-                            <h4 className="font-extrabold text-sm line-clamp-1">{evt.title}</h4>
-                            <p className="text-[11px] text-white/80">📍 {evt.location}</p>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
+                          <div className="absolute bottom-2.5 left-3 right-3 text-white z-10 pointer-events-none">
+                            <h4 className="font-extrabold text-sm !text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] line-clamp-1">{evt.title}</h4>
+                            <p className="text-[11px] !text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,0.95)]">📍 {evt.location}</p>
                           </div>
                         </div>
 
@@ -2005,9 +2208,8 @@ export function CMSDashboard() {
                     <Button
                       onClick={handleSortRecByDefaultReviews}
                       variant="outline"
-                      className={`text-xs font-bold h-9 rounded-xl border-[#cbd5e1] ${
-                        recSortMode === "reviews" ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "text-[#334155]"
-                      }`}
+                      className={`text-xs font-bold h-9 rounded-xl border-[#cbd5e1] ${recSortMode === "reviews" ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "text-[#334155]"
+                        }`}
                       title="Sort Recommended list by highest reviews count (Default)"
                     >
                       <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
@@ -2065,22 +2267,20 @@ export function CMSDashboard() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
-                          className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:border-[#0f172a]/30 ${
-                            isFirst ? "border-amber-300 bg-amber-50/30" : "border-[#e2e8f0]"
-                          }`}
+                          className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:border-[#0f172a]/30 ${isFirst ? "border-amber-300 bg-amber-50/30" : "border-[#e2e8f0]"
+                            }`}
                         >
                           {/* Position Indicator & Controls */}
                           <div className="flex items-center gap-3 w-full md:w-auto">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${
-                                isFirst
-                                  ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
-                                  : index === 1
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${isFirst
+                                ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
+                                : index === 1
                                   ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white"
                                   : index === 2
-                                  ? "bg-gradient-to-br from-amber-600 to-amber-800 text-white"
-                                  : "bg-white text-[#475569] border border-[#cbd5e1]"
-                              }`}
+                                    ? "bg-gradient-to-br from-amber-600 to-amber-800 text-white"
+                                    : "bg-white text-[#475569] border border-[#cbd5e1]"
+                                }`}
                               title={`Position #${index + 1}`}
                             >
                               {isFirst ? <Star className="w-5 h-5 fill-white text-white" /> : `#${index + 1}`}
@@ -2175,11 +2375,10 @@ export function CMSDashboard() {
                             </div>
 
                             <Badge
-                              className={`font-extrabold text-xs px-2.5 py-1 ${
-                                turf.status === "Active"
-                                  ? "bg-emerald-100 text-emerald-800 border-none"
-                                  : "bg-amber-100 text-amber-800 border-none"
-                              }`}
+                              className={`font-extrabold text-xs px-2.5 py-1 ${turf.status === "Active"
+                                ? "bg-emerald-100 text-emerald-800 border-none"
+                                : "bg-amber-100 text-amber-800 border-none"
+                                }`}
                             >
                               {turf.status || "Active"}
                             </Badge>
@@ -2230,9 +2429,8 @@ export function CMSDashboard() {
                     <Button
                       onClick={handleSortAllByDefaultReviews}
                       variant="outline"
-                      className={`text-xs font-bold h-9 rounded-xl border-[#cbd5e1] ${
-                        allSortMode === "reviews" ? "bg-blue-50 text-blue-700 border-blue-300" : "text-[#334155]"
-                      }`}
+                      className={`text-xs font-bold h-9 rounded-xl border-[#cbd5e1] ${allSortMode === "reviews" ? "bg-blue-50 text-blue-700 border-blue-300" : "text-[#334155]"
+                        }`}
                       title="Sort All Venues list by highest reviews count (Default)"
                     >
                       <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
@@ -2290,22 +2488,20 @@ export function CMSDashboard() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
-                          className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:border-[#0f172a]/30 ${
-                            isFirst ? "border-blue-300 bg-blue-50/30" : "border-[#e2e8f0]"
-                          }`}
+                          className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:border-[#0f172a]/30 ${isFirst ? "border-blue-300 bg-blue-50/30" : "border-[#e2e8f0]"
+                            }`}
                         >
                           {/* Position Indicator & Controls */}
                           <div className="flex items-center gap-3 w-full md:w-auto">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${
-                                isFirst
-                                  ? "bg-gradient-to-br from-blue-500 to-blue-700 text-white"
-                                  : index === 1
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${isFirst
+                                ? "bg-gradient-to-br from-blue-500 to-blue-700 text-white"
+                                : index === 1
                                   ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white"
                                   : index === 2
-                                  ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white"
-                                  : "bg-white text-[#475569] border border-[#cbd5e1]"
-                              }`}
+                                    ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white"
+                                    : "bg-white text-[#475569] border border-[#cbd5e1]"
+                                }`}
                               title={`Position #${index + 1}`}
                             >
                               {isFirst ? <Star className="w-5 h-5 fill-white text-white" /> : `#${index + 1}`}
@@ -2400,11 +2596,10 @@ export function CMSDashboard() {
                             </div>
 
                             <Badge
-                              className={`font-extrabold text-xs px-2.5 py-1 ${
-                                turf.status === "Active"
-                                  ? "bg-emerald-100 text-emerald-800 border-none"
-                                  : "bg-amber-100 text-amber-800 border-none"
-                              }`}
+                              className={`font-extrabold text-xs px-2.5 py-1 ${turf.status === "Active"
+                                ? "bg-emerald-100 text-emerald-800 border-none"
+                                : "bg-amber-100 text-amber-800 border-none"
+                                }`}
                             >
                               {turf.status || "Active"}
                             </Badge>
@@ -2468,7 +2663,7 @@ export function CMSDashboard() {
                     onClick={handleOpenAddPost}
                     className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs h-10 px-4 rounded-xl shadow-xs"
                   >
-                    <Plus className="w-4 h-4 mr-1.5" /> + Create New Post
+                    <Plus className="w-4 h-4 mr-1.5" />Create New Post
                   </Button>
                 </div>
               </div>
@@ -2725,7 +2920,7 @@ export function CMSDashboard() {
                   </div>
                 </div>
 
-                {cmsTournaments.filter(t => 
+                {cmsTournaments.filter(t =>
                   (t.name || t.title || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
                   (t.sport || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
                   (t.location || "").toLowerCase().includes(tournSearchQuery.toLowerCase())
@@ -2738,7 +2933,7 @@ export function CMSDashboard() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {cmsTournaments
-                      .filter(t => 
+                      .filter(t =>
                         (t.name || t.title || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
                         (t.sport || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
                         (t.location || "").toLowerCase().includes(tournSearchQuery.toLowerCase())
@@ -2940,13 +3135,12 @@ export function CMSDashboard() {
                             <td className="p-3.5 font-semibold">{team.members_count || 11} Players</td>
                             <td className="p-3.5">
                               <Badge
-                                className={`text-[10px] font-extrabold px-2.5 py-0.5 ${
-                                  (team.status || "").toLowerCase() === "approved"
-                                    ? "bg-emerald-100 text-emerald-800 border-none"
-                                    : (team.status || "").toLowerCase() === "rejected"
+                                className={`text-[10px] font-extrabold px-2.5 py-0.5 ${(team.status || "").toLowerCase() === "approved"
+                                  ? "bg-emerald-100 text-emerald-800 border-none"
+                                  : (team.status || "").toLowerCase() === "rejected"
                                     ? "bg-red-100 text-red-800 border-none"
                                     : "bg-amber-100 text-amber-800 border-none"
-                                }`}
+                                  }`}
                               >
                                 {team.status || "Pending"}
                               </Badge>
@@ -3165,11 +3359,10 @@ export function CMSDashboard() {
                     return (
                       <Card
                         key={member.id}
-                        className={`bg-white border transition-all duration-200 rounded-2xl shadow-xs overflow-hidden ${
-                          member.status === "Active"
-                            ? "border-[#e2e8f0] hover:border-[#cbd5e1]"
-                            : "border-red-200/60 bg-slate-50/50 opacity-80"
-                        }`}
+                        className={`bg-white border transition-all duration-200 rounded-2xl shadow-xs overflow-hidden ${member.status === "Active"
+                          ? "border-[#e2e8f0] hover:border-[#cbd5e1]"
+                          : "border-red-200/60 bg-slate-50/50 opacity-80"
+                          }`}
                       >
                         <div className="p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                           {/* Left: User Identity & Avatar */}
@@ -3179,9 +3372,8 @@ export function CMSDashboard() {
                                 {(member.full_name || member.username || "U").charAt(0).toUpperCase()}
                               </div>
                               <span
-                                className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${
-                                  member.status === "Active" ? "bg-emerald-500" : "bg-red-500"
-                                }`}
+                                className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white ${member.status === "Active" ? "bg-emerald-500" : "bg-red-500"
+                                  }`}
                                 title={member.status === "Active" ? "Active Account" : "Inactive Account"}
                               />
                             </div>
@@ -3197,9 +3389,8 @@ export function CMSDashboard() {
                                   </Badge>
                                 )}
                                 <span
-                                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
-                                    ROLE_PRESETS[member.role]?.badgeClass || "bg-slate-100 text-slate-700 border-slate-200"
-                                  }`}
+                                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${ROLE_PRESETS[member.role]?.badgeClass || "bg-slate-100 text-slate-700 border-slate-200"
+                                    }`}
                                 >
                                   {member.role || "Editor"}
                                 </span>
@@ -3269,11 +3460,10 @@ export function CMSDashboard() {
                                 return (
                                   <div
                                     key={mod.key}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
-                                      hasPerm
-                                        ? mod.color
-                                        : "bg-slate-50 text-slate-400 border-slate-200 opacity-40 line-through"
-                                    }`}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${hasPerm
+                                      ? mod.color
+                                      : "bg-slate-50 text-slate-400 border-slate-200 opacity-40 line-through"
+                                      }`}
                                     title={mod.description}
                                   >
                                     <Icon className="w-3 h-3" />
@@ -3296,17 +3486,15 @@ export function CMSDashboard() {
                               onClick={() => handleToggleMemberStatus(member)}
                               variant="outline"
                               disabled={isPrimaryAdmin}
-                              className={`h-9 px-3 text-xs font-extrabold rounded-xl border transition-all cursor-pointer ${
-                                member.status === "Active"
-                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                                  : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
-                              }`}
+                              className={`h-9 px-3 text-xs font-extrabold rounded-xl border transition-all cursor-pointer ${member.status === "Active"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                                : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                                }`}
                               title={isPrimaryAdmin ? "Primary admin cannot be deactivated" : "Toggle account active status"}
                             >
                               <span
-                                className={`h-2 w-2 rounded-full mr-1.5 ${
-                                  member.status === "Active" ? "bg-emerald-500" : "bg-red-500"
-                                }`}
+                                className={`h-2 w-2 rounded-full mr-1.5 ${member.status === "Active" ? "bg-emerald-500" : "bg-red-500"
+                                  }`}
                               />
                               {member.status === "Active" ? "Active" : "Inactive"}
                             </Button>
@@ -3327,9 +3515,8 @@ export function CMSDashboard() {
                               onClick={() => handleDeleteTeamMember(member)}
                               variant="ghost"
                               disabled={isPrimaryAdmin}
-                              className={`h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl cursor-pointer ${
-                                isPrimaryAdmin ? "opacity-30 cursor-not-allowed" : ""
-                              }`}
+                              className={`h-9 w-9 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl cursor-pointer ${isPrimaryAdmin ? "opacity-30 cursor-not-allowed" : ""
+                                }`}
                               title={isPrimaryAdmin ? "Primary admin cannot be deleted" : "Delete console account"}
                             >
                               <Trash2 className="w-4 h-4" />
@@ -3353,23 +3540,23 @@ export function CMSDashboard() {
                   const matchStatus = teamStatusFilter === "all" || m.status === teamStatusFilter;
                   return matchQuery && matchRole && matchStatus;
                 }).length === 0 && (
-                  <Card className="bg-white border border-dashed border-[#cbd5e1] rounded-3xl p-12 text-center space-y-3">
-                    <div className="h-12 w-12 rounded-full bg-slate-100 text-[#64748b] flex items-center justify-center mx-auto">
-                      <Users className="w-6 h-6" />
-                    </div>
-                    <h3 className="font-extrabold text-base text-[#0f172a]">No Console Accounts Found</h3>
-                    <p className="text-xs text-[#64748b] max-w-sm mx-auto">
-                      No team members matched your search or active filters. Try adjusting your query or click below to add a new account.
-                    </p>
-                    <Button
-                      onClick={handleOpenAddTeamMember}
-                      className="bg-[#0f172a] text-white text-xs font-extrabold h-9 px-4 rounded-xl cursor-pointer"
-                    >
-                      <UserPlus className="w-3.5 h-3.5 mr-1.5" />
-                      Add New Console User
-                    </Button>
-                  </Card>
-                )}
+                    <Card className="bg-white border border-dashed border-[#cbd5e1] rounded-3xl p-12 text-center space-y-3">
+                      <div className="h-12 w-12 rounded-full bg-slate-100 text-[#64748b] flex items-center justify-center mx-auto">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <h3 className="font-extrabold text-base text-[#0f172a]">No Console Accounts Found</h3>
+                      <p className="text-xs text-[#64748b] max-w-sm mx-auto">
+                        No team members matched your search or active filters. Try adjusting your query or click below to add a new account.
+                      </p>
+                      <Button
+                        onClick={handleOpenAddTeamMember}
+                        className="bg-[#0f172a] text-white text-xs font-extrabold h-9 px-4 rounded-xl cursor-pointer"
+                      >
+                        <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                        Add New Console User
+                      </Button>
+                    </Card>
+                  )}
               </div>
             </div>
           )}
@@ -3483,34 +3670,379 @@ export function CMSDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* 3. Banner Modal */}
-      <Dialog open={isBannerModalOpen} onOpenChange={setIsBannerModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+      {/* 3. Banner Modal - Upload Hero Banner with Title and Subtitle inputs */}
+      <Dialog
+        open={isBannerModalOpen}
+        onOpenChange={(open) => {
+          if (!isUploadingBanners) {
+            setIsBannerModalOpen(open);
+            if (!open) {
+              setSelectedBannerFiles([]);
+              setNewBannerForm({ title: "", subtitle: "" });
+            }
+          }
+        }}
+      >
+        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-extrabold">Add Hero Banner</DialogTitle>
+            <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
+              <UploadCloud className="w-5 h-5 text-emerald-600" />
+              Upload Hero Banner Image(s)
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748b]">
+              Enter the title and subtitle, then select banner image(s) from your computer to feature dynamically on the website hero carousel.
+            </DialogDescription>
           </DialogHeader>
+
           <form onSubmit={handleSaveBanner} className="space-y-4 pt-2">
+            {/* Input 1: Title */}
             <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Banner Title</Label>
+              <Label className="text-xs font-bold text-[#334155]">
+                Banner Title / Heading <span className="text-red-500">*</span>
+              </Label>
               <Input
-                value={bannerForm.title}
-                onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
-                placeholder="Banner Title"
+                value={newBannerForm.title}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewBannerForm((prev) => ({ ...prev, title: val }));
+                  if (selectedBannerFiles.length > 0) {
+                    setSelectedBannerFiles((prev) =>
+                      prev.map((item, idx) => (idx === 0 ? { ...item, title: val } : item))
+                    );
+                  }
+                }}
+                placeholder="e.g. Flat 15% Cashback on Early Bird & Night Turf Bookings"
                 className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
               />
             </div>
+
+            {/* Input 2: Sub Title */}
             <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Image URL</Label>
+              <Label className="text-xs font-bold text-[#334155]">
+                Banner Sub Title / Description
+              </Label>
               <Input
-                value={bannerForm.image_url}
-                onChange={(e) => setBannerForm({ ...bannerForm, image_url: e.target.value })}
-                placeholder="https://images.unsplash.com/..."
+                value={newBannerForm.subtitle}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewBannerForm((prev) => ({ ...prev, subtitle: val }));
+                  if (selectedBannerFiles.length > 0) {
+                    setSelectedBannerFiles((prev) =>
+                      prev.map((item, idx) => (idx === 0 ? { ...item, subtitle: val } : item))
+                    );
+                  }
+                }}
+                placeholder="e.g. Book verified turfs before 11 AM or after 10 PM. Instant refund-safe slots & zero extra fees."
                 className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
               />
             </div>
-            <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
-                Add Banner
+
+            {/* Image Selector Area */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-[#334155]">
+                Banner Image(s) from Computer <span className="text-red-500">*</span>
+              </Label>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsBannerDragging(true);
+                }}
+                onDragLeave={() => setIsBannerDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsBannerDragging(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleBannerFilesSelected(e.dataTransfer.files);
+                  }
+                }}
+                onClick={() => document.getElementById("hero-banner-file-input")?.click()}
+                className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-2 ${isBannerDragging
+                  ? "border-emerald-500 bg-emerald-50/50 scale-[0.99]"
+                  : "border-[#cbd5e1] hover:border-emerald-500 bg-[#f8fafc]/70 hover:bg-[#f1f5f9]"
+                  }`}
+              >
+                <input
+                  id="hero-banner-file-input"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      handleBannerFilesSelected(e.target.files);
+                    }
+                    e.target.value = "";
+                  }}
+                />
+                <div className="w-12 h-12 rounded-full bg-emerald-100/80 text-emerald-700 flex items-center justify-center shadow-xs">
+                  <UploadCloud className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#0f172a]">
+                    Click to browse or drag & drop banner images
+                  </p>
+                  <p className="text-xs text-[#64748b] mt-0.5">
+                    Select one or multiple images (JPG, PNG, WEBP) from your computer
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Selected Images Preview Grid */}
+            {selectedBannerFiles.length > 0 && (
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#334155]">
+                    Selected Image(s) ({selectedBannerFiles.length})
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => document.getElementById("hero-banner-file-input")?.click()}
+                      className="text-xs text-emerald-600 hover:text-emerald-700 h-7 px-2 font-semibold cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 mr-1" /> Add More
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedBannerFiles([])}
+                      className="text-xs text-red-600 hover:text-red-700 h-7 px-2 font-semibold cursor-pointer"
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-48 overflow-y-auto p-1">
+                  {selectedBannerFiles.map((item, idx) => (
+                    <div
+                      key={item.id || idx}
+                      className="relative border border-[#e2e8f0] rounded-xl overflow-hidden bg-white shadow-xs p-2 flex gap-2.5 items-center group"
+                    >
+                      <div className="w-16 h-12 rounded-lg overflow-hidden bg-slate-900 shrink-0 relative border border-[#e2e8f0]">
+                        <img
+                          src={item.preview}
+                          alt="preview"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0 pr-5">
+                        <p className="text-xs font-bold text-[#0f172a] truncate">
+                          {item.title || "SportX Hero Banner"}
+                        </p>
+                        <p className="text-[10px] text-[#64748b] truncate">
+                          {item.subtitle || "Image ready to upload"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSelectedBanner(idx)}
+                        className="absolute top-2 right-2 p-1 text-[#94a3b8] hover:text-red-600 hover:bg-red-50 rounded-md transition-colors cursor-pointer"
+                        title="Remove image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="pt-3 border-t border-[#f1f5f9] flex sm:justify-between items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSelectedBannerFiles([]);
+                  setNewBannerForm({ title: "", subtitle: "" });
+                  setIsBannerModalOpen(false);
+                }}
+                disabled={isUploadingBanners}
+                className="text-xs h-9 font-semibold rounded-xl border-[#cbd5e1] cursor-pointer"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={selectedBannerFiles.length === 0 || isUploadingBanners}
+                className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl px-5 cursor-pointer shadow-xs"
+              >
+                {isUploadingBanners ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading Banners...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-1.5" />
+                    Upload & Save {selectedBannerFiles.length > 0 ? `(${selectedBannerFiles.length})` : ""}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 3.1 Edit Existing Hero Banner Modal */}
+      <Dialog
+        open={isEditBannerModalOpen}
+        onOpenChange={(open) => {
+          if (!isSavingEditBanner) {
+            setIsEditBannerModalOpen(open);
+            if (!open) setEditingBanner(null);
+          }
+        }}
+      >
+        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl sm:max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
+              <Edit2 className="w-5 h-5 text-emerald-600" />
+              Edit Hero Banner Slide Text & Image
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[#64748b]">
+              Update the heading, description text, call-to-action buttons, or replace the banner image from your computer.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveEditBanner} className="space-y-4 pt-2">
+            {/* Banner Image Preview + Replace Button */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold text-[#334155]">Banner Image</Label>
+              <div className="relative rounded-xl overflow-hidden border border-[#e2e8f0] h-40 bg-slate-900 group">
+                {editBannerForm.image_url ? (
+                  <img
+                    src={editBannerForm.image_url}
+                    alt="Banner preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                    No image selected
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Button
+                    type="button"
+                    onClick={() => document.getElementById("edit-banner-file-input")?.click()}
+                    className="bg-white text-[#0f172a] hover:bg-slate-100 text-xs font-bold h-9 rounded-xl shadow-lg cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4 mr-1.5" />
+                    Replace Image from Computer
+                  </Button>
+                </div>
+              </div>
+              <input
+                id="edit-banner-file-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleEditBannerImageChange}
+              />
+            </div>
+
+            {/* Banner Title */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-[#334155]">Banner Title / Heading</Label>
+              <Input
+                value={editBannerForm.title}
+                onChange={(e) => setEditBannerForm({ ...editBannerForm, title: e.target.value })}
+                placeholder="e.g. FIFA-Standard Floodlit Night Turfs & Arenas"
+                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                required
+              />
+            </div>
+
+            {/* Subtitle / Description */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-[#334155]">Subtitle / Description Text</Label>
+              <Input
+                value={editBannerForm.subtitle}
+                onChange={(e) => setEditBannerForm({ ...editBannerForm, subtitle: e.target.value })}
+                placeholder="e.g. High-lux pro lighting, shock-pad turfing, rooftop courts..."
+                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+              />
+            </div>
+
+            {/* Primary Action Button */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Primary Button Text</Label>
+                <Input
+                  value={editBannerForm.cta_text}
+                  onChange={(e) => setEditBannerForm({ ...editBannerForm, cta_text: e.target.value })}
+                  placeholder="Browse All Venues"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Primary Button Link</Label>
+                <Input
+                  value={editBannerForm.link}
+                  onChange={(e) => setEditBannerForm({ ...editBannerForm, link: e.target.value })}
+                  placeholder="/venues"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+            </div>
+
+            {/* Secondary Action Button */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Secondary Button Text</Label>
+                <Input
+                  value={editBannerForm.secondary_cta_text}
+                  onChange={(e) => setEditBannerForm({ ...editBannerForm, secondary_cta_text: e.target.value })}
+                  placeholder="View Night Slots"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Secondary Button Link</Label>
+                <Input
+                  value={editBannerForm.secondary_link}
+                  onChange={(e) => setEditBannerForm({ ...editBannerForm, secondary_link: e.target.value })}
+                  placeholder="/venues"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-3 border-t border-[#f1f5f9] flex sm:justify-between items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditBannerModalOpen(false);
+                  setEditingBanner(null);
+                }}
+                disabled={isSavingEditBanner}
+                className="text-xs h-9 font-semibold rounded-xl border-[#cbd5e1] cursor-pointer"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={isSavingEditBanner}
+                className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl px-5 cursor-pointer shadow-xs"
+              >
+                {isSavingEditBanner ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving Changes...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-1.5" />
+                    Save Banner Changes
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -4404,11 +4936,10 @@ export function CMSDashboard() {
                     <div
                       key={mod.key}
                       onClick={() => handleTogglePermission(mod.key)}
-                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${
-                        isChecked
-                          ? "bg-slate-50 border-[#0f172a] shadow-xs"
-                          : "bg-white border-[#e2e8f0] hover:border-[#cbd5e1] opacity-75"
-                      }`}
+                      className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${isChecked
+                        ? "bg-slate-50 border-[#0f172a] shadow-xs"
+                        : "bg-white border-[#e2e8f0] hover:border-[#cbd5e1] opacity-75"
+                        }`}
                     >
                       <div className="pt-0.5">
                         {isChecked ? (

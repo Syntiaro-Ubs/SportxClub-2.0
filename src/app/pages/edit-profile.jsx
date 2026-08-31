@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../providers/auth-provider";
+import { profileService } from "../services/profile.service";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 import {
   User,
   MapPin,
@@ -10,12 +12,21 @@ import {
   Trophy,
   Upload,
   Phone,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Container } from "../components/ui/container";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 const sportsOptions = [
   { id: "football", name: "Football", emoji: "⚽" },
@@ -32,7 +43,7 @@ const sportsOptions = [
 
 export function EditProfilePage() {
   const navigate = useNavigate();
-  const { currentUser, updateUser } = useAuth();
+  const { currentUser, updateUser, deleteAccount, logout } = useAuth();
 
   // Form State
   const [fullName, setFullName] = useState("");
@@ -43,6 +54,33 @@ export function EditProfilePage() {
   const [profilePicture, setProfilePicture] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim().toUpperCase() !== "DELETE") {
+      toast.error("Please type DELETE to confirm account deletion.");
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      await profileService.deleteAccount(currentUser);
+      if (typeof deleteAccount === "function") {
+        await deleteAccount();
+      } else {
+        logout();
+      }
+      toast.success("Your player account has been permanently removed from database.");
+      setDeleteOpen(false);
+      navigate("/login");
+    } catch (err) {
+      console.error("Delete account error:", err);
+      toast.error(err.message || "Failed to delete account from database");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Load current values
   useEffect(() => {
@@ -296,9 +334,72 @@ export function EditProfilePage() {
                     )}
                   </Button>
                 </div>
+
+                {/* Danger Zone: Permanently Delete Account */}
+                <div className="mt-8 pt-6 border-t border-rose-500/20 rounded-2xl bg-rose-500/5 p-4 border border-dashed">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                        <Trash2 className="w-4 h-4" /> Danger Zone: Delete Account
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Permanently removes your athlete profile and all data from the MySQL database.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => setDeleteOpen(true)}
+                      className="text-xs h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 shrink-0 font-bold cursor-pointer"
+                    >
+                      Delete Account
+                    </Button>
+                  </div>
+                </div>
               </form>
             </div>
           )}
+
+          {/* Delete Account Confirmation Dialog */}
+          <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <DialogContent className="bg-background border-border text-foreground sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-rose-600 font-black">
+                  <Trash2 className="h-5 w-5" /> Permanently Delete Account
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground pt-1.5 leading-relaxed">
+                  Are you sure you want to delete your SportXClub player account?
+                  <br /><br />
+                  <strong className="text-rose-500 font-bold">Important:</strong> All your personal details, match records, wallet balance, active bookings, and reviews will be <strong>permanently deleted from our MySQL database</strong>. This cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2 py-2">
+                <p className="text-xs text-muted-foreground font-medium">
+                  Please type <strong className="text-foreground font-mono font-bold">DELETE</strong> to confirm:
+                </p>
+                <Input
+                  type="text"
+                  placeholder="Type DELETE"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  className="text-xs font-mono uppercase tracking-wider"
+                />
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => { setDeleteOpen(false); setDeleteConfirmText(""); }}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  disabled={deleteConfirmText.trim().toUpperCase() !== "DELETE" || isDeleting}
+                  onClick={handleDeleteAccount}
+                  className="bg-rose-600 hover:bg-rose-700 font-bold text-white cursor-pointer"
+                >
+                  {isDeleting ? "Deleting from Database..." : "Permanently Delete"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </Container>
     </div>

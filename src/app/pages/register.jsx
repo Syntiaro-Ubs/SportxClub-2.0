@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../providers/auth-provider";
 import { motion, AnimatePresence } from "motion/react";
@@ -45,7 +45,8 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const initialType = searchParams.get("type") || "athlete";
+  const isOwnerRoute = searchParams.get("type") === "owner" || location.pathname === "/admin-register";
+  const initialType = isOwnerRoute ? "owner" : (searchParams.get("type") || "athlete");
 
   const { register } = useAuth();
   const [step, setStep] = useState(1);
@@ -58,11 +59,10 @@ export function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: initialType, // athlete | owner | admin
+    role: initialType, // athlete | owner
     selectedSports: [],
     skillLevel: "Intermediate", // Beginner | Intermediate | Pro
     city: "",
-    phone: "",
     otp: "",
     address: "",
     state: "",
@@ -75,16 +75,23 @@ export function RegisterPage() {
 
   // Email verification states
   const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   const [emailVerified, setEmailVerified] = useState(false);
   const [emailOtpError, setEmailOtpError] = useState("");
   const [emailExistsError, setEmailExistsError] = useState("");
   const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
-  const [generatedEmailOtp, setGeneratedEmailOtp] = useState("");
 
-  // Phone states
-  const [phoneOtpError, setPhoneOtpError] = useState("");
-  const [phoneExistsError, setPhoneExistsError] = useState("");
-  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  useEffect(() => {
+    let timer;
+    if (resendCountdown > 0) {
+      timer = setInterval(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCountdown]);
 
   const checkEmailAvailability = async (emailVal) => {
     if (!emailVal || !emailVal.includes("@")) {
@@ -104,37 +111,15 @@ export function RegisterPage() {
     }
   };
 
-  const checkPhoneAvailability = async (phoneVal) => {
-    if (!phoneVal || phoneVal.trim().length < 10) {
-      setPhoneExistsError("");
-      return;
-    }
-    try {
-      const accountType = (formData.role === "owner" || initialType === "owner" || isOwnerRoute) ? "turf-owner" : "player";
-      const res = await adminApi.checkExists({ phone: phoneVal.trim(), accountType });
-      if (res.exists && res.field === "phone") {
-        setPhoneExistsError("This mobile number is already registered for this portal. Please log in instead.");
-      } else {
-        setPhoneExistsError("");
-      }
-    } catch (e) {
-      console.error("Check phone error:", e);
-    }
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
     if (name === "email") {
       setEmailOtpSent(false);
+      setResendCountdown(0);
       setEmailOtpError("");
       checkEmailAvailability(value);
-    }
-    if (name === "phone") {
-      setPhoneOtpSent(false);
-      setPhoneOtpError("");
-      checkPhoneAvailability(value);
     }
   };
 
@@ -172,9 +157,7 @@ export function RegisterPage() {
       formData.lastName.trim() !== "" &&
       formData.email.includes("@") &&
       !emailExistsError &&
-      emailVerified &&
-      formData.phone.length >= 10 &&
-      !phoneExistsError
+      emailVerified
     );
   };
 
@@ -199,14 +182,20 @@ export function RegisterPage() {
 
   // Real Backend OTP Handlers (Live Nodemailer dispatch)
   const sendEmailOtp = async () => {
-    if (!formData.email.includes("@") || emailExistsError) return;
+    if (!formData.email.includes("@") || emailExistsError || isSendingEmailOtp) return;
     try {
       setIsSendingEmailOtp(true);
       setEmailOtpError("");
       const res = await adminApi.requestOtp(formData.email.trim(), "register");
       if (res.success) {
         setEmailOtpSent(true);
-        toast.success(`Verification code sent to ${formData.email}! Check your Gmail inbox.`, { duration: 6000 });
+        setResendCountdown(60); // 60 seconds (1 minute) countdown
+        toast.success(
+          emailOtpSent
+            ? `New verification code resent to ${formData.email}! Please check your Gmail inbox.`
+            : `Verification code sent to ${formData.email}! Please check your Gmail inbox.`,
+          { duration: 6000 }
+        );
       } else {
         setEmailOtpError(res.error || "Failed sending OTP code");
       }
@@ -246,7 +235,6 @@ export function RegisterPage() {
     const result = await register({
       fullName: `${formData.firstName} ${formData.lastName}`.trim(),
       email: formData.email,
-      phone: formData.phone,
       password: formData.password,
       role: formData.role,
       selectedSports: formData.selectedSports,
@@ -258,8 +246,13 @@ export function RegisterPage() {
 
     if (result.success) {
       setIsSuccess(true);
-      if (formData.role === "owner" && result.user?.ownerId) {
-        setGeneratedOwnerId(result.user.ownerId);
+      const isOwner = formData.role === "owner" || result.user?.accountType === "turf-owner" || result.user?.role === "owner";
+      const assignedId = result.user?.ownerId || result.user?.userId || result.user?.id || (isOwner ? "26080001" : "PLY-26080001");
+      if (assignedId) {
+        setGeneratedOwnerId(String(assignedId));
+        if (isOwner) {
+          localStorage.setItem("ownerId", String(assignedId));
+        }
       }
       toast.success("Registration submitted successfully!");
     } else {
@@ -315,27 +308,29 @@ export function RegisterPage() {
 
               <div className="space-y-3 mb-6">
                 <h1 className="text-[28px] text-slate-900 font-medium tracking-tight">
-                  Registration Completed!
+                  {formData.role === "owner" ? "Registration Completed!" : "Account Created Successfully!"}
                 </h1>
                 <p className="text-slate-600 text-[15px] max-w-xs mx-auto leading-relaxed">
-                  Welcome aboard, {formData.firstName}. Please proceed to complete the Turf Onboarding Process.
+                  {formData.role === "owner"
+                    ? `Welcome aboard, ${formData.firstName}. Please proceed to complete the Turf Onboarding Process.`
+                    : `Welcome aboard, ${formData.firstName}! Your sports profile is ready.`}
                 </p>
               </div>
 
               {/* ID Box Layout matching screenshot */}
               <div className="p-8 border border-slate-200 bg-[#f8fafc] rounded-[24px] text-center mb-8 mx-auto w-[90%] shadow-sm">
                 <p className="text-[12px] text-slate-500 font-semibold uppercase tracking-widest mb-6">
-                  YOUR ASSIGNED TURF OWNER ID
+                  {formData.role === "owner" ? "YOUR ASSIGNED TURF OWNER ID" : "YOUR UNIQUE PLAYER ID"}
                 </p>
 
                 <div className="flex items-center justify-center w-full max-w-[280px] mx-auto h-[72px] bg-white rounded-2xl shadow-[-10px_12px_24px_rgba(0,0,0,0.04)] border border-slate-100 mb-6">
-                  <p className="text-[32px] font-medium text-slate-900 tracking-[0.2em] font-mono ml-[0.2em]">
+                  <p className="text-[26px] sm:text-[30px] font-bold text-slate-900 tracking-[0.15em] font-mono ml-[0.15em]">
                     {generatedOwnerId}
                   </p>
                 </div>
 
                 <p className="text-[13px] text-slate-500 max-w-[250px] mx-auto leading-relaxed">
-                  Please save this ID. It has been generated securely for your records.
+                  Please save this ID. It has been generated securely in the database for your records.
                 </p>
               </div>
 
@@ -344,11 +339,15 @@ export function RegisterPage() {
                   onClick={() => {
                     localStorage.setItem("isLoggedIn", "true");
                     localStorage.setItem("userName", formData.firstName);
-                    navigate("/owner-setup");
+                    if (formData.role === "owner") {
+                      navigate("/owner-setup");
+                    } else {
+                      navigate("/");
+                    }
                   }}
-                  className="w-full h-14 rounded-full bg-[#059669] text-white text-[16px] font-medium hover:bg-[#047857] transition-all shadow-lg shadow-[#059669]/20"
+                  className="w-full h-14 rounded-full bg-[#059669] text-white text-[16px] font-medium hover:bg-[#047857] transition-all shadow-lg shadow-[#059669]/20 cursor-pointer"
                 >
-                  Complete Turf Setup
+                  {formData.role === "owner" ? "Complete Turf Setup" : "Explore Turfs"}
                 </Button>
               </div>
             </motion.div>
@@ -390,6 +389,33 @@ export function RegisterPage() {
                 {/* STEP 1: ACCOUNT DETAILS */}
                 {step === 1 && (
                   <div className="space-y-3">
+                    {/* Account Type Tabs */}
+                    <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl mb-2 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, role: "athlete" }))}
+                        className={cn(
+                          "py-2 rounded-lg transition-all cursor-pointer text-center",
+                          formData.role !== "owner"
+                            ? "bg-background text-foreground shadow-sm font-bold"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Player / Athlete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, role: "owner" }))}
+                        className={cn(
+                          "py-2 rounded-lg transition-all cursor-pointer text-center",
+                          formData.role === "owner"
+                            ? "bg-background text-foreground shadow-sm font-bold"
+                            : "text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Turf Owner
+                      </button>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label htmlFor="firstName">First Name</Label>
@@ -450,11 +476,27 @@ export function RegisterPage() {
                           <Button
                             type="button"
                             variant="outline"
-                            disabled={!formData.email.includes("@") || emailOtpSent || Boolean(emailExistsError) || isSendingEmailOtp}
+                            disabled={
+                              !formData.email.includes("@") ||
+                              Boolean(emailExistsError) ||
+                              isSendingEmailOtp ||
+                              (emailOtpSent && resendCountdown > 0)
+                            }
                             onClick={sendEmailOtp}
-                            className="h-10.5 px-4 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary dark:text-white text-xs transition-all shrink-0 font-bold cursor-pointer"
+                            className={cn(
+                              "h-10.5 px-3.5 sm:px-4 rounded-xl border text-xs transition-all shrink-0 font-bold cursor-pointer",
+                              emailOtpSent && resendCountdown === 0
+                                ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
+                                : "border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary dark:text-white"
+                            )}
                           >
-                            {isSendingEmailOtp ? "Sending..." : emailOtpSent ? "OTP Sent" : "Send OTP"}
+                            {isSendingEmailOtp
+                              ? "Sending..."
+                              : emailOtpSent
+                              ? resendCountdown > 0
+                                ? `Resend (${resendCountdown}s)`
+                                : "Resend OTP"
+                              : "Send OTP"}
                           </Button>
                         )}
                         {emailVerified && (
@@ -512,37 +554,6 @@ export function RegisterPage() {
                         )}
                       </motion.div>
                     )}
-
-                    {/* PHONE NUMBER FIELD */}
-                    <div className="space-y-1.5">
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <div className="flex gap-2">
-                        <div className="relative flex-1">
-                          <Phone className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
-                          <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            placeholder="Enter Mobile No."
-                            className={cn(
-                              "pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs",
-                              phoneExistsError && "border-rose-500 focus-visible:ring-rose-500"
-                            )}
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            required
-                          />
-                        </div>
-                      </div>
-
-                      {/* INLINE ALERT FOR EXISTING PHONE */}
-                      {phoneExistsError && (
-                        <div className="text-[11px] font-bold text-rose-500 bg-rose-500/10 border border-rose-500/20 px-3 py-2 rounded-xl flex items-center gap-2 mt-1.5 animate-in fade-in">
-                          <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
-                          <span>{phoneExistsError}</span>
-                        </div>
-                      )}
-                    </div>
 
                     <div className="pt-2">
                       <Button

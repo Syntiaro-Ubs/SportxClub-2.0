@@ -48,78 +48,65 @@ function parseSelectedSports(value) {
 
 // Helper function to send Live HTML Email OTP via Nodemailer
 async function sendLiveEmailOtp(toEmail, otpCode, userName = "Athlete") {
-  try {
-    const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
-    const smtpPort = parseInt(process.env.SMTP_PORT || "587");
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+  const cleanToEmail = (toEmail || "").trim().toLowerCase();
+  const smtpUser = (process.env.SMTP_USER || "waghmareshrinivas99@gmail.com").trim();
+  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
 
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: smtpPort,
-      secure: smtpPort === 465,
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
 
-    const htmlContent = `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background-color: #0d1117; border-radius: 20px; color: #ffffff; border: 1px solid #21262d;">
-        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #21262d;">
-          <h1 style="color: #10b981; font-size: 30px; font-weight: 900; margin: 0; letter-spacing: -0.5px;">SportXClub</h1>
-          <p style="color: #8b949e; font-size: 11px; margin-top: 4px; font-weight: 700; letter-spacing: 2px;">YOUR ULTIMATE SPORTS ARENA PORTAL</p>
-        </div>
-        
-        <div style="padding: 24px 0;">
-          <h2 style="font-size: 18px; color: #f0f6fc; margin-bottom: 12px;">Hello ${userName},</h2>
-          <p style="color: #c9d1d9; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-            Your verification code for SportXClub account security is:
-          </p>
-          
-          <div style="background-color: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 20px; text-align: center; margin: 24px 0;">
-            <span style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 8px; color: #10b981;">
-              ${otpCode}
-            </span>
-          </div>
-          
-          <p style="color: #8b949e; font-size: 12px; line-height: 1.5;">
-            This code will expire in <strong>10 minutes</strong>. If you did not request this verification code, please ignore this email.
-          </p>
-        </div>
-        
-        <div style="border-top: 1px solid #21262d; pt: 16px; text-align: center; color: #8b949e; font-size: 11px;">
-          <p>© 2026 SportXClub. All rights reserved.</p>
-        </div>
+  const plainTextContent = `Hello ${userName},\n\nYour verification code for SportXClub account security is: ${otpCode}\n\nThis code will expire in 10 minutes. If you did not request this verification code, please ignore this email.\n\n© 2026 SportXClub. All rights reserved.`;
+
+  const htmlContent = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background-color: #0d1117; border-radius: 20px; color: #ffffff; border: 1px solid #21262d;">
+      <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #21262d;">
+        <h1 style="color: #10b981; font-size: 30px; font-weight: 900; margin: 0; letter-spacing: -0.5px;">SportXClub</h1>
+        <p style="color: #8b949e; font-size: 11px; margin-top: 4px; font-weight: 700; letter-spacing: 2px;">YOUR ULTIMATE SPORTS ARENA PORTAL</p>
       </div>
-    `;
+      
+      <div style="padding: 24px 0;">
+        <h2 style="font-size: 18px; color: #f0f6fc; margin-bottom: 12px;">Hello ${userName},</h2>
+        <p style="color: #c9d1d9; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+          Your verification code for SportXClub account security is:
+        </p>
+        
+        <div style="background-color: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 20px; text-align: center; margin: 24px 0;">
+          <span style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 8px; color: #10b981;">
+            ${otpCode}
+          </span>
+        </div>
+        
+        <p style="color: #8b949e; font-size: 12px; line-height: 1.5;">
+          This code will expire in <strong>10 minutes</strong>. If you did not request this verification code, please ignore this email.
+        </p>
+      </div>
+      
+      <div style="border-top: 1px solid #21262d; padding-top: 16px; text-align: center; color: #8b949e; font-size: 11px;">
+        <p>© 2026 SportXClub. All rights reserved.</p>
+      </div>
+    </div>
+  `;
 
-    transporter.sendMail({
-      from: `"SportXClub Verification" <${smtpUser}>`,
-      to: toEmail,
-      subject: `[SportXClub] Your Verification Code is ${otpCode}`,
-      html: htmlContent,
-    }).then((info) => {
-      console.log(`[NODEMAILER] Live Email OTP dispatched to ${toEmail} (MessageId: ${info.messageId})`);
-    }).catch((error) => {
-      console.warn(`[NODEMAILER DISPATCH] Email OTP notice for ${toEmail}: ${error.message}`);
-    });
+  await transporter.sendMail({
+    from: `"SportXClub Verification" <${smtpUser}>`,
+    to: cleanToEmail,
+    replyTo: smtpUser,
+    subject: `SportXClub Verification Code: ${otpCode}`,
+    text: plainTextContent,
+    html: htmlContent,
+    priority: "high",
+    headers: {
+      "X-Priority": "1",
+      "X-MSMail-Priority": "High",
+      "Importance": "High"
+    }
+  });
 
-    return { success: true };
-  } catch (error) {
-    console.warn(`[NODEMAILER SETUP] ${error.message}`);
-    return { success: false, error: error.message };
-  }
-}
-
-// Helper function for static Mobile SMS OTP (FAST2SMS API integration removed)
-async function sendStaticSmsOtp(phoneNumber, otpCode = "123456") {
-  console.log(`================================================================`);
-  console.log(`[MOBILE SMS OTP - STATIC MODE] Mobile: ${phoneNumber} | Static OTP Code: ${otpCode}`);
-  console.log(`================================================================`);
   return { success: true };
 }
 
@@ -131,7 +118,9 @@ router.post("/register", async (req, res) => {
     if (!email || !password || !fullName) {
       return res.status(400).json({ success: false, error: "Missing required fields" });
     }
-    const accountType = String(role).toLowerCase() === "owner" ? "turf-owner" : "player";
+    const roleStr = String(role || req.body.accountType || "").toLowerCase();
+    const isOwnerRole = roleStr === "owner" || roleStr === "turf-owner" || roleStr === "turf_owner";
+    const accountType = isOwnerRole ? "turf-owner" : "player";
 
     if (await accountEmailExists(pool, email, accountType)) {
       return res.status(400).json({ success: false, error: "Email is already registered for this account type" });
@@ -139,26 +128,29 @@ router.post("/register", async (req, res) => {
 
     const joinedDate = new Date().toISOString().split("T")[0];
     const avatarUrl = profilePicture || avatar || null;
+    const yy = joinedDate.substring(2, 4);
+    const mm = joinedDate.substring(5, 7);
+    const prefix = `${yy}${mm}`;
 
     if (accountType === "turf-owner") {
-      const yy = joinedDate.substring(2, 4);
-      const mm = joinedDate.substring(5, 7);
-      const prefix = `${yy}${mm}`;
-
       const connection = await pool.getConnection();
       await connection.beginTransaction();
 
       try {
-        const [latest] = await connection.query(
-          `SELECT owner_id FROM turf_owners WHERE owner_id LIKE ? ORDER BY owner_id DESC LIMIT 1 FOR UPDATE`,
+        const [allOwners] = await connection.query(
+          `SELECT owner_id FROM turf_owners WHERE owner_id LIKE ? ORDER BY id DESC`,
           [`${prefix}%`]
         );
 
         let seq = 1;
-        if (latest.length > 0 && latest[0].owner_id) {
-          const lastSeq = parseInt(latest[0].owner_id.slice(-4), 10);
-          if (!isNaN(lastSeq)) {
-            seq = lastSeq + 1;
+        if (allOwners.length > 0) {
+          for (const row of allOwners) {
+            if (row.owner_id) {
+              const lastDigits = parseInt(row.owner_id.slice(-4), 10);
+              if (!isNaN(lastDigits) && lastDigits >= seq) {
+                seq = lastDigits + 1;
+              }
+            }
           }
         }
         const ownerIdStr = `${prefix}${String(seq).padStart(4, '0')}`;
@@ -183,10 +175,11 @@ router.post("/register", async (req, res) => {
             id: ownerResult.insertId,
             accountId: ownerResult.insertId,
             ownerId: ownerIdStr,
+            userId: ownerIdStr,
             fullName,
             email: email.trim().toLowerCase(),
             role: "owner",
-            accountType,
+            accountType: "turf-owner",
             phone,
             city,
             status: "Pending",
@@ -210,11 +203,16 @@ router.post("/register", async (req, res) => {
        VALUES (?, ?, ?, ?, 'Active')`,
       [profileResult.insertId, fullName, email.trim().toLowerCase(), password]
     );
+
+    const playerIdStr = `PLY-${prefix}${String(profileResult.insertId).padStart(4, '0')}`;
+
     return res.json({
       success: true,
       user: {
         id: profileResult.insertId,
         accountId: profileResult.insertId,
+        userId: playerIdStr,
+        ownerId: playerIdStr,
         fullName,
         email: email.trim().toLowerCase(),
         role: "Player",
@@ -249,11 +247,26 @@ router.post("/login", async (req, res) => {
                 o.owner_id, o.phone, o.city, o.status, o.total_turfs, o.earnings
          FROM turf_owner_accounts oa
          LEFT JOIN turf_owners o ON o.id = oa.owner_profile_id
-         WHERE (LOWER(oa.email) = LOWER(?) OR o.owner_id = ?) AND oa.password = ? AND LOWER(oa.status) = 'active'
+         WHERE (LOWER(oa.email) = LOWER(?) OR o.owner_id = ?) AND oa.password = ?
          LIMIT 1`,
         [email.trim(), email.trim(), password.trim()]
       );
-      if (!rows[0]) return res.status(401).json({ success: false, error: "Invalid turf-owner credentials" });
+
+      if (!rows[0]) {
+        // Check if user is trying to log in with a Player account on the Turf Owner login page
+        const [playerExists] = await pool.query(
+          `SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1`,
+          [email.trim()]
+        );
+        if (playerExists.length > 0) {
+          return res.status(400).json({
+            success: false,
+            error: "This account is registered as a Player. Please log in through the Player login page (/login)."
+          });
+        }
+        return res.status(401).json({ success: false, error: "Invalid Turf Owner email/ID or password" });
+      }
+
       const owner = rows[0];
       return res.json({
         success: true,
@@ -261,10 +274,11 @@ router.post("/login", async (req, res) => {
           id: owner.owner_profile_id,
           accountId: owner.account_id,
           ownerId: owner.owner_id,
+          userId: owner.owner_id,
           fullName: owner.full_name,
           email: owner.email,
           role: "owner",
-          accountType,
+          accountType: "turf-owner",
           phone: owner.phone || "",
           city: owner.city || "",
           status: owner.status || owner.account_status,
@@ -274,7 +288,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Normal Player / User Login (Strictly queries `users` table)
+    // Normal Player / User Login (Strictly for /login)
     let player = null;
     const [userRows] = await pool.query(
       `SELECT * FROM users WHERE (LOWER(email) = LOWER(?) OR LOWER(phone) = LOWER(?)) AND password = ? LIMIT 1`,
@@ -290,7 +304,7 @@ router.post("/login", async (req, res) => {
                 u.games_played, u.bookings
          FROM player_accounts pa
          INNER JOIN users u ON u.id = pa.profile_user_id
-         WHERE (LOWER(pa.email) = LOWER(?) OR LOWER(u.phone) = LOWER(?)) AND pa.password = ? AND LOWER(pa.status) = 'active'
+         WHERE (LOWER(pa.email) = LOWER(?) OR LOWER(u.phone) = LOWER(?)) AND pa.password = ?
          LIMIT 1`,
         [email.trim(), email.trim(), password.trim()]
       );
@@ -314,6 +328,17 @@ router.post("/login", async (req, res) => {
     }
 
     if (!player) {
+      // Check if user is trying to log in with a Turf Owner account on the Player login page
+      const [ownerExists] = await pool.query(
+        `SELECT id FROM turf_owner_accounts WHERE LOWER(email) = LOWER(?) OR owner_id = ? LIMIT 1`,
+        [email.trim(), email.trim()]
+      );
+      if (ownerExists.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "This account is registered as a Turf Owner. Please log in through the Turf Owner Portal (/admin-login)."
+        });
+      }
       return res.status(401).json({ success: false, error: "Invalid player email or password" });
     }
 
@@ -536,11 +561,9 @@ router.post("/otp/request", async (req, res) => {
       return res.status(404).json({ success: false, error: "No account found matching this Email or Phone number" });
     }
 
-    // Generate 6-digit OTP (Random 6-digit for Email, Static "123456" for Mobile Number)
+    // Generate 6-digit OTP
     const isEmail = cleanInput.includes("@");
-    const generatedOtp = isEmail
-      ? Math.floor(100000 + Math.random() * 900000).toString()
-      : "123456";
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     otpStore.set(cleanInput, {
@@ -549,26 +572,18 @@ router.post("/otp/request", async (req, res) => {
       user: foundUser || { email: cleanInput, fullName: "New User" },
     });
 
-    console.log(`[OTP DISPATCH] (${mode}) For ${cleanInput} -> Code: ${generatedOtp}`);
-
-    // Dispatch Email or Static Mobile SMS OTP
+    // Dispatch Live Email OTP
     if (isEmail) {
       await sendLiveEmailOtp(cleanInput, generatedOtp, foundUser?.full_name || "Athlete");
-    } else {
-      await sendStaticSmsOtp(cleanInput, generatedOtp);
     }
 
     return res.json({
       success: true,
-      otp: generatedOtp,
-      message: isEmail
-        ? `Verification code sent to your Gmail inbox!`
-        : `Static OTP code (123456) generated for mobile number!`,
+      message: `Verification code sent to your email address! Please check your inbox.`,
       user: foundUser ? {
         id: foundUser.id,
         fullName: foundUser.full_name,
         email: foundUser.email,
-        phone: foundUser.phone,
       } : null,
     });
   } catch (err) {
@@ -874,17 +889,6 @@ router.get("/accounts", async (req, res) => {
 router.post("/owner/setup", async (req, res) => {
   try {
     const pool = getPool();
-    console.log("OWNER SETUP REQUEST", {
-      bodyKeys: Object.keys(req.body || {}),
-      ownerId: req.body?.ownerId,
-      setupDataType: typeof req.body?.setupData,
-      setupDataKeys:
-        req.body?.setupData &&
-        typeof req.body.setupData === "object"
-          ? Object.keys(req.body.setupData)
-          : []
-    });
-
     const ownerId = req.body.ownerId || req.body.owner_id || req.body.id;
     const setupData = req.body.setupData || req.body.formData || req.body.form_data || req.body.data;
 
@@ -899,6 +903,22 @@ router.post("/owner/setup", async (req, res) => {
       });
     }
 
+    // Ensure table and column exist in MySQL
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS turf_onboarding_requests (
+        id VARCHAR(100) PRIMARY KEY,
+        owner_id VARCHAR(50),
+        owner_email VARCHAR(255),
+        form_data LONGTEXT,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    try {
+      await pool.query("ALTER TABLE turf_owners ADD COLUMN setup_data LONGTEXT");
+    } catch (e) { }
+
     // Save setup_data to turf_owners
     await pool.query(
       `UPDATE turf_owners SET setup_data = ? WHERE owner_id = ? OR id = ?`,
@@ -911,20 +931,17 @@ router.post("/owner/setup", async (req, res) => {
       [ownerId, ownerId]
     );
 
-    if (owners.length > 0) {
-      const ownerEmail = owners[0].email;
-      
-      const requestId = `ONB-${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 8)
-        .toUpperCase()}`;
+    const ownerEmail = owners.length > 0 ? owners[0].email : (req.body.email || "");
+    const requestId = `ONB-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase()}`;
 
-      await pool.query(
-        `INSERT INTO turf_onboarding_requests (id, owner_id, owner_email, form_data, status)
-         VALUES (?, ?, ?, ?, 'pending')`,
-        [requestId, ownerId, ownerEmail, JSON.stringify(setupData)]
-      );
-    }
+    await pool.query(
+      `INSERT INTO turf_onboarding_requests (id, owner_id, owner_email, form_data, status)
+       VALUES (?, ?, ?, ?, 'pending')`,
+      [requestId, ownerId, ownerEmail, JSON.stringify(setupData)]
+    );
 
     return res.json({ success: true, message: "Profile submitted successfully" });
   } catch (err) {

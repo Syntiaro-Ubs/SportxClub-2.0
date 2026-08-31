@@ -15,6 +15,7 @@ import {
   QrCode,
   Share2,
   ShoppingBag,
+  Trash2,
   Trophy,
   Wallet,
 } from "lucide-react";
@@ -67,7 +68,7 @@ function EmptyState({ children }) {
 
 export function UserProfile() {
   const navigate = useNavigate();
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, deleteAccount } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -75,6 +76,9 @@ export function UserProfile() {
   const [txHistoryOpen, setTxHistoryOpen] = useState(false);
   const [addonsOpen, setAddonsOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [topUpAmount, setTopUpAmount] = useState("");
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -112,6 +116,30 @@ export function UserProfile() {
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim().toUpperCase() !== "DELETE") {
+      toast.error("Please type DELETE to confirm account deletion.");
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      await profileService.deleteAccount(currentUser);
+      if (typeof deleteAccount === "function") {
+        await deleteAccount();
+      } else {
+        logout();
+      }
+      toast.success("Your player account has been permanently removed from database.");
+      setDeleteOpen(false);
+      navigate("/login");
+    } catch (err) {
+      console.error("Delete account error:", err);
+      toast.error(err.message || "Failed to delete account from database");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleTopUp = async () => {
@@ -225,6 +253,47 @@ export function UserProfile() {
         </DialogContent>
       </Dialog>
 
+      {/* Permanently Delete Account Modal */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="bg-background border-border text-foreground sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-rose-600 font-black">
+              <Trash2 className="h-5 w-5" /> Permanently Delete Account
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1.5 leading-relaxed">
+              Are you sure you want to delete your SportXClub player account?
+              <br /><br />
+              <strong className="text-rose-500 font-bold">Important Notice:</strong> This action will permanently remove your athlete profile, match stats, wallet balance, active bookings, and reviews from our MySQL database. <strong>This cannot be undone.</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <p className="text-xs text-muted-foreground font-medium">
+              Please type <strong className="text-foreground font-mono font-bold">DELETE</strong> to confirm:
+            </p>
+            <Input
+              type="text"
+              placeholder="Type DELETE"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="text-xs font-mono uppercase tracking-wider"
+            />
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => { setDeleteOpen(false); setDeleteConfirmText(""); }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteConfirmText.trim().toUpperCase() !== "DELETE" || isDeleting}
+              onClick={handleDeleteAccount}
+              className="bg-rose-600 hover:bg-rose-700 font-bold text-white cursor-pointer"
+            >
+              {isDeleting ? "Deleting from Database..." : "Permanently Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card className="rounded-none sm:rounded-2xl border-x-0 sm:border-x border-border/50 bg-gradient-to-br from-primary/5 via-card to-card">
         <CardContent className="p-4 sm:p-6">
           <div className="flex flex-col gap-6 md:flex-row md:items-start justify-between">
@@ -234,7 +303,16 @@ export function UserProfile() {
             </div>
             <div className="bg-background/50 border border-border/60 rounded-2xl p-4 w-full md:w-80 space-y-3 text-left"><div className="flex justify-between items-center text-xs"><span className="font-semibold flex items-center gap-1.5"><Flame className="h-4 w-4 text-emerald-600" /> LEVEL {level}</span><span className="text-emerald-600 font-mono font-bold">{xp} XP</span></div><Progress value={xp % 1000 / 10} className="h-2 bg-muted" indicatorColor="bg-emerald-600" /><div className="flex justify-between text-[10px] text-muted-foreground"><span>LVL {level}</span><span>{xpToNextLevel ? `${xpToNextLevel} XP to next level` : "Level ready"}</span></div></div>
           </div>
-          <div className="mt-6 flex justify-end gap-2 border-t border-border/40 pt-4"><Link to="/edit-profile"><Button size="sm" variant="outline" className="text-xs rounded-xl gap-1"><Edit className="h-3.5 w-3.5" /> Edit Profile</Button></Link><Button size="sm" variant="destructive" className="text-xs rounded-xl gap-1" onClick={handleLogout}><LogOut className="h-3.5 w-3.5" /> Logout</Button></div>
+          <div className="mt-6 flex justify-end gap-2 border-t border-border/40 pt-4">
+            <Link to="/edit-profile">
+              <Button size="sm" variant="outline" className="text-xs rounded-xl gap-1 cursor-pointer">
+                <Edit className="h-3.5 w-3.5" /> Edit Profile
+              </Button>
+            </Link>
+            <Button size="sm" variant="destructive" className="text-xs rounded-xl gap-1 cursor-pointer" onClick={handleLogout}>
+              <LogOut className="h-3.5 w-3.5" /> Logout
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -257,6 +335,28 @@ export function UserProfile() {
       <hr className="border-border/60" />
 
       <div className="space-y-4"><h2 className="text-xl font-black text-left flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" /> Teammate Reviews & Ratings</h2><Card className="border-border/50 bg-card"><CardContent className="space-y-4 p-6">{profile?.reviews?.length ? profile.reviews.map((review) => <div key={review.id} className="border-b border-border/50 pb-4 last:border-0 text-left space-y-1.5"><div className="flex items-center justify-between"><p className="font-bold text-sm">{review.reviewer}</p><div className="flex gap-1">{Array.from({ length: Number(review.rating || 0) }).map((_, index) => <Trophy key={index} className="h-4 w-4 fill-amber-400 text-amber-400" />)}</div></div><p className="text-xs text-muted-foreground">{review.comment}</p><p className="text-[10px] text-muted-foreground/60">{formatDateTime(review.createdAt)}</p></div>) : <EmptyState>No teammate reviews are stored for this account.</EmptyState>}</CardContent></Card></div>
+
+      <hr className="border-border/60" />
+
+      {/* Danger Zone: Permanently Delete Account (at the bottom) */}
+      <div className="rounded-2xl border border-dashed border-rose-500/30 bg-rose-500/5 p-5 text-left flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+            <Trash2 className="w-4 h-4" /> Danger Zone: Delete Account
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            Permanently removes your athlete profile, match stats, wallet balance, active bookings, and reviews from our database.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={() => setDeleteOpen(true)}
+          className="text-xs h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 font-bold shrink-0 cursor-pointer shadow-sm"
+        >
+          <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Account
+        </Button>
+      </div>
     </Container>
   );
 }

@@ -252,34 +252,41 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
           <DialogTitle>Select Your City</DialogTitle>
         </DialogHeader>
 
-        {/* 1. Top Search Bar */}
-        <div className="relative shrink-0 w-[85%] sm:w-full mr-auto">
-          <Search
-            className={cn(
-              "absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px]",
-              isDark ? "text-white/40" : "text-slate-400"
+        {/* 1. Top Search Bar Row */}
+        <div className="flex items-center gap-3 w-full pr-10 sm:pr-12 shrink-0">
+          <div className="relative flex-1">
+            <Search
+              className={cn(
+                "absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px]",
+                isDark ? "text-white/40" : "text-slate-400"
+              )}
+            />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search for your city"
+              className={cn(
+                "w-full h-12 pl-12 pr-10 rounded-xl border-[1.5px] text-[15px] font-medium transition-all outline-none bg-transparent",
+                isDark
+                  ? "border-emerald-600 text-white placeholder:text-white/40 focus:ring-1 focus:ring-emerald-600"
+                  : "border-[#059669] text-slate-900 placeholder:text-slate-400 focus:ring-1 focus:ring-[#059669]"
+              )}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className={cn(
+                  "absolute right-3.5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer",
+                  isDark ? "text-white/60 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                )}
+                title="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
-          />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search for your city"
-            className={cn(
-              "w-full h-12 pl-12 pr-10 rounded-xl border-[1.5px] text-[15px] font-medium transition-all outline-none bg-transparent",
-              isDark
-                ? "border-emerald-600 text-white placeholder:text-white/40 focus:ring-1 focus:ring-emerald-600"
-                : "border-[#059669] text-slate-900 placeholder:text-slate-400 focus:ring-1 focus:ring-[#059669]"
-            )}
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+          </div>
         </div>
 
         {/* 2. Detect My Location Button */}

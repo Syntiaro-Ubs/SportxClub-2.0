@@ -83,6 +83,28 @@ export const cmsService = {
     return data.data;
   },
 
+  createBanners: async (bannersData) => {
+    const res = await fetch(`${API_BASE}/banners`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bannersData),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to create banners");
+    return data.data;
+  },
+
+  updateBanner: async (id, bannerData) => {
+    const res = await fetch(`${API_BASE}/banners/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bannerData),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || "Failed to update banner");
+    return data.data;
+  },
+
   deleteBanner: async (id) => {
     const res = await fetch(`${API_BASE}/banners/${id}`, {
       method: "DELETE",

@@ -7,13 +7,41 @@ export async function detectUserCity() {
     try {
       const position = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 6000,
+          timeout: 8000,
           enableHighAccuracy: true,
+          maximumAge: 0,
         });
       });
       const { latitude, longitude } = position.coords;
 
-      // Reverse Geocode using BigDataCloud API (Free, fast, no API key required)
+      // Reverse Geocode using OpenStreetMap Nominatim first (Very accurate city/district/suburb)
+      try {
+        const osmRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`,
+          { headers: { "Accept-Language": "en" } }
+        );
+        if (osmRes.ok) {
+          const osmData = await osmRes.json();
+          const addr = osmData.address || {};
+          const cityCandidate =
+            addr.city ||
+            addr.town ||
+            addr.state_district ||
+            addr.district ||
+            addr.county ||
+            addr.suburb ||
+            addr.village ||
+            addr.municipality;
+
+          if (cityCandidate && cityCandidate.trim()) {
+            return cityCandidate.trim();
+          }
+        }
+      } catch (err) {
+        console.warn("[GEOLOCATION] OpenStreetMap fallback to BigDataCloud:", err);
+      }
+
+      // Secondary: BigDataCloud Reverse Geocoding
       const res = await fetch(
         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
       );
@@ -21,9 +49,11 @@ export async function detectUserCity() {
         const data = await res.json();
         const city =
           data.city ||
+          (data.localityInfo && data.localityInfo.administrative && (
+            data.localityInfo.administrative.find((a) => a.adminLevel === 6 || a.adminLevel === 5 || a.adminLevel === 4)?.name
+          )) ||
           data.locality ||
-          data.principalSubdivision ||
-          (data.localityInfo && data.localityInfo.administrative && data.localityInfo.administrative[2] && data.localityInfo.administrative[2].name);
+          data.principalSubdivision;
         if (city && city.trim()) {
           return city.trim();
         }
@@ -38,8 +68,8 @@ export async function detectUserCity() {
     const ipRes = await fetch("https://ipapi.co/json/");
     if (ipRes.ok) {
       const ipData = await ipRes.json();
-      if (ipData && ipData.city) {
-        return ipData.city;
+      if (ipData && (ipData.city || ipData.region)) {
+        return ipData.city || ipData.region;
       }
     }
   } catch (e) {
@@ -47,7 +77,7 @@ export async function detectUserCity() {
       const fallbackRes = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client");
       if (fallbackRes.ok) {
         const fallbackData = await fallbackRes.json();
-        const city = fallbackData.city || fallbackData.locality || fallbackData.principalSubdivision;
+        const city = fallbackData.city || fallbackData.principalSubdivision || fallbackData.locality;
         if (city) return city;
       }
     } catch (err) {}
