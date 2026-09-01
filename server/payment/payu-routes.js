@@ -38,16 +38,16 @@ router.post("/initiate", async (req, res) => {
 
     const numericAmount = parseFloat(amount || 1200);
     const formattedAmount = numericAmount.toFixed(2);
-    const txnid = `SPX_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
+    const txnid = `SPX${Date.now()}${Math.floor(100 + Math.random() * 900)}`;
 
     const cleanEmail = (userEmail || "user@sportxclub.com").trim().toLowerCase();
-    const cleanName = (userName || "SportX Player").replace(/[^a-zA-Z0-9 ]/g, " ").trim() || "SportX Player";
-    const cleanPhone = (userPhone || "9876543210").replace(/[^0-9]/g, "").slice(-10) || "9876543210";
-    const cleanTurf = (turfName || "SportX Turf").replace(/[^a-zA-Z0-9 ]/g, " ").trim() || "SportX Turf";
-    const cleanDate = (date || new Date().toISOString().split("T")[0]).trim();
-    const cleanTime = (time || "6:00 PM - 7:00 PM").trim();
-    const cleanSport = (sport || "Football").replace(/[^a-zA-Z0-9 ]/g, " ").trim() || "Football";
-    const cleanBookingCode = (bookingCode || `SPX-BK-${Date.now()}`).trim();
+    const cleanTurf = String(turfName || "SportXTurf").replace(/[^a-zA-Z0-9]/g, "");
+    const cleanName = String(userName || "SportXPlayer").replace(/[^a-zA-Z0-9]/g, "");
+    const cleanPhone = String(userPhone || "9876543210").replace(/[^0-9]/g, "").slice(-10);
+    const cleanDate = String(date || "").replace(/[^a-zA-Z0-9]/g, "");
+    const cleanTime = String(time || "").replace(/[^a-zA-Z0-9]/g, "");
+    const cleanSport = String(sport || "").replace(/[^a-zA-Z0-9]/g, "");
+    const cleanBookingCode = String(bookingCode || `SPXBK${Date.now()}`).replace(/[^a-zA-Z0-9]/g, "");
 
     // User-Defined Fields for tracking booking details in PayU
     const udf1 = String(venueId || "");
@@ -92,8 +92,7 @@ router.post("/initiate", async (req, res) => {
       udf2,
       udf3,
       udf4,
-      udf5,
-      service_provider: "payu_paisa",
+      udf5
     };
 
     return res.json({
