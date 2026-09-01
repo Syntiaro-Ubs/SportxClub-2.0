@@ -263,7 +263,7 @@ export function OwnerSetupPage() {
     setStatus("submitting");
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
     try {
       console.log("ONBOARDING SUBMIT DEBUG", {
@@ -312,9 +312,9 @@ export function OwnerSetupPage() {
       clearTimeout(timeoutId);
       console.error("Network error: ", e.message);
       if (e.name === 'AbortError') {
-        alert("The server is not responding (timeout). Please check if your backend is running on port 5000.");
+        alert("The server is not responding (timeout). The images might be too large or your connection is slow. Please try again.");
       } else {
-        alert("Network error: " + e.message + ". Make sure the backend server is running.");
+        alert("Network error: " + e.message + ". Make sure your internet connection is stable.");
       }
       setStatus("draft");
     }
