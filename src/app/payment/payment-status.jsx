@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
-import { phonepeService } from "./phonepe-service";
+import { payuService } from "./payu-service";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -25,7 +25,10 @@ export function PaymentStatus() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const merchantTxnId = searchParams.get("merchantTransactionId") || searchParams.get("txnId") || `M22W_${Date.now()}`;
+  const txnid = searchParams.get("txnid") || searchParams.get("merchantTransactionId") || searchParams.get("txnId") || "";
+  const queryStatus = searchParams.get("status") || "";
+  const mihpayid = searchParams.get("mihpayid") || "";
+  const failureReason = searchParams.get("reason") || "";
 
   const [isLoading, setIsLoading] = useState(true);
   const [verificationResult, setVerificationResult] = useState(null);
@@ -50,54 +53,56 @@ export function PaymentStatus() {
   const sportStr = bookingData?.sport || "Football";
 
   useEffect(() => {
-    if (!merchantTxnId || verifyingRef.current) return;
+    if (verifyingRef.current) return;
     verifyingRef.current = true;
 
     async function verify() {
       setIsLoading(true);
       try {
-        let isPaid = false;
+        const isQuerySuccess = queryStatus.toLowerCase() === "success";
 
-        try {
-          const phonePeStatus = await phonepeService.getPaymentStatus(merchantTxnId);
-          const statusUpper = String(
-            phonePeStatus?.paymentStatus ||
-            phonePeStatus?.code ||
-            phonePeStatus?.data?.responseCode ||
-            phonePeStatus?.data?.state ||
-            ""
-          ).toUpperCase();
+        if (txnid) {
+          const statusRes = await payuService.getPaymentStatus(txnid);
 
-          isPaid = (
-            phonePeStatus?.success === true ||
-            statusUpper === "PAYMENT_SUCCESS" ||
-            statusUpper === "SUCCESS" ||
-            statusUpper === "COMPLETED"
-          );
-        } catch (statusErr) {
-          console.warn("Could not fetch PhonePe status from gateway API, checking query params:", statusErr);
-          const queryCode = String(
-            searchParams.get("code") ||
-            searchParams.get("responseCode") ||
-            searchParams.get("status") ||
-            ""
-          ).toUpperCase();
-          if (queryCode === "PAYMENT_SUCCESS" || queryCode === "SUCCESS" || queryCode === "COMPLETED") {
-            isPaid = true;
+          if (statusRes.success && statusRes.isPaid) {
+            setVerificationResult({
+              status: "Success",
+              success: true,
+              transactionId: statusRes.transactionId || mihpayid || txnid,
+              payment: statusRes.payment,
+              booking: statusRes.booking,
+            });
+            toast.success("PayU Payment Verified & Booking Saved!");
+          } else if (isQuerySuccess) {
+            // Callback redirected as success; ensure database record is synced
+            const verifyRes = await payuService.verifyPayment(
+              txnid,
+              "SUCCESS",
+              bookingData || { venue: venueName, date: dateStr, time: timeStr, price, sport: sportStr }
+            );
+            setVerificationResult(verifyRes);
+            toast.success("PayU Payment Verified & Booking Saved!");
+          } else {
+            setVerificationResult({
+              status: "Failed",
+              success: false,
+              message: failureReason || "Payment not completed on PayU.",
+            });
+            toast.error("Payment Failed. Slot was not reserved.");
           }
-        }
-
-        const result = await phonepeService.verifyPayment(
-          merchantTxnId,
-          isPaid ? "SUCCESS" : "FAILED",
-          bookingData || { venue: venueName, date: dateStr, time: timeStr, price, sport: sportStr }
-        );
-
-        setVerificationResult(result);
-        if (result?.status === "Success" || result?.success === true || isPaid) {
-          toast.success("PhonePe Payment Verified & Booking Saved!");
+        } else if (isQuerySuccess) {
+          setVerificationResult({
+            status: "Success",
+            success: true,
+            transactionId: mihpayid || `PAYU_${Date.now()}`,
+          });
+          toast.success("Payment Confirmed!");
         } else {
-          toast.error("Payment Failed. Slot was not reserved.");
+          setVerificationResult({
+            status: "Failed",
+            success: false,
+            message: failureReason || "Transaction cancelled.",
+          });
         }
       } catch (err) {
         console.error("Verification error:", err);
@@ -106,9 +111,9 @@ export function PaymentStatus() {
       }
     }
     verify();
-  }, [merchantTxnId]);
+  }, [txnid, queryStatus]);
 
-  const isSuccess = verificationResult?.status === "Success" || verificationResult?.success === true;
+  const isSuccess = verificationResult?.status === "Success" || verificationResult?.success === true || queryStatus.toLowerCase() === "success";
 
   const handleDownloadReceipt = () => {
     const loadingToastId = toast.loading("Generating receipt PDF...");
@@ -125,7 +130,7 @@ export function PaymentStatus() {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
       doc.setFont("Helvetica", "normal");
-      doc.text(`Transaction Ref: ${verificationResult?.transactionId || merchantTxnId}`, 120, 25);
+      doc.text(`Transaction Ref: ${verificationResult?.transactionId || mihpayid || txnid}`, 120, 25);
 
       doc.setTextColor(16, 18, 22);
       doc.setFontSize(12);
@@ -135,7 +140,7 @@ export function PaymentStatus() {
 
       doc.setFont("Helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`Status: Paid / Confirmed (PhonePe Business PG)`, 20, 66);
+      doc.text(`Status: Paid / Confirmed (PayU Live Gateway)`, 20, 66);
       doc.text(`Venue: ${venueName}`, 20, 74);
       doc.text(`Address: ${venueAddress}`, 20, 82);
       doc.text(`Sport: ${sportStr}`, 20, 90);
@@ -143,7 +148,7 @@ export function PaymentStatus() {
       doc.text(`Time Slot: ${timeStr}`, 120, 74);
       doc.text(`Amount Paid: INR ${price}`, 120, 82);
 
-      doc.save("PhonePe-SportXClub-Receipt.pdf");
+      doc.save("PayU-SportXClub-Receipt.pdf");
       toast.dismiss(loadingToastId);
       toast.success("Receipt downloaded successfully!");
     } catch (e) {
@@ -156,7 +161,7 @@ export function PaymentStatus() {
     return (
       <Container className="py-24 flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-12 w-12 text-emerald-600 animate-spin mb-4" />
-        <p className="text-slate-700 dark:text-white font-bold text-lg">Verifying PhonePe Transaction...</p>
+        <p className="text-slate-700 dark:text-white font-bold text-lg">Verifying PayU Transaction...</p>
         <p className="text-slate-400 text-sm mt-1">Updating payment record in database...</p>
       </Container>
     );
@@ -181,7 +186,7 @@ export function PaymentStatus() {
               </div>
               <div className="space-y-2">
                 <span className="inline-flex items-center gap-1 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  ⚡ PhonePe Transaction Successful
+                  ⚡ PayU Live Transaction Successful
                 </span>
                 <h1 className="text-3xl font-black text-slate-900 dark:text-white">
                   Booking Confirmed!
@@ -200,13 +205,13 @@ export function PaymentStatus() {
               </div>
               <div className="space-y-2">
                 <span className="inline-flex items-center gap-1 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                  ⚠️ PhonePe Transaction Failed
+                  ⚠️ PayU Transaction Failed
                 </span>
                 <h1 className="text-3xl font-black text-slate-900 dark:text-white">
                   Payment Failed
                 </h1>
                 <p className="text-slate-500 dark:text-white/70 text-sm font-medium max-w-md mx-auto">
-                  Your transaction was cancelled or declined on PhonePe. <span className="font-bold text-rose-600">The slot has not been reserved.</span>
+                  Your transaction was cancelled or declined on PayU. <span className="font-bold text-rose-600">The slot has not been reserved.</span>
                 </p>
               </div>
             </div>
@@ -248,8 +253,8 @@ export function PaymentStatus() {
                   </div>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] uppercase text-slate-400 font-bold">Merchant Ref ID</p>
-                  <p className="font-mono text-xs font-bold text-slate-800 dark:text-white">{merchantTxnId}</p>
+                  <p className="text-[10px] uppercase text-slate-400 font-bold">PayU Transaction ID</p>
+                  <p className="font-mono text-xs font-bold text-slate-800 dark:text-white">{txnid || verificationResult?.transactionId || "—"}</p>
                 </div>
               </div>
 
@@ -257,7 +262,7 @@ export function PaymentStatus() {
                 <>
                   <div className="pt-2 border-t border-dashed border-border/40 flex flex-col items-center">
                     <div className="bg-slate-50 dark:bg-black/40 p-3 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-white/[0.05] shadow-inner w-full max-w-[200px]">
-                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-PhonePe-Ticket" alt="QR Code" className="h-24 w-24 object-contain mix-blend-multiply dark:mix-blend-normal" />
+                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-PayU-Ticket" alt="QR Code" className="h-24 w-24 object-contain mix-blend-multiply dark:mix-blend-normal" />
                       <span className="text-[8px] font-mono text-slate-500 mt-2 font-semibold tracking-widest uppercase">
                         Scan at Reception
                       </span>

@@ -428,9 +428,19 @@ router.delete("/admin/:entity/:id", async (req, res) => {
   }
 });
 
-// Reset/Reseed database endpoint
+// Reset/Reseed database endpoint (Protected)
 router.post("/admin/reset-db", async (req, res) => {
   try {
+    const adminSecret = req.headers["x-admin-secret"] || req.body?.adminSecret;
+    const isProduction = process.env.NODE_ENV === "production";
+
+    if (isProduction || !adminSecret || adminSecret !== (process.env.ADMIN_API_SECRET || "sportxclub_admin_sec_2026_x89")) {
+      return res.status(403).json({
+        success: false,
+        error: "Forbidden: Database reset is disabled or unauthorized.",
+      });
+    }
+
     const pool = getPool();
     // Drop all tables & re-initialize
     const tables = Object.values(ALLOWED_ENTITIES);

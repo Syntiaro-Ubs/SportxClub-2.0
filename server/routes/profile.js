@@ -267,6 +267,15 @@ router.delete("/account", async (req, res) => {
   try {
     const userId = req.body?.userId || req.query?.userId;
     const email = req.body?.email || req.query?.email;
+    const confirmText = String(req.body?.confirmText || req.query?.confirmText || "").trim().toUpperCase();
+
+    if (confirmText !== "DELETE") {
+      return res.status(400).json({
+        success: false,
+        error: "Confirmation required. You must provide confirmText: 'DELETE' to delete an account.",
+      });
+    }
+
     const user = await findUser(connection, userId, email);
     if (!user) {
       return res.status(404).json({ success: false, error: "Player account not found in database." });

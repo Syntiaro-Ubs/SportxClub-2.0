@@ -27,7 +27,8 @@ export function TurfOnboardingView() {
 
   const loadRequests = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/admin/onboarding");
+      const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+      const response = await fetch(`${apiBase}/api/admin/onboarding`);
       const result = await response.json();
       if (result.success) {
         setRequests(result.data);
@@ -75,8 +76,9 @@ export function TurfOnboardingView() {
 
       await turfService.create("admin", mappedData);
 
+      const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
       // Update backend status to approved
-      await fetch(`http://localhost:5000/api/admin/onboarding/${req.id}`, {
+      await fetch(`${apiBase}/api/admin/onboarding/${req.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "approved" })
@@ -99,7 +101,8 @@ export function TurfOnboardingView() {
     if (!window.confirm("Are you sure you want to reject this turf onboarding request?")) return;
 
     try {
-      await fetch(`http://localhost:5000/api/admin/onboarding/${req.id}`, {
+      const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+      await fetch(`${apiBase}/api/admin/onboarding/${req.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "rejected" })

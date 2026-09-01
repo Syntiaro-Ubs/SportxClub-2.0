@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation, useParams } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "../providers/auth-provider";
 import { useTheme } from "next-themes";
-import { phonepeService } from "../payment/phonepe-service";
+import { payuService } from "../payment/payu-service";
 import {
   ArrowLeft,
   ArrowRight,
@@ -1931,18 +1931,16 @@ export function VenueDetails() {
                       console.warn("Storage note:", e.message);
                     }
 
-                    toast.loading("Connecting to PhonePe Business Gateway...", { id: "phonepe-init" });
-                    phonepeService.initiatePayment(bookingPayload).then((res) => {
-                      toast.dismiss("phonepe-init");
-                      if (res.success && res.redirectUrl) {
-                        window.location.href = res.redirectUrl;
-                      } else {
-                        toast.error(res.message || "PhonePe could not start the payment. Please try again.");
+                    toast.loading("Connecting to PayU Live Gateway...", { id: "payu-init" });
+                    payuService.initiatePayment(bookingPayload).then((res) => {
+                      toast.dismiss("payu-init");
+                      if (!res.success) {
+                        toast.error(res.message || "PayU could not start the payment. Please try again.");
                       }
                     }).catch((err) => {
-                      toast.dismiss("phonepe-init");
-                      toast.error("Failed initiating PhonePe payment. Redirecting to status...");
-                      navigate(`/payment-status?status=FAILED`);
+                      toast.dismiss("payu-init");
+                      console.error("PayU initialization error:", err);
+                      toast.error("Failed initiating PayU payment.");
                     });
                   }}
                   className={cn(
