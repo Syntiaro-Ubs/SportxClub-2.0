@@ -70,7 +70,7 @@ app.get("/api/health", (req, res) => {
 
 // Serve frontend in production
 app.use(express.static(path.join(__dirname, "../dist")));
-app.get("*", (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, "../dist/index.html"));
 });
 
