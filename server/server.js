@@ -68,6 +68,12 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date() });
 });
 
+// Serve frontend in production
+app.use(express.static(path.join(__dirname, "../dist")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../dist/index.html"));
+});
+
 async function startServer() {
   try {
     await initDatabase();
