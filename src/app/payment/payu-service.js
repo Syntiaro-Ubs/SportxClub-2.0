@@ -40,7 +40,7 @@ export const payuService = {
       form.style.display = "none";
 
       Object.entries(paymentPayload).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (value !== undefined && value !== null && value !== "") {
           const input = document.createElement("input");
           input.type = "hidden";
           input.name = key;
