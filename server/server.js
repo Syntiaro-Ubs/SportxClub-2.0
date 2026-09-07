@@ -17,7 +17,7 @@ import turfRoutes from "./routes/turf/index.js";
 import cmsRoutes from "./routes/cms/index.js";
 import profileRoutes from "./routes/profile.js";
 import aiAssistantRoutes from "./routes/ai-assistant.js";
-import payuRoutes from "./payment/payu-routes.js";
+import cashfreeRoutes from "./payment/cashfree-routes.js";
 
 
 const app = express();
@@ -56,8 +56,8 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/ai-assistant", aiAssistantRoutes);
-app.use("/api/payment/payu", payuRoutes);
-app.use("/api/payment", payuRoutes);
+app.use("/api/payment/cashfree", cashfreeRoutes);
+app.use("/api/payment", cashfreeRoutes);
 app.use("/api", authRoutes);
 app.use("/api", adminRoutes);
 app.use("/api/turf", turfRoutes);

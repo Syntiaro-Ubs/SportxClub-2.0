@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router";
-import { payuService } from "./payu-service";
+import { cashfreeService } from "./cashfree-service";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import {
@@ -14,6 +14,8 @@ import {
   RotateCcw,
   ShieldAlert,
   Loader2,
+  CreditCard,
+  Building2,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
@@ -25,9 +27,15 @@ export function PaymentStatus() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const txnid = searchParams.get("txnid") || searchParams.get("merchantTransactionId") || searchParams.get("txnId") || "";
+  const orderId =
+    searchParams.get("order_id") ||
+    searchParams.get("orderId") ||
+    searchParams.get("txnid") ||
+    searchParams.get("merchantTransactionId") ||
+    (typeof window !== "undefined" ? sessionStorage.getItem("sportxclub_cashfree_order_id") : "") ||
+    "";
+
   const queryStatus = searchParams.get("status") || "";
-  const mihpayid = searchParams.get("mihpayid") || "";
   const failureReason = searchParams.get("reason") || "";
 
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +45,10 @@ export function PaymentStatus() {
   // Read saved booking payload
   let bookingData = null;
   try {
-    const saved = sessionStorage.getItem("sportxclub_last_booking") || sessionStorage.getItem("sportxclub_pending_booking") || sessionStorage.getItem("sportxclub_booking");
+    const saved =
+      sessionStorage.getItem("sportxclub_last_booking") ||
+      sessionStorage.getItem("sportxclub_pending_booking") ||
+      sessionStorage.getItem("sportxclub_booking");
     if (saved) {
       bookingData = JSON.parse(saved);
     }
@@ -45,10 +56,18 @@ export function PaymentStatus() {
     console.error("Error parsing pending booking data:", e);
   }
 
-  const venueName = typeof bookingData?.venue === "object" ? (bookingData.venue.name || "Elite Sports Arena") : (bookingData?.venue || "Elite Sports Arena");
-  const venueAddress = typeof bookingData?.venue === "object" ? (bookingData.venue.location || "123 Sports Complex, MG Road, Mumbai") : (bookingData?.location || "123 Sports Complex, MG Road, Mumbai");
+  const venueName =
+    typeof bookingData?.venue === "object"
+      ? (bookingData.venue.name || "Elite Sports Arena")
+      : (bookingData?.venue || "Elite Sports Arena");
+  const venueAddress =
+    typeof bookingData?.venue === "object"
+      ? (bookingData.venue.location || "123 Sports Complex, MG Road, Mumbai")
+      : (bookingData?.location || "123 Sports Complex, MG Road, Mumbai");
   const dateStr = bookingData?.selectedDate || bookingData?.date || "June 18, 2026";
-  const timeStr = bookingData?.startTime ? `${bookingData.startTime} (${bookingData.playHours || 1} hr)` : (bookingData?.time || "6:00 PM - 7:00 PM");
+  const timeStr = bookingData?.startTime
+    ? `${bookingData.startTime} (${bookingData.playHours || 1} hr)`
+    : (bookingData?.time || "6:00 PM - 7:00 PM");
   const price = bookingData?.price || bookingData?.amount || 1200;
   const sportStr = bookingData?.sport || "Football";
 
@@ -59,61 +78,78 @@ export function PaymentStatus() {
     async function verify() {
       setIsLoading(true);
       try {
-        const isQuerySuccess = queryStatus.toLowerCase() === "success";
+        if (orderId) {
+          console.log("[PaymentStatus] Verifying Cashfree order:", orderId);
+          const statusRes = await cashfreeService.getOrderStatus(orderId);
 
-        if (txnid) {
-          const statusRes = await payuService.getPaymentStatus(txnid);
-
-          if (statusRes.success && statusRes.isPaid) {
+          if (statusRes.success && (statusRes.isPaid || statusRes.status === "Success")) {
             setVerificationResult({
               status: "Success",
               success: true,
-              transactionId: statusRes.transactionId || mihpayid || txnid,
-              payment: statusRes.payment,
+              transactionId: statusRes.transactionId || statusRes.cf_payment_id || orderId,
+              order_id: statusRes.order_id || orderId,
+              payment: statusRes.paymentDetails,
               booking: statusRes.booking,
             });
-            toast.success("PayU Payment Verified & Booking Saved!");
-          } else if (isQuerySuccess) {
-            // Callback redirected as success; ensure database record is synced
-            const verifyRes = await payuService.verifyPayment(
-              txnid,
-              "SUCCESS",
+            toast.success("Cashfree Payment Verified & Booking Confirmed!");
+          } else if (statusRes.status === "Pending") {
+            // Try fallback verification
+            const verifyRes = await cashfreeService.verifyPayment(
+              orderId,
               bookingData || { venue: venueName, date: dateStr, time: timeStr, price, sport: sportStr }
             );
-            setVerificationResult(verifyRes);
-            toast.success("PayU Payment Verified & Booking Saved!");
+
+            if (verifyRes.success && verifyRes.status === "Success") {
+              setVerificationResult(verifyRes);
+              toast.success("Cashfree Payment Verified & Booking Confirmed!");
+            } else {
+              setVerificationResult({
+                status: "Pending",
+                success: false,
+                message: "Payment is pending or awaiting bank settlement.",
+              });
+              toast.info("Payment is being processed by your bank.");
+            }
           } else {
             setVerificationResult({
               status: "Failed",
               success: false,
-              message: failureReason || "Payment not completed on PayU.",
+              message: statusRes.message || failureReason || "Payment was not completed on Cashfree.",
             });
-            toast.error("Payment Failed. Slot was not reserved.");
+            toast.error("Payment Failed. The slot was not reserved.");
           }
-        } else if (isQuerySuccess) {
+        } else if (queryStatus.toLowerCase() === "success") {
           setVerificationResult({
             status: "Success",
             success: true,
-            transactionId: mihpayid || `PAYU_${Date.now()}`,
+            transactionId: `CF_${Date.now()}`,
           });
           toast.success("Payment Confirmed!");
         } else {
           setVerificationResult({
             status: "Failed",
             success: false,
-            message: failureReason || "Transaction cancelled.",
+            message: failureReason || "No order reference found.",
           });
         }
       } catch (err) {
         console.error("Verification error:", err);
+        setVerificationResult({
+          status: "Failed",
+          success: false,
+          message: err.message || "Failed verifying transaction.",
+        });
       } finally {
         setIsLoading(false);
       }
     }
     verify();
-  }, [txnid, queryStatus]);
+  }, [orderId, queryStatus]);
 
-  const isSuccess = verificationResult?.status === "Success" || verificationResult?.success === true || queryStatus.toLowerCase() === "success";
+  const isSuccess =
+    verificationResult?.status === "Success" ||
+    verificationResult?.success === true ||
+    queryStatus.toLowerCase() === "success";
 
   const handleDownloadReceipt = () => {
     const loadingToastId = toast.loading("Generating receipt PDF...");
@@ -130,7 +166,7 @@ export function PaymentStatus() {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(10);
       doc.setFont("Helvetica", "normal");
-      doc.text(`Transaction Ref: ${verificationResult?.transactionId || mihpayid || txnid}`, 120, 25);
+      doc.text(`Cashfree Ref: ${verificationResult?.transactionId || orderId}`, 115, 25);
 
       doc.setTextColor(16, 18, 22);
       doc.setFontSize(12);
@@ -140,15 +176,17 @@ export function PaymentStatus() {
 
       doc.setFont("Helvetica", "normal");
       doc.setFontSize(10);
-      doc.text(`Status: Paid / Confirmed (PayU Live Gateway)`, 20, 66);
-      doc.text(`Venue: ${venueName}`, 20, 74);
-      doc.text(`Address: ${venueAddress}`, 20, 82);
-      doc.text(`Sport: ${sportStr}`, 20, 90);
+      doc.text(`Payment Gateway: Cashfree Live Payments`, 20, 66);
+      doc.text(`Order ID: ${orderId}`, 20, 74);
+      doc.text(`Venue: ${venueName}`, 20, 82);
+      doc.text(`Address: ${venueAddress}`, 20, 90);
+      doc.text(`Sport: ${sportStr}`, 20, 98);
       doc.text(`Date: ${dateStr}`, 120, 66);
       doc.text(`Time Slot: ${timeStr}`, 120, 74);
       doc.text(`Amount Paid: INR ${price}`, 120, 82);
+      doc.text(`Status: Confirmed / Paid`, 120, 90);
 
-      doc.save("PayU-SportXClub-Receipt.pdf");
+      doc.save(`Cashfree-SportXClub-Receipt-${orderId || "booking"}.pdf`);
       toast.dismiss(loadingToastId);
       toast.success("Receipt downloaded successfully!");
     } catch (e) {
@@ -161,8 +199,8 @@ export function PaymentStatus() {
     return (
       <Container className="py-24 flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-12 w-12 text-emerald-600 animate-spin mb-4" />
-        <p className="text-slate-700 dark:text-white font-bold text-lg">Verifying PayU Transaction...</p>
-        <p className="text-slate-400 text-sm mt-1">Updating payment record in database...</p>
+        <p className="text-slate-700 dark:text-white font-bold text-lg">Verifying Cashfree Live Payment...</p>
+        <p className="text-slate-400 text-sm mt-1">Confirming transaction with Cashfree gateway...</p>
       </Container>
     );
   }
@@ -186,13 +224,13 @@ export function PaymentStatus() {
               </div>
               <div className="space-y-2">
                 <span className="inline-flex items-center gap-1 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  ⚡ PayU Live Transaction Successful
+                  ⚡ Cashfree Live Payment Successful
                 </span>
                 <h1 className="text-3xl font-black text-slate-900 dark:text-white">
                   Booking Confirmed!
                 </h1>
                 <p className="text-slate-500 dark:text-white/70 text-sm font-medium max-w-md mx-auto">
-                  Your reservation at <span className="font-extrabold text-emerald-600">{venueName}</span> has been confirmed & saved.
+                  Your reservation at <span className="font-extrabold text-emerald-600">{venueName}</span> has been confirmed & locked.
                 </p>
               </div>
             </div>
@@ -205,13 +243,13 @@ export function PaymentStatus() {
               </div>
               <div className="space-y-2">
                 <span className="inline-flex items-center gap-1 px-3.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                  ⚠️ PayU Transaction Failed
+                  ⚠️ Cashfree Payment Failed
                 </span>
                 <h1 className="text-3xl font-black text-slate-900 dark:text-white">
                   Payment Failed
                 </h1>
                 <p className="text-slate-500 dark:text-white/70 text-sm font-medium max-w-md mx-auto">
-                  Your transaction was cancelled or declined on PayU. <span className="font-bold text-rose-600">The slot has not been reserved.</span>
+                  {verificationResult?.message || "Your transaction was cancelled or declined on Cashfree."} <span className="font-bold text-rose-600">The slot has not been reserved.</span>
                 </p>
               </div>
             </div>
@@ -253,8 +291,8 @@ export function PaymentStatus() {
                   </div>
                 </div>
                 <div className="col-span-2">
-                  <p className="text-[10px] uppercase text-slate-400 font-bold">PayU Transaction ID</p>
-                  <p className="font-mono text-xs font-bold text-slate-800 dark:text-white">{txnid || verificationResult?.transactionId || "—"}</p>
+                  <p className="text-[10px] uppercase text-slate-400 font-bold">Cashfree Order ID</p>
+                  <p className="font-mono text-xs font-bold text-slate-800 dark:text-white">{orderId || verificationResult?.order_id || "—"}</p>
                 </div>
               </div>
 
@@ -262,7 +300,7 @@ export function PaymentStatus() {
                 <>
                   <div className="pt-2 border-t border-dashed border-border/40 flex flex-col items-center">
                     <div className="bg-slate-50 dark:bg-black/40 p-3 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-white/[0.05] shadow-inner w-full max-w-[200px]">
-                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-PayU-Ticket" alt="QR Code" className="h-24 w-24 object-contain mix-blend-multiply dark:mix-blend-normal" />
+                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-Cashfree-Pass" alt="QR Code" className="h-24 w-24 object-contain mix-blend-multiply dark:mix-blend-normal" />
                       <span className="text-[8px] font-mono text-slate-500 mt-2 font-semibold tracking-widest uppercase">
                         Scan at Reception
                       </span>
@@ -321,3 +359,4 @@ export function PaymentStatus() {
     </>
   );
 }
+

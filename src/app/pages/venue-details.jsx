@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation, useParams } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "../providers/auth-provider";
 import { useTheme } from "next-themes";
-import { payuService } from "../payment/payu-service";
+import { cashfreeService } from "../payment/cashfree-service";
 import {
   ArrowLeft,
   ArrowRight,
@@ -1931,16 +1931,16 @@ export function VenueDetails() {
                       console.warn("Storage note:", e.message);
                     }
 
-                    toast.loading("Connecting to PayU Live Gateway...", { id: "payu-init" });
-                    payuService.initiatePayment(bookingPayload).then((res) => {
-                      toast.dismiss("payu-init");
+                    toast.loading("Connecting to Cashfree Live Gateway...", { id: "cashfree-init" });
+                    cashfreeService.initiatePayment(bookingPayload).then((res) => {
+                      toast.dismiss("cashfree-init");
                       if (!res.success) {
-                        toast.error(res.message || "PayU could not start the payment. Please try again.");
+                        toast.error(res.message || "Cashfree could not start the payment. Please try again.");
                       }
                     }).catch((err) => {
-                      toast.dismiss("payu-init");
-                      console.error("PayU initialization error:", err);
-                      toast.error("Failed initiating PayU payment.");
+                      toast.dismiss("cashfree-init");
+                      console.error("Cashfree initialization error:", err);
+                      toast.error("Failed initiating Cashfree payment.");
                     });
                   }}
                   className={cn(
