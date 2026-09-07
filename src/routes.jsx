@@ -1,9 +1,27 @@
-import { createBrowserRouter, Navigate, Outlet, ScrollRestoration } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, ScrollRestoration, useRouteError } from "react-router";
 import { Layout } from "./app/components/layout/layout";
 import { OwnerLayout } from "./app/components/layout/owner-layout";
 import { AdminLayout } from "./app/components/layout/admin-layout";
 import { LandingPage } from "./app/pages/landing-page";
 import { BookingSuccess } from "./app/pages/booking-success";
+
+const GlobalErrorBoundary = () => {
+  const error = useRouteError();
+  console.error("Global Error Boundary caught:", error);
+  
+  if (error?.message?.includes("Failed to fetch dynamically imported module") || error?.message?.includes("Importing a module script failed")) {
+    window.location.reload();
+    return <div>Updating application...</div>;
+  }
+  
+  return (
+    <div style={{ padding: "2rem", textAlign: "center", fontFamily: "sans-serif" }}>
+      <h1>Oops! Something went wrong.</h1>
+      <p>{error?.message || "An unexpected error occurred."}</p>
+      <button onClick={() => window.location.reload()} style={{ padding: "0.5rem 1rem", marginTop: "1rem", cursor: "pointer" }}>Refresh Page</button>
+    </div>
+  );
+};
 
 const RootLayout = () => (
   <>
@@ -15,6 +33,7 @@ const RootLayout = () => (
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
+    errorElement: <GlobalErrorBoundary />,
     children: [
       {
         path: "/",
