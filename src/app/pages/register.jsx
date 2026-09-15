@@ -328,24 +328,25 @@ export function RegisterPage() {
                 </p>
               </div>
 
-              {/* ID Box Layout matching screenshot */}
-              <div className="p-8 border border-slate-200 bg-[#f8fafc] rounded-[24px] text-center mb-8 mx-auto w-[90%] shadow-sm">
-                <p className="text-[12px] text-slate-500 font-semibold uppercase tracking-widest mb-6">
-                  {formData.role === "owner" ? "YOUR ASSIGNED TURF OWNER ID" : "YOUR UNIQUE PLAYER ID"}
-                </p>
+              {formData.role === "owner" && (
+                <div className="p-8 border border-slate-200 bg-[#f8fafc] rounded-[24px] text-center mb-8 mx-auto w-[90%] shadow-sm">
+                  <p className="text-[12px] text-slate-500 font-semibold uppercase tracking-widest mb-6">
+                    YOUR ASSIGNED TURF OWNER ID
+                  </p>
 
-                <div className="flex items-center justify-center w-full max-w-[280px] mx-auto h-[72px] bg-white rounded-2xl shadow-[-10px_12px_24px_rgba(0,0,0,0.04)] border border-slate-100 mb-6">
-                  <p className="text-[26px] sm:text-[30px] font-bold text-slate-900 tracking-[0.15em] font-mono ml-[0.15em]">
-                    {generatedOwnerId}
+                  <div className="flex items-center justify-center w-full max-w-[280px] mx-auto h-[72px] bg-white rounded-2xl shadow-[-10px_12px_24px_rgba(0,0,0,0.04)] border border-slate-100 mb-6">
+                    <p className="text-[26px] sm:text-[30px] font-bold text-slate-900 tracking-[0.15em] font-mono ml-[0.15em]">
+                      {generatedOwnerId}
+                    </p>
+                  </div>
+
+                  <p className="text-[13px] text-slate-500 max-w-[250px] mx-auto leading-relaxed">
+                    Please save this ID. It has been generated securely in the database for your records.
                   </p>
                 </div>
+              )}
 
-                <p className="text-[13px] text-slate-500 max-w-[250px] mx-auto leading-relaxed">
-                  Please save this ID. It has been generated securely in the database for your records.
-                </p>
-              </div>
-
-              <div className="pt-2">
+              <div className="pt-2 flex justify-center">
                 <Button
                   onClick={() => {
                     localStorage.setItem("isLoggedIn", "true");
@@ -356,7 +357,7 @@ export function RegisterPage() {
                       navigate("/");
                     }
                   }}
-                  className="w-full h-14 rounded-full bg-[#059669] text-white text-[16px] font-medium hover:bg-[#047857] transition-all shadow-lg shadow-[#059669]/20 cursor-pointer"
+                  className="w-[200px] h-11 rounded-full bg-white border-2 border-[#059669] text-[#059669] text-[15px] font-bold hover:bg-emerald-50 transition-all shadow-lg shadow-[#059669]/10 cursor-pointer"
                 >
                   {formData.role === "owner" ? "Complete Turf Setup" : "Explore Turfs"}
                 </Button>
@@ -400,33 +401,7 @@ export function RegisterPage() {
                 {/* STEP 1: ACCOUNT DETAILS */}
                 {step === 1 && (
                   <div className="space-y-3">
-                    {/* Account Type Tabs */}
-                    <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-xl mb-2 text-xs font-semibold">
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, role: "athlete" }))}
-                        className={cn(
-                          "py-2 rounded-lg transition-all cursor-pointer text-center",
-                          formData.role !== "owner"
-                            ? "bg-background text-foreground shadow-sm font-bold"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        Player / Athlete
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, role: "owner" }))}
-                        className={cn(
-                          "py-2 rounded-lg transition-all cursor-pointer text-center",
-                          formData.role === "owner"
-                            ? "bg-background text-foreground shadow-sm font-bold"
-                            : "text-muted-foreground hover:text-foreground"
-                        )}
-                      >
-                        Turf Owner
-                      </button>
-                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label htmlFor="firstName">First Name</Label>
@@ -505,10 +480,10 @@ export function RegisterPage() {
                             {isSendingEmailOtp
                               ? "Sending..."
                               : emailOtpSent
-                              ? resendCountdown > 0
-                                ? `Resend (${resendCountdown}s)`
-                                : "Resend OTP"
-                              : "Send OTP"}
+                                ? resendCountdown > 0
+                                  ? `Resend (${resendCountdown}s)`
+                                  : "Resend OTP"
+                                : "Send OTP"}
                           </Button>
                         )}
                         {emailVerified && (
@@ -581,13 +556,13 @@ export function RegisterPage() {
                       </motion.div>
                     )}
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex justify-center">
                       <Button
                         type="button"
                         onClick={handleNext}
                         disabled={!isStep1Valid()}
                         className={cn(
-                          "w-full h-11 rounded-xl bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all",
+                          "w-[200px] h-11 rounded-xl bg-primary text-primary-foreground font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all",
                           !isStep1Valid() && "opacity-60 cursor-not-allowed"
                         )}
                       >
