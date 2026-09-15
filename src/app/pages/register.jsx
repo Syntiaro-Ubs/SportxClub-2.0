@@ -119,6 +119,7 @@ export function RegisterPage() {
       setEmailOtpSent(false);
       setResendCountdown(0);
       setEmailOtpError("");
+      setEmailVerified(false);
       checkEmailAvailability(value);
     }
   };
@@ -154,7 +155,6 @@ export function RegisterPage() {
   const isStep1Valid = () => {
     return (
       formData.firstName.trim() !== "" &&
-      formData.lastName.trim() !== "" &&
       formData.email.includes("@") &&
       !emailExistsError &&
       emailVerified
@@ -206,10 +206,11 @@ export function RegisterPage() {
     }
   };
 
-  const verifyEmailOtp = async () => {
-    if (!formData.otp.trim()) return;
+  const verifyEmailOtp = async (customOtp) => {
+    const code = typeof customOtp === "string" ? customOtp : formData.otp;
+    if (!code || !code.trim()) return;
     try {
-      const res = await adminApi.verifyOtp(formData.email.trim(), formData.otp.trim());
+      const res = await adminApi.verifyOtp(formData.email.trim(), code.trim());
       if (res.success) {
         setEmailVerified(true);
         setEmailOtpError("");
@@ -222,6 +223,16 @@ export function RegisterPage() {
     }
   };
 
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    if (step === 1) {
+      if (isStep1Valid()) {
+        handleNext();
+      }
+      return;
+    }
+    handleSubmit(e);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -385,7 +396,7 @@ export function RegisterPage() {
                 />
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-3">
+              <form onSubmit={handleFormSubmit} className="space-y-3">
                 {/* STEP 1: ACCOUNT DETAILS */}
                 {step === 1 && (
                   <div className="space-y-3">
@@ -434,7 +445,9 @@ export function RegisterPage() {
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="lastName">Last Name</Label>
+                        <Label htmlFor="lastName">
+                          Last Name <span className="text-muted-foreground text-xs font-normal">(Optional)</span>
+                        </Label>
                         <div className="relative">
                           <User className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
                           <Input
@@ -445,7 +458,6 @@ export function RegisterPage() {
                             className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs"
                             value={formData.lastName}
                             onChange={handleInputChange}
-                            required
                           />
                         </div>
                       </div>
@@ -536,14 +548,28 @@ export function RegisterPage() {
                               placeholder="Enter OTP Code"
                               className="pl-10 h-10.5 rounded-xl font-mono text-center tracking-[0.25em]"
                               value={formData.otp}
-                              onChange={handleInputChange}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                handleInputChange(e);
+                                if (val.trim().length === 6) {
+                                  verifyEmailOtp(val.trim());
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  if (formData.otp.trim().length === 6) {
+                                    verifyEmailOtp(formData.otp.trim());
+                                  }
+                                }
+                              }}
                               required
                             />
                           </div>
                           <Button
                             type="button"
                             disabled={formData.otp.length !== 6}
-                            onClick={verifyEmailOtp}
+                            onClick={() => verifyEmailOtp(formData.otp)}
                             className="h-10.5 px-4 rounded-xl border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 transition-all text-xs font-bold shrink-0 cursor-pointer"
                           >
                             Verify Code

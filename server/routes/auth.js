@@ -889,19 +889,25 @@ router.get("/accounts", async (req, res) => {
 router.post("/owner/setup", async (req, res) => {
   try {
     const pool = getPool();
-    const ownerId = req.body.ownerId || req.body.owner_id || req.body.id;
+    let ownerId = req.body.ownerId || req.body.owner_id || req.body.id;
     const setupData = req.body.setupData || req.body.formData || req.body.form_data || req.body.data;
 
-    if (!ownerId || !setupData) {
+    if (!setupData) {
       return res.status(400).json({
         success: false,
-        message: "Missing ownerId or setupData",
-        received: {
-          hasOwnerId: Boolean(ownerId),
-          hasSetupData: Boolean(setupData)
-        }
+        message: "Missing setupData",
       });
     }
+
+    const personal = setupData.personal || {};
+    const business = setupData.business || {};
+    const location = setupData.location || {};
+
+    const fullName = (personal.fullName || business.ownerName || personal.name || "Turf Owner").trim();
+    const ownerEmail = (personal.email || business.email || req.body.email || "").trim().toLowerCase();
+    const phone = (personal.phone || business.phone || req.body.phone || "").trim();
+    const password = (personal.password || req.body.password || "").trim();
+    const city = (personal.city || location.city || business.city || "").trim();
 
     // Ensure table and column exist in MySQL
     await pool.query(`
@@ -919,19 +925,90 @@ router.post("/owner/setup", async (req, res) => {
       await pool.query("ALTER TABLE turf_owners ADD COLUMN setup_data LONGTEXT");
     } catch (e) { }
 
-    // Save setup_data to turf_owners
-    await pool.query(
-      `UPDATE turf_owners SET setup_data = ? WHERE owner_id = ? OR id = ?`,
-      [JSON.stringify(setupData), ownerId, ownerId]
-    );
+    try {
+      await pool.query("ALTER TABLE turf_owners ADD COLUMN owner_id VARCHAR(50) UNIQUE AFTER id");
+    } catch (e) { }
+
+    const joinedDate = new Date().toISOString().split("T")[0];
+    const yy = joinedDate.substring(2, 4);
+    const mm = joinedDate.substring(5, 7);
+    const prefix = `${yy}${mm}`;
+
+    let finalOwnerId = ownerId;
+
+    // Check if owner already exists by ID or email
+    let existingOwner = null;
+    if (finalOwnerId) {
+      const [rows] = await pool.query(
+        "SELECT id, owner_id, email, name FROM turf_owners WHERE owner_id = ? OR id = ? LIMIT 1",
+        [finalOwnerId, finalOwnerId]
+      );
+      if (rows.length > 0) existingOwner = rows[0];
+    }
+
+    if (!existingOwner && ownerEmail) {
+      const [rows] = await pool.query(
+        "SELECT id, owner_id, email, name FROM turf_owners WHERE LOWER(email) = ? LIMIT 1",
+        [ownerEmail]
+      );
+      if (rows.length > 0) existingOwner = rows[0];
+    }
+
+    if (existingOwner) {
+      finalOwnerId = existingOwner.owner_id || String(existingOwner.id);
+      // Update existing owner with setupData and latest info
+      await pool.query(
+        `UPDATE turf_owners SET 
+           setup_data = ?, 
+           name = COALESCE(NULLIF(?, ''), name),
+           phone = COALESCE(NULLIF(?, ''), phone),
+           city = COALESCE(NULLIF(?, ''), city)
+         WHERE id = ?`,
+        [JSON.stringify(setupData), fullName, phone, city, existingOwner.id]
+      );
+
+      if (password) {
+        await pool.query(
+          `UPDATE turf_owner_accounts SET password = ? WHERE owner_profile_id = ? OR owner_id = ?`,
+          [password, existingOwner.id, finalOwnerId]
+        );
+      }
+    } else {
+      // Generate new sequential owner ID
+      const [allOwners] = await pool.query(
+        `SELECT owner_id FROM turf_owners WHERE owner_id LIKE ? ORDER BY id DESC`,
+        [`${prefix}%`]
+      );
+
+      let seq = 1;
+      if (allOwners.length > 0) {
+        for (const row of allOwners) {
+          if (row.owner_id) {
+            const lastDigits = parseInt(row.owner_id.slice(-4), 10);
+            if (!isNaN(lastDigits) && lastDigits >= seq) {
+              seq = lastDigits + 1;
+            }
+          }
+        }
+      }
+      finalOwnerId = `${prefix}${String(seq).padStart(4, '0')}`;
+
+      const [ownerResult] = await pool.query(
+        `INSERT INTO turf_owners (owner_id, name, email, phone, city, status, total_turfs, earnings, joined_date, setup_data)
+         VALUES (?, ?, ?, ?, ?, 'Pending', 0, '₹0', ?, ?)`,
+        [finalOwnerId, fullName, ownerEmail, phone, city, joinedDate, JSON.stringify(setupData)]
+      );
+
+      if (password) {
+        await pool.query(
+          `INSERT INTO turf_owner_accounts (owner_profile_id, owner_id, full_name, email, password, status)
+           VALUES (?, ?, ?, ?, ?, 'Pending')`,
+          [ownerResult.insertId, finalOwnerId, fullName, ownerEmail, password]
+        );
+      }
+    }
 
     // Save to turf_onboarding_requests
-    const [owners] = await pool.query(
-      `SELECT email FROM turf_owners WHERE owner_id = ? OR id = ?`,
-      [ownerId, ownerId]
-    );
-
-    const ownerEmail = owners.length > 0 ? owners[0].email : (req.body.email || "");
     const requestId = `ONB-${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 8)
@@ -940,10 +1017,15 @@ router.post("/owner/setup", async (req, res) => {
     await pool.query(
       `INSERT INTO turf_onboarding_requests (id, owner_id, owner_email, form_data, status)
        VALUES (?, ?, ?, ?, 'pending')`,
-      [requestId, ownerId, ownerEmail, JSON.stringify(setupData)]
+      [requestId, finalOwnerId, ownerEmail, JSON.stringify(setupData)]
     );
 
-    return res.json({ success: true, message: "Profile submitted successfully" });
+    return res.json({
+      success: true,
+      ownerId: finalOwnerId,
+      requestId,
+      message: "Profile and Turf Onboarding Request submitted successfully",
+    });
   } catch (err) {
     console.error("Owner Setup Error:", err);
     return res.status(500).json({ success: false, error: err.message });

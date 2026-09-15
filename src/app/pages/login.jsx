@@ -551,7 +551,7 @@ export function LoginPage() {
               <p className="text-xs text-muted-foreground">
                 {loginType === "owner" ? "Don't have an owner account? " : "Don't have an account yet? "}
                 <Link
-                  to={`/register?type=${loginType}`}
+                  to={loginType === "owner" ? "/owner-setup" : `/register?type=${loginType}`}
                   className="font-medium text-primary hover:underline"
                 >
                   {loginType === "owner" ? "Register Turf" : "Sign up"}
