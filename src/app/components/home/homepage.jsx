@@ -491,7 +491,7 @@ export function Navbar() {
                     )}
                   >
                     <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-emerald-600 dark:text-white" />
-                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-black dark:text-white group-hover:scale-110 transition-transform duration-300 origin-left">
+                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-black dark:text-white">
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
                     <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80 text-black dark:text-white" />
