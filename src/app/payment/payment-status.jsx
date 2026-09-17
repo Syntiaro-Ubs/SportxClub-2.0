@@ -91,6 +91,33 @@ export function PaymentStatus() {
               payment: statusRes.paymentDetails,
               booking: statusRes.booking,
             });
+
+            try {
+              const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+              const newBooking = {
+                booking_code: statusRes.booking?.booking_code || orderId,
+                turf_name: venueName,
+                venue: venueName,
+                turf_id: bookingData?.venueId,
+                date: dateStr,
+                time_slot: timeStr,
+                slot_time: timeStr,
+                time: timeStr,
+                sport: sportStr,
+                amount: price,
+                user_name: bookingData?.userName || localStorage.getItem("userName") || "SportX Player",
+                user_email: bookingData?.userEmail || localStorage.getItem("userEmail") || "user@sportxclub.com",
+                status: "Confirmed",
+                timestamp: Date.now(),
+              };
+              const exists = confirmedList.some((b) => b.booking_code === newBooking.booking_code || (b.turf_name === newBooking.turf_name && b.date === newBooking.date && b.time_slot === newBooking.time_slot));
+              if (!exists) {
+                confirmedList.unshift(newBooking);
+                localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
+              }
+              sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
+            } catch (e) {}
+
             toast.success("Cashfree Payment Verified & Booking Confirmed!");
           } else if (statusRes.status === "Pending") {
             // Try fallback verification
@@ -101,6 +128,33 @@ export function PaymentStatus() {
 
             if (verifyRes.success && verifyRes.status === "Success") {
               setVerificationResult(verifyRes);
+
+              try {
+                const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+                const newBooking = {
+                  booking_code: verifyRes.booking?.booking_code || orderId,
+                  turf_name: venueName,
+                  venue: venueName,
+                  turf_id: bookingData?.venueId,
+                  date: dateStr,
+                  time_slot: timeStr,
+                  slot_time: timeStr,
+                  time: timeStr,
+                  sport: sportStr,
+                  amount: price,
+                  user_name: bookingData?.userName || localStorage.getItem("userName") || "SportX Player",
+                  user_email: bookingData?.userEmail || localStorage.getItem("userEmail") || "user@sportxclub.com",
+                  status: "Confirmed",
+                  timestamp: Date.now(),
+                };
+                const exists = confirmedList.some((b) => b.booking_code === newBooking.booking_code || (b.turf_name === newBooking.turf_name && b.date === newBooking.date && b.time_slot === newBooking.time_slot));
+                if (!exists) {
+                  confirmedList.unshift(newBooking);
+                  localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
+                }
+                sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
+              } catch (e) {}
+
               toast.success("Cashfree Payment Verified & Booking Confirmed!");
             } else {
               setVerificationResult({
@@ -124,6 +178,30 @@ export function PaymentStatus() {
             success: true,
             transactionId: `CF_${Date.now()}`,
           });
+
+          try {
+            const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+            const newBooking = {
+              booking_code: `CF_${Date.now()}`,
+              turf_name: venueName,
+              venue: venueName,
+              turf_id: bookingData?.venueId,
+              date: dateStr,
+              time_slot: timeStr,
+              slot_time: timeStr,
+              time: timeStr,
+              sport: sportStr,
+              amount: price,
+              user_name: bookingData?.userName || localStorage.getItem("userName") || "SportX Player",
+              user_email: bookingData?.userEmail || localStorage.getItem("userEmail") || "user@sportxclub.com",
+              status: "Confirmed",
+              timestamp: Date.now(),
+            };
+            confirmedList.unshift(newBooking);
+            localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
+            sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
+          } catch (e) {}
+
           toast.success("Payment Confirmed!");
         } else {
           setVerificationResult({

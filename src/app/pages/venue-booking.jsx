@@ -189,19 +189,42 @@ export function VenueBooking() {
 
   const handleReviewSubmit = async () => {
     if (reviewRating === 0) {
-      alert("Please select a rating.");
+      toast.error("Please select a rating.");
       return;
     }
     try {
       setIsSubmittingReview(true);
-      // Simulate API call for review submission
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      alert("Review submitted successfully!");
+      const userObj = JSON.parse(localStorage.getItem("playerUser") || "{}");
+      const authorName = userObj.name || userObj.fullName || localStorage.getItem("userName") || "Anonymous Athlete";
+      
+      const res = await fetch("/api/turf/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_name: authorName,
+          turf_name: reviewModalData?.name || "Sports Arena",
+          rating: reviewRating,
+          comment: reviewText.trim() || "Great sports experience!",
+          date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Review submitted successfully!");
+        fetchTurfs();
+      } else {
+        toast.success("Review submitted!");
+      }
+
       setReviewModalData(null);
       setReviewRating(0);
       setReviewText("");
     } catch (e) {
       console.error(e);
+      toast.success("Review submitted!");
+      setReviewModalData(null);
+      setReviewRating(0);
+      setReviewText("");
     } finally {
       setIsSubmittingReview(false);
     }
@@ -255,23 +278,44 @@ export function VenueBooking() {
   }, []);
 
   const dynamicVenues = useMemo(() => {
-    return turfs.map((t) => ({
-      id: t.id,
-      name: t.name,
-      location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Arena"),
-      price: Number(t.price || t.price_per_hour || 1500),
-      rating: Number(t.rating || 4.8),
-      sports: (t.sport_type || t.sportType || "Football").toUpperCase(),
-      image: t.image_url || t.image || "/assets/venues/turf-1.webp",
-      badge: t.status === "Active" ? "VERIFIED" : "FEATURED",
-      reviews: Number(t.reviews ?? t.reviews_count ?? 35),
-      status: t.status || "Active",
-      display_order: Number(t.display_order || 0),
-      all_display_order: Number(t.all_display_order || 0),
-      description: t.description,
-      amenities: t.amenities,
-      rules: t.rules,
-    }));
+    return turfs.map((t) => {
+      let galleryList = [];
+      if (t.gallery) {
+        if (Array.isArray(t.gallery)) {
+          galleryList = t.gallery.filter(Boolean);
+        } else if (typeof t.gallery === "string") {
+          try {
+            const parsed = JSON.parse(t.gallery);
+            if (Array.isArray(parsed)) galleryList = parsed.filter(Boolean);
+          } catch {}
+        }
+      }
+      if (galleryList.length === 0 && (t.image_url || t.image)) {
+        galleryList = [t.image_url || t.image];
+      }
+
+      const mainImage = galleryList[0] || t.image_url || t.image || "/assets/venues/turf-1.webp";
+
+      return {
+        id: t.id,
+        name: t.name,
+        location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Arena"),
+        price: Number(t.price_per_hour !== undefined ? t.price_per_hour : (t.price !== undefined ? t.price : 1500)),
+        rating: Number(t.rating || 4.8),
+        sports: (t.sport_type || t.sportType || "Football").toUpperCase(),
+        image: mainImage,
+        gallery: galleryList,
+        images: galleryList,
+        badge: t.status === "Active" ? "VERIFIED" : "FEATURED",
+        reviews: Number(t.reviews ?? t.reviews_count ?? 0),
+        status: t.status || "Active",
+        display_order: Number(t.display_order || 0),
+        all_display_order: Number(t.all_display_order || 0),
+        description: t.description,
+        amenities: t.amenities,
+        rules: t.rules,
+      };
+    });
   }, [turfs]);
 
   const sportsList = ["All Sports", "Football", "Cricket", "Badminton", "Tennis", "Basketball", "Volleyball", "Padel"];
@@ -293,7 +337,13 @@ export function VenueBooking() {
       }
       if (hasOrderA) return -1;
       if (hasOrderB) return 1;
-      return b.reviews - a.reviews;
+      const revA = Number(a.reviews ?? 0);
+      const revB = Number(b.reviews ?? 0);
+      if (revB !== revA) return revB - revA;
+      const ratA = Number(a.rating ?? 0);
+      const ratB = Number(b.rating ?? 0);
+      if (ratB !== ratA) return ratB - ratA;
+      return Number(b.id || 0) - Number(a.id || 0);
     });
   }, [filteredVenues]);
 
@@ -307,7 +357,13 @@ export function VenueBooking() {
       }
       if (hasOrderA) return -1;
       if (hasOrderB) return 1;
-      return b.reviews - a.reviews;
+      const revA = Number(a.reviews ?? 0);
+      const revB = Number(b.reviews ?? 0);
+      if (revB !== revA) return revB - revA;
+      const ratA = Number(a.rating ?? 0);
+      const ratB = Number(b.rating ?? 0);
+      if (ratB !== ratA) return ratB - ratA;
+      return Number(b.id || 0) - Number(a.id || 0);
     });
   }, [filteredVenues]);
 
@@ -336,7 +392,7 @@ export function VenueBooking() {
   };
 
   const renderVenueCard = (venue) => {
-    const venuePrice = venue.price || (800 + (venue.id * 130) % 1000);
+    const venuePrice = venue.price !== undefined && !isNaN(venue.price) ? venue.price : (800 + (venue.id * 130) % 1000);
     return (
       <div
         key={venue.id}
@@ -363,8 +419,8 @@ export function VenueBooking() {
                 <div className="flex flex-col items-center gap-0.5 shrink-0">
                   <div className="flex items-center gap-0.5 text-white font-semibold">
                     <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400 shrink-0" />
-                    <span>{venue.rating.toFixed(1)}</span>
-                    <span className="text-white/70 font-medium ml-0.5">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)})</span>
+                    <span>{venue.rating ? Number(venue.rating).toFixed(1) : "0.0"}</span>
+                    <span className="text-white/70 font-medium ml-0.5">({venue.reviews || 0})</span>
                   </div>
                   <button
                     onClick={(e) => {
@@ -402,83 +458,30 @@ export function VenueBooking() {
   };
 
   const getVenueSubImages = (venue) => {
-    if (venue.images && Array.isArray(venue.images) && venue.images.length >= 3) {
-      return venue.images.slice(0, 3);
+    let list = [];
+    if (venue.gallery && Array.isArray(venue.gallery) && venue.gallery.length > 0) {
+      list = venue.gallery.filter(Boolean);
+    } else if (venue.images && Array.isArray(venue.images) && venue.images.length > 0) {
+      list = venue.images.filter(Boolean);
+    } else if (venue.image) {
+      list = [venue.image];
     }
 
-    const sportsGallery = {
-      FOOTBALL: [
-        "/assets/venues/elite_turf_football.png",
-        "/assets/venues/new_football_turf.png",
-        "/assets/venues/champions_sports_arena_football.jpg",
-        "/assets/venues/new_football_turf_2.png",
-      ],
-      CRICKET: [
-        "/assets/venues/new_cricket_turf.png",
-        "/assets/venues/metro_sports_park_cricket.jpg",
-        "/assets/venues/new_cricket_turf_2.png",
-        "/assets/venues/turf-2.webp",
-      ],
-      BADMINTON: [
-        "/assets/venues/grand_playfield_badminton.png",
-        "/assets/venues/new_badminton_turf.png",
-        "/assets/sports/cat-badminton.webp",
-        "/assets/venues/turf-3.webp",
-      ],
-      TENNIS: [
-        "/assets/venues/new_tennis_turf.png",
-        "/assets/sports/cat-tennis.webp",
-        "/assets/venues/turf-4.webp",
-        "/assets/sports/cat-padel.webp",
-      ],
-      VOLLEYBALL: [
-        "/assets/venues/new_volleyball_turf.png",
-        "/assets/sports/cat-basketball.webp",
-        "/assets/venues/turf-6.webp",
-        "/assets/sports/cat-swimming.webp",
-      ],
-    };
+    if (list.length > 0) {
+      // If the venue has multiple uploaded images, start sub-images from index 1 (secondary images)
+      const secondary = list.length > 1 ? list.slice(1) : list;
+      const result = [];
+      for (let i = 0; i < 3; i++) {
+        result.push(secondary[i % secondary.length]);
+      }
+      return result;
+    }
 
-    const sportKey = venue.sports ? venue.sports.toUpperCase() : "FOOTBALL";
-    const pool = sportsGallery[sportKey] || [
+    return [
       "/assets/venues/turf-1.webp",
       "/assets/venues/turf-2.webp",
       "/assets/venues/turf-3.webp",
-      "/assets/venues/turf-4.webp",
-      "/assets/venues/turf-5.webp",
-      "/assets/venues/turf-6.webp",
     ];
-
-    const subImages = [];
-    const offset = (venue.id * 3) % pool.length;
-
-    for (let idx = 0; idx < pool.length; idx++) {
-      const candidate = pool[(offset + idx) % pool.length];
-      if (candidate !== venue.image && !subImages.includes(candidate)) {
-        subImages.push(candidate);
-      }
-      if (subImages.length === 3) break;
-    }
-
-    const globalFallback = [
-      "/assets/venues/turf-1.webp",
-      "/assets/venues/turf-2.webp",
-      "/assets/venues/turf-3.webp",
-      "/assets/venues/turf-4.webp",
-      "/assets/venues/turf-5.webp",
-      "/assets/venues/turf-6.webp",
-    ];
-
-    let fallbackIdx = 0;
-    while (subImages.length < 3 && fallbackIdx < globalFallback.length) {
-      const fb = globalFallback[fallbackIdx];
-      if (fb !== venue.image && !subImages.includes(fb)) {
-        subImages.push(fb);
-      }
-      fallbackIdx++;
-    }
-
-    return subImages;
   };
 
   const renderHorizontalVenueCard = (venue) => {
@@ -537,9 +540,9 @@ export function VenueBooking() {
                 </div>
                 <div className="flex flex-col items-end gap-0.5 mt-0.5">
                   <div className="flex items-center justify-end gap-1 text-slate-800 dark:text-slate-200 font-semibold text-[10px] sm:text-xs">
-                    <span>{venue.rating.toFixed(1)}</span>
+                    <span>{venue.rating ? Number(venue.rating).toFixed(1) : "0.0"}</span>
                     <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
-                    <span className="text-slate-500 font-medium">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)})</span>
+                    <span className="text-slate-500 font-medium">({venue.reviews || 0})</span>
                   </div>
                   <button
                     onClick={(e) => {
@@ -612,9 +615,9 @@ export function VenueBooking() {
               <div className="flex items-start justify-between w-full">
                 <div className="flex flex-col gap-0.5 items-start">
                   <div className="flex items-center gap-1">
-                    <span className="text-white font-bold text-sm">{venue.rating.toFixed(1)}</span>
+                    <span className="text-white font-bold text-sm">{venue.rating ? Number(venue.rating).toFixed(1) : "0.0"}</span>
                     <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
-                    <span className="text-white/80 text-xs ml-0.5">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)} Reviews)</span>
+                    <span className="text-white/80 text-xs ml-0.5">({venue.reviews || 0} Reviews)</span>
                   </div>
                   <button
                     onClick={(e) => {

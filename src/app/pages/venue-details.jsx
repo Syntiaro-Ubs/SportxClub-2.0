@@ -35,11 +35,19 @@ import {
   MessageSquarePlus,
   Send,
   Flag,
+  AlertTriangle,
+  XCircle,
+  Ban,
+  Loader2,
+  Wallet,
+  CalendarDays,
+  Trash2,
 } from "lucide-react";
 
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import { adminApi } from "../services/admin-api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -52,23 +60,14 @@ const defaultVenue = {
   name: "Elite Turf Arena",
   location: "Powai, Mumbai",
   address: "123 Sports Complex, Hiranandani Gardens, Powai, Mumbai - 400076",
-  rating: 4.9,
-  reviews: 234,
+  rating: 0,
+  reviews: 0,
   price: 1200,
   sport: "Football",
   area: "8,500 Sq. Ft. (120ft × 70ft)",
   description:
     "Elite Turf Arena is built for fast discovery and confident booking. The venue combines reliable lighting, verified access, and clear refund terms so players can decide quickly.",
 };
-
-const gallery = [
-  asset("/venues/turf-1.webp"),
-  asset("/venues/new_football_turf.png"),
-  asset("/venues/elite_turf_football.png"),
-  asset("/venues/champions_sports_arena_football.jpg"),
-  asset("/venues/new_football_turf_2.png"),
-  asset("/venues/turf-6.webp"),
-];
 
 const marqueeVerticalStyle = `
   @keyframes marqueeVertical {
@@ -112,87 +111,47 @@ const amenities = [
   { icon: Users, label: "Coaching Pro", desc: "Certified trainers" },
 ];
 
-const INITIAL_REVIEWS = [
-  {
-    name: "Rahul Sharma",
-    rating: 5,
-    date: "2 days ago",
-    daysAgo: 2,
-    comment:
-      "Excellent facility with clean turf and fast booking. The lighting is top-notch for night matches!",
-  },
-  {
-    name: "Priya Patel",
-    rating: 5,
-    date: "1 week ago",
-    daysAgo: 7,
-    comment:
-      "Very professional experience. The slot selection and instant booking flow feel super smooth.",
-  },
-  {
-    name: "Arjun Malhotra",
-    rating: 4,
-    date: "2 weeks ago",
-    daysAgo: 14,
-    comment:
-      "Great lighting and easy access. Parking was hassle-free and staff was very cooperative.",
-  },
-  {
-    name: "Amit Verma",
-    rating: 3,
-    date: "3 weeks ago",
-    daysAgo: 21,
-    comment:
-      "The turf quality is good, but they should really improve the water dispenser and washroom facilities.",
-  },
-  {
-    name: "Siddharth Rao",
-    rating: 2,
-    date: "1 month ago",
-    daysAgo: 30,
-    comment:
-      "The court was double booked and we had to wait for 30 minutes. Customer support was slow in resolving the slot dispute.",
-  },
-  {
-    name: "Neha Gupta",
-    rating: 5,
-    date: "1 month ago",
-    daysAgo: 32,
-    comment:
-      "Superb experience! Highly recommended for weekend corporate matches. Booking was quick.",
-  },
-  {
-    name: "Rohan Das",
-    rating: 1,
-    date: "2 months ago",
-    daysAgo: 60,
-    comment:
-      "Extremely poor lighting! One of the floodlights was broken, making it impossible to play in the corners. Waste of money.",
-  }
+const CANCEL_REASONS = [
+  { id: "schedule", label: "Change of plans / Schedule conflict", icon: "🕒" },
+  { id: "wrong_time", label: "Booked wrong date, time or venue", icon: "📍" },
+  { id: "weather", label: "Bad weather / Unfavorable turf conditions", icon: "🌧️" },
+  { id: "emergency", label: "Personal or medical emergency", icon: "🏥" },
+  { id: "teammates", label: "Teammates or players unavailable", icon: "👥" },
+  { id: "other", label: "Other reason (specify below)", icon: "✏️" },
 ];
 
 export function VenueDetails() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
 
-  const { currentUser } = useAuth();
+  const { currentUser, playerUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
+
+  const activePlayer = useMemo(() => {
+    if (currentUser) return currentUser;
+    if (playerUser) return playerUser;
+    try {
+      const p = JSON.parse(localStorage.getItem("playerUser") || "{}");
+      if (p && (p.email || p.fullName || p.name || p.id)) return p;
+    } catch {}
+    return null;
+  }, [currentUser, playerUser]);
 
   const passedVenue = location.state?.venue;
   const [fetchedTurf, setFetchedTurf] = useState(null);
 
   useEffect(() => {
-    if (!passedVenue && id) {
+    if (id) {
       adminApi.getAll("turfs").then((turfs) => {
         const found = (turfs || []).find((t) => String(t.id) === String(id));
         if (found) setFetchedTurf(found);
       }).catch(console.error);
     }
-  }, [id, passedVenue]);
+  }, [id]);
 
-  const activeVenueData = passedVenue || fetchedTurf;
+  const activeVenueData = fetchedTurf || passedVenue;
   const venue = activeVenueData
     ? {
       name: activeVenueData.name,
@@ -201,17 +160,39 @@ export function VenueDetails() {
       rating:
         typeof activeVenueData.rating === "number"
           ? activeVenueData.rating
-          : parseFloat(activeVenueData.rating) || 4.9,
-      reviews: activeVenueData.reviews || 128,
-      price:
-        typeof activeVenueData.price === "number"
-          ? activeVenueData.price
-          : parseInt(
-            String(activeVenueData.price || activeVenueData.price_per_hour).replace(/[^0-9]/g, "") || "1200",
-          ),
+          : parseFloat(activeVenueData.rating) || 0,
+      reviews: activeVenueData.reviews !== undefined && activeVenueData.reviews !== null ? Number(activeVenueData.reviews) : 0,
+      price: (() => {
+        const raw = activeVenueData.price_per_hour ?? activeVenueData.price;
+        if (typeof raw === "number") return raw;
+        if (typeof raw === "string") {
+          const parsed = parseFloat(raw.replace(/[^0-9.]/g, ""));
+          return !isNaN(parsed) ? parsed : 1200;
+        }
+        return 1200;
+      })(),
       sport: (activeVenueData.sport || activeVenueData.sport_type || activeVenueData.sportType || "Football").split("•")[0]?.trim(),
       description: activeVenueData.description || `${activeVenueData.name} is built for fast discovery and confident booking.`,
       image: activeVenueData.image_url || activeVenueData.image || "/assets/venues/turf-1.webp",
+      gallery: (() => {
+        if (activeVenueData.gallery) {
+          if (Array.isArray(activeVenueData.gallery)) {
+            const clean = activeVenueData.gallery.filter(Boolean);
+            if (clean.length > 0) return clean;
+          }
+          if (typeof activeVenueData.gallery === "string") {
+            try {
+              const p = JSON.parse(activeVenueData.gallery);
+              if (Array.isArray(p) && p.length > 0) return p.filter(Boolean);
+            } catch {}
+          }
+        }
+        if (activeVenueData.images && Array.isArray(activeVenueData.images) && activeVenueData.images.length > 0) {
+          return activeVenueData.images.filter(Boolean);
+        }
+        const main = activeVenueData.image_url || activeVenueData.image;
+        return main ? [main] : [];
+      })(),
       area: activeVenueData.area || "8,500 Sq. Ft. (120ft × 70ft)",
     }
     : defaultVenue;
@@ -248,7 +229,13 @@ export function VenueDetails() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
   const [cancelledSlots, setCancelledSlots] = useState([]);
-  const [reviewsList, setReviewsList] = useState(INITIAL_REVIEWS);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [slotToCancel, setSlotToCancel] = useState(null);
+  const [cancelReason, setCancelReason] = useState("Change of plans / Schedule conflict");
+  const [customReason, setCustomReason] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [reviewsList, setReviewsList] = useState([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [reviewAuthor, setReviewAuthor] = useState(() => {
     try {
       const p = JSON.parse(localStorage.getItem("playerUser") || "{}");
@@ -262,15 +249,25 @@ export function VenueDetails() {
   const [reviewComment, setReviewComment] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  // Load reviews from DB for this venue
+  // Dynamic reviews metrics for this venue
+  const totalVenueReviews = reviewsList.length;
+  const averageVenueRating = useMemo(() => {
+    if (reviewsList.length === 0) return 0;
+    const sum = reviewsList.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+    return Number((sum / reviewsList.length).toFixed(1));
+  }, [reviewsList]);
+
+  // Load purely dynamic reviews from DB for this venue
   useEffect(() => {
     let isMounted = true;
     async function loadDbReviews() {
+      if (!venue.name) return;
+      setIsLoadingReviews(true);
       try {
-        const res = await fetch("/api/turf/reviews");
+        const res = await fetch(`/api/turf/reviews?turf_name=${encodeURIComponent(venue.name)}`);
         if (res.ok) {
           const json = await res.json();
-          if (isMounted && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          if (isMounted && json.success && Array.isArray(json.data)) {
             const currentVenueName = String(venue.name || "").toLowerCase().trim();
             const dbFormatted = json.data
               .filter((r) => {
@@ -287,17 +284,13 @@ export function VenueDetails() {
                 comment: r.comment || "",
               }));
 
-            if (dbFormatted.length > 0) {
-              setReviewsList((prev) => {
-                const existingComments = new Set(prev.map((p) => `${p.name}_${p.comment}`));
-                const newItems = dbFormatted.filter((d) => !existingComments.has(`${d.name}_${d.comment}`));
-                return [...newItems, ...prev];
-              });
-            }
+            setReviewsList(dbFormatted);
           }
         }
       } catch (err) {
         console.warn("Could not load DB reviews:", err);
+      } finally {
+        if (isMounted) setIsLoadingReviews(false);
       }
     }
     loadDbReviews();
@@ -322,21 +315,25 @@ export function VenueDetails() {
         turf_name: venue.name || "Sports Arena",
         rating: reviewRating,
         comment: reviewComment.trim(),
-        date: "Just now",
+        date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
       };
 
-      await fetch("/api/turf/reviews", {
+      const res = await fetch("/api/turf/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
+      const json = await res.json();
+      const created = json?.data;
+
       const newReviewItem = {
-        name: authorName,
-        rating: reviewRating,
-        date: "Just now",
+        id: created?.id || Date.now(),
+        name: created?.user_name || authorName,
+        rating: Number(created?.rating) || reviewRating,
+        date: created?.date || "Just now",
         daysAgo: 0,
-        comment: reviewComment.trim(),
+        comment: created?.comment || reviewComment.trim(),
       };
 
       setReviewsList((prev) => [newReviewItem, ...prev]);
@@ -346,6 +343,7 @@ export function VenueDetails() {
     } catch (err) {
       console.error("Error submitting review:", err);
       const newReviewItem = {
+        id: Date.now(),
         name: authorName,
         rating: reviewRating,
         date: "Just now",
@@ -363,24 +361,73 @@ export function VenueDetails() {
   const [visibleReviewsCount, setVisibleReviewsCount] = useState(3);
   const [likedReviews, setLikedReviews] = useState(new Set());
 
-  const handleLikeReview = (idx) => {
+  const handleLikeReview = (idKey) => {
     setLikedReviews((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(idx)) {
-        newSet.delete(idx);
+      if (newSet.has(idKey)) {
+        newSet.delete(idKey);
       } else {
-        newSet.add(idx);
+        newSet.add(idKey);
       }
       return newSet;
     });
   };
 
-  const handleReplyReview = (idx) => {
+  const handleReplyReview = (idKey) => {
     toast.success("Reply dialog opened!");
   };
 
-  const handleReportReview = (idx) => {
+  const handleReportReview = (idKey) => {
     toast.info("Review reported to admins.");
+  };
+
+  const isMyReview = (rev) => {
+    if (!rev) return false;
+    const revAuthor = String(rev.name || rev.user_name || "").trim().toLowerCase();
+    if (!revAuthor) return false;
+
+    // Check all possible identifiers of the current logged-in user
+    const names = [
+      activePlayer?.name,
+      activePlayer?.fullName,
+      activePlayer?.full_name,
+      reviewAuthor,
+      (() => {
+        try {
+          const p = JSON.parse(localStorage.getItem("playerUser") || "{}");
+          return p.name || p.fullName || p.full_name;
+        } catch { return null; }
+      })(),
+      (() => {
+        try {
+          const u = JSON.parse(localStorage.getItem("user") || "{}");
+          return u.name || u.full_name;
+        } catch { return null; }
+      })(),
+      localStorage.getItem("userName"),
+    ]
+      .filter(Boolean)
+      .map((n) => String(n).trim().toLowerCase());
+
+    return names.some((n) => n === revAuthor);
+  };
+
+  const handleDeleteReview = async (rev) => {
+    if (!rev) return;
+    const confirmDelete = window.confirm("Are you sure you want to delete your review?");
+    if (!confirmDelete) return;
+
+    try {
+      if (rev.id) {
+        await fetch(`/api/turf/reviews/${rev.id}`, { method: "DELETE" });
+      }
+      setReviewsList((prev) => prev.filter((r) => (rev.id ? r.id !== rev.id : r !== rev)));
+      toast.success("Your review has been deleted.");
+    } catch (err) {
+      console.error("Error deleting review:", err);
+      setReviewsList((prev) => prev.filter((r) => (rev.id ? r.id !== rev.id : r !== rev)));
+      toast.success("Review removed.");
+    }
   };
   const [showAllSlots, setShowAllSlots] = useState(false);
   const [dbBookings, setDbBookings] = useState([]);
@@ -396,34 +443,102 @@ export function VenueDetails() {
 
   useEffect(() => {
     loadBookings();
-  }, []);
 
-  const handleCancelSlot = async (slot) => {
-    setCancelledSlots((prev) => [...prev, slot.startHour]);
-    const bookingId = slot.bookingId || slot.booking?.id;
-    if (bookingId) {
-      try {
-        const res = await fetch(`/api/profile/bookings/${bookingId}/cancel`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: currentUser?.id,
-            email: currentUser?.email || slot.bookedByEmail,
-          }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          toast.success("Slot booking cancelled & refunded to wallet!");
-          loadBookings();
-        } else {
-          toast.info("Slot cancelled from current view.");
-        }
-      } catch (err) {
-        console.error("Cancel slot error:", err);
-        toast.success("Slot booking cancelled.");
+    const handlePageShow = () => {
+      loadBookings();
+    };
+    const handlePopState = () => {
+      loadBookings();
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadBookings();
       }
-    } else {
+    };
+    const handleFocus = () => {
+      loadBookings();
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const interval = setInterval(loadBookings, 3000);
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      clearInterval(interval);
+    };
+  }, [id, selectedDate]);
+
+  const handleOpenCancelModal = (slot) => {
+    setSlotToCancel(slot);
+    setCancelReason("Change of plans / Schedule conflict");
+    setCustomReason("");
+    setCancelModalOpen(true);
+  };
+
+  const handleConfirmCancelSlot = async () => {
+    if (!slotToCancel) return;
+    setIsCancelling(true);
+
+    const slotHour = slotToCancel.startHour;
+    const bookingId = slotToCancel.bookingId || slotToCancel.booking?.id || slotToCancel.booking?.booking_code;
+    const formattedTimeSlot = formatSlotRange(slotHour, 1);
+    const refundAmount = slotToCancel.booking?.amount || getSlotPrice(slotHour, 1) || venue.price || 0;
+
+    const finalReason = cancelReason === "Other reason (specify below)"
+      ? (customReason.trim() || "User requested cancellation")
+      : (customReason.trim() ? `${cancelReason} - ${customReason.trim()}` : cancelReason);
+
+    try {
+      const res = await fetch(`/api/profile/bookings/${bookingId || "direct"}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: activePlayer?.id,
+          email: activePlayer?.email || slotToCancel.bookedByEmail || slotToCancel.booking?.user_email,
+          reason: finalReason,
+          turfName: venue.name,
+          date: selectedDate,
+          timeSlot: formattedTimeSlot,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Slot booking cancelled! ₹${refundAmount} refunded to your wallet.`);
+      } else {
+        toast.info(data.error || "Slot cancelled from current view.");
+      }
+    } catch (err) {
+      console.error("Cancel slot error:", err);
       toast.success("Slot booking cancelled.");
+    } finally {
+      // Remove from localStorage confirmed list if present
+      try {
+        const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+        const filtered = confirmedList.filter((b) => {
+          const isMatch = (
+            (b.booking_code && bookingId && String(b.booking_code) === String(bookingId)) ||
+            (String(b.turf_name || "").toLowerCase().trim() === String(venue.name || "").toLowerCase().trim() &&
+             String(b.date || "").trim() === String(selectedDate || "").trim() &&
+             (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
+          );
+          return !isMatch;
+        });
+        localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(filtered));
+      } catch (e) {}
+
+      setCancelledSlots((prev) => [...prev, slotHour]);
+      await loadBookings();
+      setIsCancelling(false);
+      setCancelModalOpen(false);
+      setSlotToCancel(null);
     }
   };
 
@@ -431,14 +546,46 @@ export function VenueDetails() {
   const venueOpeningHour = venue.openingHour || 6;
   const venueClosingHour = venue.closingHour || 23;
 
+  const localConfirmedBookings = useMemo(() => {
+    try {
+      const list = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }, [dbBookings]);
+
+  const allBookings = useMemo(() => {
+    const combined = [...dbBookings];
+    localConfirmedBookings.forEach((localB) => {
+      const isAlreadyPresent = combined.some((b) =>
+        (b.id && localB.id && String(b.id) === String(localB.id)) ||
+        (b.booking_code && localB.booking_code && String(b.booking_code) === String(localB.booking_code)) ||
+        (String(b.turf_name || "").toLowerCase().trim() === String(localB.turf_name || "").toLowerCase().trim() &&
+         String(b.date || "").trim() === String(localB.date || "").trim() &&
+         String(b.time_slot || b.slot_time || "").trim() === String(localB.time_slot || localB.time || "").trim() &&
+         String(b.status || "").toLowerCase() !== "cancelled")
+      );
+      if (!isAlreadyPresent && localB.status !== "Cancelled") {
+        combined.push(localB);
+      }
+    });
+    return combined;
+  }, [dbBookings, localConfirmedBookings]);
+
   const baseTimeSlots = useMemo(() => {
     const slots = [];
     const targetVenueName = String(venue.name || "").toLowerCase().trim();
 
     // Filter active bookings for this venue & selectedDate
-    const venueBookings = dbBookings.filter((b) => {
+    const venueBookings = allBookings.filter((b) => {
       const bVenueName = String(b.turf_name || b.venue || "").toLowerCase().trim();
-      const isSameVenue = !targetVenueName || bVenueName.includes(targetVenueName) || targetVenueName.includes(bVenueName);
+      const isSameVenue = !targetVenueName ||
+        bVenueName.includes(targetVenueName) ||
+        targetVenueName.includes(bVenueName) ||
+        (b.turf_id && venue.id && String(b.turf_id) === String(venue.id)) ||
+        (b.venueId && venue.id && String(b.venueId) === String(venue.id));
+
       const isNotCancelled = String(b.status || "").toLowerCase() !== "cancelled";
 
       const bDate = String(b.date || "").toLowerCase().trim();
@@ -792,7 +939,7 @@ export function VenueDetails() {
               {/* Main Hero Photo (Spans 1 column on desktop) */}
               <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-auto md:h-[280px] rounded-2xl overflow-hidden group">
                 <ImageWithFallback
-                  src={venue.image || gallery[0]}
+                  src={venue.image || (venue.gallery && venue.gallery[0]) || "/assets/venues/turf-1.webp"}
                   alt={venue.name}
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
@@ -860,7 +1007,7 @@ export function VenueDetails() {
                         )}
                       />
                       <span className="font-bold">
-                        {venue.rating.toFixed(1)}
+                        {totalVenueReviews > 0 ? averageVenueRating.toFixed(1) : (venue.rating ? Number(venue.rating).toFixed(1) : "0.0")}
                       </span>
                       <span
                         className={cn(
@@ -868,7 +1015,7 @@ export function VenueDetails() {
                           isDark ? "text-white/80" : "text-white/80",
                         )}
                       >
-                        ({venue.reviews})
+                        ({totalVenueReviews})
                       </span>
                     </div>
                   </div>
@@ -877,18 +1024,27 @@ export function VenueDetails() {
 
               {/* Automatic Scrolling Marquee for Secondary Photos */}
               <div className="overflow-hidden relative w-full rounded-xl">
-
                 <div className="animate-marquee-horizontal">
-                  {[...gallery.slice(1, 4), ...gallery.slice(1, 4), ...gallery.slice(1, 4)].map((img, idx) => (
-                    <div key={idx} className="relative aspect-video sm:aspect-[21/9] md:aspect-video rounded-xl overflow-hidden group border border-slate-200 dark:border-white/5 w-[150px] sm:w-[220px] md:w-[280px] shrink-0">
-                      <ImageWithFallback
-                        src={img}
-                        alt={`Venue Photo ${idx + 1}`}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
-                    </div>
-                  ))}
+                  {(() => {
+                    const photos = (venue.gallery && venue.gallery.length > 1)
+                      ? venue.gallery.slice(1)
+                      : (venue.gallery && venue.gallery.length > 0 ? venue.gallery : [venue.image || "/assets/venues/turf-1.webp"]);
+                    const marqueeList = photos.length >= 3
+                      ? [...photos, ...photos]
+                      : photos.length === 2
+                      ? [photos[0], photos[1], photos[0], photos[1], photos[0], photos[1]]
+                      : [photos[0], photos[0], photos[0]];
+                    return marqueeList.map((img, idx) => (
+                      <div key={idx} className="relative aspect-video sm:aspect-[21/9] md:aspect-video rounded-xl overflow-hidden group border border-slate-200 dark:border-white/5 w-[150px] sm:w-[220px] md:w-[280px] shrink-0">
+                        <ImageWithFallback
+                          src={img}
+                          alt={`Venue Photo ${idx + 1}`}
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
             </div>
@@ -1057,7 +1213,7 @@ export function VenueDetails() {
                       isDark ? "text-emerald-600" : "text-emerald-700",
                     )}
                   >
-                    {venue.rating.toFixed(1)}
+                    {totalVenueReviews > 0 ? averageVenueRating.toFixed(1) : (venue.rating ? Number(venue.rating).toFixed(1) : "0.0")}
                   </span>
                   <span
                     className={cn(
@@ -1065,7 +1221,7 @@ export function VenueDetails() {
                       isDark ? "text-white/60" : "text-slate-600",
                     )}
                   >
-                    ({venue.reviews})
+                    ({totalVenueReviews})
                   </span>
                 </div>
               </div>
@@ -1203,166 +1359,218 @@ export function VenueDetails() {
               </div>
 
               {/* Review Sorting Controls - UI/UX Premium Redesign */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
-                <div className="flex items-center gap-1.5 shrink-0 select-none">
-                  <Sparkles className={cn(
-                    "h-3.5 w-3.5",
-                    isDark ? "text-emerald-600" : "text-emerald-600"
-                  )} />
-                  <span className={cn(
-                    "text-xs font-extrabold tracking-wide leading-none",
-                    isDark ? "text-slate-200" : "text-slate-800"
-                  )}>
-                    Sort Reviews
-                  </span>
-                </div>
+              {reviewsList.length > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
+                  <div className="flex items-center gap-1.5 shrink-0 select-none">
+                    <Sparkles className={cn(
+                      "h-3.5 w-3.5",
+                      isDark ? "text-emerald-600" : "text-emerald-600"
+                    )} />
+                    <span className={cn(
+                      "text-xs font-extrabold tracking-wide leading-none",
+                      isDark ? "text-slate-200" : "text-slate-800"
+                    )}>
+                      Sort Reviews
+                    </span>
+                  </div>
 
-                <div className={cn(
-                  "flex p-1 rounded-full border w-full sm:w-fit select-none transition-all duration-300",
-                  isDark
-                    ? "bg-white/[0.03] border-white/5"
-                    : "bg-[#f1f5f9] border-slate-200/80"
-                )}>
-                  {[
-                    { key: "recent", label: "Recent" },
-                    { key: "highest", label: "Highest Rating" },
-                    { key: "lowest", label: "Lowest Rating" }
-                  ].map((opt) => {
-                    const isActive = sortBy === opt.key;
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        onClick={() => setSortBy(opt.key)}
-                        className={cn(
-                          "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
-                          isActive
-                            ? isDark
-                              ? "bg-emerald-600 text-black shadow-md shadow-emerald-600/10 scale-100 font-extrabold"
-                              : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100 font-bold"
-                            : isDark
-                              ? "text-white/60 hover:text-white bg-transparent border-transparent"
-                              : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
+                  <div className={cn(
+                    "flex p-1 rounded-full border w-full sm:w-fit select-none transition-all duration-300",
+                    isDark
+                      ? "bg-white/[0.03] border-white/5"
+                      : "bg-[#f1f5f9] border-slate-200/80"
+                  )}>
+                    {[
+                      { key: "recent", label: "Recent" },
+                      { key: "highest", label: "Highest Rating" },
+                      { key: "lowest", label: "Lowest Rating" }
+                    ].map((opt) => {
+                      const isActive = sortBy === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => setSortBy(opt.key)}
+                          className={cn(
+                            "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
+                            isActive
+                              ? isDark
+                                ? "bg-emerald-600 text-black shadow-md shadow-emerald-600/10 scale-100 font-extrabold"
+                                : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100 font-bold"
+                              : isDark
+                                ? "text-white/60 hover:text-white bg-transparent border-transparent"
+                                : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-3">
-                {[...reviewsList]
-                  .sort((a, b) => {
-                    if (sortBy === "highest") {
-                      if (b.rating !== a.rating) return b.rating - a.rating;
-                      return a.daysAgo - b.daysAgo;
-                    }
-                    if (sortBy === "lowest") {
-                      if (a.rating !== b.rating) return a.rating - b.rating;
-                      return a.daysAgo - b.daysAgo;
-                    }
-                    // Default: recent
-                    return a.daysAgo - b.daysAgo;
-                  })
-                  .slice(0, visibleReviewsCount)
-                  .map((rev, idx) => (
-                    <div
-                      key={idx}
-                      className={cn(
-                        "rounded-xl border p-3 space-y-1.5 transition-colors shadow-sm",
-                        isDark
-                          ? "border-white/5 bg-white/[0.03]"
-                          : "border-slate-200 bg-white hover:bg-slate-50/30",
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className={cn(
-                              "h-8 w-8 rounded-full border font-bold text-xs flex items-center justify-center",
-                              isDark
-                                ? "bg-emerald-600/20 border-emerald-600/40 text-emerald-600"
-                                : "bg-emerald-100 border-emerald-300 text-emerald-800",
-                            )}
-                          >
-                            {rev.name[0]}
-                          </div>
-                          <div>
-                            <p
-                              className={cn(
-                                "text-xs font-bold",
-                                isDark ? "text-white" : "text-slate-800",
-                              )}
-                            >
-                              {rev.name}
-                            </p>
-                            <p
-                              className={cn(
-                                "text-[10px]",
-                                isDark ? "text-white/40" : "text-slate-400",
-                              )}
-                            >
-                              {rev.date}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 shrink-0">
-                          <span className={cn("text-[11px] font-extrabold", isDark ? "text-white" : "text-slate-800")}>
-                            {rev.rating.toFixed(1)}
-                          </span>
-                          <Star
-                            className="h-3 w-3 fill-emerald-500 text-emerald-500"
-                          />
-                        </div>
-                      </div>
-                      <p
+                {reviewsList.length === 0 ? (
+                  <div
+                    className={cn(
+                      "flex flex-col items-center justify-center p-8 sm:p-10 rounded-2xl border text-center space-y-3 transition-colors duration-300",
+                      isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200/80 shadow-sm"
+                    )}
+                  >
+                    <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                      <MessageSquare className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className={cn("text-base font-bold", isDark ? "text-white" : "text-slate-900")}>
+                        No reviews yet for this venue
+                      </h4>
+                      <p className={cn("text-xs max-w-sm", isDark ? "text-white/50" : "text-slate-500")}>
+                        Be the first athlete to write a review above and share your experience with the community!
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  [...reviewsList]
+                    .sort((a, b) => {
+                      if (sortBy === "highest") {
+                        if (b.rating !== a.rating) return b.rating - a.rating;
+                        return (b.id || 0) - (a.id || 0);
+                      }
+                      if (sortBy === "lowest") {
+                        if (a.rating !== b.rating) return a.rating - b.rating;
+                        return (b.id || 0) - (a.id || 0);
+                      }
+                      // Default: recent
+                      return (b.id || 0) - (a.id || 0);
+                    })
+                    .slice(0, visibleReviewsCount)
+                    .map((rev, idx) => (
+                      <div
+                        key={rev.id || idx}
                         className={cn(
-                          "text-xs leading-relaxed",
-                          isDark ? "text-white/70" : "text-slate-600",
+                          "rounded-xl border p-3.5 space-y-2 transition-colors shadow-sm",
+                          isDark
+                            ? "border-white/5 bg-white/[0.03]"
+                            : "border-slate-200 bg-white hover:bg-slate-50/30",
                         )}
                       >
-                        "{rev.comment}"
-                      </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={cn(
+                                "h-8 w-8 rounded-full border font-bold text-xs flex items-center justify-center uppercase",
+                                isDark
+                                  ? "bg-emerald-600/20 border-emerald-600/40 text-emerald-600"
+                                  : "bg-emerald-100 border-emerald-300 text-emerald-800",
+                              )}
+                            >
+                              {rev.name?.[0] || "P"}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <p
+                                  className={cn(
+                                    "text-xs font-bold",
+                                    isDark ? "text-white" : "text-slate-800",
+                                  )}
+                                >
+                                  {rev.name}
+                                </p>
+                                {isMyReview(rev) && (
+                                  <span
+                                    className={cn(
+                                      "text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider",
+                                      isDark
+                                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                        : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    )}
+                                  >
+                                    You
+                                  </span>
+                                )}
+                              </div>
+                              <p
+                                className={cn(
+                                  "text-[10px]",
+                                  isDark ? "text-white/40" : "text-slate-400",
+                                )}
+                              >
+                                {rev.date}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 shrink-0">
+                            <span className={cn("text-[11px] font-extrabold", isDark ? "text-white" : "text-slate-800")}>
+                              {Number(rev.rating).toFixed(1)}
+                            </span>
+                            <Star
+                              className="h-3 w-3 fill-emerald-500 text-emerald-500"
+                            />
+                          </div>
+                        </div>
+                        <p
+                          className={cn(
+                            "text-xs leading-relaxed",
+                            isDark ? "text-white/70" : "text-slate-600",
+                          )}
+                        >
+                          "{rev.comment}"
+                        </p>
 
-                      {/* Review Action Buttons */}
-                      <div className="flex items-center justify-end gap-3 pt-2">
-                        <button
-                          onClick={() => handleLikeReview(idx)}
-                          className={cn(
-                            "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
-                            likedReviews.has(idx)
-                              ? "text-emerald-600"
-                              : isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                        {/* Review Action Buttons */}
+                        <div className="flex items-center justify-end gap-3 pt-1">
+                          <button
+                            onClick={() => handleLikeReview(rev.id || idx)}
+                            className={cn(
+                              "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                              likedReviews.has(rev.id || idx)
+                                ? "text-emerald-600"
+                                : isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                            )}
+                          >
+                            <ThumbsUp className={cn("h-3.5 w-3.5", likedReviews.has(rev.id || idx) ? "fill-emerald-600" : "")} />
+                            Like
+                          </button>
+                          <button
+                            onClick={() => handleReplyReview(rev.id || idx)}
+                            className={cn(
+                              "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                              isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                            )}
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            Reply
+                          </button>
+                          <button
+                            onClick={() => handleReportReview(rev.id || idx)}
+                            className={cn(
+                              "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                              isDark ? "text-white/30 hover:text-rose-400" : "text-slate-300 hover:text-rose-500"
+                            )}
+                          >
+                            <Flag className="h-3 w-3" />
+                            Report
+                          </button>
+
+                          {/* Delete Button - ONLY rendered if this review was written by the current logged in user */}
+                          {isMyReview(rev) && (
+                            <button
+                              onClick={() => handleDeleteReview(rev)}
+                              className={cn(
+                                "flex items-center gap-1 text-[11px] font-semibold transition-colors cursor-pointer text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 pl-2.5 border-l",
+                                isDark ? "border-white/10" : "border-slate-200"
+                              )}
+                              title="Delete this review"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete
+                            </button>
                           )}
-                        >
-                          <ThumbsUp className={cn("h-3.5 w-3.5", likedReviews.has(idx) ? "fill-emerald-600" : "")} />
-                          Like
-                        </button>
-                        <button
-                          onClick={() => handleReplyReview(idx)}
-                          className={cn(
-                            "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
-                            isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
-                          )}
-                        >
-                          <MessageSquare className="h-3.5 w-3.5" />
-                          Reply
-                        </button>
-                        <button
-                          onClick={() => handleReportReview(idx)}
-                          className={cn(
-                            "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
-                            isDark ? "text-white/30 hover:text-rose-400" : "text-slate-300 hover:text-rose-500"
-                          )}
-                        >
-                          <Flag className="h-3 w-3" />
-                          Report
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                )}
 
                 {reviewsList.length > 3 && (
                   <div className="flex justify-center pt-2">
@@ -1719,14 +1927,31 @@ export function VenueDetails() {
                         const slotPrice = getSlotPrice(slotHour, playHours);
 
                         // Only the user who booked this slot can cancel it
-                        const currentEmail = String(currentUser?.email || "").toLowerCase().trim();
-                        const currentName = String(currentUser?.fullName || currentUser?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
+                        const currentEmail = String(activePlayer?.email || localStorage.getItem("userEmail") || "").toLowerCase().trim();
+                        const currentName = String(activePlayer?.fullName || activePlayer?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
+                        const currentPhone = String(activePlayer?.phone || activePlayer?.phoneNumber || localStorage.getItem("userPhone") || "").replace(/\D/g, "");
+                        const currentUserId = activePlayer?.id;
+
                         const bookedEmail = String(slot.bookedByEmail || slot.booking?.user_email || "").toLowerCase().trim();
                         const bookedName = String(slot.bookedBy || slot.booking?.user_name || "").toLowerCase().trim();
+                        const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
+                        const bookedUserId = slot.booking?.user_id;
 
                         const isMyBooking = isBooked && Boolean(
-                          (currentEmail && bookedEmail && currentEmail === bookedEmail) ||
-                          (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName)))
+                          (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
+                          (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
+                          (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
+                          (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName))) ||
+                          (sessionStorage.getItem("sportxclub_last_booking") && (() => {
+                            try {
+                              const lb = JSON.parse(sessionStorage.getItem("sportxclub_last_booking") || "{}");
+                              return (
+                                lb.venue === venue.name &&
+                                lb.date === selectedDate &&
+                                (lb.time === formatSlotRange(slotHour, playHours) || lb.time?.includes(formatHour(slotHour)))
+                              );
+                            } catch { return false; }
+                          })())
                         );
 
                         return (
@@ -1807,9 +2032,10 @@ export function VenueDetails() {
                                       <div
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          handleCancelSlot(slot);
+                                          e.preventDefault();
+                                          handleOpenCancelModal(slot);
                                         }}
-                                        className="px-1.5 py-0.5 bg-red-500/20 text-red-600 dark:text-white rounded-md text-[8px] font-bold tracking-wider hover:bg-red-500/30 transition-colors cursor-pointer pointer-events-auto shadow-sm mt-0.5"
+                                        className="px-2 py-0.5 bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer pointer-events-auto shadow-xs border border-red-500/30 active:scale-95 mt-0.5"
                                       >
                                         CANCEL
                                       </div>
@@ -1899,7 +2125,7 @@ export function VenueDetails() {
                       toast.error("Please select an available time slot first.");
                       return;
                     }
-                    if (!currentUser) {
+                    if (!activePlayer && !currentUser) {
                       toast.error("Please sign in first to continue booking.");
                       navigate("/login");
                       return;
@@ -1918,8 +2144,8 @@ export function VenueDetails() {
                       date: selectedDate,
                       time: formattedSlotTime,
                       price: computedPrice,
-                      userName: currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
-                      userEmail: currentUser?.email || 'user@sportxclub.com',
+                      userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
+                      userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
                       venueId: venue.id,
                     };
 
@@ -1961,6 +2187,164 @@ export function VenueDetails() {
           </div>
         </div>
       </div>
+
+      {/* Cancellation Reason Modal Dialog */}
+      <Dialog open={cancelModalOpen} onOpenChange={(open) => { if (!isCancelling) setCancelModalOpen(open); }}>
+        <DialogContent className={cn(
+          "max-w-md w-full rounded-3xl p-6 border shadow-2xl overflow-hidden",
+          isDark ? "bg-[#0f172a] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
+        )}>
+          <DialogHeader className="space-y-2 text-left">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-black tracking-tight">
+                  Cancel Slot Booking
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Are you sure you want to cancel this reservation?
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {slotToCancel && (
+            <div className="space-y-4 my-2">
+              {/* Slot Details Summary Box */}
+              <div className={cn(
+                "rounded-2xl p-3.5 border space-y-2",
+                isDark ? "bg-slate-900/80 border-slate-800" : "bg-slate-50 border-slate-200"
+              )}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground">Turf Venue:</span>
+                  <span className="text-xs font-black text-foreground">{venue.name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground">Sport & Date:</span>
+                  <span className="text-xs font-black text-foreground">
+                    {venue.sport} • {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", weekday: "short" })}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-muted-foreground">Reserved Slot:</span>
+                  <span className="text-xs font-black text-emerald-500">
+                    {formatSlotRange(slotToCancel.startHour, 1)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-dashed border-border/60">
+                  <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                    <Wallet className="h-3.5 w-3.5 text-emerald-500" /> Wallet Refund:
+                  </span>
+                  <span className="text-sm font-black text-emerald-500">
+                    ₹{slotToCancel.booking?.amount || getSlotPrice(slotToCancel.startHour, 1) || venue.price || 0}
+                  </span>
+                </div>
+              </div>
+
+              {/* Reason Selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Please select a reason for cancellation <span className="text-red-500">*</span>
+                </label>
+                <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                  {CANCEL_REASONS.map((r) => {
+                    const isSelected = cancelReason === r.label;
+                    return (
+                      <div
+                        key={r.id}
+                        onClick={() => setCancelReason(r.label)}
+                        className={cn(
+                          "flex items-center gap-2.5 p-2.5 rounded-xl border text-xs font-medium cursor-pointer transition-all",
+                          isSelected
+                            ? isDark
+                              ? "bg-red-500/10 border-red-500/50 text-white font-bold"
+                              : "bg-red-50/80 border-red-400 text-red-950 font-bold shadow-xs"
+                            : isDark
+                              ? "bg-slate-800/40 border-slate-800 text-slate-300 hover:bg-slate-800/80"
+                              : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100/70"
+                        )}
+                      >
+                        <span className="text-base leading-none">{r.icon}</span>
+                        <span className="flex-1 leading-tight">{r.label}</span>
+                        <div className={cn(
+                          "h-4 w-4 rounded-full border flex items-center justify-center transition-colors",
+                          isSelected ? "border-red-500 bg-red-500 text-white" : "border-slate-400/50"
+                        )}>
+                          {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom Reason / Optional Feedback input */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground flex items-center justify-between">
+                  <span>Additional Details / Notes</span>
+                  <span className="text-[10px] font-normal text-muted-foreground/80">Optional</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                  placeholder="Help us improve by telling us why you're cancelling..."
+                  className={cn(
+                    "w-full px-3 py-2 text-xs rounded-xl border outline-none transition-all resize-none",
+                    isDark
+                      ? "bg-slate-900/90 border-slate-800 text-white focus:border-red-500/50 placeholder:text-slate-600"
+                      : "bg-white border-slate-200 text-slate-900 focus:border-red-400 placeholder:text-slate-400"
+                  )}
+                />
+              </div>
+
+              {/* Refund Policy Alert */}
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400 flex items-start gap-2">
+                <span className="text-xs shrink-0 mt-0.5">ℹ️</span>
+                <span>
+                  Upon cancellation, this slot will be released for other players immediately and the amount will be credited to your <strong>SportXClub Wallet</strong>.
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-2 pt-2 border-t border-border/50">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isCancelling}
+              onClick={() => setCancelModalOpen(false)}
+              className="rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 h-10 px-4 cursor-pointer"
+            >
+              Keep My Booking
+            </Button>
+            <Button
+              type="button"
+              disabled={isCancelling}
+              onClick={handleConfirmCancelSlot}
+              className={cn(
+                "rounded-xl text-xs font-black h-10 px-5 transition-all text-white flex items-center gap-2 cursor-pointer",
+                "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-500/20 active:scale-95 disabled:opacity-50"
+              )}
+            >
+              {isCancelling ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Cancelling...</span>
+                </>
+              ) : (
+                <>
+                  <Ban className="h-4 w-4" />
+                  <span>Confirm Cancellation</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <GlobalFooter />
     </div>
   );

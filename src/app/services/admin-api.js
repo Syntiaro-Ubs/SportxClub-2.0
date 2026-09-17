@@ -4,6 +4,26 @@
 
 const API_BASE = "/api";
 
+function getAuthHeaders(extraHeaders = {}) {
+  let token = null;
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    if (!token) {
+      try {
+        const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
+        const oUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+        const cUser = JSON.parse(localStorage.getItem("cmsAdminUser") || "{}");
+        token = pUser.token || oUser.token || cUser.token || localStorage.getItem("cmsAdminToken");
+      } catch (e) {}
+    }
+  }
+  const headers = { ...extraHeaders };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export const adminApi = {
   // Generic Entity Fetcher
   getAll: async (entity, params = {}) => {
@@ -33,7 +53,9 @@ export const adminApi = {
 
       const query = cleanParams.toString();
       const url = query ? `${API_BASE}/admin/${entity}?${query}` : `${API_BASE}/admin/${entity}`;
-      const res = await fetch(url);
+      const res = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || `Failed to fetch ${entity}`);
       return json.data;
@@ -48,7 +70,7 @@ export const adminApi = {
     try {
       const res = await fetch(`${API_BASE}/admin/${entity}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(data),
       });
       const json = await res.json();
@@ -65,7 +87,7 @@ export const adminApi = {
     try {
       const res = await fetch(`${API_BASE}/admin/${entity}/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(data),
       });
       const json = await res.json();
@@ -82,6 +104,7 @@ export const adminApi = {
     try {
       const res = await fetch(`${API_BASE}/admin/${entity}/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || `Failed to delete item ${id} from ${entity}`);
@@ -95,7 +118,9 @@ export const adminApi = {
   // Dashboard Live Stats
   getStats: async () => {
     try {
-      const res = await fetch(`${API_BASE}/admin/dashboard/stats`);
+      const res = await fetch(`${API_BASE}/admin/dashboard/stats`, {
+        headers: getAuthHeaders(),
+      });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || "Failed to fetch stats");
       return json;
@@ -114,6 +139,9 @@ export const adminApi = {
         body: JSON.stringify({ email, password, accountType }),
       });
       const json = await res.json();
+      if (json.success && json.token) {
+        localStorage.setItem("token", json.token);
+      }
       return json;
     } catch (err) {
       console.error("adminApi.login error:", err);
@@ -129,6 +157,9 @@ export const adminApi = {
         body: JSON.stringify(userData),
       });
       const json = await res.json();
+      if (json.success && json.token) {
+        localStorage.setItem("token", json.token);
+      }
       return json;
     } catch (err) {
       console.error("adminApi.register error:", err);
@@ -201,7 +232,11 @@ export const adminApi = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      return await res.json();
+      const json = await res.json();
+      if (json.success && json.token) {
+        localStorage.setItem("token", json.token);
+      }
+      return json;
     } catch (err) {
       console.error("adminApi.googleAuth error:", err);
       return { success: false, error: err.message || "Network error" };
@@ -210,7 +245,9 @@ export const adminApi = {
 
   getAccounts: async (accountType = "player") => {
     try {
-      const res = await fetch(`${API_BASE}/auth/accounts?accountType=${encodeURIComponent(accountType)}`);
+      const res = await fetch(`${API_BASE}/auth/accounts?accountType=${encodeURIComponent(accountType)}`, {
+        headers: getAuthHeaders(),
+      });
       const json = await res.json();
       return json.accounts || [];
     } catch (err) {
@@ -223,7 +260,7 @@ export const adminApi = {
     try {
       const res = await fetch(`${API_BASE}/auth/update-profile`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(userData),
       });
       return await res.json();
@@ -238,6 +275,7 @@ export const adminApi = {
     try {
       const res = await fetch(`${API_BASE}/admin/reset-db`, {
         method: "POST",
+        headers: getAuthHeaders(),
       });
       const json = await res.json();
       return json;

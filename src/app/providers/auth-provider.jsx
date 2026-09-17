@@ -67,6 +67,10 @@ export function AuthProvider({ children }) {
         const targetType = res.user.accountType || accountType;
         const userObj = { ...res.user, accountType: targetType };
 
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+        }
+
         if (targetType === "turf-owner" || accountType === "turf-owner") {
           setTurfOwnerUser(userObj);
           localStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
@@ -120,6 +124,9 @@ export function AuthProvider({ children }) {
       });
 
       if (res.success && res.user) {
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+        }
         const targetType = res.user.accountType || (role === "owner" ? "turf-owner" : "player");
         const userObj = { ...res.user, accountType: targetType };
 
@@ -145,6 +152,9 @@ export function AuthProvider({ children }) {
     try {
       const res = await adminApi.register(userData);
       if (res.success && res.user) {
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+        }
         const targetType = res.user.accountType || (userData.role === "owner" ? "turf-owner" : "player");
         const newUserObj = { ...res.user, accountType: targetType };
 
@@ -192,6 +202,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    localStorage.removeItem("token");
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     if (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner")) {
       setTurfOwnerUser(null);

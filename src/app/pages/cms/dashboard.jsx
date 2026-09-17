@@ -65,6 +65,7 @@ import { cmsService } from "../../services/cms-service";
 import { adminApi } from "../../services/admin-api";
 import { turfService } from "../../services/turf.service";
 import { TurfOnboardingView } from "./turf-onboarding-view";
+import { ReviewsManagementView } from "./reviews-management-view";
 
 export const CONSOLE_MODULES = [
   {
@@ -90,6 +91,14 @@ export const CONSOLE_MODULES = [
     icon: MapPin,
     tag: "Venues",
     color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  },
+  {
+    key: "reviews",
+    label: "Reviews Management",
+    description: "View, moderate, add, edit, and delete real-time user ratings and turf feedback.",
+    icon: Star,
+    tag: "Reviews",
+    color: "text-amber-600 bg-amber-50 border-amber-200",
   },
   {
     key: "tournaments",
@@ -121,13 +130,13 @@ export const ROLE_PRESETS = {
   "Super Admin": {
     label: "Super Admin",
     description: "Full unrestricted access to all console modules and user management.",
-    permissions: ["home-page", "onboarding", "turfs", "tournaments", "community", "team"],
+    permissions: ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"],
     badgeClass: "bg-purple-100 text-purple-700 border-purple-200",
   },
   "Manager": {
     label: "Console Manager",
-    description: "Access to manage home page, onboarding, turfs, tournaments, and community feed.",
-    permissions: ["home-page", "onboarding", "turfs", "tournaments", "community"],
+    description: "Access to manage home page, onboarding, turfs, reviews, tournaments, and community feed.",
+    permissions: ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community"],
     badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
   },
   "Editor": {
@@ -138,8 +147,8 @@ export const ROLE_PRESETS = {
   },
   "Turf Manager": {
     label: "Turf Manager",
-    description: "Access to manage venue listings, pricing, and home page featured turfs.",
-    permissions: ["turfs", "home-page"],
+    description: "Access to manage venue listings, pricing, reviews, and home page featured turfs.",
+    permissions: ["turfs", "reviews", "home-page"],
     badgeClass: "bg-teal-100 text-teal-700 border-teal-200",
   },
   "Tournament Coordinator": {
@@ -177,9 +186,9 @@ export function CMSDashboard() {
   });
 
   const userPermissions = useMemo(() => {
-    if (!currentCmsUser) return ["home-page", "onboarding", "turfs", "tournaments", "community", "team"];
+    if (!currentCmsUser) return ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
     if (currentCmsUser.role === "Super Admin" || currentCmsUser.role === "Admin") {
-      return ["home-page", "onboarding", "turfs", "tournaments", "community", "team"];
+      return ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
     }
     return Array.isArray(currentCmsUser.permissions) && currentCmsUser.permissions.length > 0
       ? currentCmsUser.permissions
@@ -188,7 +197,7 @@ export function CMSDashboard() {
 
   // Active view tab
   const currentView = params.view || (userPermissions[0] || "home-page");
-  const validViews = ["home-page", "onboarding", "turfs", "tournaments", "community", "team"];
+  const validViews = ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
   const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : (userPermissions[0] || "home-page"));
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -391,12 +400,16 @@ export function CMSDashboard() {
     image_url: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"
   });
 
-  // Helper to sort turfs by highest reviews count (default requirement)
+  // Helper to sort turfs by highest reviews count (default requirement), tie-broken by rating then ID
   const sortTurfsByReviews = (items) => {
     return [...items].sort((a, b) => {
       const revA = Number(a.reviews ?? a.reviews_count ?? 0);
       const revB = Number(b.reviews ?? b.reviews_count ?? 0);
-      return revB - revA;
+      if (revB !== revA) return revB - revA;
+      const ratA = Number(a.rating ?? 0);
+      const ratB = Number(b.rating ?? 0);
+      if (ratB !== ratA) return ratB - ratA;
+      return Number(b.id || 0) - Number(a.id || 0);
     });
   };
 
@@ -478,7 +491,15 @@ export function CMSDashboard() {
         recList.sort((a, b) => (Number(a.display_order) || 999) - (Number(b.display_order) || 999));
         setRecSortMode("custom");
       } else {
-        recList.sort((a, b) => Number(b.reviews ?? b.reviews_count ?? 0) - Number(a.reviews ?? a.reviews_count ?? 0));
+        recList.sort((a, b) => {
+          const revA = Number(a.reviews ?? a.reviews_count ?? 0);
+          const revB = Number(b.reviews ?? b.reviews_count ?? 0);
+          if (revB !== revA) return revB - revA;
+          const ratA = Number(a.rating ?? 0);
+          const ratB = Number(b.rating ?? 0);
+          if (ratB !== ratA) return ratB - ratA;
+          return Number(b.id || 0) - Number(a.id || 0);
+        });
         setRecSortMode("reviews");
       }
       setRecommendedTurfs(recList);
@@ -489,7 +510,15 @@ export function CMSDashboard() {
         allList.sort((a, b) => (Number(a.all_display_order) || 999) - (Number(b.all_display_order) || 999));
         setAllSortMode("custom");
       } else {
-        allList.sort((a, b) => Number(b.reviews ?? b.reviews_count ?? 0) - Number(a.reviews ?? a.reviews_count ?? 0));
+        allList.sort((a, b) => {
+          const revA = Number(a.reviews ?? a.reviews_count ?? 0);
+          const revB = Number(b.reviews ?? b.reviews_count ?? 0);
+          if (revB !== revA) return revB - revA;
+          const ratA = Number(a.rating ?? 0);
+          const ratB = Number(b.rating ?? 0);
+          if (ratB !== ratA) return ratB - ratA;
+          return Number(b.id || 0) - Number(a.id || 0);
+        });
         setAllSortMode("reviews");
       }
       setAllVenuesTurfs(allList);
@@ -980,6 +1009,21 @@ export function CMSDashboard() {
     }
   };
 
+  const handleGalleryFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setGalleryForm((prev) => ({ ...prev, image_url: ev.target.result }));
+      toast.success("Image selected successfully!");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleDeleteGalleryItem = async (id) => {
     if (!window.confirm("Delete this gallery item?")) return;
     try {
@@ -1446,6 +1490,7 @@ export function CMSDashboard() {
       { key: "home-page", label: "Home Page", icon: Home },
       { key: "onboarding", label: "Onboarding Requests", icon: CheckSquare },
       { key: "turfs", label: "Turfs", icon: MapPin },
+      { key: "reviews", label: "Reviews", icon: Star },
       { key: "tournaments", label: "Tournaments Page", icon: Trophy },
       { key: "community", label: "Community Feed", icon: MessageSquare },
       { key: "team", label: "Team Management", icon: Users },
@@ -1526,13 +1571,15 @@ export function CMSDashboard() {
               ? "Team & Admin Management"
               : activeView === "onboarding"
                 ? "Turf Onboarding Requests"
-                : activeView === "community"
-                  ? "Community Feed Management"
-                  : activeView === "tournaments"
-                    ? "Leagues & Tournaments Page Management"
-                    : activeView === "turfs"
-                      ? "Turfs Management & Rearrange"
-                      : "Home Page Management"}
+                : activeView === "reviews"
+                  ? "Turf Reviews Management"
+                  : activeView === "community"
+                    ? "Community Feed Management"
+                    : activeView === "tournaments"
+                      ? "Leagues & Tournaments Page Management"
+                      : activeView === "turfs"
+                        ? "Turfs Management & Rearrange"
+                        : "Home Page Management"}
           </h1>
 
           <div className="flex items-center gap-5">
@@ -2630,6 +2677,14 @@ export function CMSDashboard() {
                 </div>
               </section>
             </div>
+          )}
+
+          {/* REVIEWS MANAGEMENT VIEW */}
+          {activeView === "reviews" && (
+            <ReviewsManagementView
+              turfs={turfs}
+              onTurfsUpdated={loadDashboardData}
+            />
           )}
 
           {/* TURF ONBOARDING REQUESTS VIEW */}
@@ -4083,49 +4138,6 @@ export function CMSDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* 5. Turf Modal */}
-      <Dialog open={isTurfModalOpen} onOpenChange={setIsTurfModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-extrabold">Add Turf Venue</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSaveTurf} className="space-y-4 pt-2">
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Turf Name</Label>
-              <Input
-                value={turfForm.name}
-                onChange={(e) => setTurfForm({ ...turfForm, name: e.target.value })}
-                placeholder="e.g. Skyline Sports Arena"
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Location / City</Label>
-              <Input
-                value={turfForm.location}
-                onChange={(e) => setTurfForm({ ...turfForm, location: e.target.value })}
-                placeholder="e.g. Powai, Mumbai"
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Price Per Hour (₹)</Label>
-              <Input
-                type="number"
-                value={turfForm.price_per_hour}
-                onChange={(e) => setTurfForm({ ...turfForm, price_per_hour: Number(e.target.value) })}
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
-                Add Turf Venue
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* 6. Offer Card Modal */}
       <Dialog open={isOfferModalOpen} onOpenChange={setIsOfferModalOpen}>
         <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
@@ -4180,59 +4192,142 @@ export function CMSDashboard() {
 
       {/* 7. Gallery Item Modal */}
       <Dialog open={isGalleryModalOpen} onOpenChange={setIsGalleryModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-extrabold">{editingGallery ? "Edit Gallery Item" : "Add Immersive Turf Item"}</DialogTitle>
+            <DialogTitle className="font-extrabold flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-emerald-600" />
+              {editingGallery ? "Edit Gallery Item" : "Add Immersive Turf Item"}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSaveGalleryItem} className="space-y-4 pt-2">
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Turf Name</Label>
-              <Input
-                value={galleryForm.name}
-                onChange={(e) => setGalleryForm({ ...galleryForm, name: e.target.value })}
-                placeholder="e.g. Smash & Drive Badminton"
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
+            {/* Quick-fill from Existing Turfs */}
+            {!editingGallery && turfs && turfs.length > 0 && (
+              <div className="space-y-1 bg-emerald-50/60 p-3 rounded-xl border border-emerald-100">
+                <Label className="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wider">Quick-Select From Existing Turf (Optional)</Label>
+                <select
+                  onChange={(e) => {
+                    const selected = turfs.find(t => String(t.id) === e.target.value);
+                    if (selected) {
+                      setGalleryForm((prev) => ({
+                        ...prev,
+                        name: selected.name || prev.name,
+                        location: typeof selected.location === "string" ? selected.location : (selected.location?.city || selected.location?.address || prev.location),
+                        rating: selected.rating ? String(selected.rating) : prev.rating,
+                        reviews: selected.reviews ? Number(selected.reviews) : prev.reviews,
+                        image_url: selected.image_url || selected.image || prev.image_url,
+                      }));
+                      toast.success(`Autofilled details from ${selected.name}`);
+                    }
+                  }}
+                  className="w-full bg-white border border-emerald-200 text-xs text-[#0f172a] rounded-lg p-2 font-medium"
+                  defaultValue=""
+                >
+                  <option value="">-- Choose a registered venue to autofill --</option>
+                  {turfs.map(t => (
+                    <option key={t.id} value={t.id}>{t.name} ({typeof t.location === 'string' ? t.location : 'Venue'})</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs font-bold text-[#334155]">Turf / Experience Name</Label>
+                <Input
+                  value={galleryForm.name}
+                  onChange={(e) => setGalleryForm({ ...galleryForm, name: e.target.value })}
+                  placeholder="e.g. Smash & Drive Badminton"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs font-bold text-[#334155]">Location / City</Label>
+                <Input
+                  value={galleryForm.location}
+                  onChange={(e) => setGalleryForm({ ...galleryForm, location: e.target.value })}
+                  placeholder="e.g. Andheri West, Mumbai"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Rating</Label>
+                <Input
+                  value={galleryForm.rating}
+                  onChange={(e) => setGalleryForm({ ...galleryForm, rating: e.target.value })}
+                  placeholder="e.g. 4.9"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold text-[#334155]">Review Count</Label>
+                <Input
+                  type="number"
+                  value={galleryForm.reviews}
+                  onChange={(e) => setGalleryForm({ ...galleryForm, reviews: Number(e.target.value) })}
+                  placeholder="e.g. 124"
+                  className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
+                />
+              </div>
+
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs font-bold text-[#334155]">Homepage Bento Grid Size</Label>
+                <select
+                  value={galleryForm.className || "md:col-span-1 md:row-span-1"}
+                  onChange={(e) => setGalleryForm({ ...galleryForm, className: e.target.value })}
+                  className="w-full bg-[#f8fafc] border border-[#cbd5e1] text-xs text-[#0f172a] rounded-xl p-2 font-medium"
+                >
+                  <option value="md:col-span-1 md:row-span-1">Standard Card (1x1)</option>
+                  <option value="md:col-span-2 md:row-span-1">Wide Card (2x1)</option>
+                  <option value="md:col-span-2 md:row-span-2">Large Featured Card (2x2)</option>
+                </select>
+              </div>
+
+              {/* Photo Upload & Preview Section */}
+              <div className="space-y-2 sm:col-span-2 border-t border-slate-100 pt-3">
+                <Label className="text-xs font-bold text-[#334155]">Gallery Photo (Upload File or Enter URL)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={galleryForm.image_url}
+                    onChange={(e) => setGalleryForm({ ...galleryForm, image_url: e.target.value })}
+                    placeholder="https://... or upload below"
+                    className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] flex-1"
+                  />
+                  <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                    Browse
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleGalleryFileSelect}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {galleryForm.image_url && (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200 h-36 bg-slate-900 group">
+                    <img src={galleryForm.image_url} alt="Gallery Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setGalleryForm((prev) => ({ ...prev, image_url: "" }))}
+                        className="h-8 text-xs font-bold rounded-lg"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1" /> Remove Photo
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Location</Label>
-              <Input
-                value={galleryForm.location}
-                onChange={(e) => setGalleryForm({ ...galleryForm, location: e.target.value })}
-                placeholder="e.g. Andheri West"
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Rating</Label>
-              <Input
-                value={galleryForm.rating}
-                onChange={(e) => setGalleryForm({ ...galleryForm, rating: e.target.value })}
-                placeholder="e.g. 4.9"
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Review Count</Label>
-              <Input
-                type="number"
-                value={galleryForm.reviews}
-                onChange={(e) => setGalleryForm({ ...galleryForm, reviews: Number(e.target.value) })}
-                placeholder="e.g. 124"
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Image URL</Label>
-              <Input
-                value={galleryForm.image_url}
-                onChange={(e) => setGalleryForm({ ...galleryForm, image_url: e.target.value })}
-                placeholder="https://..."
-                className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
+
+            <DialogFooter className="pt-2">
+              <Button type="submit" className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
                 {editingGallery ? "Update Gallery Item" : "Save Gallery Item"}
               </Button>
             </DialogFooter>

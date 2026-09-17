@@ -157,7 +157,7 @@ export function OwnerSetupPage() {
   // Email Verification & OTP state for Step 1
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
-  const [emailVerified, setEmailVerified] = useState(Boolean(currentUser?.email && currentUser?.email.includes("@")));
+  const [emailVerified, setEmailVerified] = useState(false);
   const [emailOtpError, setEmailOtpError] = useState("");
   const [emailExistsError, setEmailExistsError] = useState("");
   const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
@@ -184,28 +184,28 @@ export function OwnerSetupPage() {
 
   const getEmptyState = () => ({
     personal: {
-      fullName: currentUser?.fullName || "",
-      email: currentUser?.email || "",
+      fullName: "",
+      email: "",
       password: "",
       confirmPassword: "",
-      phone: currentUser?.phone || "",
+      phone: "",
       dob: "",
       gender: "",
       profilePhoto: null,
       address: "",
-      city: currentUser?.city || "",
+      city: "",
       state: "",
       pincode: ""
     },
     business: {
       businessName: "",
-      ownerName: currentUser?.fullName || "",
+      ownerName: "",
       businessType: "",
       gst: "",
       tradeLicense: null,
       yearsInBusiness: "",
-      email: currentUser?.email || "",
-      phone: currentUser?.phone || ""
+      email: "",
+      phone: ""
     },
     identity: {
       aadhaarFront: null,
@@ -226,7 +226,7 @@ export function OwnerSetupPage() {
     location: {
       address: "",
       landmark: "",
-      city: currentUser?.city || "",
+      city: "",
       state: "",
       pincode: "",
       latitude: "",
@@ -251,7 +251,7 @@ export function OwnerSetupPage() {
       cancellationPolicy: "moderate"
     },
     bank: {
-      accountName: currentUser?.fullName || "",
+      accountName: "",
       bankName: "",
       accountNumber: "",
       confirmAccountNumber: "",
@@ -276,14 +276,18 @@ export function OwnerSetupPage() {
           personal: {
             ...empty.personal,
             ...(parsed?.personal || {}),
-            fullName: (parsed?.personal?.fullName === "John Owner" || !parsed?.personal?.fullName)
-              ? (currentUser?.fullName || "")
-              : parsed.personal.fullName,
-            email: parsed?.personal?.email || currentUser?.email || "",
+            fullName: (parsed?.personal?.fullName === "John Owner")
+              ? ""
+              : (parsed?.personal?.fullName || ""),
+            email: "", // Keep email empty by default so user enters manually and verifies with OTP
             password: "",
             confirmPassword: "",
           },
-          business: { ...empty.business, ...(parsed?.business || {}) },
+          business: {
+            ...empty.business,
+            ...(parsed?.business || {}),
+            email: "",
+          },
           identity: { ...empty.identity, ...(parsed?.identity || {}) },
           turf: { ...empty.turf, ...(parsed?.turf || {}) },
           location: { ...empty.location, ...(parsed?.location || {}) },
@@ -351,7 +355,7 @@ export function OwnerSetupPage() {
     if (window.confirm("Do you want to reset this turf registration form and start fresh? All unsubmitted inputs will be cleared.")) {
       const key = getStorageKey();
       if (key) {
-        try { localStorage.removeItem(key); } catch (e) {}
+        try { localStorage.removeItem(key); } catch (e) { }
       }
       setFormData(getEmptyState());
       setEmailVerified(false);
@@ -639,8 +643,8 @@ export function OwnerSetupPage() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
-      const response = await fetch(`${apiBase}/api/owner/setup`, {
+      const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+      const response = await fetch(`${apiBase}/api/auth/owner/setup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1002,10 +1006,10 @@ export function OwnerSetupPage() {
                         {isSendingEmailOtp
                           ? "Sending..."
                           : emailOtpSent
-                          ? resendCountdown > 0
-                            ? `Resend (${resendCountdown}s)`
-                            : "Resend OTP"
-                          : "Send OTP"}
+                            ? resendCountdown > 0
+                              ? `Resend (${resendCountdown}s)`
+                              : "Resend OTP"
+                            : "Send OTP"}
                       </Button>
                     )}
                     {emailVerified && (
@@ -1058,7 +1062,7 @@ export function OwnerSetupPage() {
                           id="otp"
                           type="text"
                           maxLength={6}
-                          placeholder="Enter OTP Code"
+                          placeholder="******"
                           className="pl-10 h-10 rounded-xl font-mono text-center tracking-[0.25em] text-sm"
                           value={emailOtpCode}
                           onChange={(e) => {
@@ -1141,7 +1145,7 @@ export function OwnerSetupPage() {
                     <Label className="text-xs font-semibold">Phone Number</Label>
                     <Input
                       type="tel"
-                      placeholder="e.g. 9876543210"
+                      placeholder="Phone Number"
                       value={formData.personal?.phone || ""}
                       onChange={(e) => updateSection('personal', 'phone', e.target.value)}
                       className="h-10 rounded-xl text-sm"
@@ -1263,11 +1267,11 @@ export function OwnerSetupPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>Business Email (Optional)</Label>
-                    <Input type="email" value={formData.business?.email || formData.personal?.email || ""} onChange={(e) => updateSection('business', 'email', e.target.value)} className="h-11 rounded-xl" />
+                    <Input type="email" value={formData.business?.email || ""} onChange={(e) => updateSection('business', 'email', e.target.value)} className="h-11 rounded-xl" placeholder="e.g. contact@business.com" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Business Contact Number</Label>
-                    <Input value={formData.business?.phone || formData.personal?.phone || ""} onChange={(e) => updateSection('business', 'phone', e.target.value)} className="h-11 rounded-xl" />
+                    <Input value={formData.business?.phone || ""} onChange={(e) => updateSection('business', 'phone', e.target.value)} className="h-11 rounded-xl" placeholder="Mobile Number" />
                   </div>
                 </div>
               </div>

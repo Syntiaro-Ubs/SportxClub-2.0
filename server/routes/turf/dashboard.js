@@ -1,15 +1,24 @@
 import express from "express";
 import { getPool } from "../../db.js";
+import { authenticateToken, requireRole } from "../../middleware/auth.js";
 
 const router = express.Router();
 
 // GET /api/turf/dashboard/stats - Overview stats for Turf Dashboard (Isolated per Turf Owner)
-router.get("/stats", async (req, res) => {
+router.get("/stats", authenticateToken, async (req, res) => {
   try {
     const pool = getPool();
-    const { ownerEmail, ownerName } = req.query;
-    const cleanEmail = String(ownerEmail || "").trim().toLowerCase();
-    const cleanName = String(ownerName || "").trim().toLowerCase();
+    const authUser = req.user;
+    const isAdmin = authUser.role === "Admin" || authUser.role === "Super Admin" || authUser.accountType === "cms-admin";
+
+    // Non-admins only see their own turfs
+    let cleanEmail = authUser.email ? authUser.email.trim().toLowerCase() : "";
+    let cleanName = authUser.fullName ? authUser.fullName.trim().toLowerCase() : "";
+
+    if (isAdmin && (req.query.ownerEmail || req.query.ownerName)) {
+      cleanEmail = String(req.query.ownerEmail || "").trim().toLowerCase();
+      cleanName = String(req.query.ownerName || "").trim().toLowerCase();
+    }
 
     let turfs = [];
     if (cleanEmail || cleanName) {
@@ -20,12 +29,12 @@ router.get("/stats", async (req, res) => {
         [cleanEmail, cleanEmail, cleanName, cleanName]
       );
       turfs = rows;
-    } else {
+    } else if (isAdmin) {
       const [rows] = await pool.query("SELECT * FROM turfs ORDER BY id DESC");
       turfs = rows;
     }
 
-    if ((cleanEmail || cleanName) && turfs.length === 0) {
+    if (turfs.length === 0) {
       return res.json({
         success: true,
         stats: {
@@ -47,9 +56,6 @@ router.get("/stats", async (req, res) => {
         `SELECT * FROM bookings WHERE turf_name IN (${turfNames.map(() => "?").join(",")}) ORDER BY id DESC`,
         turfNames
       );
-      bookings = rows;
-    } else if (!cleanEmail && !cleanName) {
-      const [rows] = await pool.query("SELECT * FROM bookings ORDER BY id DESC");
       bookings = rows;
     }
 

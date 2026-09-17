@@ -6,21 +6,22 @@ import {
   getCashfreeHeaders,
   verifyCashfreeWebhookSignature,
 } from "./cashfree-config.js";
+import { sendBookingEmails } from "../services/booking-email-service.js";
+import { authenticateToken, optionalAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
 /**
  * Helper to get clean frontend & backend URLs
- * Note: Cashfree Live (Production) strictly requires HTTPS for return_url
  */
 function getAppUrls(req) {
   let frontendUrl = (process.env.APP_FRONTEND_URL || "https://sportxclub.com").replace(/\/+$/, "");
-  if (!frontendUrl.startsWith("https://")) {
+  if (!frontendUrl.startsWith("https://") && process.env.NODE_ENV === "production") {
     frontendUrl = "https://sportxclub.com";
   }
 
   let backendUrl = (process.env.APP_BACKEND_URL || "https://sportxclub.com").replace(/\/+$/, "");
-  if (!backendUrl.startsWith("https://")) {
+  if (!backendUrl.startsWith("https://") && process.env.NODE_ENV === "production") {
     backendUrl = "https://sportxclub.com";
   }
 
@@ -28,11 +29,11 @@ function getAppUrls(req) {
 }
 
 /**
- * 1. CREATE CASHFREE ORDER & GET PAYMENT SESSION ID
+ * 1. CREATE CASHFREE ORDER & GET PAYMENT SESSION ID (Authoritative Pricing)
  * POST /api/payment/cashfree/create-order
  * POST /api/payment/cashfree/initiate
  */
-router.post(["/create-order", "/initiate"], async (req, res) => {
+router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
   try {
     if (!hasCashfreeCredentials()) {
       return res.status(500).json({
@@ -54,27 +55,51 @@ router.post(["/create-order", "/initiate"], async (req, res) => {
       bookingCode,
     } = req.body;
 
-    const numericAmount = parseFloat(amount || 1200);
+    const pool = getPool();
+
+    // Authoritative Server-Side Pricing: Fetch true price from MySQL database
+    let authoritativeAmount = parseFloat(amount || 1200);
+    let resolvedTurfName = String(turfName || "SportX Turf").trim();
+
+    if (venueId || turfName) {
+      try {
+        let rows = [];
+        if (venueId) {
+          [rows] = await pool.query("SELECT id, name, price_per_hour FROM turfs WHERE id = ? LIMIT 1", [venueId]);
+        }
+        if (rows.length === 0 && turfName) {
+          [rows] = await pool.query("SELECT id, name, price_per_hour FROM turfs WHERE LOWER(name) = LOWER(?) LIMIT 1", [turfName.trim()]);
+        }
+        if (rows.length > 0) {
+          const dbPrice = parseFloat(rows[0].price_per_hour);
+          if (Number.isFinite(dbPrice) && dbPrice > 0) {
+            authoritativeAmount = dbPrice;
+          }
+          resolvedTurfName = rows[0].name || resolvedTurfName;
+        }
+      } catch (dbLookupErr) {
+        console.warn("DB Price lookup note:", dbLookupErr.message);
+      }
+    }
+
+    const numericAmount = Math.max(1, authoritativeAmount);
     const formattedAmount = numericAmount.toFixed(2);
-    
-    // Generate clean unique Cashfree Order ID (alphanumeric and underscore, max 45 chars)
+
     const uniqueSuffix = `${Date.now()}_${Math.floor(100 + Math.random() * 900)}`;
     const orderId = `SPX_${uniqueSuffix}`;
 
-    const cleanEmail = (userEmail || "user@sportxclub.com").trim().toLowerCase();
+    const cleanEmail = (req.user?.email || userEmail || "user@sportxclub.com").trim().toLowerCase();
     const cleanName = String(userName || "SportX Player").replace(/[^a-zA-Z0-9 ]/g, "").trim() || "SportX Player";
     const rawPhone = String(userPhone || "9876543210").replace(/[^0-9]/g, "");
     const cleanPhone = rawPhone.length >= 10 ? rawPhone.slice(-10) : "9876543210";
     
     const cleanCustomerId = `cust_${cleanPhone}_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "").slice(0, 15)}`;
-    const cleanTurf = String(turfName || "SportX Turf").trim();
     const cleanDate = String(date || "").trim();
     const cleanTime = String(time || "").trim();
     const cleanSport = String(sport || "Sports").trim();
     const cleanBookingCode = String(bookingCode || `SPXBK${Date.now()}`).trim();
 
     const { frontendUrl, backendUrl } = getAppUrls(req);
-    // Return URL where Cashfree redirects the customer after checkout
     const returnUrl = `${frontendUrl}/payment-status?order_id={order_id}`;
     const notifyUrl = `${backendUrl}/api/payment/cashfree/webhook`;
 
@@ -92,9 +117,9 @@ router.post(["/create-order", "/initiate"], async (req, res) => {
         return_url: returnUrl,
         notify_url: notifyUrl,
       },
-      order_note: `SportXClub Booking: ${cleanTurf} (${cleanSport})`,
+      order_note: `SportXClub Booking: ${resolvedTurfName} (${cleanSport})`,
       order_tags: {
-        turfName: cleanTurf.slice(0, 40),
+        turfName: resolvedTurfName.slice(0, 40),
         sport: cleanSport.slice(0, 40),
         date: cleanDate.slice(0, 20),
         time: cleanTime.slice(0, 30),
@@ -103,7 +128,7 @@ router.post(["/create-order", "/initiate"], async (req, res) => {
       },
     };
 
-    console.log(`[Cashfree Live PG] Creating Order: ${orderId} for ₹${formattedAmount} at ${cleanTurf}`);
+    console.log(`[Cashfree Live PG] Creating Order: ${orderId} for ₹${formattedAmount} at ${resolvedTurfName}`);
 
     const response = await fetch(`${CASHFREE_CONFIG.BASE_URL}/orders`, {
       method: "POST",
@@ -124,7 +149,6 @@ router.post(["/create-order", "/initiate"], async (req, res) => {
 
     // Save pending transaction in MySQL payments table
     try {
-      const pool = getPool();
       await pool.query(
         `INSERT INTO payments 
          (transaction_id, merchant_transaction_id, provider_reference_id, user_name, user_email, turf_name, amount, method, status, date, payment_details)
@@ -135,7 +159,7 @@ router.post(["/create-order", "/initiate"], async (req, res) => {
           responseData.cf_order_id ? String(responseData.cf_order_id) : orderId,
           cleanName,
           cleanEmail,
-          cleanTurf,
+          resolvedTurfName,
           numericAmount,
           "Cashfree Live",
           cleanDate || new Date().toISOString().split("T")[0],
@@ -179,7 +203,6 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
 
     console.log(`[Cashfree Verify] Fetching status for order: ${order_id}`);
 
-    // 1. Fetch Order status from Cashfree API
     const orderRes = await fetch(`${CASHFREE_CONFIG.BASE_URL}/orders/${encodeURIComponent(order_id)}`, {
       method: "GET",
       headers: getCashfreeHeaders(),
@@ -196,7 +219,6 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
       });
     }
 
-    // 2. Fetch Payments attempt list for this order
     let paymentsList = [];
     try {
       const paymentsRes = await fetch(`${CASHFREE_CONFIG.BASE_URL}/orders/${encodeURIComponent(order_id)}/payments`, {
@@ -222,7 +244,6 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
     const pool = getPool();
 
     if (isPaid) {
-      // Tags / Metadata stored during order creation
       const tags = orderData.order_tags || {};
       const turfName = tags.turfName || "SportX Arena";
       const turfId = tags.venueId ? parseInt(tags.venueId, 10) : null;
@@ -234,7 +255,6 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
       const userName = orderData.customer_details?.customer_name || "SportX Player";
       const userPhone = orderData.customer_details?.customer_phone || "9876543210";
 
-      // 1. Update/Insert into payments table
       const [existingPayments] = await pool.query(
         "SELECT id, status FROM payments WHERE merchant_transaction_id = ? OR transaction_id = ? LIMIT 1",
         [order_id, cfPaymentId]
@@ -269,7 +289,6 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
         paymentId = payRes.insertId;
       }
 
-      // 2. Insert Confirmed Booking into bookings table if not already present
       const [existingBookings] = await pool.query(
         "SELECT id, booking_code FROM bookings WHERE booking_code = ? OR (user_email = ? AND turf_name = ? AND date = ? AND (time_slot = ? OR slot_time = ?)) LIMIT 1",
         [bookingCode, userEmail, turfName, dateStr, timeStr, timeStr]
@@ -299,7 +318,6 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
         bookingRecord = { id: bookRes.insertId, booking_code: bookingCode };
       }
 
-      // 3. Update user statistics
       try {
         await pool.query(
           "UPDATE users SET bookings = bookings + 1, games_played = games_played + 1 WHERE LOWER(email) = LOWER(?)",
@@ -307,7 +325,19 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
         );
       } catch (e) {}
 
-      console.log(`[Cashfree Confirmed] Order: ${order_id}, Payment ID: ${cfPaymentId}, Status: PAID`);
+      sendBookingEmails(bookingRecord?.id || bookingCode, {
+        bookingCode,
+        userName,
+        userEmail,
+        userPhone,
+        turfName,
+        turfId,
+        sport: sportName,
+        date: dateStr,
+        timeSlot: timeStr,
+        amount: numericAmount,
+        paymentMethod,
+      }).catch((mailErr) => console.error("[Cashfree Confirmation Mail Error]:", mailErr.message));
 
       return res.json({
         success: true,
@@ -322,10 +352,8 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
         paymentDetails: successfulPayment || orderData,
       });
     } else {
-      // Order not yet paid or failed
       const failureReason = successfulPayment?.payment_message || (orderData.order_status === "EXPIRED" ? "Order session expired" : "Payment pending or cancelled");
 
-      // Update payment record if exists
       try {
         await pool.query(
           `UPDATE payments SET status = ?, payment_details = ? WHERE merchant_transaction_id = ?`,
@@ -356,14 +384,13 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
  * 3. FALLBACK VERIFICATION ROUTE
  * POST /api/payment/cashfree/verify
  */
-router.post("/verify", async (req, res) => {
+router.post("/verify", optionalAuth, async (req, res) => {
   try {
     const { order_id, bookingPayload } = req.body;
     if (!order_id) {
       return res.status(400).json({ success: false, status: "Failed", message: "order_id is required." });
     }
 
-    // Call internal verification logic
     const orderRes = await fetch(`${CASHFREE_CONFIG.BASE_URL}/orders/${encodeURIComponent(order_id)}`, {
       method: "GET",
       headers: getCashfreeHeaders(),
@@ -391,7 +418,6 @@ router.post("/verify", async (req, res) => {
     const bookingCode = `SPX-BK-${Date.now()}`;
     const cfPaymentId = orderData.cf_order_id ? String(orderData.cf_order_id) : order_id;
 
-    // Save payment
     const [payRes] = await pool.query(
       `INSERT INTO payments 
        (transaction_id, merchant_transaction_id, provider_reference_id, user_name, user_email, turf_name, amount, method, status, date, payment_details)
@@ -411,7 +437,6 @@ router.post("/verify", async (req, res) => {
       ]
     );
 
-    // Save booking
     const [bookRes] = await pool.query(
       `INSERT INTO bookings 
        (booking_code, user_name, user_email, user_phone, turf_name, turf_id, sport, date, time_slot, slot_time, amount, status, payment_method, payment_type)
@@ -431,6 +456,20 @@ router.post("/verify", async (req, res) => {
       ]
     );
 
+    sendBookingEmails(bookRes.insertId || bookingCode, {
+      bookingCode,
+      userName,
+      userEmail,
+      userPhone: bookingPayload?.userPhone || "9876543210",
+      turfName,
+      turfId,
+      sport: sportName,
+      date: dateStr,
+      timeSlot: timeStr,
+      amount: numericAmount,
+      paymentMethod: "Cashfree",
+    }).catch((mailErr) => console.error("[Cashfree Verify Mail Error]:", mailErr.message));
+
     return res.json({
       success: true,
       status: "Success",
@@ -447,7 +486,7 @@ router.post("/verify", async (req, res) => {
 });
 
 /**
- * 4. REAL-TIME CASHFREE WEBHOOK HANDLER
+ * 4. REAL-TIME CASHFREE WEBHOOK HANDLER (Strict Signature Verification)
  * POST /api/payment/cashfree/webhook
  */
 router.post("/webhook", async (req, res) => {
@@ -457,11 +496,11 @@ router.post("/webhook", async (req, res) => {
 
     console.log(`[Cashfree Webhook] Received webhook event: ${req.body?.type}`);
 
-    // Verify webhook signature if present
-    if (signature && timestamp) {
-      const isValid = verifyCashfreeWebhookSignature(timestamp, req.body, signature);
-      if (!isValid) {
-        console.warn("[Cashfree Webhook] Invalid signature received.");
+    // Strictly enforce signature validation in production
+    if (process.env.NODE_ENV === "production" || signature) {
+      if (!signature || !timestamp || !verifyCashfreeWebhookSignature(timestamp, req.body, signature)) {
+        console.warn("[Cashfree Webhook] Webhook signature verification rejected.");
+        return res.status(401).json({ status: "Error", message: "Invalid or missing webhook signature" });
       }
     }
 
@@ -481,6 +520,8 @@ router.post("/webhook", async (req, res) => {
           `UPDATE payments SET status = 'Success', transaction_id = ?, provider_reference_id = ? WHERE merchant_transaction_id = ?`,
           [cfPaymentId, cfPaymentId, orderId]
         );
+
+        sendBookingEmails(orderId).catch((e) => {});
       }
     }
 
@@ -492,20 +533,26 @@ router.post("/webhook", async (req, res) => {
 });
 
 /**
- * 5. PAYMENT HISTORY
+ * 5. PAYMENT HISTORY (Secured: User can only access their own history)
  * GET /api/payment/cashfree/history
  */
-router.get("/history", async (req, res) => {
+router.get("/history", authenticateToken, async (req, res) => {
   try {
-    const { email } = req.query;
     const pool = getPool();
+    const authUser = req.user;
+    const isAdmin = authUser.role === "Admin" || authUser.role === "Super Admin" || authUser.accountType === "cms-admin";
 
     let sql = "SELECT * FROM payments";
     const params = [];
-    if (email) {
+
+    if (!isAdmin) {
       sql += " WHERE LOWER(user_email) = LOWER(?)";
-      params.push(email.trim());
+      params.push(authUser.email);
+    } else if (req.query.email) {
+      sql += " WHERE LOWER(user_email) = LOWER(?)";
+      params.push(req.query.email.trim());
     }
+
     sql += " ORDER BY id DESC LIMIT 50";
 
     const [rows] = await pool.query(sql, params);

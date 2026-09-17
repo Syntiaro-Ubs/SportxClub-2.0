@@ -3,7 +3,8 @@ import { toast } from "sonner";
 import {
   Building2, User, Phone, Mail, MapPin,
   CalendarDays, CheckCircle2, XCircle, FileText,
-  CreditCard, Search, Eye, AlertTriangle, Shield, Hash
+  CreditCard, Search, Eye, AlertTriangle, Shield, Hash,
+  Trash2, Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -27,8 +28,7 @@ export function TurfOnboardingView() {
 
   const loadRequests = async () => {
     try {
-      const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
-      const response = await fetch(`${apiBase}/api/admin/onboarding`);
+      const response = await fetch("/api/admin/onboarding");
       const result = await response.json();
       if (result.success) {
         setRequests(result.data);
@@ -55,6 +55,37 @@ export function TurfOnboardingView() {
     setIsModalOpen(true);
   };
 
+  const handleDelete = async (req) => {
+    if (!req?.id) return;
+    const turfTitle = req.business?.businessName || req.turf?.name || "this turf onboarding request";
+    if (!window.confirm(`Are you sure you want to permanently delete "${turfTitle}"? This will remove the onboarding application and any associated turf listing.`)) {
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`/api/admin/onboarding/${req.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setRequests(prev => prev.filter(r => r.id !== req.id));
+        toast.success("Turf onboarding request and venue deleted successfully.");
+        if (selectedRequest?.id === req.id) {
+          setIsModalOpen(false);
+          setSelectedRequest(null);
+        }
+      } else {
+        toast.error(data.error || "Failed to delete request.");
+      }
+    } catch (e) {
+      console.error("Delete Error:", e);
+      toast.error("An error occurred while deleting the request.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleAccept = async (req) => {
     if (!window.confirm("Are you sure you want to approve and list this turf?")) return;
 
@@ -76,9 +107,8 @@ export function TurfOnboardingView() {
 
       await turfService.create("admin", mappedData);
 
-      const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
       // Update backend status to approved
-      await fetch(`${apiBase}/api/admin/onboarding/${req.id}`, {
+      await fetch(`/api/admin/onboarding/${req.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "approved" })
@@ -101,8 +131,7 @@ export function TurfOnboardingView() {
     if (!window.confirm("Are you sure you want to reject this turf onboarding request?")) return;
 
     try {
-      const apiBase = (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
-      await fetch(`${apiBase}/api/admin/onboarding/${req.id}`, {
+      await fetch(`/api/admin/onboarding/${req.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "rejected" })
@@ -285,13 +314,26 @@ export function TurfOnboardingView() {
                         <CalendarDays className="w-3 h-3" />
                         Submitted: {new Date(req.createdAt).toLocaleDateString()}
                       </span>
-                      <Button
-                        onClick={() => handleReview(req)}
-                        className="bg-[#0f172a] text-white hover:bg-[#1e293b] rounded-lg h-8 px-3 text-[10px] font-bold"
-                      >
-                        <Eye className="w-3 h-3 mr-1.5" />
-                        Review Profile
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(req);
+                          }}
+                          variant="outline"
+                          title="Delete Request & Turf"
+                          className="border-rose-200 text-rose-600 hover:text-white hover:bg-rose-600 hover:border-rose-600 rounded-lg h-8 w-8 p-0 cursor-pointer transition-colors shadow-2xs"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          onClick={() => handleReview(req)}
+                          className="bg-[#0f172a] text-white hover:bg-[#1e293b] rounded-lg h-8 px-3 text-[10px] font-bold cursor-pointer"
+                        >
+                          <Eye className="w-3 h-3 mr-1.5" />
+                          Review Profile
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -443,39 +485,51 @@ export function TurfOnboardingView() {
                 </div>
               </div>
 
-              <div className="px-8 py-5 border-t border-[#e2e8f0] bg-white flex justify-end gap-3 shrink-0">
+              <div className="px-8 py-5 border-t border-[#e2e8f0] bg-white flex flex-wrap items-center justify-between gap-3 shrink-0">
                 <Button
                   variant="outline"
-                  onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl font-bold h-11 px-6 border-[#cbd5e1] text-[#475569] hover:bg-[#f1f5f9]"
+                  onClick={() => handleDelete(selectedRequest)}
+                  disabled={isProcessing}
+                  className="rounded-xl font-bold h-11 px-5 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 cursor-pointer transition-colors"
                 >
-                  {selectedRequest.status?.toLowerCase() === 'pending' ? 'Cancel' : 'Close'}
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Request
                 </Button>
-                {selectedRequest.status?.toLowerCase() === 'pending' && (
-                  <>
-                    <Button
-                      onClick={() => handleReject(selectedRequest)}
-                      disabled={isProcessing}
-                      variant="destructive"
-                      className="rounded-xl font-bold h-11 px-6 bg-rose-600 hover:bg-rose-700"
-                    >
-                      <XCircle className="w-4 h-4 mr-2" />
-                      Reject Request
-                    </Button>
-                    <Button
-                      onClick={() => handleAccept(selectedRequest)}
-                      disabled={isProcessing}
-                      className="rounded-xl font-bold h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white"
-                    >
-                      {isProcessing ? "Processing..." : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Approve & List Turf
-                        </>
-                      )}
-                    </Button>
-                  </>
-                )}
+
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsModalOpen(false)}
+                    className="rounded-xl font-bold h-11 px-6 border-[#cbd5e1] text-[#475569] hover:bg-[#f1f5f9] cursor-pointer"
+                  >
+                    {selectedRequest.status?.toLowerCase() === 'pending' ? 'Cancel' : 'Close'}
+                  </Button>
+                  {selectedRequest.status?.toLowerCase() === 'pending' && (
+                    <>
+                      <Button
+                        onClick={() => handleReject(selectedRequest)}
+                        disabled={isProcessing}
+                        variant="destructive"
+                        className="rounded-xl font-bold h-11 px-6 bg-rose-600 hover:bg-rose-700 cursor-pointer"
+                      >
+                        <XCircle className="w-4 h-4 mr-2" />
+                        Reject Request
+                      </Button>
+                      <Button
+                        onClick={() => handleAccept(selectedRequest)}
+                        disabled={isProcessing}
+                        className="rounded-xl font-bold h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                      >
+                        {isProcessing ? "Processing..." : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Approve & List Turf
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </>
           )}

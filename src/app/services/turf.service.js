@@ -68,9 +68,13 @@ export const turfService = {
         reviews: Number(data.reviews || data.reviews_count || 25),
         status: data.status || "Active",
         owner_name: data.owner_name || activeUser.fullName || activeUser.name || "Owner",
-        owner_email: data.owner_email || activeUser.email || "",
+        owner_email: data.owner_email || data.email || activeUser.email || "",
         owner_phone: data.contactNumber || data.owner_phone || activeUser.phone || "",
         image_url: data.image || data.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600",
+        gallery: Array.isArray(data.gallery) ? JSON.stringify(data.gallery) : (data.gallery || JSON.stringify([data.image || data.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"])),
+        description: data.description || "",
+        amenities: Array.isArray(data.amenities) ? JSON.stringify(data.amenities) : (data.amenities || "[]"),
+        rules: data.rules || "",
         display_order: Number(data.display_order || 0),
       };
 
@@ -95,13 +99,24 @@ export const turfService = {
       if (data.name !== undefined) payload.name = data.name;
       if (data.location !== undefined) payload.location = data.location;
       if (data.sportType || data.sport_type) payload.sport_type = data.sportType || data.sport_type;
-      if (data.price || data.price_per_hour) payload.price_per_hour = Number(data.price || data.price_per_hour);
+      if (data.price_per_hour !== undefined || data.price !== undefined) {
+        payload.price_per_hour = Number(data.price_per_hour !== undefined ? data.price_per_hour : data.price);
+      }
       if (data.rating !== undefined) payload.rating = Number(data.rating);
       if (data.reviews !== undefined || data.reviews_count !== undefined) payload.reviews = Number(data.reviews ?? data.reviews_count);
       if (data.status !== undefined) payload.status = data.status;
       if (data.owner_name !== undefined) payload.owner_name = data.owner_name;
+      if (data.owner_email !== undefined || data.email !== undefined) payload.owner_email = data.owner_email || data.email;
       if (data.contactNumber || data.owner_phone) payload.owner_phone = data.contactNumber || data.owner_phone;
       if (data.image || data.image_url) payload.image_url = data.image || data.image_url;
+      if (data.gallery !== undefined) {
+        payload.gallery = Array.isArray(data.gallery) ? JSON.stringify(data.gallery) : data.gallery;
+      }
+      if (data.description !== undefined) payload.description = data.description;
+      if (data.amenities !== undefined) {
+        payload.amenities = Array.isArray(data.amenities) ? JSON.stringify(data.amenities) : data.amenities;
+      }
+      if (data.rules !== undefined) payload.rules = data.rules;
       if (data.display_order !== undefined) payload.display_order = Number(data.display_order);
       if (data.all_display_order !== undefined) payload.all_display_order = Number(data.all_display_order);
 

@@ -1042,18 +1042,35 @@ export function RecommendedVenuesSection({ asSlider = false }) {
     fetchTurfs();
   }, []);
 
-  const recommendedVenues = turfs.map((t) => ({
-    id: t.id,
-    name: t.name,
-    location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Complex"),
-    sport: (t.sport_type || t.sportType || "Football").toUpperCase(),
-    rating: String(t.rating || 4.8),
-    reviews: "45",
-    price: `₹${(Number(t.price || t.price_per_hour || 1500)).toLocaleString()}`,
-    unit: "/ hr",
-    badge: t.status === "Active" ? "VERIFIED" : "PROMOTED",
-    image: t.image_url || t.image || asset("/venues/champions_sports_arena_football.jpg"),
-  }));
+  const recommendedVenues = useMemo(() => {
+    return [...turfs]
+      .sort((a, b) => {
+        const hasOrderA = Number(a.display_order) > 0;
+        const hasOrderB = Number(b.display_order) > 0;
+        if (hasOrderA && hasOrderB) return Number(a.display_order) - Number(b.display_order);
+        if (hasOrderA) return -1;
+        if (hasOrderB) return 1;
+        const revA = Number(a.reviews ?? a.reviews_count ?? 0);
+        const revB = Number(b.reviews ?? b.reviews_count ?? 0);
+        if (revB !== revA) return revB - revA;
+        const ratA = Number(a.rating ?? 0);
+        const ratB = Number(b.rating ?? 0);
+        if (ratB !== ratA) return ratB - ratA;
+        return Number(b.id || 0) - Number(a.id || 0);
+      })
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Complex"),
+        sport: (t.sport_type || t.sportType || "Football").toUpperCase(),
+        rating: String(t.rating || 4.8),
+        reviews: String(t.reviews ?? t.reviews_count ?? 25),
+        price: `₹${(Number(t.price || t.price_per_hour || 1500)).toLocaleString()}`,
+        unit: "/ hr",
+        badge: t.status === "Active" ? "VERIFIED" : "PROMOTED",
+        image: t.image_url || t.image || asset("/venues/champions_sports_arena_football.jpg"),
+      }));
+  }, [turfs]);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -1155,7 +1172,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
                       <div className="flex items-center gap-1 text-[11px] font-bold text-white drop-shadow-md leading-none">
                         <Star className="h-3 w-3 fill-emerald-500 text-emerald-500 shrink-0" />
                         <span className="leading-none">{venue.rating}</span>
-                        <span className="text-white/80 text-[9px] font-medium ml-0.5 leading-none">({venue.reviews || Math.floor(40 + (venue.id * 13) % 200)} Reviews)</span>
+                        <span className="text-white/80 text-[9px] font-medium ml-0.5 leading-none">({venue.reviews} Reviews)</span>
                       </div>
                     </div>
 

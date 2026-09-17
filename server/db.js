@@ -47,17 +47,33 @@ export async function initDatabase() {
     // 3. Auto create tables
     await createTables();
 
-    // 3.5. Ensure setup_data column exists in turf_owners
+    // 3.5. Ensure all necessary schema columns and tables exist
     try {
       await pool.query("ALTER TABLE turf_owners ADD COLUMN setup_data LONGTEXT");
-    } catch (e) {
-      // Column might already exist, ignore error
-    }
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turf_owners ADD COLUMN owner_id VARCHAR(50) UNIQUE AFTER id");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE bookings ADD COLUMN cancellation_reason TEXT");
+    } catch (e) {}
     try {
       await pool.query("ALTER TABLE cms_banners ADD COLUMN secondary_cta_text VARCHAR(100) DEFAULT 'Explore'");
     } catch (e) {}
     try {
       await pool.query("ALTER TABLE cms_banners ADD COLUMN secondary_link VARCHAR(255) DEFAULT '/venues'");
+    } catch (e) {}
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS turf_onboarding_requests (
+          id VARCHAR(100) PRIMARY KEY,
+          owner_id VARCHAR(50),
+          owner_email VARCHAR(255),
+          form_data LONGTEXT,
+          status VARCHAR(50) DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
     } catch (e) {}
     // 4. Auto seed initial demo data
     await seedData();
@@ -167,6 +183,7 @@ async function createTables() {
       status VARCHAR(50) DEFAULT 'Confirmed',
       payment_method VARCHAR(50) DEFAULT 'UPI',
       payment_type VARCHAR(50) DEFAULT 'UPI',
+      email_sent TINYINT(1) DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
@@ -640,6 +657,9 @@ async function createTables() {
     await conn.query("ALTER TABLE turfs ADD COLUMN rules TEXT;");
   } catch (e) { }
   try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN gallery LONGTEXT;");
+  } catch (e) { }
+  try {
     await conn.query("ALTER TABLE turfs ADD COLUMN display_order INT DEFAULT 0;");
   } catch (e) { }
   try {
@@ -648,6 +668,24 @@ async function createTables() {
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN reviews INT DEFAULT 25;");
   } catch (e) { }
+
+  // Update existing turfs with realistic distinct review counts if needed
+  try {
+    const [turfsWith25] = await conn.query("SELECT COUNT(*) as cnt FROM turfs WHERE reviews = 25");
+    const [totalTurfs] = await conn.query("SELECT COUNT(*) as cnt FROM turfs");
+    if (turfsWith25[0].cnt === totalTurfs[0].cnt && totalTurfs[0].cnt > 0) {
+      await conn.query("UPDATE turfs SET reviews = 185 WHERE LOWER(name) LIKE '%shree%'");
+      await conn.query("UPDATE turfs SET reviews = 156 WHERE LOWER(name) LIKE '%champions%'");
+      await conn.query("UPDATE turfs SET reviews = 142 WHERE LOWER(name) LIKE '%green turf%'");
+      await conn.query("UPDATE turfs SET reviews = 94 WHERE LOWER(name) = 'shri'");
+      await conn.query("UPDATE turfs SET reviews = 82 WHERE LOWER(name) LIKE '%urban sports%'");
+      await conn.query("UPDATE turfs SET reviews = 64 WHERE LOWER(name) LIKE '%apex sports%'");
+      await conn.query("UPDATE turfs SET reviews = 38 WHERE LOWER(name) = 'test'");
+      await conn.query("UPDATE turfs SET reviews = 18 WHERE LOWER(name) = 'test' AND id != 5");
+    }
+  } catch (e) {
+    console.error("Migration for turf reviews update error:", e);
+  }
   try {
     await conn.query("ALTER TABLE banners MODIFY COLUMN image_url LONGTEXT;");
   } catch (e) { }
@@ -710,6 +748,9 @@ async function createTables() {
   } catch (e) { }
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN payment_type VARCHAR(50) DEFAULT 'UPI';");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN email_sent TINYINT(1) DEFAULT 0;");
   } catch (e) { }
 
   // Clean up any historical duplicate payments (same email, turf, amount, date created within 60s)
@@ -790,12 +831,12 @@ async function seedData() {
   const [turfs] = await conn.query("SELECT COUNT(*) as count FROM turfs");
   if (turfs[0].count === 0) {
     await conn.query(`
-      INSERT INTO turfs (name, location, sport_type, price_per_hour, rating, status, owner_name, owner_phone, image_url)
+      INSERT INTO turfs (name, location, sport_type, price_per_hour, rating, reviews, status, owner_name, owner_phone, image_url)
       VALUES 
-      ('Green Turf Arena', 'Andheri West, Mumbai', 'Football, Cricket', 1500.00, 4.8, 'Active', 'Rajesh Mehta', '+91 9820012345', 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600'),
-      ('Urban Sports Hub', 'Koramangala, Bangalore', 'Box Cricket, Badminton', 1200.00, 4.6, 'Active', 'Rohan Bopanna', '+91 9845054321', 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600'),
-      ('Champions Turf', 'Gachibowli, Hyderabad', 'Football', 1800.00, 4.9, 'Active', 'Sunil Gavaskar', '+91 9820054321', 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=600'),
-      ('Apex Sports Complex', 'Connaught Place, Delhi', 'Multi-sport', 2000.00, 4.3, 'Under Maintenance', 'Anil Kumble', '+91 9845012345', 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600')
+      ('Green Turf Arena', 'Andheri West, Mumbai', 'Football, Cricket', 1500.00, 4.8, 142, 'Active', 'Rajesh Mehta', '+91 9820012345', 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600'),
+      ('Urban Sports Hub', 'Koramangala, Bangalore', 'Box Cricket, Badminton', 1200.00, 4.6, 82, 'Active', 'Rohan Bopanna', '+91 9845054321', 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=600'),
+      ('Champions Turf', 'Gachibowli, Hyderabad', 'Football', 1800.00, 4.9, 156, 'Active', 'Sunil Gavaskar', '+91 9820054321', 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=600'),
+      ('Apex Sports Complex', 'Connaught Place, Delhi', 'Multi-sport', 2000.00, 4.3, 64, 'Under Maintenance', 'Anil Kumble', '+91 9845012345', 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=600')
     `);
   }
 
@@ -872,17 +913,7 @@ async function seedData() {
     `);
   }
 
-  // Seed Reviews if empty
-  const [reviews] = await conn.query("SELECT COUNT(*) as count FROM reviews");
-  if (reviews[0].count === 0) {
-    await conn.query(`
-      INSERT INTO reviews (user_name, turf_name, rating, comment, status, date)
-      VALUES 
-      ('Rahul Sharma', 'Green Turf Arena', 5, 'Awesome turf quality, lighting was top notch!', 'Approved', '2026-08-01'),
-      ('Priya Patel', 'Urban Sports Hub', 4, 'Great location and well maintained amenities.', 'Approved', '2026-08-02'),
-      ('Amit Kumar', 'Champions Turf', 2, 'Parking issue during peak weekend hours.', 'Pending', '2026-08-03')
-    `);
-  }
+  // Reviews are purely user-generated and dynamic
 
   // Seed Reports if empty
   const [reports] = await conn.query("SELECT COUNT(*) as count FROM reports");

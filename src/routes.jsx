@@ -5,6 +5,8 @@ import { AdminLayout } from "./app/components/layout/admin-layout";
 import { LandingPage } from "./app/pages/landing-page";
 import { BookingSuccess } from "./app/pages/booking-success";
 
+import { ProtectedRoute } from "./app/components/auth/protected-route";
+
 const GlobalErrorBoundary = () => {
   const error = useRouteError();
   console.error("Global Error Boundary caught:", error);
@@ -50,14 +52,26 @@ export const router = createBrowserRouter([
         path: "/dashboard",
         lazy: async () => {
           const { CMSDashboard } = await import("./app/pages/cms/dashboard");
-          return { Component: CMSDashboard };
+          return {
+            Component: () => (
+              <ProtectedRoute allowedRoles={["admin", "Super Admin", "cms-admin"]}>
+                <CMSDashboard />
+              </ProtectedRoute>
+            ),
+          };
         },
       },
       {
         path: "/dashboard/:view",
         lazy: async () => {
           const { CMSDashboard } = await import("./app/pages/cms/dashboard");
-          return { Component: CMSDashboard };
+          return {
+            Component: () => (
+              <ProtectedRoute allowedRoles={["admin", "Super Admin", "cms-admin"]}>
+                <CMSDashboard />
+              </ProtectedRoute>
+            ),
+          };
         },
       },
       {
@@ -97,7 +111,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "/site-maker",
-        element: <AdminLayout />,
+        element: (
+          <ProtectedRoute allowedRoles={["admin", "Super Admin", "cms-admin"]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        ),
         children: [
           {
             index: true,

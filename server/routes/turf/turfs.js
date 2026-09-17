@@ -1,9 +1,9 @@
 import express from "express";
 import { getPool } from "../../db.js";
+import { authenticateToken, requireRole, optionalAuth } from "../../middleware/auth.js";
 
 const router = express.Router();
 
-// Helper to filter valid columns for turfs table
 async function filterTurfColumns(pool, rawBody) {
   const [columns] = await pool.query("SHOW COLUMNS FROM `turfs`");
   const validColNames = new Set(columns.map(c => c.Field));
@@ -21,7 +21,7 @@ async function filterTurfColumns(pool, rawBody) {
   return filtered;
 }
 
-// GET /api/turf/turfs - Get all turfs
+// GET /api/turf/turfs - Get all turfs (Public)
 router.get("/", async (req, res) => {
   try {
     const pool = getPool();
@@ -33,7 +33,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/turf/turfs/:id - Get turf by ID
+// GET /api/turf/turfs/:id - Get turf by ID (Public)
 router.get("/:id", async (req, res) => {
   try {
     const pool = getPool();
@@ -48,8 +48,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST /api/turf/turfs - Add a new turf
-router.post("/", async (req, res) => {
+// POST /api/turf/turfs - Add a new turf (Protected: Owner / Admin)
+router.post("/", authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const body = await filterTurfColumns(pool, req.body);
@@ -73,8 +73,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// PUT /api/turf/turfs/:id - Update turf details
-router.put("/:id", async (req, res) => {
+// PUT /api/turf/turfs/:id - Update turf details (Protected: Owner / Admin)
+router.put("/:id", authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const { id } = req.params;
@@ -96,8 +96,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// DELETE /api/turf/turfs/:id - Delete a turf
-router.delete("/:id", async (req, res) => {
+// DELETE /api/turf/turfs/:id - Delete a turf (Protected: Admin / Owner)
+router.delete("/:id", authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const { id } = req.params;

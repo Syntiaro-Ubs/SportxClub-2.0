@@ -1,5 +1,7 @@
 import express from "express";
 import { getPool } from "../db.js";
+import { sendCancellationEmails } from "../services/booking-email-service.js";
+import { authenticateToken, requireRole, optionalAuth } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -94,7 +96,7 @@ async function getProfileData(pool, user) {
     [user.email, user.full_name]
   );
 
-  const [matchRows] = await pool.query(
+  let [matchRows] = await pool.query(
     `SELECT id, venue, sport, match_date AS matchDate, result, score
        FROM player_matches
       WHERE user_id = ?
@@ -102,9 +104,9 @@ async function getProfileData(pool, user) {
     [user.id]
   );
 
-  const [reviewRows] = await pool.query(
+  let [reviewRows] = await pool.query(
     `SELECT pr.id, pr.rating, pr.comment, pr.created_at AS createdAt,
-            COALESCE(u.full_name, 'SportXClub player') AS reviewer
+            COALESCE(u.full_name, 'SportX Player') AS reviewer
        FROM player_reviews pr
        LEFT JOIN users u ON u.id = pr.reviewer_id
       WHERE pr.player_id = ?
@@ -113,7 +115,7 @@ async function getProfileData(pool, user) {
   );
 
   const [products] = await pool.query(
-    `SELECT id, title AS name, price, image_url AS image, category, badge
+    `SELECT id, title AS name, price, image_url AS image, category, badge, rating
        FROM cms_facilities
       WHERE is_active = 1
       ORDER BY display_order ASC, id ASC`
@@ -124,17 +126,25 @@ async function getProfileData(pool, user) {
     walletBalance: Number(wallet?.balance || 0),
     transactions: transactionRows,
     activeBooking: activeBookingRows[0] || null,
-    matchHistory: matchRows,
-    reviews: reviewRows,
-    shopItems: products,
-    addons: products,
+    matchHistory: matchRows || [],
+    reviews: reviewRows || [],
+    shopItems: products || [],
+    addons: products || [],
   };
 }
 
 async function loadUserFromRequest(req, res) {
   const pool = getPool();
   const body = req.body || {};
-  const user = await findUser(pool, req.query.userId || body.userId, req.query.email || body.email);
+  // Prioritize authenticated user ID from JWT token if available
+  const authUserId = req.user?.id;
+  const requestedUserId = req.query.userId || body.userId;
+  const requestedEmail = req.query.email || body.email;
+
+  const targetId = authUserId || requestedUserId;
+  const targetEmail = !targetId ? (req.user?.email || requestedEmail) : null;
+
+  const user = await findUser(pool, targetId, targetEmail);
   if (!user) {
     res.status(404).json({ success: false, error: "Player account not found" });
     return null;
@@ -142,7 +152,8 @@ async function loadUserFromRequest(req, res) {
   return { pool, user };
 }
 
-router.get("/", async (req, res) => {
+// GET /api/profile
+router.get("/", optionalAuth, async (req, res) => {
   try {
     const result = await loadUserFromRequest(req, res);
     if (!result) return;
@@ -153,7 +164,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/wallet/top-up", async (req, res) => {
+// POST /api/profile/wallet/top-up (Secured: Only authenticated users can trigger topup requests)
+router.post("/wallet/top-up", authenticateToken, async (req, res) => {
   const connection = await getPool().getConnection();
   try {
     const { amount } = req.body;
@@ -162,7 +174,8 @@ router.post("/wallet/top-up", async (req, res) => {
       return res.status(400).json({ success: false, error: "A valid top-up amount is required" });
     }
 
-    const user = await findUser(connection, req.body.userId, req.body.email);
+    const userId = req.user.id;
+    const user = await findUser(connection, userId);
     if (!user) return res.status(404).json({ success: false, error: "Player account not found" });
 
     await connection.beginTransaction();
@@ -184,10 +197,12 @@ router.post("/wallet/top-up", async (req, res) => {
   }
 });
 
-router.post("/shop/purchase", async (req, res) => {
+// POST /api/profile/shop/purchase (Secured: strictly uses authenticated req.user.id)
+router.post("/shop/purchase", authenticateToken, async (req, res) => {
   const connection = await getPool().getConnection();
   try {
-    const user = await findUser(connection, req.body.userId, req.body.email);
+    const userId = req.user.id;
+    const user = await findUser(connection, userId);
     if (!user) return res.status(404).json({ success: false, error: "Player account not found" });
 
     const [products] = await connection.query(
@@ -222,35 +237,187 @@ router.post("/shop/purchase", async (req, res) => {
   }
 });
 
-router.post("/bookings/:id/cancel", async (req, res) => {
+// POST /api/profile/reviews (Secured)
+router.post("/reviews", authenticateToken, async (req, res) => {
   const connection = await getPool().getConnection();
   try {
-    const user = await findUser(connection, req.body.userId, req.body.email);
+    const { rating, comment, reviewerName } = req.body;
+    const userId = req.user.id;
+    const user = await findUser(connection, userId);
     if (!user) return res.status(404).json({ success: false, error: "Player account not found" });
 
-    const [bookings] = await connection.query(
-      `SELECT * FROM bookings
-        WHERE id = ? AND (LOWER(user_email) = LOWER(?) OR LOWER(user_name) = LOWER(?))
-        LIMIT 1`,
-      [req.params.id, user.email, user.full_name]
-    );
-    const booking = bookings[0];
-    if (!booking) return res.status(404).json({ success: false, error: "Booking not found" });
-    if (["Cancelled", "Canceled"].includes(booking.status)) {
-      return res.status(400).json({ success: false, error: "Booking is already cancelled" });
+    const numericRating = Math.max(1, Math.min(5, Number(rating) || 5));
+    const reviewComment = String(comment || "").trim();
+    if (!reviewComment) {
+      return res.status(400).json({ success: false, error: "Review comment cannot be empty." });
     }
 
-    await connection.beginTransaction();
-    await connection.query("UPDATE bookings SET status = 'Cancelled' WHERE id = ?", [booking.id]);
-    await connection.query("INSERT IGNORE INTO player_wallets (user_id, balance) VALUES (?, 0)", [user.id]);
-    await connection.query("UPDATE player_wallets SET balance = balance + ? WHERE user_id = ?", [booking.amount || 0, user.id]);
+    let reviewerId = req.user.id;
+    if (reviewerName) {
+      const [revUsers] = await connection.query(
+        "SELECT id FROM users WHERE LOWER(full_name) = LOWER(?) LIMIT 1",
+        [reviewerName.trim()]
+      );
+      if (revUsers.length > 0) reviewerId = revUsers[0].id;
+    }
+
     await connection.query(
-      `INSERT INTO wallet_transactions (user_id, type, label, amount, status, is_credit)
-       VALUES (?, 'Refund', ?, ?, 'Success', 1)`,
-      [user.id, `Refund - Booking ${booking.booking_code || booking.id}`, booking.amount || 0]
+      "INSERT INTO player_reviews (player_id, reviewer_id, rating, comment) VALUES (?, ?, ?, ?)",
+      [user.id, reviewerId, numericRating, reviewComment]
     );
+
+    return res.json({
+      success: true,
+      message: "Teammate review posted successfully!",
+      data: await getProfileData(connection, user),
+    });
+  } catch (err) {
+    console.error("Add Review Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// POST /api/profile/matches (Secured)
+router.post("/matches", authenticateToken, async (req, res) => {
+  const connection = await getPool().getConnection();
+  try {
+    const { venue, sport, matchDate, result, score } = req.body;
+    const userId = req.user.id;
+    const user = await findUser(connection, userId);
+    if (!user) return res.status(404).json({ success: false, error: "Player account not found" });
+
+    if (!venue || !sport) {
+      return res.status(400).json({ success: false, error: "Venue and sport are required." });
+    }
+
+    await connection.query(
+      `INSERT INTO player_matches (user_id, venue, sport, match_date, result, score)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        user.id,
+        venue.trim(),
+        sport.trim(),
+        matchDate || new Date().toISOString().split("T")[0],
+        result || "Won",
+        score || "—",
+      ]
+    );
+
+    await connection.query(
+      "UPDATE users SET games_played = COALESCE(games_played, 0) + 1 WHERE id = ?",
+      [user.id]
+    );
+
+    return res.json({
+      success: true,
+      message: "Match log recorded successfully!",
+      data: await getProfileData(connection, user),
+    });
+  } catch (err) {
+    console.error("Add Match Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// POST /api/profile/bookings/:id/cancel (Secured: IDOR prevented)
+router.post("/bookings/:id/cancel", authenticateToken, async (req, res) => {
+  const connection = await getPool().getConnection();
+  try {
+    const { reason, turfName, date } = req.body;
+    const bookingParam = req.params.id;
+    const authUser = req.user;
+
+    let booking = null;
+    if (bookingParam && bookingParam !== "direct" && bookingParam !== "undefined" && bookingParam !== "null") {
+      const [bookings] = await connection.query(
+        `SELECT * FROM bookings WHERE id = ? OR booking_code = ? LIMIT 1`,
+        [bookingParam, bookingParam]
+      );
+      if (bookings && bookings.length > 0) {
+        booking = bookings[0];
+      }
+    }
+
+    if (!booking && turfName && date) {
+      const [altBookings] = await connection.query(
+        `SELECT * FROM bookings 
+         WHERE LOWER(turf_name) = LOWER(?) 
+           AND (date = ? OR date LIKE ?)
+           AND status != 'Cancelled'
+         ORDER BY id DESC LIMIT 1`,
+        [turfName, date, `%${date}%`]
+      );
+      if (altBookings && altBookings.length > 0) {
+        booking = altBookings[0];
+      }
+    }
+
+    if (!booking) {
+      return res.status(404).json({ success: false, error: "Booking not found" });
+    }
+
+    // Verify ownership: Caller must be the user who booked, or an Admin
+    const isAdmin = authUser.role === "Admin" || authUser.role === "Super Admin" || authUser.accountType === "cms-admin";
+    const isOwnerOfBooking =
+      String(booking.user_email || "").toLowerCase() === String(authUser.email || "").toLowerCase();
+
+    if (!isAdmin && !isOwnerOfBooking) {
+      return res.status(403).json({ success: false, error: "Forbidden. You can only cancel your own bookings." });
+    }
+
+    if (["Cancelled", "Canceled"].includes(booking.status)) {
+      return res.status(400).json({ success: false, error: "This booking is already cancelled" });
+    }
+
+    const cancelReason = String(reason || "User cancelled slot").trim();
+
+    await connection.beginTransaction();
+
+    await connection.query(
+      "UPDATE bookings SET status = 'Cancelled', cancellation_reason = ? WHERE id = ?",
+      [cancelReason, booking.id]
+    );
+
+    // Refund to player's wallet
+    const user = await findUser(connection, authUser.id, booking.user_email);
+    if (user) {
+      try {
+        await connection.query("INSERT IGNORE INTO player_wallets (user_id, balance) VALUES (?, 0)", [user.id]);
+        await connection.query("UPDATE player_wallets SET balance = balance + ? WHERE user_id = ?", [booking.amount || 0, user.id]);
+        await connection.query(
+          `INSERT INTO wallet_transactions (user_id, type, label, amount, status, is_credit)
+           VALUES (?, 'Refund', ?, ?, 'Success', 1)`,
+          [user.id, `Refund - Booking ${booking.booking_code || booking.id} (${cancelReason})`, booking.amount || 0]
+        );
+      } catch (walletErr) {
+        console.warn("Wallet refund error:", walletErr.message);
+      }
+    }
+
     await connection.commit();
-    return res.json({ success: true, data: await getProfileData(connection, user) });
+
+    sendCancellationEmails(booking.id, {
+      bookingCode: booking.booking_code,
+      userName: booking.user_name,
+      userEmail: booking.user_email,
+      turfName: booking.turf_name,
+      sport: booking.sport,
+      date: booking.date,
+      timeSlot: booking.time_slot || booking.slot_time,
+      amount: booking.amount,
+      reason: cancelReason,
+    }).catch((mailErr) => console.error("[Cancel Mail Error]:", mailErr.message));
+
+    return res.json({
+      success: true,
+      message: "Slot booking cancelled successfully & refunded to wallet!",
+      bookingId: booking.id,
+      data: user ? await getProfileData(connection, user) : null,
+    });
   } catch (err) {
     await connection.rollback();
     console.error("Cancel Player Booking Error:", err);
@@ -260,13 +427,11 @@ router.post("/bookings/:id/cancel", async (req, res) => {
   }
 });
 
-// DELETE PLAYER ACCOUNT PERMANENTLY FROM DATABASE
-router.delete("/account", async (req, res) => {
+// DELETE /api/profile/account (Secured: strictly deletes authenticated user)
+router.delete("/account", authenticateToken, async (req, res) => {
   const pool = getPool();
   const connection = await pool.getConnection();
   try {
-    const userId = req.body?.userId || req.query?.userId;
-    const email = req.body?.email || req.query?.email;
     const confirmText = String(req.body?.confirmText || req.query?.confirmText || "").trim().toUpperCase();
 
     if (confirmText !== "DELETE") {
@@ -276,38 +441,30 @@ router.delete("/account", async (req, res) => {
       });
     }
 
-    const user = await findUser(connection, userId, email);
+    const userId = req.user.id;
+    const user = await findUser(connection, userId);
     if (!user) {
       return res.status(404).json({ success: false, error: "Player account not found in database." });
     }
 
     await connection.beginTransaction();
 
-    // 1. Delete player wallets and transactions
     try { await connection.query("DELETE FROM wallet_transactions WHERE user_id = ?", [user.id]); } catch (e) {}
     try { await connection.query("DELETE FROM player_wallets WHERE user_id = ?", [user.id]); } catch (e) {}
-
-    // 2. Delete player stats & matches & teammate reviews
     try { await connection.query("DELETE FROM player_stats WHERE user_id = ?", [user.id]); } catch (e) {}
     try { await connection.query("DELETE FROM player_matches WHERE user_id = ?", [user.id]); } catch (e) {}
-    try { await connection.query("DELETE FROM player_teammate_reviews WHERE user_id = ? OR LOWER(reviewer) = LOWER(?)", [user.id, user.full_name]); } catch (e) {}
-
-    // 3. Delete user reviews
-    try { await connection.query("DELETE FROM reviews WHERE LOWER(user_name) = LOWER(?) OR LOWER(user_email) = LOWER(?)", [user.full_name, user.email]); } catch (e) {}
-
-    // 4. Delete bookings / payments associated with user
-    try { await connection.query("DELETE FROM bookings WHERE LOWER(user_email) = LOWER(?) OR LOWER(user_name) = LOWER(?)", [user.email, user.full_name]); } catch (e) {}
-    try { await connection.query("DELETE FROM payments WHERE LOWER(user_email) = LOWER(?) OR LOWER(user_name) = LOWER(?)", [user.email, user.full_name]); } catch (e) {}
-
-    // 5. Delete tournament team registrations / notifications
+    try { await connection.query("DELETE FROM player_reviews WHERE player_id = ? OR reviewer_id = ?", [user.id, user.id]); } catch (e) {}
+    try { await connection.query("DELETE FROM reviews WHERE LOWER(user_email) = LOWER(?)", [user.email]); } catch (e) {}
+    try { await connection.query("DELETE FROM bookings WHERE LOWER(user_email) = LOWER(?)", [user.email]); } catch (e) {}
+    try { await connection.query("DELETE FROM payments WHERE LOWER(user_email) = LOWER(?)", [user.email]); } catch (e) {}
     try { await connection.query("DELETE FROM notifications WHERE user_id = ? OR LOWER(user_email) = LOWER(?)", [user.id, user.email]); } catch (e) {}
 
-    // 6. Delete user record from users table
     await connection.query("DELETE FROM users WHERE id = ?", [user.id]);
+    await connection.query("DELETE FROM player_accounts WHERE profile_user_id = ?", [user.id]).catch(() => {});
 
     await connection.commit();
 
-    console.log(`[Player Account Permanently Deleted from DB] ID: ${user.id}, Email: ${user.email}, Name: ${user.full_name}`);
+    console.log(`[Player Account Deleted] ID: ${user.id}, Email: ${user.email}`);
     return res.json({
       success: true,
       message: "Your account and all associated data have been permanently deleted from our database.",

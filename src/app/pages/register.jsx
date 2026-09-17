@@ -520,7 +520,7 @@ export function RegisterPage() {
                               name="otp"
                               type="text"
                               maxLength={6}
-                              placeholder="Enter OTP Code"
+                              placeholder="******"
                               className="pl-10 h-10.5 rounded-xl font-mono text-center tracking-[0.25em]"
                               value={formData.otp}
                               onChange={(e) => {

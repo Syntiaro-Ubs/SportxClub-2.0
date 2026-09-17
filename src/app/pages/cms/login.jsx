@@ -60,9 +60,6 @@ export function CMSLoginPage() {
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
               Console Administrator Login
             </CardTitle>
-            <CardDescription className="text-xs text-[#64748b]">
-              Default credentials: <code className="text-[#0f172a] bg-[#f1f5f9] px-1.5 py-0.5 rounded font-mono font-bold">admin / admin123</code>
-            </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">

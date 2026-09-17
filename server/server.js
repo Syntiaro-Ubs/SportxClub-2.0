@@ -10,6 +10,8 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { initDatabase } from "./db.js";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin-routes.js";
@@ -19,11 +21,18 @@ import profileRoutes from "./routes/profile.js";
 import aiAssistantRoutes from "./routes/ai-assistant.js";
 import cashfreeRoutes from "./payment/cashfree-routes.js";
 
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.disable("x-powered-by");
+
+// Apply HTTP security headers
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 const allowedOrigins = [
   process.env.APP_FRONTEND_URL,
@@ -39,11 +48,13 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, server-to-server callbacks)
       if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
         return callback(null, true);
       }
-      return callback(null, true); // Permissive in dev, configurable for production
+      if (process.env.NODE_ENV !== "production") {
+        return callback(null, true);
+      }
+      return callback(new Error("CORS policy violation: Unauthorized origin"));
     },
     credentials: true,
   })
@@ -51,6 +62,35 @@ app.use(
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Rate limiters for brute-force & denial-of-service protection
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many authentication requests. Please try again in 15 minutes." },
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many OTP requests. Please wait a few minutes before trying again." },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 200, // Limit each IP to 200 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/", apiLimiter);
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/otp", otpLimiter);
+app.use("/api/cms/auth/login", authLimiter);
 
 // API routes
 app.use("/api/auth", authRoutes);

@@ -7,11 +7,31 @@ const identityParams = (user) => {
   return params;
 };
 
+function getAuthHeaders(extraHeaders = {}) {
+  let token = null;
+  if (typeof window !== "undefined") {
+    token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    if (!token) {
+      try {
+        const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
+        const oUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+        const cUser = JSON.parse(localStorage.getItem("cmsAdminUser") || "{}");
+        token = pUser.token || oUser.token || cUser.token;
+      } catch (e) {}
+    }
+  }
+  const headers = { "Content-Type": "application/json", ...extraHeaders };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 async function request(path, options = {}) {
   try {
     const response = await fetch(`${API_BASE}${path}`, {
       ...options,
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      headers: getAuthHeaders(options.headers || {}),
     });
     const text = await response.text();
     let data = null;
@@ -56,10 +76,45 @@ export const profileService = {
     return data.data;
   },
 
-  cancelBooking: async (user, bookingId) => {
+  addReview: async (user, { rating, comment, reviewerName }) => {
+    const data = await request("/reviews", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: user?.id,
+        email: user?.email,
+        rating,
+        comment,
+        reviewerName,
+      }),
+    });
+    return data.data;
+  },
+
+  addMatch: async (user, { venue, sport, matchDate, result, score }) => {
+    const data = await request("/matches", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: user?.id,
+        email: user?.email,
+        venue,
+        sport,
+        matchDate,
+        result,
+        score,
+      }),
+    });
+    return data.data;
+  },
+
+  cancelBooking: async (user, bookingId, reason, extraDetails = {}) => {
     const data = await request(`/bookings/${bookingId}/cancel`, {
       method: "POST",
-      body: JSON.stringify({ userId: user?.id, email: user?.email }),
+      body: JSON.stringify({
+        userId: user?.id,
+        email: user?.email,
+        reason,
+        ...extraDetails,
+      }),
     });
     return data.data;
   },
@@ -72,3 +127,4 @@ export const profileService = {
     return data;
   },
 };
+
