@@ -1,12 +1,26 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { adminApi } from "../services/admin-api";
 
-const AuthContext = createContext(undefined);
+const defaultAuthValue = {
+  currentUser: null,
+  playerUser: null,
+  turfOwnerUser: null,
+  cmsAdminUser: null,
+  login: async () => ({ success: false }),
+  loginWithGoogle: async () => ({ success: false }),
+  register: async () => ({ success: false }),
+  logout: () => {},
+  logoutOwner: () => {},
+  updateUser: async () => ({ success: false }),
+  deleteAccount: async () => ({ success: false }),
+};
+
+const AuthContext = createContext(defaultAuthValue);
 
 export function AuthProvider({ children }) {
   const [playerUser, setPlayerUser] = useState(() => {
     try {
-      const saved = localStorage.getItem("playerUser");
+      const saved = typeof window !== "undefined" ? localStorage.getItem("playerUser") : null;
       return saved ? JSON.parse(saved) : null;
     } catch (e) {
       return null;
@@ -77,7 +91,7 @@ export function AuthProvider({ children }) {
       const res = await adminApi.login(email, password, accountType);
       if (res.success && res.user) {
         const targetType = res.user.accountType || accountType;
-        const userObj = { ...res.user, accountType: targetType };
+        const userObj = { ...res.user, accountType: targetType, token: res.token || res.user.token };
 
         if (res.token) {
           localStorage.setItem("token", res.token);
@@ -315,8 +329,32 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  if (!context) {
+    const getSavedUser = (key) => {
+      try {
+        const saved = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        return saved ? JSON.parse(saved) : null;
+      } catch {
+        return null;
+      }
+    };
+    const playerUser = getSavedUser("playerUser");
+    const turfOwnerUser = getSavedUser("turfOwnerUser");
+    const cmsAdminUser = getSavedUser("cmsAdminUser");
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const currentUser = (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner"))
+      ? turfOwnerUser
+      : (path.startsWith("/dashboard") || path.startsWith("/site-maker"))
+      ? cmsAdminUser
+      : playerUser;
+
+    return {
+      ...defaultAuthValue,
+      currentUser,
+      playerUser,
+      turfOwnerUser,
+      cmsAdminUser,
+    };
   }
   return context;
 };

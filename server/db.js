@@ -64,6 +64,24 @@ export async function initDatabase() {
       await pool.query("ALTER TABLE cms_banners ADD COLUMN secondary_link VARCHAR(255) DEFAULT '/venues'");
     } catch (e) {}
     try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN display_order INT DEFAULT 0");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN all_display_order INT DEFAULT 0");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN reviews INT DEFAULT 0");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN owner_email VARCHAR(255)");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN gallery LONGTEXT");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE reviews ADD COLUMN owner_reply TEXT");
+    } catch (e) {}
+    try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS turf_onboarding_requests (
           id VARCHAR(100) PRIMARY KEY,
@@ -157,13 +175,18 @@ async function createTables() {
       sport_type VARCHAR(100),
       price_per_hour DECIMAL(10,2),
       rating DECIMAL(3,2) DEFAULT 4.5,
+      reviews INT DEFAULT 0,
       status VARCHAR(50) DEFAULT 'Active',
       owner_name VARCHAR(255),
+      owner_email VARCHAR(255),
       owner_phone VARCHAR(50),
       image_url LONGTEXT,
+      gallery LONGTEXT,
       description LONGTEXT,
       amenities TEXT,
       rules TEXT,
+      display_order INT DEFAULT 0,
+      all_display_order INT DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
 
@@ -272,6 +295,7 @@ async function createTables() {
       turf_name VARCHAR(255),
       rating INT DEFAULT 5,
       comment TEXT,
+      owner_reply TEXT,
       status VARCHAR(50) DEFAULT 'Approved',
       date VARCHAR(50),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -98,10 +98,12 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/ai-assistant", aiAssistantRoutes);
 app.use("/api/payment/cashfree", cashfreeRoutes);
 app.use("/api/payment", cashfreeRoutes);
-app.use("/api", authRoutes);
-app.use("/api", adminRoutes);
 app.use("/api/turf", turfRoutes);
 app.use("/api/cms", cmsRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/owner", adminRoutes);
+app.use("/api", authRoutes);
+app.use("/api", adminRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

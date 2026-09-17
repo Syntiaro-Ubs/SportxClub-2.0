@@ -6,6 +6,7 @@ import { LandingPage } from "./app/pages/landing-page";
 import { BookingSuccess } from "./app/pages/booking-success";
 
 import { ProtectedRoute } from "./app/components/auth/protected-route";
+import { AuthProvider } from "./app/providers/auth-provider";
 
 const GlobalErrorBoundary = () => {
   const error = useRouteError();
@@ -25,17 +26,24 @@ const GlobalErrorBoundary = () => {
   );
 };
 
+const HydrateFallback = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-background">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
+);
+
 const RootLayout = () => (
-  <>
+  <AuthProvider>
     <ScrollRestoration />
     <Outlet />
-  </>
+  </AuthProvider>
 );
 
 export const router = createBrowserRouter([
   {
     element: <RootLayout />,
     errorElement: <GlobalErrorBoundary />,
+    hydrateFallbackElement: <HydrateFallback />,
     children: [
       {
         path: "/",

@@ -1,78 +1,30 @@
-// TODO: Implement actual endpoint when ready
-const API_BASE = "/api/owner";
+import { adminApi } from "./admin-api";
 
-/**
- * Service for notification
- * All requests must include ownerId to ensure data isolation.
- */
 export const notificationService = {
-  getAll: async (ownerId, params) => {
+  getAll: async (ownerId, params = {}) => {
     try {
-      const queryParams = new URLSearchParams({
-        ownerId,
-        ...params,
-      }).toString();
-      const response = await fetch(`${API_BASE}/notification?${queryParams}`);
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      const result = await adminApi.getAll("notifications", params);
+      return Array.isArray(result) ? result : [];
     } catch (error) {
-      console.error("Error fetching notification:", error);
-      throw error;
+      console.error("Error fetching notifications:", error);
+      return [];
     }
   },
   getById: async (ownerId, id) => {
     try {
-      const response = await fetch(
-        `${API_BASE}/notification/${id}?ownerId=${ownerId}`,
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      return await adminApi.getById("notifications", id);
     } catch (error) {
       console.error("Error fetching notification details:", error);
-      throw error;
+      return null;
     }
   },
   create: async (ownerId, data) => {
-    try {
-      const response = await fetch(`${API_BASE}/notification`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, ownerId }),
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
-    } catch (error) {
-      console.error("Error creating notification:", error);
-      throw error;
-    }
+    return await adminApi.create("notifications", data);
   },
   update: async (ownerId, id, data) => {
-    try {
-      const response = await fetch(`${API_BASE}/notification/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, ownerId }),
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
-    } catch (error) {
-      console.error("Error updating notification:", error);
-      throw error;
-    }
+    return await adminApi.update("notifications", id, data);
   },
   delete: async (ownerId, id) => {
-    try {
-      const response = await fetch(
-        `${API_BASE}/notification/${id}?ownerId=${ownerId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-      throw error;
-    }
+    return await adminApi.delete("notifications", id);
   },
 };

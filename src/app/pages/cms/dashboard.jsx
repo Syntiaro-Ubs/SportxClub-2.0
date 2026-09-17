@@ -1112,11 +1112,20 @@ export function CMSDashboard() {
   // ----------------------------------------------------
   // SECTION 1: Recommended Venues Handlers & Reordering
   // ----------------------------------------------------
-  const handleSortRecByDefaultReviews = () => {
-    const sorted = sortTurfsByReviews(recommendedTurfs);
-    setRecommendedTurfs(sorted);
-    setRecSortMode("reviews");
-    toast.success("Recommended Venues sorted by most reviews (Default order)");
+  const handleSortRecByDefaultReviews = async () => {
+    try {
+      setIsSavingRecOrder(true);
+      await turfService.resetOrder("recommended");
+      const sorted = sortTurfsByReviews(recommendedTurfs);
+      setRecommendedTurfs(sorted);
+      setRecSortMode("reviews");
+      toast.success("Recommended Venues sorted by most reviews (Default order)");
+      await loadDashboardData();
+    } catch (err) {
+      toast.error("Failed resetting Recommended Venues sequence");
+    } finally {
+      setIsSavingRecOrder(false);
+    }
   };
 
   const handleMoveRecTurf = (index, direction) => {
@@ -1148,7 +1157,7 @@ export function CMSDashboard() {
       setIsSavingRecOrder(true);
       await turfService.reorder(recommendedTurfs);
       toast.success("Recommended Venues display sequence saved successfully!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed saving Recommended Venues sequence");
     } finally {
@@ -1159,11 +1168,20 @@ export function CMSDashboard() {
   // ----------------------------------------------------
   // SECTION 2: All Venues Handlers & Reordering
   // ----------------------------------------------------
-  const handleSortAllByDefaultReviews = () => {
-    const sorted = sortTurfsByReviews(allVenuesTurfs);
-    setAllVenuesTurfs(sorted);
-    setAllSortMode("reviews");
-    toast.success("All Venues sorted by most reviews (Default order)");
+  const handleSortAllByDefaultReviews = async () => {
+    try {
+      setIsSavingAllOrder(true);
+      await turfService.resetOrder("all");
+      const sorted = sortTurfsByReviews(allVenuesTurfs);
+      setAllVenuesTurfs(sorted);
+      setAllSortMode("reviews");
+      toast.success("All Venues sorted by most reviews (Default order)");
+      await loadDashboardData();
+    } catch (err) {
+      toast.error("Failed resetting All Venues sequence");
+    } finally {
+      setIsSavingAllOrder(false);
+    }
   };
 
   const handleMoveAllTurf = (index, direction) => {
@@ -1195,7 +1213,7 @@ export function CMSDashboard() {
       setIsSavingAllOrder(true);
       await turfService.reorderAll(allVenuesTurfs);
       toast.success("All Venues display sequence saved successfully!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed saving All Venues sequence");
     } finally {
@@ -1332,7 +1350,7 @@ export function CMSDashboard() {
       toast.success("Community post deleted successfully!");
       loadDashboardData();
     } catch (err) {
-      toast.error("Failed deleting post");
+      toast.error(err.message || "Failed deleting post");
     }
   };
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { useAuth } from "../../providers/auth-provider";
 import {
   Card,
@@ -24,26 +25,64 @@ export function ReviewsList() {
   const [selectedSort, setSelectedSort] = useState("relevant");
   const [replyingId, setReplyingId] = useState(null);
   const [replyText, setReplyText] = useState("");
-  const [ownerReplies, setOwnerReplies] = useState({});
+  const [ownerReplies, setOwnerReplies] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sportx_owner_review_replies");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  const handleSendReply = (reviewId) => {
+  const handleSendReply = async (reviewId) => {
     if (!replyText.trim()) {
       toast.error("Please enter a reply message.");
       return;
     }
-    setOwnerReplies((prev) => ({ ...prev, [reviewId]: replyText.trim() }));
+    const cleanText = replyText.trim();
+    setOwnerReplies((prev) => {
+      const updated = { ...prev, [reviewId]: cleanText };
+      try {
+        localStorage.setItem("sportx_owner_review_replies", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     setReplyingId(null);
     setReplyText("");
     toast.success("Reply posted successfully!");
+
+    // Also attempt backend update if review exists
+    try {
+      const ownerId = currentUser?.id || "owner-123";
+      await reviewService.update(ownerId, reviewId, {
+        owner_reply: cleanText,
+        ownerReply: cleanText,
+      });
+    } catch (e) {
+      console.warn("Backend reply update note:", e);
+    }
   };
 
-  const handleDeleteReply = (reviewId) => {
+  const handleDeleteReply = async (reviewId) => {
     setOwnerReplies((prev) => {
       const updated = { ...prev };
       delete updated[reviewId];
+      try {
+        localStorage.setItem("sportx_owner_review_replies", JSON.stringify(updated));
+      } catch {}
       return updated;
     });
     toast.info("Reply removed");
+
+    try {
+      const ownerId = currentUser?.id || "owner-123";
+      await reviewService.update(ownerId, reviewId, {
+        owner_reply: "",
+        ownerReply: "",
+      });
+    } catch (e) {
+      console.warn("Backend reply delete note:", e);
+    }
   };
 
   useEffect(() => {
@@ -53,13 +92,14 @@ export function ReviewsList() {
         const ownerId = currentUser?.id || "guest";
         const result = await reviewService.getAll(ownerId);
 
-        // Update mock dates to look recent
+        // Update dates & hydrate ownerReply from DB
         const modifiedResult = result.map((r, i) => {
           const d = new Date();
           d.setDate(d.getDate() - (i * 2 + 1));
           return {
             ...r,
-            date: format(d, "MMM dd, yyyy"),
+            ownerReply: r.owner_reply || r.ownerReply || undefined,
+            date: r.date || format(d, "MMM dd, yyyy"),
           };
         });
 

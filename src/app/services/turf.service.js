@@ -1,3 +1,5 @@
+import { getAuthHeaders } from "./admin-api";
+
 /**
  * Turf Service connecting to Express + MySQL Backend
  */
@@ -31,7 +33,9 @@ export const turfService = {
 
       const query = cleanParams.toString();
       const url = query ? `${API_BASE}/turfs?${query}` : `${API_BASE}/turfs`;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: getAuthHeaders(),
+      });
       if (!response.ok) throw new Error("Network response was not ok");
       const json = await response.json();
       return json.data || [];
@@ -80,7 +84,7 @@ export const turfService = {
 
       const response = await fetch(`${API_BASE}/turfs`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
 
@@ -122,7 +126,7 @@ export const turfService = {
 
       const response = await fetch(`${API_BASE}/turfs/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
 
@@ -137,14 +141,17 @@ export const turfService = {
 
   reorder: async (items) => {
     try {
-      const updatePromises = items.map((item, index) =>
-        fetch(`${API_BASE}/turfs/${item.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ display_order: index + 1 }),
-        })
-      );
-      await Promise.all(updatePromises);
+      const payload = items.map((item, index) => ({
+        id: item.id,
+        display_order: index + 1,
+      }));
+      const res = await fetch(`${API_BASE}/turfs/reorder`, {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ items: payload, type: "recommended" }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || "Failed reordering turfs");
       return true;
     } catch (error) {
       console.error("Error reordering turfs:", error);
@@ -154,17 +161,36 @@ export const turfService = {
 
   reorderAll: async (items) => {
     try {
-      const updatePromises = items.map((item, index) =>
-        fetch(`${API_BASE}/turfs/${item.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ all_display_order: index + 1 }),
-        })
-      );
-      await Promise.all(updatePromises);
+      const payload = items.map((item, index) => ({
+        id: item.id,
+        all_display_order: index + 1,
+      }));
+      const res = await fetch(`${API_BASE}/turfs/reorder`, {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ items: payload, type: "all" }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || "Failed reordering all turfs");
       return true;
     } catch (error) {
       console.error("Error reordering all turfs:", error);
+      throw error;
+    }
+  },
+
+  resetOrder: async (type = "recommended") => {
+    try {
+      const res = await fetch(`${API_BASE}/turfs/reset-order`, {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ type }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json.error || "Failed resetting turf sequence");
+      return true;
+    } catch (error) {
+      console.error("Error resetting turf sequence:", error);
       throw error;
     }
   },
@@ -173,6 +199,7 @@ export const turfService = {
     try {
       const response = await fetch(`${API_BASE}/turfs/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
       if (!response.ok) throw new Error("Network response was not ok");
       const json = await response.json();

@@ -72,7 +72,7 @@ router.put("/:id", async (req, res) => {
   try {
     const pool = getPool();
     const { id } = req.params;
-    const { user_name, turf_name, rating, comment, status, date } = req.body;
+    const { user_name, turf_name, rating, comment, owner_reply, ownerReply, status, date } = req.body;
 
     const fields = [];
     const params = [];
@@ -81,6 +81,10 @@ router.put("/:id", async (req, res) => {
     if (turf_name !== undefined) { fields.push("turf_name = ?"); params.push(turf_name); }
     if (rating !== undefined) { fields.push("rating = ?"); params.push(Number(rating) || 5); }
     if (comment !== undefined) { fields.push("comment = ?"); params.push(comment); }
+    if (owner_reply !== undefined || ownerReply !== undefined) {
+      fields.push("owner_reply = ?");
+      params.push(owner_reply !== undefined ? owner_reply : ownerReply);
+    }
     if (status !== undefined) { fields.push("status = ?"); params.push(status); }
     if (date !== undefined) { fields.push("date = ?"); params.push(date); }
 

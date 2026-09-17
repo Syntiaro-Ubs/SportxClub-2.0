@@ -4,24 +4,52 @@
 
 const API_BASE = "/api";
 
-function getAuthHeaders(extraHeaders = {}) {
+export function getAuthHeaders(extraHeaders = {}) {
   let token = null;
   if (typeof window !== "undefined") {
-    token =
-      localStorage.getItem("token") ||
-      localStorage.getItem("authToken") ||
-      sessionStorage.getItem("sportx_cms_token");
-    if (!token) {
-      try {
-        const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
-        const oUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
-        const cUser =
-          JSON.parse(localStorage.getItem("cmsAdminUser") || "null") ||
-          JSON.parse(sessionStorage.getItem("sportx_cms_user") || "{}");
-        token = pUser.token || oUser.token || cUser.token || localStorage.getItem("cmsAdminToken");
-      } catch (e) {}
+    const path = window.location.pathname || "";
+    const isCmsRoute = path.startsWith("/dashboard") || path.startsWith("/site-maker");
+    const isOwnerRoute = path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner");
+
+    try {
+      const oUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+      const cUser = JSON.parse(sessionStorage.getItem("sportx_cms_user") || localStorage.getItem("cmsAdminUser") || "{}");
+      const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
+
+      if (isCmsRoute) {
+        token =
+          sessionStorage.getItem("sportx_cms_token") ||
+          cUser.token ||
+          localStorage.getItem("token") ||
+          localStorage.getItem("cmsAdminToken");
+      } else if (isOwnerRoute) {
+        token =
+          oUser.token ||
+          (oUser.email || oUser.ownerId || oUser.fullName ? `owner_session_${encodeURIComponent(oUser.email || oUser.ownerId || "owner")}` : null) ||
+          localStorage.getItem("token") ||
+          localStorage.getItem("authToken");
+      } else {
+        token =
+          localStorage.getItem("token") ||
+          localStorage.getItem("authToken") ||
+          sessionStorage.getItem("sportx_cms_token") ||
+          oUser.token ||
+          pUser.token;
+      }
+
+      if (!token) {
+        token =
+          cUser.token ||
+          oUser.token ||
+          pUser.token ||
+          localStorage.getItem("token") ||
+          localStorage.getItem("authToken");
+      }
+    } catch (e) {
+      token = localStorage.getItem("token") || localStorage.getItem("authToken");
     }
   }
+
   const headers = { ...extraHeaders };
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
@@ -66,6 +94,21 @@ export const adminApi = {
       return json.data;
     } catch (err) {
       console.error(`adminApi.getAll(${entity}) error:`, err);
+      throw err;
+    }
+  },
+
+  // Generic Single Entity Fetcher
+  getById: async (entity, id) => {
+    try {
+      const res = await fetch(`${API_BASE}/admin/${entity}/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || `Failed to fetch ${entity} item ${id}`);
+      return json.data;
+    } catch (err) {
+      console.error(`adminApi.getById(${entity}, ${id}) error:`, err);
       throw err;
     }
   },

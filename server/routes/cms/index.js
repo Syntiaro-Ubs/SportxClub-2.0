@@ -20,13 +20,20 @@ const router = express.Router();
 // Allow public auth endpoints (login)
 router.use("/auth", authRoutes);
 
-// Protect all write/delete operations on CMS content with admin auth
+// Protect write/delete operations on CMS content with admin auth
 router.use((req, res, next) => {
   if (req.method === "GET") {
     return next();
   }
+  // Community feed interactions (like, comment, share) are user-level actions handled inside posts.js
+  if (
+    req.path.startsWith("/posts/") &&
+    (req.path.endsWith("/like") || req.path.endsWith("/comments") || req.path.endsWith("/share"))
+  ) {
+    return next();
+  }
   return authenticateToken(req, res, () => {
-    return requireRole(["admin", "super admin", "cms-admin"])(req, res, next);
+    return requireRole(["admin", "super admin", "cms-admin", "editor", "content manager", "community moderator"])(req, res, next);
   });
 });
 

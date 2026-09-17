@@ -194,8 +194,9 @@ export function VenueDetails() {
         return main ? [main] : [];
       })(),
       area: activeVenueData.area || "8,500 Sq. Ft. (120ft × 70ft)",
+      id: activeVenueData.id || id,
     }
-    : defaultVenue;
+    : { ...defaultVenue, id };
 
   const [selectedSport, setSelectedSport] = useState(
     venue.sport || "Football",

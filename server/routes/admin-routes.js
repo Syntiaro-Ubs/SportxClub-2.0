@@ -57,26 +57,48 @@ async function sendOnboardingStatusEmail(toEmail, ownerName, status) {
 
 const ALLOWED_ENTITIES = {
   users: "users",
+  user: "users",
+  customer: "users",
+  customers: "users",
   "turf-owners": "turf_owners",
+  owner: "turf_owners",
+  owners: "turf_owners",
   onboarding: "turf_owners",
   "turf-onboarding": "turf_owners",
   turfs: "turfs",
+  turf: "turfs",
   bookings: "bookings",
+  booking: "bookings",
   games: "games",
+  game: "games",
   payments: "payments",
+  payment: "payments",
   passes: "game_passes",
+  pass: "game_passes",
   coupons: "coupons",
+  coupon: "coupons",
+  promotions: "coupons",
+  promotion: "coupons",
   banners: "banners",
+  banner: "banners",
   reviews: "reviews",
+  review: "reviews",
   reports: "reports",
+  report: "reports",
   notifications: "notifications",
+  notification: "notifications",
   staff: "staff",
+  documents: "documents",
+  document: "documents",
+  settings: "turf_owners",
+  setting: "turf_owners",
   tournaments: "tournaments",
+  tournament: "tournaments",
   "tournament-teams": "tournament_teams",
   "tournament-fixtures": "tournament_fixtures",
 };
 
-const SENSITIVE_ENTITIES = new Set(["users", "turf-owners", "payments", "staff", "reports", "onboarding", "turf-onboarding"]);
+const SENSITIVE_ENTITIES = new Set(["users", "user", "customer", "customers", "turf-owners", "owner", "owners", "payments", "payment", "staff", "reports", "report", "onboarding", "turf-onboarding"]);
 
 // ----------------------------------------------------
 // DASHBOARD STATS (Admin Only)
@@ -258,20 +280,62 @@ router.delete("/admin/onboarding/:id", authenticateToken, requireRole(["admin", 
 });
 
 // ----------------------------------------------------
+// TURF REORDERING & DISPLAY SEQUENCE
+// ----------------------------------------------------
+router.post("/admin/turfs/reorder", authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
+  try {
+    const pool = getPool();
+    const { items, type = "recommended" } = req.body;
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ success: false, error: "Items must be an array" });
+    }
+
+    const orderCol = type === "all" ? "all_display_order" : "display_order";
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const targetId = item.id;
+      const orderVal = item[orderCol] !== undefined && item[orderCol] !== null ? Number(item[orderCol]) : i + 1;
+      if (targetId) {
+        await pool.query(`UPDATE turfs SET \`${orderCol}\` = ? WHERE id = ?`, [orderVal, targetId]);
+      }
+    }
+
+    return res.json({ success: true, message: "Turfs reordered successfully" });
+  } catch (err) {
+    console.error("Turfs Reorder Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/admin/turfs/reset-order", authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
+  try {
+    const pool = getPool();
+    const { type = "recommended" } = req.body;
+    const orderCol = type === "all" ? "all_display_order" : "display_order";
+    await pool.query(`UPDATE turfs SET \`${orderCol}\` = 0`);
+    return res.json({ success: true, message: "Turf order reset to default successfully" });
+  } catch (err) {
+    console.error("Turfs Reset Order Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ----------------------------------------------------
 // GENERIC CRUD FOR ALL ADMIN ENTITIES
 // ----------------------------------------------------
 
 // Get All Items for an entity (Protected for sensitive entities)
-router.get("/admin/:entity", optionalAuth, async (req, res) => {
+router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async (req, res, next) => {
   const entity = req.params.entity;
   const tableName = ALLOWED_ENTITIES[entity];
   if (!tableName) {
-    return res.status(400).json({ success: false, error: `Invalid entity '${entity}'` });
+    return next();
   }
 
-  // Enforce authentication on sensitive entities
+  // Enforce authentication on sensitive entities (allow owner-scoped queries)
   if (SENSITIVE_ENTITIES.has(entity)) {
-    if (!req.user) {
+    const isOwnerScoped = Boolean(req.query.ownerEmail || req.query.ownerName || req.query.ownerId);
+    if (!req.user && !isOwnerScoped) {
       return res.status(401).json({ success: false, error: `Authentication required to view ${entity}.` });
     }
   }
@@ -284,7 +348,7 @@ router.get("/admin/:entity", optionalAuth, async (req, res) => {
       const cleanEmail = String(ownerEmail || "").trim().toLowerCase();
       const cleanName = String(ownerName || "").trim().toLowerCase();
 
-      if (entity === "turfs") {
+      if (entity === "turfs" || entity === "turf") {
         const [rows] = await pool.query(
           `SELECT * FROM turfs 
            WHERE (LOWER(owner_email) = ? AND ? != '') 
@@ -295,7 +359,7 @@ router.get("/admin/:entity", optionalAuth, async (req, res) => {
         return res.json({ success: true, data: rows });
       }
 
-      if (entity === "bookings") {
+      if (entity === "bookings" || entity === "booking") {
         const [rows] = await pool.query(
           `SELECT b.* FROM bookings b
            INNER JOIN turfs t ON LOWER(t.name) = LOWER(b.turf_name)
@@ -307,7 +371,7 @@ router.get("/admin/:entity", optionalAuth, async (req, res) => {
         return res.json({ success: true, data: rows });
       }
 
-      if (entity === "payments") {
+      if (entity === "payments" || entity === "payment") {
         const [rows] = await pool.query(
           `SELECT p.* FROM payments p
            INNER JOIN turfs t ON LOWER(t.name) = LOWER(p.turf_name)
@@ -319,7 +383,7 @@ router.get("/admin/:entity", optionalAuth, async (req, res) => {
         return res.json({ success: true, data: rows });
       }
 
-      if (entity === "reviews") {
+      if (entity === "reviews" || entity === "review") {
         const [rows] = await pool.query(
           `SELECT r.* FROM reviews r
            INNER JOIN turfs t ON LOWER(t.name) = LOWER(r.turf_name)
@@ -343,7 +407,7 @@ router.get("/admin/:entity", optionalAuth, async (req, res) => {
         return res.json({ success: true, data: rows });
       }
 
-      if (entity === "turf-owners") {
+      if (entity === "turf-owners" || entity === "owner" || entity === "owners") {
         const [rows] = await pool.query(
           `SELECT * FROM turf_owners 
            WHERE (LOWER(email) = ? AND ? != '') 
@@ -354,7 +418,7 @@ router.get("/admin/:entity", optionalAuth, async (req, res) => {
         return res.json({ success: true, data: rows });
       }
 
-      if (entity === "tournaments") {
+      if (entity === "tournaments" || entity === "tournament") {
         const [rows] = await pool.query(
           `SELECT * FROM tournaments 
            WHERE (LOWER(organizer_email) = ? AND ? != '') 
@@ -384,29 +448,59 @@ router.get("/admin/:entity", optionalAuth, async (req, res) => {
   }
 });
 
+// Get Single Item for an entity (Protected for sensitive entities)
+router.get(["/admin/:entity/:id", "/owner/:entity/:id", "/:entity/:id"], optionalAuth, async (req, res, next) => {
+  const { entity, id } = req.params;
+  const tableName = ALLOWED_ENTITIES[entity];
+  if (!tableName) {
+    return next();
+  }
+
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(`SELECT * FROM \`${tableName}\` WHERE id = ? LIMIT 1`, [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: `${entity} with id ${id} not found` });
+    }
+    return res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    console.error(`Fetch ${entity}/${id} Error:`, err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 async function filterValidColumns(pool, tableName, rawBody) {
   const [columns] = await pool.query(`SHOW COLUMNS FROM \`${tableName}\``);
   const validColNames = new Set(columns.map(c => c.Field));
   const filtered = {};
   for (const key of Object.keys(rawBody)) {
     if (key === 'id' || key === 'created_at') continue;
+    let targetKey = key;
     if (validColNames.has(key)) {
-      let val = rawBody[key];
-      if (typeof val === 'object' && val !== null) {
-        val = JSON.stringify(val);
+      targetKey = key;
+    } else {
+      const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+      if (validColNames.has(snakeKey)) {
+        targetKey = snakeKey;
+      } else {
+        continue;
       }
-      filtered[key] = val;
     }
+    let val = rawBody[key];
+    if (typeof val === 'object' && val !== null) {
+      val = JSON.stringify(val);
+    }
+    filtered[targetKey] = val;
   }
   return filtered;
 }
 
 // Create Item in an entity (Protected)
-router.post("/admin/:entity", authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
+router.post(["/admin/:entity", "/owner/:entity", "/:entity"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner", "player", "user", "editor", "moderator"]), async (req, res, next) => {
   const entity = req.params.entity;
   const tableName = ALLOWED_ENTITIES[entity];
   if (!tableName) {
-    return res.status(400).json({ success: false, error: `Invalid entity '${entity}'` });
+    return next();
   }
 
   try {
@@ -435,11 +529,11 @@ router.post("/admin/:entity", authenticateToken, requireRole(["admin", "super ad
 });
 
 // Update Item in an entity (Protected)
-router.put("/admin/:entity/:id", authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
+router.put(["/admin/:entity/:id", "/owner/:entity/:id", "/:entity/:id"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner", "player", "user", "editor", "moderator"]), async (req, res, next) => {
   const { entity, id } = req.params;
   const tableName = ALLOWED_ENTITIES[entity];
   if (!tableName) {
-    return res.status(400).json({ success: false, error: `Invalid entity '${entity}'` });
+    return next();
   }
 
   try {
@@ -467,11 +561,11 @@ router.put("/admin/:entity/:id", authenticateToken, requireRole(["admin", "super
 });
 
 // Delete Item from an entity (Protected)
-router.delete("/admin/:entity/:id", authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
+router.delete(["/admin/:entity/:id", "/owner/:entity/:id", "/:entity/:id"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res, next) => {
   const { entity, id } = req.params;
   const tableName = ALLOWED_ENTITIES[entity];
   if (!tableName) {
-    return res.status(400).json({ success: false, error: `Invalid entity '${entity}'` });
+    return next();
   }
 
   try {

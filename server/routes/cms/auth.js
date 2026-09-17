@@ -1,5 +1,6 @@
 import express from "express";
 import { getPool } from "../../db.js";
+import { generateToken } from "../../middleware/auth.js";
 
 const router = express.Router();
 
@@ -49,6 +50,18 @@ router.post("/login", async (req, res) => {
       // Update last_login
       await pool.query("UPDATE dashboard_users SET last_login = CURRENT_TIMESTAMP WHERE id = ?", [user.id]).catch(() => {});
 
+      const tokenPayload = {
+        id: user.id,
+        fullName: user.full_name,
+        username: user.username,
+        email: user.email,
+        role: user.role || "Super Admin",
+        accountType: "cms-admin",
+        isAdmin: true,
+      };
+
+      const token = generateToken(tokenPayload);
+
       return res.json({
         success: true,
         user: {
@@ -56,14 +69,14 @@ router.post("/login", async (req, res) => {
           fullName: user.full_name,
           username: user.username,
           email: user.email,
-          role: user.role || "Admin",
+          role: user.role || "Super Admin",
           status: user.status || "Active",
           permissions: parsedPerms,
           phone: user.phone || "",
           avatar: user.avatar || "",
           accountType: "cms-admin",
         },
-        token: `cms_admin_${user.id}_${Date.now()}`,
+        token,
       });
     }
 
@@ -74,6 +87,15 @@ router.post("/login", async (req, res) => {
     );
 
     if (cmsRows.length > 0) {
+      const token = generateToken({
+        id: cmsRows[0].id,
+        username: cmsRows[0].username,
+        email: cmsRows[0].email,
+        role: cmsRows[0].role || "Admin",
+        accountType: "cms-admin",
+        isAdmin: true,
+      });
+
       return res.json({
         success: true,
         user: {
@@ -86,7 +108,7 @@ router.post("/login", async (req, res) => {
           permissions: ALL_MODULES,
           accountType: "cms-admin",
         },
-        token: `cms_admin_${cmsRows[0].id}_${Date.now()}`,
+        token,
       });
     }
 
@@ -97,6 +119,15 @@ router.post("/login", async (req, res) => {
     );
 
     if (adminRows.length > 0) {
+      const token = generateToken({
+        id: adminRows[0].id,
+        username: adminRows[0].username,
+        email: adminRows[0].email,
+        role: adminRows[0].role || "Admin",
+        accountType: "cms-admin",
+        isAdmin: true,
+      });
+
       return res.json({
         success: true,
         user: {
@@ -109,7 +140,7 @@ router.post("/login", async (req, res) => {
           permissions: ALL_MODULES,
           accountType: "cms-admin",
         },
-        token: `cms_admin_${adminRows[0].id}_${Date.now()}`,
+        token,
       });
     }
 

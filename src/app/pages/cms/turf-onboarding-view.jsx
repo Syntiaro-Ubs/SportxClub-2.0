@@ -13,6 +13,7 @@ import { Badge } from "../../components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { turfService } from "../../services/turf.service";
+import { adminApi } from "../../services/admin-api";
 
 export function TurfOnboardingView() {
   const [requests, setRequests] = useState([]);
@@ -28,15 +29,10 @@ export function TurfOnboardingView() {
 
   const loadRequests = async () => {
     try {
-      const response = await fetch("/api/admin/onboarding");
-      const result = await response.json();
-      if (result.success) {
-        setRequests(result.data);
-      } else {
-        setRequests([]);
-      }
+      const data = await adminApi.getAll("onboarding");
+      setRequests(Array.isArray(data) ? data : []);
     } catch (e) {
-      console.error(e);
+      console.error("Onboarding load error:", e);
       setRequests([]);
     }
   };
@@ -64,23 +60,16 @@ export function TurfOnboardingView() {
 
     setIsProcessing(true);
     try {
-      const res = await fetch(`/api/admin/onboarding/${req.id}`, {
-        method: "DELETE",
-      });
-      const data = await res.json();
-      if (data.success) {
-        setRequests(prev => prev.filter(r => r.id !== req.id));
-        toast.success("Turf onboarding request and venue deleted successfully.");
-        if (selectedRequest?.id === req.id) {
-          setIsModalOpen(false);
-          setSelectedRequest(null);
-        }
-      } else {
-        toast.error(data.error || "Failed to delete request.");
+      await adminApi.delete("onboarding", req.id);
+      setRequests(prev => prev.filter(r => r.id !== req.id));
+      toast.success("Turf onboarding request and venue deleted successfully.");
+      if (selectedRequest?.id === req.id) {
+        setIsModalOpen(false);
+        setSelectedRequest(null);
       }
     } catch (e) {
       console.error("Delete Error:", e);
-      toast.error("An error occurred while deleting the request.");
+      toast.error(e.message || "An error occurred while deleting the request.");
     } finally {
       setIsProcessing(false);
     }
@@ -108,11 +97,7 @@ export function TurfOnboardingView() {
       await turfService.create("admin", mappedData);
 
       // Update backend status to approved
-      await fetch(`/api/admin/onboarding/${req.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "approved" })
-      });
+      await adminApi.update("onboarding", req.id, { status: "approved" });
 
       const newRequests = requests.map(r => r.id === req.id ? { ...r, status: "Approved" } : r);
       setRequests(newRequests);
@@ -131,11 +116,7 @@ export function TurfOnboardingView() {
     if (!window.confirm("Are you sure you want to reject this turf onboarding request?")) return;
 
     try {
-      await fetch(`/api/admin/onboarding/${req.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "rejected" })
-      });
+      await adminApi.update("onboarding", req.id, { status: "rejected" });
 
       const newRequests = requests.map(r => r.id === req.id ? { ...r, status: "Rejected" } : r);
       setRequests(newRequests);
@@ -144,7 +125,7 @@ export function TurfOnboardingView() {
       setIsModalOpen(false);
       setSelectedRequest(null);
     } catch (e) {
-      toast.error("Error rejecting request");
+      toast.error(e.message || "Error rejecting request");
     }
   };
 

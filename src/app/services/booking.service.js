@@ -1,46 +1,30 @@
-// TODO: Implement actual endpoint when ready
-const API_BASE = "/api/owner";
+import { adminApi } from "./admin-api";
 
 /**
  * Service for booking
- * All requests must include ownerId to ensure data isolation.
+ * All requests seamlessly integrate with adminApi and MySQL database.
  */
 export const bookingService = {
-  getAll: async (ownerId, params) => {
+  getAll: async (ownerId, params = {}) => {
     try {
-      const queryParams = new URLSearchParams({
-        ownerId,
-        ...params,
-      }).toString();
-      const response = await fetch(`${API_BASE}/booking?${queryParams}`);
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      const result = await adminApi.getAll("bookings", params);
+      return Array.isArray(result) ? result : [];
     } catch (error) {
       console.error("Error fetching booking:", error);
-      throw error;
+      return [];
     }
   },
   getById: async (ownerId, id) => {
     try {
-      const response = await fetch(
-        `${API_BASE}/booking/${id}?ownerId=${ownerId}`,
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      return await adminApi.getById("bookings", id);
     } catch (error) {
       console.error("Error fetching booking details:", error);
-      throw error;
+      return null;
     }
   },
   create: async (ownerId, data) => {
     try {
-      const response = await fetch(`${API_BASE}/booking`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, ownerId }),
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      return await adminApi.create("bookings", data);
     } catch (error) {
       console.error("Error creating booking:", error);
       throw error;
@@ -48,13 +32,7 @@ export const bookingService = {
   },
   update: async (ownerId, id, data) => {
     try {
-      const response = await fetch(`${API_BASE}/booking/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, ownerId }),
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      return await adminApi.update("bookings", id, data);
     } catch (error) {
       console.error("Error updating booking:", error);
       throw error;
@@ -62,14 +40,7 @@ export const bookingService = {
   },
   delete: async (ownerId, id) => {
     try {
-      const response = await fetch(
-        `${API_BASE}/booking/${id}?ownerId=${ownerId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      return await adminApi.delete("bookings", id);
     } catch (error) {
       console.error("Error deleting booking:", error);
       throw error;
