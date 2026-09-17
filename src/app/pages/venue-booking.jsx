@@ -330,18 +330,18 @@ export function VenueBooking() {
   // Recommended Venues (Section #1): Sorted by display_order set in Dashboard (or by most reviews if default)
   const premiumVenues = useMemo(() => {
     return [...filteredVenues].sort((a, b) => {
-      const hasOrderA = a.display_order > 0;
-      const hasOrderB = b.display_order > 0;
+      const hasOrderA = Number(a.display_order) > 0;
+      const hasOrderB = Number(b.display_order) > 0;
       if (hasOrderA && hasOrderB) {
-        return a.display_order - b.display_order;
+        return Number(a.display_order) - Number(b.display_order);
       }
       if (hasOrderA) return -1;
       if (hasOrderB) return 1;
-      const revA = Number(a.reviews ?? 0);
-      const revB = Number(b.reviews ?? 0);
+      const revA = Number(String(a.reviews ?? a.reviews_count ?? 0).replace(/[^0-9.]/g, "")) || 0;
+      const revB = Number(String(b.reviews ?? b.reviews_count ?? 0).replace(/[^0-9.]/g, "")) || 0;
       if (revB !== revA) return revB - revA;
-      const ratA = Number(a.rating ?? 0);
-      const ratB = Number(b.rating ?? 0);
+      const ratA = Number(String(a.rating ?? 0).replace(/[^0-9.]/g, "")) || 0;
+      const ratB = Number(String(b.rating ?? 0).replace(/[^0-9.]/g, "")) || 0;
       if (ratB !== ratA) return ratB - ratA;
       return Number(b.id || 0) - Number(a.id || 0);
     });
@@ -350,18 +350,18 @@ export function VenueBooking() {
   // All Venues (Section #2): Sorted by all_display_order set in Dashboard (or by most reviews if default)
   const otherVenues = useMemo(() => {
     return [...filteredVenues].sort((a, b) => {
-      const hasOrderA = a.all_display_order > 0;
-      const hasOrderB = b.all_display_order > 0;
+      const hasOrderA = Number(a.all_display_order) > 0;
+      const hasOrderB = Number(b.all_display_order) > 0;
       if (hasOrderA && hasOrderB) {
-        return a.all_display_order - b.all_display_order;
+        return Number(a.all_display_order) - Number(b.all_display_order);
       }
       if (hasOrderA) return -1;
       if (hasOrderB) return 1;
-      const revA = Number(a.reviews ?? 0);
-      const revB = Number(b.reviews ?? 0);
+      const revA = Number(String(a.reviews ?? a.reviews_count ?? 0).replace(/[^0-9.]/g, "")) || 0;
+      const revB = Number(String(b.reviews ?? b.reviews_count ?? 0).replace(/[^0-9.]/g, "")) || 0;
       if (revB !== revA) return revB - revA;
-      const ratA = Number(a.rating ?? 0);
-      const ratB = Number(b.rating ?? 0);
+      const ratA = Number(String(a.rating ?? 0).replace(/[^0-9.]/g, "")) || 0;
+      const ratB = Number(String(b.rating ?? 0).replace(/[^0-9.]/g, "")) || 0;
       if (ratB !== ratA) return ratB - ratA;
       return Number(b.id || 0) - Number(a.id || 0);
     });

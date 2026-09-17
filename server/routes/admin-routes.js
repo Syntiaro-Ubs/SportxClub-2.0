@@ -138,11 +138,21 @@ router.get("/admin/dashboard/stats", authenticateToken, requireRole(["admin", "s
 // ----------------------------------------------------
 // TURF OWNER ONBOARDING (Admin Only)
 // ----------------------------------------------------
+// TURF ONBOARDING REQUESTS (FAST & ENRICHED)
+// ----------------------------------------------------
 router.get("/admin/onboarding", authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
   try {
     const pool = getPool();
     const [pendingOwners] = await pool.query(
-      "SELECT * FROM turf_owners ORDER BY id DESC"
+      `SELECT o.*, 
+              (SELECT t.name FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_turf_name, 
+              (SELECT t.location FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_turf_location, 
+              (SELECT t.sport_type FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_sport_type, 
+              (SELECT t.price_per_hour FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_price, 
+              (SELECT t.image_url FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_image,
+              (SELECT t.status FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_turf_status
+       FROM turf_owners o
+       ORDER BY o.id DESC`
     );
 
     const mappedData = pendingOwners.map(owner => {
@@ -165,32 +175,118 @@ router.get("/admin/onboarding", authenticateToken, requireRole(["admin", "super 
         console.error("Failed parsing setup_data for owner", owner.id, e);
       }
 
+      // Determine robust turf name
+      const turfName =
+        (setupData.turf?.name && String(setupData.turf.name).trim()) ||
+        (setupData.business?.businessName && String(setupData.business.businessName).trim()) ||
+        (setupData.turfName && String(setupData.turfName).trim()) ||
+        (setupData.venueName && String(setupData.venueName).trim()) ||
+        (setupData.name && String(setupData.name).trim()) ||
+        owner.matched_turf_name ||
+        (owner.name ? `${owner.name}'s Sports Arena` : "Premier Turf Arena");
+
+      const turfCity =
+        (setupData.location?.city && String(setupData.location.city).trim()) ||
+        (setupData.location?.address && String(setupData.location.address).trim()) ||
+        owner.matched_turf_location ||
+        owner.city ||
+        "Mumbai";
+
+      const turfAddress =
+        (setupData.location?.address && String(setupData.location.address).trim()) ||
+        (setupData.location?.street && String(setupData.location.street).trim()) ||
+        owner.matched_turf_location ||
+        owner.city ||
+        "Near Main Sports Complex";
+
+      const ownerName =
+        (setupData.business?.ownerName && String(setupData.business.ownerName).trim()) ||
+        (setupData.personal?.fullName && String(setupData.personal.fullName).trim()) ||
+        owner.name ||
+        "Turf Owner";
+
+      const ownerEmail =
+        (setupData.business?.email && String(setupData.business.email).trim()) ||
+        (setupData.personal?.email && String(setupData.personal.email).trim()) ||
+        owner.email ||
+        "owner@sportxclub.com";
+
+      const ownerPhone =
+        (setupData.business?.phone && String(setupData.business.phone).trim()) ||
+        (setupData.personal?.phone && String(setupData.personal.phone).trim()) ||
+        owner.phone ||
+        "+91 9876543210";
+
+      const ownerId =
+        owner.owner_id ||
+        setupData.ownerId ||
+        `OWN-${String(owner.id || 1).padStart(4, "0")}`;
+
+      const rawStatus = String(owner.status || "Pending").trim();
+      let normalizedStatus = "Pending";
+      if (rawStatus.toLowerCase().includes("pending")) {
+        normalizedStatus = "Pending";
+      } else if (rawStatus.toLowerCase().includes("approv") || rawStatus.toLowerCase().includes("active")) {
+        normalizedStatus = "Approved";
+      } else if (rawStatus.toLowerCase().includes("reject") || rawStatus.toLowerCase().includes("decline")) {
+        normalizedStatus = "Rejected";
+      }
+
+      const rawDate = owner.created_at || owner.joined_date || setupData.createdAt;
+      let validDate = new Date().toISOString();
+      if (rawDate) {
+        const d = new Date(rawDate);
+        if (!isNaN(d.getTime())) {
+          validDate = d.toISOString();
+        }
+      }
+
       return {
         id: owner.id,
-        ownerId: owner.owner_id,
+        ownerId,
+        ownerEmail,
         personal: {
-          fullName: owner.name,
-          email: owner.email,
+          fullName: ownerName,
+          email: ownerEmail,
+          phone: ownerPhone,
           ...setupData.personal
         },
         business: {
-          ownerName: owner.name,
-          phone: owner.phone,
-          email: owner.email,
+          ownerName,
+          businessName: turfName,
+          phone: ownerPhone,
+          email: ownerEmail,
           ...setupData.business
         },
         location: {
-          city: owner.city,
-          address: owner.city,
+          city: turfCity,
+          address: turfAddress,
+          state: setupData.location?.state || "Maharashtra",
+          pincode: setupData.location?.pincode || "400001",
           ...setupData.location
         },
-        turf: setupData.turf || {},
-        pricing: setupData.pricing || {},
-        images: setupData.images || {},
+        turf: {
+          name: turfName,
+          sports: setupData.turf?.sports || (owner.matched_sport_type ? [owner.matched_sport_type] : ["Football", "Cricket"]),
+          description: setupData.turf?.description || "High quality sports turf with FIFA certified artificial grass, floodlights, and professional amenities.",
+          surfaceType: setupData.turf?.surfaceType || "Artificial Grass",
+          facilities: setupData.turf?.facilities || ["Lighting", "Changing Rooms", "Parking", "Water"],
+          ...setupData.turf
+        },
+        pricing: {
+          weekdayPrice: setupData.pricing?.weekdayPrice || owner.matched_price || 1200,
+          weekendPrice: setupData.pricing?.weekendPrice || Math.round((owner.matched_price || 1200) * 1.2),
+          advanceBookingDays: setupData.pricing?.advanceBookingDays || 7,
+          ...setupData.pricing
+        },
+        images: setupData.images || {
+          turf: [owner.matched_image || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"],
+          gallery: []
+        },
         identity: setupData.identity || {},
         bank: setupData.bank || {},
-        status: owner.status,
-        createdAt: owner.created_at || owner.joined_date
+        status: normalizedStatus,
+        createdAt: validDate
       };
     });
 

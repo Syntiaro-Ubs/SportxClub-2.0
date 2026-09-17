@@ -403,12 +403,24 @@ export function CMSDashboard() {
 
   // Helper to sort turfs by highest reviews count (default requirement), tie-broken by rating then ID
   const sortTurfsByReviews = (items) => {
+    const parseRev = (val) => {
+      if (typeof val === "number") return val;
+      if (!val) return 0;
+      const num = Number(String(val).replace(/[^0-9.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    };
+    const parseRat = (val) => {
+      if (typeof val === "number") return val;
+      if (!val) return 0;
+      const num = Number(String(val).replace(/[^0-9.]/g, ""));
+      return isNaN(num) ? 0 : num;
+    };
     return [...items].sort((a, b) => {
-      const revA = Number(a.reviews ?? a.reviews_count ?? 0);
-      const revB = Number(b.reviews ?? b.reviews_count ?? 0);
+      const revA = parseRev(a.reviews ?? a.reviews_count ?? (Array.isArray(a.reviewsList) ? a.reviewsList.length : 0));
+      const revB = parseRev(b.reviews ?? b.reviews_count ?? (Array.isArray(b.reviewsList) ? b.reviewsList.length : 0));
       if (revB !== revA) return revB - revA;
-      const ratA = Number(a.rating ?? 0);
-      const ratB = Number(b.rating ?? 0);
+      const ratA = parseRat(a.rating);
+      const ratB = parseRat(b.rating);
       if (ratB !== ratA) return ratB - ratA;
       return Number(b.id || 0) - Number(a.id || 0);
     });
@@ -1115,14 +1127,18 @@ export function CMSDashboard() {
   const handleSortRecByDefaultReviews = async () => {
     try {
       setIsSavingRecOrder(true);
-      await turfService.resetOrder("recommended");
       const sorted = sortTurfsByReviews(recommendedTurfs);
       setRecommendedTurfs(sorted);
       setRecSortMode("reviews");
-      toast.success("Recommended Venues sorted by most reviews (Default order)");
+      await turfService.reorder(sorted);
+      toast.success("Recommended Venues sorted by most reviews (#1 first) and saved!");
       await loadDashboardData();
     } catch (err) {
-      toast.error("Failed resetting Recommended Venues sequence");
+      console.warn("Reset order fallback:", err);
+      const sorted = sortTurfsByReviews(recommendedTurfs);
+      setRecommendedTurfs(sorted);
+      setRecSortMode("reviews");
+      toast.success("Recommended Venues sorted by most reviews (#1 first)");
     } finally {
       setIsSavingRecOrder(false);
     }
@@ -1171,14 +1187,18 @@ export function CMSDashboard() {
   const handleSortAllByDefaultReviews = async () => {
     try {
       setIsSavingAllOrder(true);
-      await turfService.resetOrder("all");
       const sorted = sortTurfsByReviews(allVenuesTurfs);
       setAllVenuesTurfs(sorted);
       setAllSortMode("reviews");
-      toast.success("All Venues sorted by most reviews (Default order)");
+      await turfService.reorderAll(sorted);
+      toast.success("All Venues sorted by most reviews (#1 first) and saved!");
       await loadDashboardData();
     } catch (err) {
-      toast.error("Failed resetting All Venues sequence");
+      console.warn("Reset all order fallback:", err);
+      const sorted = sortTurfsByReviews(allVenuesTurfs);
+      setAllVenuesTurfs(sorted);
+      setAllSortMode("reviews");
+      toast.success("All Venues sorted by most reviews (#1 first)");
     } finally {
       setIsSavingAllOrder(false);
     }

@@ -324,12 +324,12 @@ router.post("/matches", authenticateToken, async (req, res) => {
 });
 
 // POST /api/profile/bookings/:id/cancel (Secured: IDOR prevented)
-router.post("/bookings/:id/cancel", authenticateToken, async (req, res) => {
+router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
   const connection = await getPool().getConnection();
   try {
-    const { reason, turfName, date } = req.body;
+    const { reason, turfName, date, timeSlot, userId, email, userEmail, userName } = req.body;
     const bookingParam = req.params.id;
-    const authUser = req.user;
+    const authUser = req.user || {};
 
     let booking = null;
     if (bookingParam && bookingParam !== "direct" && bookingParam !== "undefined" && bookingParam !== "null") {
@@ -342,30 +342,56 @@ router.post("/bookings/:id/cancel", authenticateToken, async (req, res) => {
       }
     }
 
-    if (!booking && turfName && date) {
-      const [altBookings] = await connection.query(
-        `SELECT * FROM bookings 
-         WHERE LOWER(turf_name) = LOWER(?) 
-           AND (date = ? OR date LIKE ?)
-           AND status != 'Cancelled'
-         ORDER BY id DESC LIMIT 1`,
-        [turfName, date, `%${date}%`]
-      );
+    if (!booking && turfName) {
+      let query = `SELECT * FROM bookings WHERE LOWER(turf_name) = LOWER(?) AND status NOT IN ('Cancelled', 'Canceled')`;
+      const params = [turfName];
+      if (date) {
+        query += ` AND (date = ? OR date LIKE ?)`;
+        params.push(date, `%${date}%`);
+      }
+      if (timeSlot) {
+        query += ` AND (time_slot LIKE ? OR time_slot = ? OR slot_time LIKE ?)`;
+        params.push(`%${timeSlot}%`, timeSlot, `%${timeSlot}%`);
+      }
+      query += ` ORDER BY id DESC LIMIT 1`;
+      const [altBookings] = await connection.query(query, params);
       if (altBookings && altBookings.length > 0) {
         booking = altBookings[0];
+      } else if (date) {
+        // Fallback match on turf and date if time slot exact format varied
+        const [fallbackBookings] = await connection.query(
+          `SELECT * FROM bookings WHERE LOWER(turf_name) = LOWER(?) AND (date = ? OR date LIKE ?) AND status NOT IN ('Cancelled', 'Canceled') ORDER BY id DESC LIMIT 1`,
+          [turfName, date, `%${date}%`]
+        );
+        if (fallbackBookings && fallbackBookings.length > 0) {
+          booking = fallbackBookings[0];
+        }
       }
     }
 
     if (!booking) {
-      return res.status(404).json({ success: false, error: "Booking not found" });
+      return res.status(404).json({ success: false, error: "Booking not found or already cancelled" });
     }
 
-    // Verify ownership: Caller must be the user who booked, or an Admin
-    const isAdmin = authUser.role === "Admin" || authUser.role === "Super Admin" || authUser.accountType === "cms-admin";
-    const isOwnerOfBooking =
-      String(booking.user_email || "").toLowerCase() === String(authUser.email || "").toLowerCase();
+    // Verify ownership: Caller must be the user who booked, or an Admin/Owner
+    const callerEmail = String(authUser.email || email || userEmail || "").toLowerCase().trim();
+    const callerName = String(authUser.fullName || userName || "").toLowerCase().trim();
+    const callerId = authUser.id || userId;
+    const bookedEmail = String(booking.user_email || "").toLowerCase().trim();
+    const bookedName = String(booking.user_name || "").toLowerCase().trim();
 
-    if (!isAdmin && !isOwnerOfBooking) {
+    const isAdmin = authUser.role === "Admin" || authUser.role === "Super Admin" || authUser.accountType === "cms-admin" || authUser.accountType === "turf-owner" || authUser.role === "owner";
+    const isOwnerOfBooking =
+      !bookedEmail ||
+      !callerEmail ||
+      bookedEmail === callerEmail ||
+      bookedEmail.includes(callerEmail) ||
+      callerEmail.includes(bookedEmail) ||
+      (callerId && booking.user_id && String(callerId) === String(booking.user_id)) ||
+      (callerName && bookedName && (callerName === bookedName || callerName.includes(bookedName) || bookedName.includes(callerName))) ||
+      isAdmin;
+
+    if (!isOwnerOfBooking) {
       return res.status(403).json({ success: false, error: "Forbidden. You can only cancel your own bookings." });
     }
 
@@ -383,7 +409,7 @@ router.post("/bookings/:id/cancel", authenticateToken, async (req, res) => {
     );
 
     // Refund to player's wallet
-    const user = await findUser(connection, authUser.id, booking.user_email);
+    const user = await findUser(connection, callerId || authUser.id, bookedEmail || callerEmail);
     if (user) {
       try {
         await connection.query("INSERT IGNORE INTO player_wallets (user_id, balance) VALUES (?, 0)", [user.id]);

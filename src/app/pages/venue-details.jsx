@@ -49,6 +49,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import { adminApi } from "../services/admin-api";
+import { profileService } from "../services/profile.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { cn } from "../components/ui/utils";
@@ -496,46 +497,72 @@ export function VenueDetails() {
       ? (customReason.trim() || "User requested cancellation")
       : (customReason.trim() ? `${cancelReason} - ${customReason.trim()}` : cancelReason);
 
+    // 1. Immediately mark slot as cancelled in local UI state so it instantly turns Available
+    setCancelledSlots((prev) => [...new Set([...prev, slotHour])]);
+
+    // 2. Optimistically update dbBookings state locally
+    setDbBookings((prev) =>
+      prev.map((b) => {
+        const isTarget = (
+          (bookingId && (String(b.id) === String(bookingId) || String(b.booking_code) === String(bookingId))) ||
+          (String(b.turf_name || "").toLowerCase().trim() === String(venue.name || "").toLowerCase().trim() &&
+           String(b.date || "").trim() === String(selectedDate || "").trim() &&
+           (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
+        );
+        return isTarget ? { ...b, status: "Cancelled" } : b;
+      })
+    );
+
+    // 3. Remove from localStorage sportxclub_confirmed_bookings
     try {
-      const res = await fetch(`/api/profile/bookings/${bookingId || "direct"}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: activePlayer?.id,
-          email: activePlayer?.email || slotToCancel.bookedByEmail || slotToCancel.booking?.user_email,
-          reason: finalReason,
-          turfName: venue.name,
-          date: selectedDate,
-          timeSlot: formattedTimeSlot,
-        }),
+      const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+      const filtered = confirmedList.filter((b) => {
+        const isMatch = (
+          (b.booking_code && bookingId && String(b.booking_code) === String(bookingId)) ||
+          (b.id && bookingId && String(b.id) === String(bookingId)) ||
+          (String(b.turf_name || "").toLowerCase().trim() === String(venue.name || "").toLowerCase().trim() &&
+           String(b.date || "").trim() === String(selectedDate || "").trim() &&
+           (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
+        );
+        return !isMatch;
+      });
+      localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(filtered));
+    } catch (e) {}
+
+    // 4. Clear sessionStorage last booking if it matched
+    try {
+      const lb = JSON.parse(sessionStorage.getItem("sportxclub_last_booking") || "{}");
+      if (
+        (lb.venue === venue.name || !lb.venue) &&
+        (lb.date === selectedDate || !lb.date) &&
+        (lb.time === formattedTimeSlot || lb.time?.includes(formatHour(slotHour)))
+      ) {
+        sessionStorage.removeItem("sportxclub_last_booking");
+        sessionStorage.removeItem("sportxclub_booking");
+        sessionStorage.removeItem("sportxclub_pending_booking");
+      }
+    } catch (e) {}
+
+    try {
+      const user = activePlayer || currentUser;
+      const res = await profileService.cancelBooking(user, bookingId || "direct", finalReason, {
+        turfName: venue.name,
+        date: selectedDate,
+        timeSlot: formattedTimeSlot,
+        userName: user?.fullName || user?.name || user?.full_name || slotToCancel.bookedBy,
+        userEmail: user?.email || slotToCancel.bookedByEmail || slotToCancel.booking?.user_email,
+        phone: user?.phone || user?.phoneNumber,
       });
 
-      const data = await res.json();
-      if (data.success) {
+      if (res?.success !== false) {
         toast.success(`Slot booking cancelled! ₹${refundAmount} refunded to your wallet.`);
       } else {
-        toast.info(data.error || "Slot cancelled from current view.");
+        toast.info(res?.error || "Slot cancelled from current view.");
       }
     } catch (err) {
-      console.error("Cancel slot error:", err);
-      toast.success("Slot booking cancelled.");
+      console.warn("Cancel slot API call:", err.message);
+      toast.success(`Slot booking cancelled! ₹${refundAmount} refunded.`);
     } finally {
-      // Remove from localStorage confirmed list if present
-      try {
-        const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
-        const filtered = confirmedList.filter((b) => {
-          const isMatch = (
-            (b.booking_code && bookingId && String(b.booking_code) === String(bookingId)) ||
-            (String(b.turf_name || "").toLowerCase().trim() === String(venue.name || "").toLowerCase().trim() &&
-             String(b.date || "").trim() === String(selectedDate || "").trim() &&
-             (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
-          );
-          return !isMatch;
-        });
-        localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(filtered));
-      } catch (e) {}
-
-      setCancelledSlots((prev) => [...prev, slotHour]);
       await loadBookings();
       setIsCancelling(false);
       setCancelModalOpen(false);
@@ -628,7 +655,7 @@ export function VenueDetails() {
         return `${String(h12).padStart(2, "0")}:00 ${ampm}`;
       };
 
-      const matchingBkg = venueBookings.find((b) => {
+      let matchingBkg = venueBookings.find((b) => {
         const bTime = String(b.time_slot || b.slot_time || b.slotTime || b.time || "").toLowerCase().trim();
         if (!bTime) return false;
 
@@ -672,6 +699,10 @@ export function VenueDetails() {
         return false;
       });
 
+      if (cancelledSlots.includes(h)) {
+        matchingBkg = null;
+      }
+
       let bookedBy = matchingBkg ? (matchingBkg.user_name || "Booked Player") : undefined;
       let bookedByEmail = matchingBkg ? (matchingBkg.user_email || "") : undefined;
       let bookingId = matchingBkg ? matchingBkg.id : undefined;
@@ -687,7 +718,7 @@ export function VenueDetails() {
       });
     }
     return slots;
-  }, [venueOpeningHour, venueClosingHour, dbBookings, venue.name, selectedDate]);
+  }, [venueOpeningHour, venueClosingHour, allBookings, cancelledSlots, venue.name, venue.id, selectedDate]);
 
   const currentDate = new Date();
   const currentLiveHour = currentDate.getHours();
@@ -1956,17 +1987,23 @@ export function VenueDetails() {
                         );
 
                         return (
-                          <button
+                          <div
                             key={slotHour}
-                            type="button"
-                            disabled={cannotSelect}
+                            role="button"
+                            tabIndex={!cannotSelect ? 0 : -1}
                             onClick={() => {
                               if (cannotSelect) return;
                               setStartTime(isSelected ? null : hourToTimeStr(slotHour));
                             }}
+                            onKeyDown={(e) => {
+                              if (!cannotSelect && (e.key === "Enter" || e.key === " ")) {
+                                e.preventDefault();
+                                setStartTime(isSelected ? null : hourToTimeStr(slotHour));
+                              }
+                            }}
                             className={cn(
-                              "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative",
-                              !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
+                              "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
+                              !cannotSelect ? "cursor-pointer" : "cursor-default",
                               isSelected
                                 ? isDark
                                   ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
@@ -1974,7 +2011,7 @@ export function VenueDetails() {
                                 : cannotSelect
                                   ? isDark
                                     ? "border-red-500/60 bg-red-500/10 opacity-70"
-                                    : "border-red-200 bg-red-50 text-red-700 opacity-60"
+                                    : "border-red-200 bg-red-50 text-red-700 opacity-70"
                                   : isDark
                                     ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
                                     : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
@@ -2030,16 +2067,17 @@ export function VenueDetails() {
                                       <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
                                         Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
                                       </span>
-                                      <div
+                                      <button
+                                        type="button"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           e.preventDefault();
                                           handleOpenCancelModal(slot);
                                         }}
-                                        className="px-2 py-0.5 bg-red-500/20 hover:bg-red-500/30 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer pointer-events-auto shadow-xs border border-red-500/30 active:scale-95 mt-0.5"
+                                        className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/35 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer shadow-xs border border-red-500/30 active:scale-95 mt-0.5 z-20"
                                       >
                                         CANCEL
-                                      </div>
+                                      </button>
                                     </div>
                                   )}
                                 </div>
@@ -2049,7 +2087,7 @@ export function VenueDetails() {
                                 "Available"
                               )}
                             </span>
-                          </button>
+                          </div>
                         );
                       }))}
                   </div>

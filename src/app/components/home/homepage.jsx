@@ -1050,11 +1050,11 @@ export function RecommendedVenuesSection({ asSlider = false }) {
         if (hasOrderA && hasOrderB) return Number(a.display_order) - Number(b.display_order);
         if (hasOrderA) return -1;
         if (hasOrderB) return 1;
-        const revA = Number(a.reviews ?? a.reviews_count ?? 0);
-        const revB = Number(b.reviews ?? b.reviews_count ?? 0);
+        const revA = Number(String(a.reviews ?? a.reviews_count ?? 0).replace(/[^0-9.]/g, "")) || 0;
+        const revB = Number(String(b.reviews ?? b.reviews_count ?? 0).replace(/[^0-9.]/g, "")) || 0;
         if (revB !== revA) return revB - revA;
-        const ratA = Number(a.rating ?? 0);
-        const ratB = Number(b.rating ?? 0);
+        const ratA = Number(String(a.rating ?? 0).replace(/[^0-9.]/g, "")) || 0;
+        const ratB = Number(String(b.rating ?? 0).replace(/[^0-9.]/g, "")) || 0;
         if (ratB !== ratA) return ratB - ratA;
         return Number(b.id || 0) - Number(a.id || 0);
       })

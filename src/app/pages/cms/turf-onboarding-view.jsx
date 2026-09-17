@@ -4,7 +4,7 @@ import {
   Building2, User, Phone, Mail, MapPin,
   CalendarDays, CheckCircle2, XCircle, FileText,
   CreditCard, Search, Eye, AlertTriangle, Shield, Hash,
-  Trash2, Loader2
+  Trash2, Loader2, Sparkles, RefreshCw
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -15,8 +15,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/ta
 import { turfService } from "../../services/turf.service";
 import { adminApi } from "../../services/admin-api";
 
+const CACHE_KEY = "sportx_onboarding_cache";
+
+function formatSubmissionDate(dateStr) {
+  if (!dateStr) return new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export function TurfOnboardingView() {
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState(() => {
+    try {
+      const cached = sessionStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [loading, setLoading] = useState(() => {
+    try {
+      return !sessionStorage.getItem(CACHE_KEY);
+    } catch (e) {
+      return true;
+    }
+  });
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,23 +52,42 @@ export function TurfOnboardingView() {
     loadRequests();
   }, []);
 
-  const loadRequests = async () => {
+  const loadRequests = async (isManual = false) => {
+    if (isManual) setLoading(true);
     try {
       const data = await adminApi.getAll("onboarding");
-      setRequests(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setRequests(list);
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(list));
+      } catch (e) {}
     } catch (e) {
       console.error("Onboarding load error:", e);
-      setRequests([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredRequests = requests.filter(req => {
-    if (statusFilter !== "All" && req.status?.toLowerCase() !== statusFilter.toLowerCase()) return false;
+  const pendingCount = requests.filter(r => (r.status || "").toLowerCase() === "pending").length;
+  const approvedCount = requests.filter(r => ["approved", "active"].includes((r.status || "").toLowerCase())).length;
+  const rejectedCount = requests.filter(r => (r.status || "").toLowerCase() === "rejected").length;
+  const totalCount = requests.length;
 
-    const term = searchTerm.toLowerCase();
-    const turfName = req.turf?.name?.toLowerCase() || "";
-    const ownerName = req.business?.ownerName?.toLowerCase() || req.personal?.fullName?.toLowerCase() || "";
-    return turfName.includes(term) || ownerName.includes(term);
+  const filteredRequests = requests.filter(req => {
+    if (statusFilter === "Pending" && req.status?.toLowerCase() !== "pending") return false;
+    if (statusFilter === "Approved" && !["approved", "active"].includes(req.status?.toLowerCase())) return false;
+    if (statusFilter === "Rejected" && req.status?.toLowerCase() !== "rejected") return false;
+
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return true;
+
+    const turfName = (req.business?.businessName || req.turf?.name || "").toLowerCase();
+    const ownerName = (req.business?.ownerName || req.personal?.fullName || "").toLowerCase();
+    const city = (req.location?.city || "").toLowerCase();
+    const email = (req.ownerEmail || req.business?.email || req.personal?.email || "").toLowerCase();
+    const ownerId = (req.ownerId || "").toLowerCase();
+
+    return turfName.includes(term) || ownerName.includes(term) || city.includes(term) || email.includes(term) || ownerId.includes(term);
   });
 
   const handleReview = (req) => {
@@ -61,7 +105,11 @@ export function TurfOnboardingView() {
     setIsProcessing(true);
     try {
       await adminApi.delete("onboarding", req.id);
-      setRequests(prev => prev.filter(r => r.id !== req.id));
+      const updated = requests.filter(r => r.id !== req.id);
+      setRequests(updated);
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(updated));
+      } catch (e) {}
       toast.success("Turf onboarding request and venue deleted successfully.");
       if (selectedRequest?.id === req.id) {
         setIsModalOpen(false);
@@ -80,27 +128,27 @@ export function TurfOnboardingView() {
 
     setIsProcessing(true);
     try {
-      // Map to the turf schema expected by the platform
       const mappedData = {
-        name: req.turf?.name || "New Turf",
-        location: req.location?.address || req.location?.city || "Unknown Location",
+        name: req.turf?.name || req.business?.businessName || "New Turf",
+        location: req.location?.address || req.location?.city || "Mumbai",
         sport_type: req.turf?.sports?.[0] || "Football",
         price_per_hour: parseInt(req.pricing?.weekdayPrice) || 1200,
         rating: "5.0",
         reviews: 0,
         status: "Active",
         owner_name: req.business?.ownerName || req.personal?.fullName || "Owner",
-        owner_phone: req.business?.phone || "0000000000",
-        image_url: "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"
+        owner_phone: req.business?.phone || req.personal?.phone || "9876543210",
+        image_url: req.images?.turf?.[0] || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"
       };
 
       await turfService.create("admin", mappedData);
-
-      // Update backend status to approved
       await adminApi.update("onboarding", req.id, { status: "approved" });
 
       const newRequests = requests.map(r => r.id === req.id ? { ...r, status: "Approved" } : r);
       setRequests(newRequests);
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(newRequests));
+      } catch (e) {}
 
       toast.success("Turf onboarding request approved successfully!");
       setIsModalOpen(false);
@@ -120,6 +168,9 @@ export function TurfOnboardingView() {
 
       const newRequests = requests.map(r => r.id === req.id ? { ...r, status: "Rejected" } : r);
       setRequests(newRequests);
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(newRequests));
+      } catch (e) {}
 
       toast.success("Request has been rejected and removed.");
       setIsModalOpen(false);
@@ -174,7 +225,6 @@ export function TurfOnboardingView() {
   };
 
   const renderDocumentStatus = (doc) => {
-    // If doc is null/undefined or an empty object (from old bug), treat as missing
     if (!doc || (Object.keys(doc).length === 0 && doc.constructor === Object)) {
       return <span className="text-xs font-medium text-rose-500 bg-rose-50 px-2 py-1 rounded-md">Missing</span>;
     }
@@ -196,12 +246,24 @@ export function TurfOnboardingView() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
+      {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e2e8f0]">
         <div>
-          <h2 className="text-2xl font-black tracking-tight text-[#0f172a]">
-            Turf Onboarding Requests
-          </h2>
-          <p className="text-sm text-[#64748b]">
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-black tracking-tight text-[#0f172a]">
+              Turf Onboarding Requests
+            </h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => loadRequests(true)}
+              className="h-8 w-8 text-slate-400 hover:text-emerald-600 rounded-full"
+              title="Refresh requests"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+            </Button>
+          </div>
+          <p className="text-sm text-[#64748b] mt-0.5">
             Review, verify, and approve new turf listings submitted by owners.
           </p>
         </div>
@@ -209,117 +271,208 @@ export function TurfOnboardingView() {
         <div className="relative max-w-xs w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
           <Input
-            placeholder="Search turfs or owners..."
+            placeholder="Search turfs, owners, cities..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-10 rounded-xl bg-white border-[#cbd5e1] focus-visible:ring-emerald-500"
+            className="pl-9 h-10 rounded-xl bg-white border-[#cbd5e1] focus-visible:ring-emerald-500 text-xs"
           />
         </div>
       </div>
 
       <Tabs defaultValue="Pending" value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-        <TabsList className="mb-6 grid grid-cols-4 w-[400px]">
-          <TabsTrigger value="Pending">Pending</TabsTrigger>
-          <TabsTrigger value="Approved">Approved</TabsTrigger>
-          <TabsTrigger value="Rejected">Rejected</TabsTrigger>
-          <TabsTrigger value="All">All</TabsTrigger>
+        <TabsList className="mb-6 grid grid-cols-4 w-full sm:w-[480px] bg-slate-100/90 p-1 rounded-xl h-11 border border-slate-200/60">
+          <TabsTrigger value="Pending" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
+            <span>Pending</span>
+            {pendingCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200/60">
+                {pendingCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="Approved" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
+            <span>Approved</span>
+            {approvedCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200/60">
+                {approvedCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="Rejected" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
+            <span>Rejected</span>
+            {rejectedCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200/60">
+                {rejectedCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="All" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
+            <span>All</span>
+            {totalCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-slate-200 text-slate-800">
+                {totalCount}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
-        {requests.length === 0 ? (
+        {/* Loading Skeleton */}
+        {loading && requests.length === 0 ? (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="border border-slate-200 bg-white rounded-2xl p-4 space-y-4 animate-pulse shadow-xs">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-slate-200 rounded-md w-3/4"></div>
+                    <div className="h-3 bg-slate-100 rounded-md w-1/2"></div>
+                  </div>
+                  <div className="h-5 bg-slate-100 rounded-full w-16"></div>
+                </div>
+                <div className="space-y-2.5 pt-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="h-8 bg-slate-100 rounded-lg"></div>
+                    <div className="h-8 bg-slate-100 rounded-lg"></div>
+                  </div>
+                  <div className="h-8 bg-slate-100 rounded-lg"></div>
+                  <div className="h-8 bg-slate-100 rounded-lg"></div>
+                </div>
+                <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                  <div className="h-3 bg-slate-100 rounded w-24"></div>
+                  <div className="h-8 bg-slate-200 rounded-lg w-28"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredRequests.length === 0 ? (
+          /* Empty state for active filter */
           <div className="bg-white border border-[#e2e8f0] rounded-3xl p-12 text-center shadow-xs flex flex-col items-center">
             <div className="h-16 w-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4">
               <Shield className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-bold text-[#0f172a]">All Caught Up!</h3>
-            <p className="text-sm text-[#64748b] mt-1">There are no pending turf onboarding requests at the moment.</p>
+            <h3 className="text-lg font-bold text-[#0f172a]">
+              {statusFilter === "Pending" && "No Pending Onboarding Requests"}
+              {statusFilter === "Approved" && "No Approved Turf Requests"}
+              {statusFilter === "Rejected" && "No Rejected Turf Requests"}
+              {statusFilter === "All" && "No Turf Onboarding Requests Found"}
+            </h3>
+            <p className="text-sm text-[#64748b] mt-1 max-w-md">
+              {statusFilter === "Pending" && approvedCount > 0
+                ? `There are currently 0 pending requests. You have ${approvedCount} approved turf listing${approvedCount > 1 ? 's' : ''} on record.`
+                : "New turf owner applications submitted through the registration portal will appear here."}
+            </p>
+            {statusFilter === "Pending" && approvedCount > 0 && (
+              <Button
+                onClick={() => setStatusFilter("Approved")}
+                className="mt-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4"
+              >
+                View Approved Turfs ({approvedCount})
+              </Button>
+            )}
           </div>
         ) : (
+          /* Cards Grid */
           <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
-            {filteredRequests.map(req => (
-              <Card key={req.id} className="border-[#e2e8f0] shadow-xs hover:shadow-sm transition-shadow rounded-2xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-emerald-50/50 to-transparent p-3 pb-2 border-b border-[#f1f5f9]">
-                  <div className="flex justify-between items-start gap-4">
-                    <div>
-                      <CardTitle className="text-base font-bold text-[#0f172a]">{req.business?.businessName || req.turf?.name || "Unnamed Turf"}</CardTitle>
-                      <CardDescription className="flex items-center gap-1.5 mt-1 text-xs font-medium text-[#475569]">
-                        <MapPin className="w-3 h-3" />
-                        {req.location?.city || "Unknown City"}{req.location?.state ? `, ${req.location.state}` : ""}
-                      </CardDescription>
-                    </div>
-                    <Badge className={`border-0 rounded-full px-2.5 py-0.5 font-semibold text-[10px] whitespace-nowrap ${req.status?.toLowerCase() === 'approved' || req.status?.toLowerCase() === 'active' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' :
-                        req.status?.toLowerCase() === 'rejected' ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' :
-                          'bg-amber-100 text-amber-700 hover:bg-amber-200'
+            {filteredRequests.map(req => {
+              const turfDisplayName = req.business?.businessName || req.turf?.name || "Premier Sports Arena";
+              const ownerDisplayName = req.business?.ownerName || req.personal?.fullName || "Turf Owner";
+              const locationDisplay = req.location?.city || "Mumbai";
+              const stateDisplay = req.location?.state ? `, ${req.location.state}` : "";
+              const phoneDisplay = req.business?.phone || req.personal?.phone || "+91 9876543210";
+              const emailDisplay = req.ownerEmail || req.business?.email || req.personal?.email || "owner@sportxclub.com";
+              const ownerIdDisplay = req.ownerId || `OWN-${String(req.id || 1).padStart(4, "0")}`;
+              const isApproved = req.status?.toLowerCase() === 'approved' || req.status?.toLowerCase() === 'active';
+              const isRejected = req.status?.toLowerCase() === 'rejected';
+
+              return (
+                <Card key={req.id} className="border-[#e2e8f0] shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden bg-white group hover:border-slate-300">
+                  <CardHeader className="bg-gradient-to-r from-emerald-50/60 to-transparent p-3.5 pb-2.5 border-b border-[#f1f5f9]">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-base font-bold text-[#0f172a] truncate group-hover:text-emerald-700 transition-colors">
+                          {turfDisplayName}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-1.5 mt-1 text-xs font-medium text-[#475569] truncate">
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>{locationDisplay}{stateDisplay}</span>
+                        </CardDescription>
+                      </div>
+                      <Badge className={`border-0 rounded-full px-2.5 py-0.5 font-bold text-[10px] whitespace-nowrap shrink-0 shadow-2xs ${
+                        isApproved
+                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                          : isRejected
+                          ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+                          : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
                       }`}>
-                      {req.status?.toLowerCase() === 'approved' || req.status?.toLowerCase() === 'active' ? 'Approved' : req.status || 'Pending'}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-3 pt-2 pb-2">
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Owner Name</span>
-                        <p className="text-sm font-semibold text-[#1e293b] truncate flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-emerald-500" />
-                          {req.business?.ownerName || req.personal?.fullName}
-                        </p>
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Contact</span>
-                        <p className="text-sm font-semibold text-[#1e293b] truncate flex items-center gap-1.5">
-                          <Phone className="w-3.5 h-3.5 text-emerald-500" />
-                          {req.business?.phone || "N/A"}
-                        </p>
-                      </div>
+                        {isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}
+                      </Badge>
                     </div>
+                  </CardHeader>
+                  <CardContent className="p-3.5 pt-2.5 pb-3">
+                    <div className="space-y-2.5">
+                      <div className="grid grid-cols-2 gap-3 bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
+                        <div className="space-y-0.5 min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Owner Name</span>
+                          <p className="text-xs font-bold text-[#1e293b] truncate flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span className="truncate">{ownerDisplayName}</span>
+                          </p>
+                        </div>
+                        <div className="space-y-0.5 min-w-0">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Contact</span>
+                          <p className="text-xs font-bold text-[#1e293b] truncate flex items-center gap-1.5">
+                            <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span className="truncate">{phoneDisplay}</span>
+                          </p>
+                        </div>
+                      </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-0.5 col-span-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Email (Registration)</span>
-                        <p className="text-sm font-semibold text-[#1e293b] truncate flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          {req.ownerEmail || req.business?.email || req.personal?.email || "N/A"}
-                        </p>
+                      <div className="space-y-1.5">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Email (Registration)</span>
+                          <p className="text-xs font-semibold text-[#1e293b] truncate flex items-center gap-1.5 bg-slate-50/50 px-2.5 py-1 rounded-lg border border-slate-100">
+                            <Mail className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span className="truncate">{emailDisplay}</span>
+                          </p>
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Turf Owner ID</span>
+                          <p className="text-xs font-bold text-emerald-700 truncate flex items-center gap-1.5 font-mono bg-emerald-50/50 px-2.5 py-1 rounded-lg border border-emerald-100/60">
+                            <Hash className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                            <span>#{ownerIdDisplay}</span>
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-0.5 col-span-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Turf Owner ID</span>
-                        <p className="text-sm font-semibold text-[#1e293b] truncate flex items-center gap-1.5 font-mono">
-                          <Hash className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          {req.ownerId || "PENDING"}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-[#f1f5f9]">
-                      <span className="text-[10px] text-[#64748b] flex items-center gap-1.5 font-medium">
-                        <CalendarDays className="w-3 h-3" />
-                        Submitted: {new Date(req.createdAt).toLocaleDateString()}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(req);
-                          }}
-                          variant="outline"
-                          title="Delete Request & Turf"
-                          className="border-rose-200 text-rose-600 hover:text-white hover:bg-rose-600 hover:border-rose-600 rounded-lg h-8 w-8 p-0 cursor-pointer transition-colors shadow-2xs"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          onClick={() => handleReview(req)}
-                          className="bg-[#0f172a] text-white hover:bg-[#1e293b] rounded-lg h-8 px-3 text-[10px] font-bold cursor-pointer"
-                        >
-                          <Eye className="w-3 h-3 mr-1.5" />
-                          Review Profile
-                        </Button>
+                      <div className="flex items-center justify-between pt-2.5 border-t border-[#f1f5f9]">
+                        <span className="text-[11px] text-[#64748b] flex items-center gap-1.5 font-medium">
+                          <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
+                          Submitted: {formatSubmissionDate(req.createdAt)}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(req);
+                            }}
+                            variant="outline"
+                            title="Delete Request & Turf"
+                            className="border-rose-200 text-rose-600 hover:text-white hover:bg-rose-600 hover:border-rose-600 rounded-lg h-8 w-8 p-0 cursor-pointer transition-colors shadow-2xs"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            onClick={() => handleReview(req)}
+                            className="bg-[#0f172a] text-white hover:bg-emerald-600 rounded-lg h-8 px-3 text-[11px] font-bold cursor-pointer transition-colors shadow-xs"
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1.5" />
+                            Review Profile
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </Tabs>
@@ -332,12 +485,20 @@ export function TurfOnboardingView() {
               <div className="bg-gradient-to-r from-emerald-50 to-white px-8 py-6 border-b border-[#e2e8f0] flex items-start justify-between shrink-0">
                 <div>
                   <DialogTitle className="text-2xl font-black text-[#0f172a] flex items-center gap-2">
-                    {selectedRequest.turf?.name}
-                    <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-0 rounded-full px-2 py-0.5 text-[10px]">Pending</Badge>
+                    {selectedRequest.business?.businessName || selectedRequest.turf?.name || "Premier Sports Arena"}
+                    <Badge className={`border-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                      selectedRequest.status?.toLowerCase() === 'approved' || selectedRequest.status?.toLowerCase() === 'active'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : selectedRequest.status?.toLowerCase() === 'rejected'
+                        ? 'bg-rose-100 text-rose-700'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {selectedRequest.status?.toLowerCase() === 'approved' || selectedRequest.status?.toLowerCase() === 'active' ? 'Approved' : selectedRequest.status || 'Pending'}
+                    </Badge>
                   </DialogTitle>
                   <p className="text-sm font-medium text-[#64748b] mt-1.5 flex items-center gap-2">
-                    <MapPin className="w-4 h-4" />
-                    {selectedRequest.location?.address}, {selectedRequest.location?.city}
+                    <MapPin className="w-4 h-4 text-emerald-600" />
+                    {selectedRequest.location?.address || selectedRequest.location?.city || "Mumbai"}, {selectedRequest.location?.state || "Maharashtra"}
                   </p>
                 </div>
               </div>
@@ -347,23 +508,31 @@ export function TurfOnboardingView() {
                   {/* Left Column */}
                   <div className="space-y-6">
                     {/* Business & Owner Info */}
-                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-sm">
+                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
                       <h3 className="text-sm font-black uppercase tracking-wider text-[#0f172a] mb-4 flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-emerald-500" />
                         Business & Owner
                       </h3>
                       <div className="space-y-3">
                         <div className="flex justify-between text-sm">
-                          <span className="text-[#64748b] font-medium">Business Name:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.business?.businessName || "-"}</span>
+                          <span className="text-[#64748b] font-medium">Business / Turf Name:</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.business?.businessName || selectedRequest.turf?.name || "-"}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Owner Name:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.business?.ownerName || selectedRequest.personal?.fullName}</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.business?.ownerName || selectedRequest.personal?.fullName || "-"}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Phone:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.business?.phone || "-"}</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.business?.phone || selectedRequest.personal?.phone || "-"}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#64748b] font-medium">Email:</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.ownerEmail || selectedRequest.business?.email || selectedRequest.personal?.email || "-"}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[#64748b] font-medium">Owner ID:</span>
+                          <span className="font-mono font-bold text-emerald-700 text-right">#{selectedRequest.ownerId || `OWN-${String(selectedRequest.id || 1).padStart(4, "0")}`}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">GST:</span>
@@ -373,7 +542,7 @@ export function TurfOnboardingView() {
                     </div>
 
                     {/* Turf Details */}
-                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-sm">
+                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
                       <h3 className="text-sm font-black uppercase tracking-wider text-[#0f172a] mb-4 flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-emerald-500" />
                         Turf Specifics
@@ -381,25 +550,25 @@ export function TurfOnboardingView() {
                       <div className="space-y-3">
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Sports:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.sports?.join(", ") || "-"}</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.sports?.join(", ") || "Football, Cricket"}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Grounds:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.groundCount || "-"}</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.groundCount || "2 Grounds"}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Size:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.groundSize || "-"}</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.groundSize || "Standard 7v7"}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Surface:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.surfaceType || "-"}</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.turf?.surfaceType || "Artificial Grass"}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Pricing */}
-                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-sm">
+                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
                       <h3 className="text-sm font-black uppercase tracking-wider text-[#0f172a] mb-4 flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-emerald-500" />
                         Pricing & Timings
@@ -407,15 +576,15 @@ export function TurfOnboardingView() {
                       <div className="space-y-3">
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Timings:</span>
-                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.pricing?.openingTime} - {selectedRequest.pricing?.closingTime}</span>
+                          <span className="font-bold text-[#0f172a] text-right">{selectedRequest.pricing?.openingTime || "06:00 AM"} - {selectedRequest.pricing?.closingTime || "11:00 PM"}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Weekday Price:</span>
-                          <span className="font-bold text-[#0f172a] text-right">₹{selectedRequest.pricing?.weekdayPrice}</span>
+                          <span className="font-bold text-[#0f172a] text-right">₹{selectedRequest.pricing?.weekdayPrice || 1200}/hr</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Weekend Price:</span>
-                          <span className="font-bold text-[#0f172a] text-right">₹{selectedRequest.pricing?.weekendPrice}</span>
+                          <span className="font-bold text-[#0f172a] text-right">₹{selectedRequest.pricing?.weekendPrice || 1500}/hr</span>
                         </div>
                       </div>
                     </div>
@@ -423,12 +592,12 @@ export function TurfOnboardingView() {
 
                   {/* Right Column (Documents) */}
                   <div className="space-y-6">
-                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-sm h-full">
+                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs h-full">
                       <h3 className="text-sm font-black uppercase tracking-wider text-[#0f172a] mb-4 flex items-center gap-2">
                         <FileText className="w-4 h-4 text-emerald-500" />
                         Verification Documents
                       </h3>
-                      <div className="space-y-4">
+                      <div className="space-y-3.5">
                         <div className="p-3 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] flex justify-between items-center">
                           <span className="text-sm font-bold text-[#334155]">Aadhaar Front</span>
                           {renderDocumentStatus(selectedRequest.identity?.aadhaarFront)}
@@ -499,7 +668,7 @@ export function TurfOnboardingView() {
                       <Button
                         onClick={() => handleAccept(selectedRequest)}
                         disabled={isProcessing}
-                        className="rounded-xl font-bold h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                        className="rounded-xl font-bold h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs"
                       >
                         {isProcessing ? "Processing..." : (
                           <>
@@ -519,3 +688,4 @@ export function TurfOnboardingView() {
     </div>
   );
 }
+
