@@ -24,7 +24,8 @@ export function AuthProvider({ children }) {
 
   const [cmsAdminUser, setCmsAdminUser] = useState(() => {
     try {
-      const saved = localStorage.getItem("cmsAdminUser");
+      const saved =
+        localStorage.getItem("cmsAdminUser") || sessionStorage.getItem("sportx_cms_user");
       return saved ? JSON.parse(saved) : null;
     } catch (e) {
       return null;
@@ -51,8 +52,19 @@ export function AuthProvider({ children }) {
     if (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner")) {
       return turfOwnerUser;
     }
-    if (path.startsWith("/dashboard")) {
-      return cmsAdminUser;
+    if (path.startsWith("/dashboard") || path.startsWith("/site-maker")) {
+      return (
+        cmsAdminUser ||
+        (() => {
+          try {
+            const s =
+              sessionStorage.getItem("sportx_cms_user") || localStorage.getItem("cmsAdminUser");
+            return s ? JSON.parse(s) : null;
+          } catch {
+            return null;
+          }
+        })()
+      );
     }
     // Main website ONLY returns playerUser (so turf owner accounts never auto-login on player site)
     return playerUser;

@@ -7,12 +7,17 @@ const API_BASE = "/api";
 function getAuthHeaders(extraHeaders = {}) {
   let token = null;
   if (typeof window !== "undefined") {
-    token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("authToken") ||
+      sessionStorage.getItem("sportx_cms_token");
     if (!token) {
       try {
         const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
         const oUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
-        const cUser = JSON.parse(localStorage.getItem("cmsAdminUser") || "{}");
+        const cUser =
+          JSON.parse(localStorage.getItem("cmsAdminUser") || "null") ||
+          JSON.parse(sessionStorage.getItem("sportx_cms_user") || "{}");
         token = pUser.token || oUser.token || cUser.token || localStorage.getItem("cmsAdminToken");
       } catch (e) {}
     }

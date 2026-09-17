@@ -5,21 +5,27 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
   const { currentUser } = useAuth();
   const location = useLocation();
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("token") || sessionStorage.getItem("sportx_cms_token")
+      : null;
   const normalizedAllowed = allowedRoles.map((r) => r.toLowerCase());
 
-  // Check if session exists in memory or localStorage
-  const activeUser = currentUser || (() => {
-    try {
-      return (
-        JSON.parse(localStorage.getItem("cmsAdminUser") || "null") ||
-        JSON.parse(localStorage.getItem("turfOwnerUser") || "null") ||
-        JSON.parse(localStorage.getItem("playerUser") || "null")
-      );
-    } catch {
-      return null;
-    }
-  })();
+  // Check if session exists in memory, sessionStorage, or localStorage
+  const activeUser =
+    currentUser ||
+    (() => {
+      try {
+        return (
+          JSON.parse(sessionStorage.getItem("sportx_cms_user") || "null") ||
+          JSON.parse(localStorage.getItem("cmsAdminUser") || "null") ||
+          JSON.parse(localStorage.getItem("turfOwnerUser") || "null") ||
+          JSON.parse(localStorage.getItem("playerUser") || "null")
+        );
+      } catch {
+        return null;
+      }
+    })();
 
   if (!activeUser && !token) {
     // Redirect to relevant login page based on attempted path

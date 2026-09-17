@@ -27,6 +27,8 @@ export function CMSLoginPage() {
       const res = await cmsService.login(username, password);
       sessionStorage.setItem("sportx_cms_token", res.token);
       sessionStorage.setItem("sportx_cms_user", JSON.stringify(res.user));
+      localStorage.setItem("token", res.token);
+      localStorage.setItem("cmsAdminUser", JSON.stringify(res.user));
       toast.success("Welcome to SportX Console!");
       navigate("/dashboard");
     } catch (err) {

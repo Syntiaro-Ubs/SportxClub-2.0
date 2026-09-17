@@ -178,7 +178,8 @@ export function CMSDashboard() {
   // Current Logged-in Console User & Permissions
   const [currentCmsUser, setCurrentCmsUser] = useState(() => {
     try {
-      const stored = sessionStorage.getItem("sportx_cms_user");
+      const stored =
+        sessionStorage.getItem("sportx_cms_user") || localStorage.getItem("cmsAdminUser");
       return stored ? JSON.parse(stored) : null;
     } catch {
       return null;
@@ -548,7 +549,8 @@ export function CMSDashboard() {
   };
 
   useEffect(() => {
-    const token = sessionStorage.getItem("sportx_cms_token");
+    const token =
+      sessionStorage.getItem("sportx_cms_token") || localStorage.getItem("token");
     if (!token) {
       navigate("/dashboard/login");
       return;
@@ -559,6 +561,10 @@ export function CMSDashboard() {
   const handleLogout = () => {
     sessionStorage.removeItem("sportx_cms_token");
     sessionStorage.removeItem("sportx_cms_user");
+    localStorage.removeItem("sportx_cms_token");
+    localStorage.removeItem("sportx_cms_user");
+    localStorage.removeItem("cmsAdminUser");
+    localStorage.removeItem("token");
     toast.info("Signed out from SportX Console");
     navigate("/dashboard/login");
   };
