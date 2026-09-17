@@ -128,17 +128,30 @@ export function TurfOnboardingView() {
 
     setIsProcessing(true);
     try {
+      const turfName = req.business?.businessName || req.turf?.name || "Premier Sports Turf";
+      const fullLocation = [req.location?.address, req.location?.city].filter(Boolean).join(", ") || req.location?.city || "Pune";
+      const sportsList = Array.isArray(req.turf?.sports) && req.turf.sports.length > 0 ? req.turf.sports : ["Football", "Cricket"];
+      const sportType = sportsList[0] || "Football";
+      const price = parseInt(req.pricing?.weekdayPrice) || 1200;
+      const ownerName = req.business?.ownerName || req.personal?.fullName || "Turf Owner";
+      const ownerEmail = req.ownerEmail || req.business?.email || req.personal?.email || "";
+      const ownerPhone = req.business?.phone || req.personal?.phone || "";
+      const coverImage = req.images?.cover?.data || req.images?.turf?.[0] || req.images?.gallery?.[0]?.data || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800";
+      const galleryList = Array.isArray(req.images?.gallery) ? req.images.gallery.map(g => g.data || g).filter(Boolean) : [];
+
       const mappedData = {
-        name: req.turf?.name || req.business?.businessName || "New Turf",
-        location: req.location?.address || req.location?.city || "Mumbai",
-        sport_type: req.turf?.sports?.[0] || "Football",
-        price_per_hour: parseInt(req.pricing?.weekdayPrice) || 1200,
+        name: turfName,
+        location: fullLocation,
+        sport_type: sportType,
+        price_per_hour: price,
         rating: "5.0",
         reviews: 0,
         status: "Active",
-        owner_name: req.business?.ownerName || req.personal?.fullName || "Owner",
-        owner_phone: req.business?.phone || req.personal?.phone || "9876543210",
-        image_url: req.images?.turf?.[0] || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"
+        owner_name: ownerName,
+        owner_email: ownerEmail,
+        owner_phone: ownerPhone,
+        image_url: coverImage,
+        gallery: JSON.stringify(galleryList)
       };
 
       await turfService.create("admin", mappedData);
@@ -150,7 +163,7 @@ export function TurfOnboardingView() {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(newRequests));
       } catch (e) {}
 
-      toast.success("Turf onboarding request approved successfully!");
+      toast.success("Turf onboarding request approved and listed successfully!");
       setIsModalOpen(false);
       setSelectedRequest(null);
     } catch (err) {
@@ -437,7 +450,7 @@ export function TurfOnboardingView() {
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#94a3b8]">Turf Owner ID</span>
                           <p className="text-xs font-bold text-emerald-700 truncate flex items-center gap-1.5 font-mono bg-emerald-50/50 px-2.5 py-1 rounded-lg border border-emerald-100/60">
                             <Hash className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                            <span>#{ownerIdDisplay}</span>
+                            <span>#{String(ownerIdDisplay).replace(/^#+/, "")}</span>
                           </p>
                         </div>
                       </div>
@@ -532,7 +545,7 @@ export function TurfOnboardingView() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">Owner ID:</span>
-                          <span className="font-mono font-bold text-emerald-700 text-right">#{selectedRequest.ownerId || `OWN-${String(selectedRequest.id || 1).padStart(4, "0")}`}</span>
+                          <span className="font-mono font-bold text-emerald-700 text-right">#{String(selectedRequest.ownerId || `OWN-${String(selectedRequest.id || 1).padStart(4, "0")}`).replace(/^#+/, "")}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-[#64748b] font-medium">GST:</span>

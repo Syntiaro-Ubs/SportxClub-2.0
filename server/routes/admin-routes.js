@@ -140,7 +140,7 @@ router.get("/admin/dashboard/stats", authenticateToken, requireRole(["admin", "s
 // ----------------------------------------------------
 // TURF ONBOARDING REQUESTS (FAST & ENRICHED)
 // ----------------------------------------------------
-router.get("/admin/onboarding", authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
+router.get(["/admin/onboarding", "/onboarding"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "editor"]), async (req, res) => {
   try {
     const pool = getPool();
     const [pendingOwners] = await pool.query(
@@ -297,18 +297,23 @@ router.get("/admin/onboarding", authenticateToken, requireRole(["admin", "super 
   }
 });
 
-router.put("/admin/onboarding/:id", authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
+router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "editor"]), async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
     const pool = getPool();
 
-    if (String(status).toLowerCase() === "approved") {
+    const isApproved = String(status).toLowerCase() === "approved";
+    const isRejected = String(status).toLowerCase() === "rejected";
+
+    if (isApproved) {
       await pool.query("UPDATE turf_owners SET status = 'Approved' WHERE id = ?", [id]);
-      await pool.query("UPDATE turf_owner_accounts SET status = 'Active' WHERE owner_profile_id = ?", [id]);
-    } else if (String(status).toLowerCase() === "rejected") {
+      await pool.query("UPDATE turf_owner_accounts SET status = 'Active' WHERE owner_profile_id = ? OR owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?)", [id, id]);
+      await pool.query("UPDATE turf_onboarding_requests SET status = 'approved' WHERE owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?) OR owner_email = (SELECT email FROM turf_owners WHERE id = ?)", [id, id]);
+    } else if (isRejected) {
       await pool.query("UPDATE turf_owners SET status = 'Rejected' WHERE id = ?", [id]);
-      await pool.query("UPDATE turf_owner_accounts SET status = 'Rejected' WHERE owner_profile_id = ?", [id]);
+      await pool.query("UPDATE turf_owner_accounts SET status = 'Rejected' WHERE owner_profile_id = ? OR owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?)", [id, id]);
+      await pool.query("UPDATE turf_onboarding_requests SET status = 'rejected' WHERE owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?) OR owner_email = (SELECT email FROM turf_owners WHERE id = ?)", [id, id]);
     }
 
     try {
@@ -327,7 +332,7 @@ router.put("/admin/onboarding/:id", authenticateToken, requireRole(["admin", "su
   }
 });
 
-router.delete("/admin/onboarding/:id", authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
+router.delete(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "editor"]), async (req, res) => {
   try {
     const { id } = req.params;
     const pool = getPool();

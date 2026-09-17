@@ -311,9 +311,9 @@ router.post("/login", async (req, res) => {
                 o.owner_id, o.phone, o.city, o.status, o.total_turfs, o.earnings
          FROM turf_owner_accounts oa
          LEFT JOIN turf_owners o ON o.id = oa.owner_profile_id
-         WHERE (LOWER(oa.email) = LOWER(?) OR o.owner_id = ?)
+         WHERE (LOWER(oa.email) = LOWER(?) OR o.owner_id = ? OR oa.owner_id = ?)
          LIMIT 1`,
-        [cleanInput, cleanInput]
+        [cleanInput, cleanInput, cleanInput]
       );
 
       if (!rows[0]) {
@@ -336,6 +336,22 @@ router.post("/login", async (req, res) => {
 
       if (!isPasswordValid) {
         return res.status(401).json({ success: false, error: "Invalid Turf Owner email/ID or password" });
+      }
+
+      // Check account approval status
+      const effectiveStatus = String(owner.status || owner.account_status || "Pending").trim();
+      if (effectiveStatus.toLowerCase().includes("pending")) {
+        return res.status(403).json({
+          success: false,
+          error: "Your turf onboarding application is pending approval by the Admin. Once approved, you can log in with your credentials."
+        });
+      }
+
+      if (effectiveStatus.toLowerCase().includes("reject")) {
+        return res.status(403).json({
+          success: false,
+          error: "Your turf onboarding application has been rejected. Please contact support."
+        });
       }
 
       // Upgrade password to bcrypt hash if plaintext
@@ -993,26 +1009,44 @@ router.post("/owner/setup", async (req, res) => {
     const personal = setupData.personal || {};
     const business = setupData.business || {};
     const location = setupData.location || {};
+    const turf = setupData.turf || {};
 
     const fullName = (personal.fullName || business.ownerName || personal.name || "Turf Owner").trim();
     const ownerEmail = (personal.email || business.email || req.body.email || "").trim().toLowerCase();
     const phone = (personal.phone || business.phone || req.body.phone || "").trim();
     const password = (personal.password || req.body.password || "").trim();
-    const city = (personal.city || location.city || business.city || "").trim();
+    const city = (location.city || personal.city || business.city || "Mumbai").trim();
 
     const joinedDate = new Date().toISOString().split("T")[0];
     const yy = joinedDate.substring(2, 4);
     const mm = joinedDate.substring(5, 7);
     const prefix = `${yy}${mm}`;
 
-    let finalOwnerId = ownerId;
+    // Compute next sequential 8-digit Owner ID
+    const [allOwners] = await pool.query(
+      `SELECT owner_id FROM turf_owners WHERE owner_id LIKE ? UNION SELECT owner_id FROM turf_owner_accounts WHERE owner_id LIKE ?`,
+      [`${prefix}%`, `${prefix}%`]
+    );
+
+    let seq = 1;
+    if (allOwners.length > 0) {
+      for (const row of allOwners) {
+        if (row.owner_id) {
+          const lastDigits = parseInt(String(row.owner_id).slice(-4), 10);
+          if (!isNaN(lastDigits) && lastDigits >= seq) {
+            seq = lastDigits + 1;
+          }
+        }
+      }
+    }
+    const nextGeneratedOwnerId = `${prefix}${String(seq).padStart(4, '0')}`;
 
     // Check if owner already exists
     let existingOwner = null;
-    if (finalOwnerId) {
+    if (ownerId && String(ownerId).length >= 8) {
       const [rows] = await pool.query(
-        "SELECT id, owner_id, email, name FROM turf_owners WHERE owner_id = ? OR id = ? LIMIT 1",
-        [finalOwnerId, finalOwnerId]
+        "SELECT id, owner_id, email, name FROM turf_owners WHERE owner_id = ? LIMIT 1",
+        [ownerId]
       );
       if (rows.length > 0) existingOwner = rows[0];
     }
@@ -1025,62 +1059,75 @@ router.post("/owner/setup", async (req, res) => {
       if (rows.length > 0) existingOwner = rows[0];
     }
 
+    let finalOwnerId = existingOwner?.owner_id;
+    if (!finalOwnerId || String(finalOwnerId).length < 8) {
+      finalOwnerId = nextGeneratedOwnerId;
+    }
+
+    let ownerProfileId;
+
     if (existingOwner) {
-      finalOwnerId = existingOwner.owner_id || String(existingOwner.id);
+      ownerProfileId = existingOwner.id;
       await pool.query(
         `UPDATE turf_owners SET 
+           owner_id = ?,
            setup_data = ?, 
            name = COALESCE(NULLIF(?, ''), name),
+           email = COALESCE(NULLIF(?, ''), email),
            phone = COALESCE(NULLIF(?, ''), phone),
-           city = COALESCE(NULLIF(?, ''), city)
+           city = COALESCE(NULLIF(?, ''), city),
+           status = 'Pending'
          WHERE id = ?`,
-        [JSON.stringify(setupData), fullName, phone, city, existingOwner.id]
+        [finalOwnerId, JSON.stringify(setupData), fullName, ownerEmail, phone, city, existingOwner.id]
       );
-
-      if (password) {
-        const hashedPassword = await hashPassword(password);
-        await pool.query(
-          `UPDATE turf_owner_accounts SET password = ? WHERE owner_profile_id = ? OR owner_id = ?`,
-          [hashedPassword, existingOwner.id, finalOwnerId]
-        );
-      }
     } else {
-      // Generate new sequential owner ID
-      const [allOwners] = await pool.query(
-        `SELECT owner_id FROM turf_owners WHERE owner_id LIKE ? ORDER BY id DESC`,
-        [`${prefix}%`]
-      );
-
-      let seq = 1;
-      if (allOwners.length > 0) {
-        for (const row of allOwners) {
-          if (row.owner_id) {
-            const lastDigits = parseInt(row.owner_id.slice(-4), 10);
-            if (!isNaN(lastDigits) && lastDigits >= seq) {
-              seq = lastDigits + 1;
-            }
-          }
-        }
-      }
-      finalOwnerId = `${prefix}${String(seq).padStart(4, '0')}`;
-
       const [ownerResult] = await pool.query(
         `INSERT INTO turf_owners (owner_id, name, email, phone, city, status, total_turfs, earnings, joined_date, setup_data)
          VALUES (?, ?, ?, ?, ?, 'Pending', 0, '₹0', ?, ?)`,
         [finalOwnerId, fullName, ownerEmail, phone, city, joinedDate, JSON.stringify(setupData)]
       );
-
-      if (password) {
-        const hashedPassword = await hashPassword(password);
-        await pool.query(
-          `INSERT INTO turf_owner_accounts (owner_profile_id, owner_id, full_name, email, password, status)
-           VALUES (?, ?, ?, ?, ?, 'Pending')`,
-          [ownerResult.insertId, finalOwnerId, fullName, ownerEmail, hashedPassword]
-        );
-      }
+      ownerProfileId = ownerResult.insertId;
     }
 
-    // Save to turf_onboarding_requests
+    // Insert or update turf_owner_accounts for login credentials
+    const hashedPassword = password ? await hashPassword(password) : null;
+    const [existingAccounts] = await pool.query(
+      `SELECT id FROM turf_owner_accounts WHERE owner_profile_id = ? OR LOWER(email) = ? OR owner_id = ? LIMIT 1`,
+      [ownerProfileId, ownerEmail, finalOwnerId]
+    );
+
+    if (existingAccounts.length > 0) {
+      if (hashedPassword) {
+        await pool.query(
+          `UPDATE turf_owner_accounts SET 
+             owner_id = ?, 
+             full_name = ?, 
+             email = ?, 
+             password = ?, 
+             status = 'Pending' 
+           WHERE id = ?`,
+          [finalOwnerId, fullName, ownerEmail, hashedPassword, existingAccounts[0].id]
+        );
+      } else {
+        await pool.query(
+          `UPDATE turf_owner_accounts SET 
+             owner_id = ?, 
+             full_name = ?, 
+             email = ?, 
+             status = 'Pending' 
+           WHERE id = ?`,
+          [finalOwnerId, fullName, ownerEmail, existingAccounts[0].id]
+        );
+      }
+    } else if (hashedPassword) {
+      await pool.query(
+        `INSERT INTO turf_owner_accounts (owner_profile_id, owner_id, full_name, email, password, status)
+         VALUES (?, ?, ?, ?, ?, 'Pending')`,
+        [ownerProfileId, finalOwnerId, fullName, ownerEmail, hashedPassword]
+      );
+    }
+
+    // Record in turf_onboarding_requests
     const requestId = `ONB-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
     await pool.query(
       `INSERT INTO turf_onboarding_requests (id, owner_id, owner_email, form_data, status)
