@@ -1,78 +1,30 @@
-// TODO: Implement actual endpoint when ready
-const API_BASE = "/api/owner";
+import { adminApi } from "./admin-api";
 
-/**
- * Service for analytics
- * All requests must include ownerId to ensure data isolation.
- */
 export const analyticsService = {
-  getAll: async (ownerId, params) => {
+  getAll: async (ownerId, params = {}) => {
     try {
-      const queryParams = new URLSearchParams({
-        ownerId,
-        ...params,
-      }).toString();
-      const response = await fetch(`${API_BASE}/analytics?${queryParams}`);
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      const result = await adminApi.getAll("reports", params);
+      return Array.isArray(result) ? result : [];
     } catch (error) {
       console.error("Error fetching analytics:", error);
-      throw error;
+      return [];
     }
   },
   getById: async (ownerId, id) => {
     try {
-      const response = await fetch(
-        `${API_BASE}/analytics/${id}?ownerId=${ownerId}`,
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
+      return await adminApi.getById("reports", id);
     } catch (error) {
       console.error("Error fetching analytics details:", error);
-      throw error;
+      return null;
     }
   },
   create: async (ownerId, data) => {
-    try {
-      const response = await fetch(`${API_BASE}/analytics`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, ownerId }),
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
-    } catch (error) {
-      console.error("Error creating analytics:", error);
-      throw error;
-    }
+    return await adminApi.create("reports", data);
   },
   update: async (ownerId, id, data) => {
-    try {
-      const response = await fetch(`${API_BASE}/analytics/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, ownerId }),
-      });
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
-    } catch (error) {
-      console.error("Error updating analytics:", error);
-      throw error;
-    }
+    return await adminApi.update("reports", id, data);
   },
   delete: async (ownerId, id) => {
-    try {
-      const response = await fetch(
-        `${API_BASE}/analytics/${id}?ownerId=${ownerId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!response.ok) throw new Error("Network response was not ok");
-      return await response.json();
-    } catch (error) {
-      console.error("Error deleting analytics:", error);
-      throw error;
-    }
+    return await adminApi.delete("reports", id);
   },
 };

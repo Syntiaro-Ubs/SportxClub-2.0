@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router";
 import { useAuth } from "../providers/auth-provider";
 import { motion } from "motion/react";
 import {
@@ -12,6 +12,16 @@ import {
   Shield,
   Chrome,
   Activity,
+  Users,
+  MapPin,
+  ShieldCheck,
+  Headphones,
+  X,
+  KeyRound,
+  Phone,
+  RefreshCw,
+  Plus,
+  User,
 } from "lucide-react";
 
 import { Button } from "../components/ui/button";
@@ -20,22 +30,223 @@ import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
 import { Logo } from "../components/brand/Logo";
 import { cn } from "../components/ui/utils";
-import { AppDownloadCTA } from "../components/home/AppDownloadCTA";
-import { Footer } from "../components/home/Footer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { adminApi } from "../services/admin-api";
+import { toast } from "sonner";
+
+// Helper function to parse Google JWT Credential Token
+function parseJwt(token) {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch (e) {
+    return null;
+  }
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isOwnerRoute = location.pathname === "/admin-login";
+  const initialType = isOwnerRoute ? "owner" : (searchParams.get("type") || "player");
+
+  const { login, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [loginType, setLoginType] = useState("player");
+  const [loginType, setLoginType] = useState(initialType);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
 
+  useEffect(() => {
+    const isOwner = location.pathname === "/admin-login" || location.pathname.startsWith("/owner");
+    setLoginType(isOwner ? "owner" : (searchParams.get("type") || "player"));
+  }, [location.pathname, location.search]);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Google Account Chooser Modal State (Local Device Only)
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [localAccounts, setLocalAccounts] = useState(() => {
+    try {
+      const saved = localStorage.getItem("sportx_local_google_accounts");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showCustomGoogleInput, setShowCustomGoogleInput] = useState(false);
+  const [googleEmailInput, setGoogleEmailInput] = useState("");
+  const [googleNameInput, setGoogleNameInput] = useState("");
+
+  const saveLocalAccount = (acc) => {
+    try {
+      const existing = JSON.parse(localStorage.getItem("sportx_local_google_accounts") || "[]");
+      const filtered = existing.filter((a) => a.email?.toLowerCase() !== acc.email?.toLowerCase());
+      const updated = [acc, ...filtered].slice(0, 5);
+      localStorage.setItem("sportx_local_google_accounts", JSON.stringify(updated));
+      setLocalAccounts(updated);
+    } catch (e) {
+      console.warn("Could not save local Google account:", e);
+    }
+  };
+
+  const removeLocalAccount = (e, emailToRemove) => {
+    e.stopPropagation();
+    try {
+      const existing = JSON.parse(localStorage.getItem("sportx_local_google_accounts") || "[]");
+      const updated = existing.filter((a) => a.email?.toLowerCase() !== emailToRemove?.toLowerCase());
+      localStorage.setItem("sportx_local_google_accounts", JSON.stringify(updated));
+      setLocalAccounts(updated);
+      toast.info("Account removed from this device.");
+    } catch (e) {
+      console.warn("Could not remove local Google account:", e);
+    }
+  };
+
+  // OTP & Recovery Modal State
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [forgotMode, setForgotMode] = useState("password"); // "password" | "email"
+  const [forgotStep, setForgotStep] = useState(1); // 1: Request, 2: Verify, 3: Reset/Result
+  const [forgotIdentifier, setForgotIdentifier] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [activeOtpCode, setActiveOtpCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [recoveredUser, setRecoveredUser] = useState(null);
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
+
+  // Google Credential Response Handler
+  const handleGoogleCredentialResponse = async (response) => {
+    if (response?.credential) {
+      const payload = parseJwt(response.credential);
+      if (payload && payload.email) {
+        await selectGoogleAccount(
+          payload.email,
+          payload.name || payload.given_name || payload.email.split("@")[0],
+          payload.picture
+        );
+      }
+    }
+  };
+
+  // Load Google Identity Services (GIS) Client Library
+  useEffect(() => {
+    window.scrollTo(0, 0);
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: "847291048201-sportxclub.apps.googleusercontent.com",
+          callback: handleGoogleCredentialResponse,
+          auto_select: false,
+        });
+      }
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
+  }, []);
+
+  const handleOpenGoogleModal = () => {
+    // Read only this local device's saved accounts from localStorage
+    try {
+      const saved = localStorage.getItem("sportx_local_google_accounts");
+      const list = saved ? JSON.parse(saved) : [];
+      setLocalAccounts(list);
+      setShowCustomGoogleInput(list.length === 0);
+    } catch {
+      setLocalAccounts([]);
+      setShowCustomGoogleInput(true);
+    }
+
+    // Trigger Google native prompt if available on device
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment() || notification.isDismissedMoment()) {
+          setIsGoogleModalOpen(true);
+        }
+      });
+    } else {
+      setIsGoogleModalOpen(true);
+    }
+  };
+
+  const selectGoogleAccount = async (email, fullName, avatar) => {
+    try {
+      setIsSubmitting(true);
+      const targetRole = loginType === "owner" ? "owner" : "player";
+      const result = await loginWithGoogle({
+        email,
+        fullName,
+        avatar,
+        role: targetRole,
+      });
+
+      setIsSubmitting(false);
+      setIsGoogleModalOpen(false);
+
+      if (result.success) {
+        // Save to this local device for easy future login
+        saveLocalAccount({
+          email: result.user?.email || email,
+          name: result.user?.fullName || fullName,
+          avatar: result.user?.avatar || avatar,
+        });
+
+        if (result.isNewUser) {
+          toast.success(`Google account registered in MySQL! Welcome, ${result.user.fullName}!`);
+        } else {
+          toast.success(`Welcome back, ${result.user.fullName}! Logged in via Google.`);
+        }
+        setIsSuccess(true);
+        setTimeout(() => {
+          if (result.user.accountType === "turf-owner") {
+            navigate("/admin-panel");
+          } else {
+            navigate("/");
+          }
+        }, 1000);
+      } else {
+        toast.error(result.error || "Google auth failed");
+      }
+    } catch (err) {
+      toast.error("Google authentication failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCustomGoogleSubmit = async (e) => {
+    e.preventDefault();
+    if (!googleEmailInput.trim()) {
+      toast.error("Please enter a Google email or phone");
+      return;
+    }
+    await selectGoogleAccount(
+      googleEmailInput.trim(),
+      googleNameInput.trim() || googleEmailInput.split("@")[0],
+      `https://i.pravatar.cc/150?u=${encodeURIComponent(googleEmailInput.trim())}`
+    );
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -47,7 +258,7 @@ export function LoginPage() {
   };
 
   const isFormValid = () => {
-    return formData.email.includes("@") && formData.password.length >= 6;
+    return formData.email.trim().length >= 3 && formData.password.trim().length >= 1;
   };
 
   const handleSubmit = async (e) => {
@@ -55,123 +266,161 @@ export function LoginPage() {
     if (!isFormValid()) return;
 
     setIsSubmitting(true);
-    const result = login(formData.email, formData.password);
-    
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const result = await login(
+      formData.email.trim(),
+      formData.password.trim(),
+      loginType === "owner" ? "turf-owner" : "player"
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 600));
     setIsSubmitting(false);
 
     if (result.success) {
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userName", result.user.fullName.split(" ")[0]);
+      localStorage.setItem("userName", result.user.fullName ? result.user.fullName.split(" ")[0] : "User");
+      toast.success(`Welcome back, ${result.user.fullName || "User"}!`);
       setIsSuccess(true);
       setTimeout(() => {
-        if (result.user.role === "owner" || loginType === "owner") navigate("/owner-dashboard");
-        else if (result.user.role === "admin") navigate("/admin-dashboard");
-        else navigate("/");
-      }, 1500);
+        if (result.user.accountType === "turf-owner") {
+          navigate("/admin-panel");
+        } else {
+          navigate("/");
+        }
+      }, 1000);
     } else {
-      alert(result.error);
+      toast.error(result.error || "Invalid email or password");
+    }
+  };
+
+  // OTP Handlers
+  const handleRequestOtp = async (e) => {
+    e.preventDefault();
+    if (!forgotIdentifier.trim()) {
+      toast.error("Please enter your registered Email or Phone number");
+      return;
+    }
+    try {
+      setIsOtpLoading(true);
+      const res = await adminApi.requestOtp(forgotIdentifier.trim());
+      if (res.success) {
+        setRecoveredUser(res.user);
+        toast.success("Verification code sent to your email address! Please check your inbox.", { duration: 6000 });
+        setForgotStep(2);
+      } else {
+        toast.error(res.error || "Account not found");
+      }
+    } catch (err) {
+      toast.error("Failed requesting OTP");
+    } finally {
+      setIsOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (!forgotOtp.trim()) {
+      toast.error("Please enter the 6-digit OTP code");
+      return;
+    }
+    try {
+      setIsOtpLoading(true);
+      const res = await adminApi.verifyOtp(forgotIdentifier.trim(), forgotOtp.trim());
+      if (res.success) {
+        toast.success("OTP verified successfully!");
+        setForgotStep(3);
+      } else {
+        toast.error(res.error || "Invalid OTP code");
+      }
+    } catch (err) {
+      toast.error("Failed verifying OTP");
+    } finally {
+      setIsOtpLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 4) {
+      toast.error("Password must be at least 4 characters long");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    try {
+      setIsOtpLoading(true);
+      const res = await adminApi.resetPassword(forgotIdentifier.trim(), forgotOtp.trim(), newPassword.trim());
+      if (res.success) {
+        toast.success("Password reset in database! Auto-filling your credentials.");
+        setFormData((prev) => ({
+          ...prev,
+          email: recoveredUser?.email || forgotIdentifier,
+          password: newPassword,
+        }));
+        setIsForgotModalOpen(false);
+        setForgotStep(1);
+      } else {
+        toast.error(res.error || "Failed resetting password");
+      }
+    } catch (err) {
+      toast.error("Error resetting password");
+    } finally {
+      setIsOtpLoading(false);
     }
   };
 
   return (
-    <div className="bg-background relative overflow-hidden transition-colors duration-200">
-      <div className="min-h-screen relative flex flex-col items-center justify-center p-4 sm:p-6 md:p-10">
-        {/* BACKGROUND ELEMENTS (Grid + Radial Accent Glows) */}
-        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.06] bg-[radial-gradient(#22c55e_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+    <div className="bg-background min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
+      {/* Right Aligned Full Height Login Form Drawer */}
+      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full bg-card shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-border px-6 sm:px-10 py-10 relative z-10 flex flex-col justify-center">
 
-      {/* Floating Blur Circles (Dynamic glow backdrop) */}
-      <div
-        className="absolute top-[10%] right-[5%] w-72 h-72 md:w-96 md:h-96 rounded-full bg-emerald-500/10 blur-[80px] md:blur-[120px] pointer-events-none animate-pulse"
-        style={{ animationDuration: "8s" }}
-      />
-      <div
-        className="absolute bottom-[10%] left-[5%] w-72 h-72 md:w-96 md:h-96 rounded-full bg-primary/10 blur-[80px] md:blur-[120px] pointer-events-none animate-pulse"
-        style={{ animationDuration: "6s" }}
-      />
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="absolute right-5 top-5 p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer z-20"
+          title="Close Login"
+          aria-label="Close Login"
+        >
+          <X className="h-5 w-5" />
+        </button>
 
+        {/* Unified Form Wrapper */}
+        <div className="w-full my-auto space-y-4">
+          {/* HEADER LOGO */}
+          <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10">
+            <Link to="/" className="flex items-center m-0 p-0">
+              <Logo className="h-[120px] sm:h-22" />
+            </Link>
+          </div>
 
-      {/* HEADER LOGO */}
-      <div className="w-full max-w-md flex items-center justify-center mb-[-12px] md:mb-[-22px] z-10">
-        <Link to="/" className="flex items-center gap-3">
-          <Logo />
-        </Link>
-      </div>
-
-      {/* MAIN CONTAINER (Centered premium Card) */}
-      <div className="w-full max-w-md border border-border/50 bg-card/65 backdrop-blur-2xl rounded-[32px] p-6 sm:p-10 shadow-[0_28px_60px_-24px_rgba(15,23,42,0.15)] dark:shadow-[0_28px_60px_-24px_rgba(0,0,0,0.4)] relative overflow-hidden z-10">
-        {/* Subtle top decoration bar */}
-        <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-
-        {isSuccess ? (
-          // Success Screen
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-12 space-y-6"
-          >
-            <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center relative">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 15,
-                  delay: 0.2,
-                }}
-              >
-                <Check className="h-10 w-10 text-emerald-500" />
-              </motion.div>
-            </div>
-
-            <div className="space-y-2">
-              <h1 className="text-3xl  tracking-tight">Login Successful</h1>
-              <p className="text-muted-foreground text-sm">
-                Welcome back! Loading your profile dashboard...
-              </p>
-            </div>
-          </motion.div>
-        ) : (
-          // Sign In Form
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <h1 className="text-2xl  tracking-tight sm:text-3xl">Login</h1>
-              <p className="text-sm text-muted-foreground">
-                Enter your credentials below to access your account.
+          {/* Sign In Form */}
+          <div className="space-y-3 pt-1">
+            <div className="space-y-0.5 mb-2">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-tight">
+                {loginType === "owner" ? "Turf Owner Login" : "Player Login"}
+              </h1>
+              <p className="text-xs text-muted-foreground pt-1">
+                {loginType === "owner"
+                  ? "Enter your credentials below to access your Turf Owner dashboard."
+                  : "Enter your credentials below to access your player profile & bookings."}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Account Type Selector */}
-              <div className="flex p-1 space-x-1 rounded-xl bg-muted/50 border border-border/50">
-                {["player", "owner"].map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setLoginType(type)}
-                    className={cn(
-                      "flex-1 rounded-lg py-2 text-xs transition-all duration-200",
-                      loginType === type
-                        ? "bg-background text-foreground shadow-sm ring-1 ring-border"
-                        : "text-muted-foreground hover:text-foreground hover:bg-background/50",
-                    )}
-                  >
-                    {type === "player" ? "Player" : "Turf Owner"}
-                  </button>
-                ))}
-              </div>
-
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="text-[12px] font-medium text-foreground">
+                  {loginType === "owner" ? "Email or Turf Owner ID" : "Email Address, Phone or Username"}
+                </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                  <Mail className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <Input
                     id="email"
                     name="email"
-                    type="email"
-                    placeholder="john@example.com"
-                    className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
+                    type="text"
+                    placeholder={loginType === "owner" ? "Enter your email or Turf Owner ID" : "Enter your email or phone"}
+                    className="pl-11 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -180,138 +429,491 @@ export function LoginPage() {
               </div>
 
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a href="#" className="text-xs text-primary  hover:underline">
-                    Forgot password?
-                  </a>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-[12px] font-medium text-foreground">Password</Label>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                  <Lock className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10 pr-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background"
+                    className="pl-11 pr-10 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
+                    className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4.5 w-4.5" />
+                      <EyeOff className="h-5 w-5" strokeWidth={1.5} />
                     ) : (
-                      <Eye className="h-4.5 w-4.5" />
+                      <Eye className="h-5 w-5" strokeWidth={1.5} />
                     )}
+                  </button>
+                </div>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsForgotModalOpen(true);
+                      setForgotStep(1);
+                      setForgotMode("password");
+                    }}
+                    className="text-[12px] font-medium text-emerald-600 dark:text-emerald-400 hover:underline transition-colors cursor-pointer"
+                  >
+                    Forgot password?
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 pt-1">
+              <div className="flex items-center space-x-2 pt-0.5">
                 <Checkbox
-                  id="rememberMe"
+                  id="remember"
                   checked={formData.rememberMe}
                   onCheckedChange={handleCheckboxChange}
+                  className="rounded border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer"
                 />
-
                 <label
-                  htmlFor="rememberMe"
-                  className="text-xs text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  htmlFor="remember"
+                  className="text-[12px] font-medium text-muted-foreground cursor-pointer select-none"
                 >
                   Remember me for 30 days
                 </label>
               </div>
 
-              <div className="flex justify-center">
+              <Button
+                type="submit"
+                variant="outline"
+                disabled={isSubmitting || !isFormValid()}
+                className={cn(
+                  "w-full h-10 rounded-lg border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer mt-3",
+                  (!isFormValid() || isSubmitting) && "opacity-60 cursor-not-allowed"
+                )}
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                    <span>Signing in...</span>
+                  </div>
+                ) : (
+                  <>
+                    <span>{loginType === "owner" ? "Login to Turf Owner Portal" : "Login to SportX"}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="relative my-3">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase">
+                <span className="bg-card px-3 text-muted-foreground font-medium tracking-wider">
+                  OR CONTINUE WITH
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={handleOpenGoogleModal}
+              className="w-full h-10 rounded-lg border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>Login with Google</span>
+            </Button>
+
+            <div className="text-center pt-2 space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                {loginType === "owner" ? "Don't have an owner account? " : "Don't have an account yet? "}
+                <Link
+                  to={loginType === "owner" ? "/owner-setup" : `/register?type=${loginType}`}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {loginType === "owner" ? "Register Turf" : "Sign up"}
+                </Link>
+              </p>
+              <div>
+                {loginType === "owner" ? (
+                  <Link
+                    to="/login"
+                    className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Are you a Player? Click here to Login
+                  </Link>
+                ) : (
+                  <Link
+                    to="/admin-login"
+                    className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    Are you a Turf Owner? Admin Login
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Premium UI/UX Success Modal Overlay */}
+        {isSuccess && (
+          <div className="absolute inset-0 bg-card/95 backdrop-blur-md z-30 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+            <div className="h-16 w-16 bg-emerald-500/10 border-2 border-emerald-500 rounded-full flex items-center justify-center text-emerald-500 mb-4 animate-bounce">
+              <Check className="h-8 w-8 stroke-[3]" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground">Authenticated!</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+              Redirecting you to your account...
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Official Google Dark Mode Sign-In Modal Overlay */}
+      <Dialog open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen}>
+        <DialogContent className="bg-[#1f1f1f] text-white border border-[#444746] rounded-3xl max-w-2xl p-0 overflow-hidden shadow-2xl [&>button]:text-slate-400 [&>button]:bg-white/10 [&>button]:hover:bg-white/20 [&>button]:hover:text-white">
+          {/* Header Bar */}
+          <div className="p-6 pb-4 border-b border-[#303134] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg className="h-6 w-6" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span className="text-sm font-medium text-slate-300">Sign in with Google</span>
+            </div>
+          </div>
+
+          <div className="p-8 grid md:grid-cols-2 gap-8 items-start">
+            {/* Left Column: Branding & Sign In Title */}
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-xl text-emerald-400">
+                S
+              </div>
+              <div className="space-y-1">
+                <h2 className="text-3xl font-normal tracking-tight text-white">Sign in</h2>
+                <p className="text-sm text-slate-400">to continue to <strong className="text-white">SportXClub</strong></p>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed pt-4">
+                Before using this app, you can review SportXClub's <a href="#" className="text-blue-400 underline">Privacy Policy</a> and <a href="#" className="text-blue-400 underline">Terms of Service</a>.
+              </p>
+            </div>
+
+            {/* Right Column: Local Accounts List & Input */}
+            <div className="space-y-5">
+              {localAccounts.length > 0 && !showCustomGoogleInput ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Choose an account on this device</p>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {localAccounts.map((acc, idx) => (
+                      <div
+                        key={acc.email || idx}
+                        onClick={() => selectGoogleAccount(acc.email, acc.name, acc.avatar)}
+                        className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#2b2b2b] hover:bg-[#363636] border border-[#444746] transition-all cursor-pointer text-left group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={acc.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(acc.email)}`}
+                            alt={acc.name}
+                            className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20"
+                          />
+                          <div className="min-w-0 truncate">
+                            <p className="font-bold text-xs text-white truncate group-hover:text-blue-400">
+                              {acc.name}
+                            </p>
+                            <p className="text-[11px] text-slate-400 truncate">{acc.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">
+                            Sign In
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => removeLocalAccount(e, acc.email)}
+                            title="Remove account from this device"
+                            className="text-slate-500 hover:text-red-400 p-1 rounded-lg hover:bg-white/10 transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomGoogleInput(true)}
+                    className="w-full flex items-center gap-3 p-3 rounded-2xl bg-[#2b2b2b] hover:bg-[#363636] border border-dashed border-[#444746] transition-all cursor-pointer text-left text-xs font-bold text-slate-300 hover:text-white mt-2"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-bold text-white">
+                      +
+                    </div>
+                    <span>Use another account</span>
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleCustomGoogleSubmit} className="space-y-4 pt-1">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-300">Email or phone</Label>
+                    <Input
+                      type="text"
+                      value={googleEmailInput}
+                      onChange={(e) => setGoogleEmailInput(e.target.value)}
+                      placeholder="Enter your Google email"
+                      className="bg-[#131314] border-[#8e918f] focus-visible:ring-blue-500 text-white text-xs h-12 rounded-xl"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    {localAccounts.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => setShowCustomGoogleInput(false)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-transparent text-xs font-medium p-0 h-auto"
+                      >
+                        ← Back to saved accounts
+                      </Button>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="bg-[#a8c7fa] hover:bg-[#8ab4f8] text-[#040b19] font-bold text-xs h-10 px-6 rounded-full cursor-pointer ml-auto"
+                    >
+                      {isSubmitting ? "Signing in..." : "Next"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+
+          {/* Footer Bar */}
+          <div className="p-4 bg-[#131314] border-t border-[#303134] flex items-center justify-between text-xs text-slate-400 px-8">
+            <span>English (United States)</span>
+            <div className="flex gap-4">
+              <a href="#" className="hover:text-white">Help</a>
+              <a href="#" className="hover:text-white">Privacy</a>
+              <a href="#" className="hover:text-white">Terms</a>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Forgot Password / Forgot Email OTP Modal */}
+      <Dialog open={isForgotModalOpen} onOpenChange={setIsForgotModalOpen}>
+        <DialogContent className="bg-card text-foreground border-border rounded-2xl max-w-md p-6">
+          <DialogHeader>
+            <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-emerald-600" />
+              Account Recovery (OTP)
+            </DialogTitle>
+          </DialogHeader>
+
+          {/* Mode Switch Tabs */}
+          <div className="flex border-b border-border pb-3 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setForgotMode("password");
+                setForgotStep(1);
+              }}
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                forgotMode === "password"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Forgot Password
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setForgotMode("email");
+                setForgotStep(1);
+              }}
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
+                forgotMode === "email"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Forgot Email
+            </button>
+          </div>
+
+          {/* STEP 1: Enter Email / Phone */}
+          {forgotStep === 1 && (
+            <form onSubmit={handleRequestOtp} className="space-y-4 pt-2">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Enter your registered Email Address or Phone Number to generate and receive a 6-digit OTP code.
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Registered Email or Mobile Number</Label>
+                <Input
+                  value={forgotIdentifier}
+                  onChange={(e) => setForgotIdentifier(e.target.value)}
+                  placeholder="Enter registered email or mobile number"
+                  className="h-10 text-xs rounded-xl"
+                  required
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isOtpLoading}
+                className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl cursor-pointer"
+              >
+                {isOtpLoading ? "Generating OTP..." : "Send OTP Code"}
+              </Button>
+            </form>
+          )}
+
+          {/* STEP 2: Enter & Verify OTP */}
+          {forgotStep === 2 && (
+            <form onSubmit={handleVerifyOtp} className="space-y-4 pt-2">
+              <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl">
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">
+                  Verification code dispatched to your email address. Please check your inbox.
+                </p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Enter the 6-digit verification code sent for <strong>{forgotIdentifier}</strong>:
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">6-Digit OTP Code</Label>
+                <Input
+                  value={forgotOtp}
+                  onChange={(e) => setForgotOtp(e.target.value)}
+                  placeholder="e.g. 123456"
+                  maxLength={6}
+                  className="h-10 text-center font-mono text-base tracking-widest rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setForgotStep(1)}
+                  className="w-1/3 h-10 text-xs rounded-xl cursor-pointer"
+                >
+                  Back
+                </Button>
                 <Button
                   type="submit"
-                  disabled={!isFormValid() || isSubmitting}
-                  className="w-1/2 h-11 rounded-full bg-primary text-primary-foreground  hover:shadow-lg hover:shadow-primary/10 transition-all flex items-center justify-center gap-1.5 group"
+                  disabled={isOtpLoading}
+                  className="w-2/3 h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl cursor-pointer"
                 >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Logging in...
-                    </span>
-                  ) : (
-                    <>
-                      Login
-                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                    </>
-                  )}
+                  {isOtpLoading ? "Verifying..." : "Verify OTP"}
                 </Button>
               </div>
             </form>
+          )}
 
-            {/* Social Login Divider */}
-            <div className="relative my-4 flex items-center">
-              <div className="flex-grow border-t border-border/60"></div>
-              <span className="flex-shrink mx-4 text-[0.68rem] text-muted-foreground uppercase  tracking-wider bg-background px-2">
-                Or continue with
-              </span>
-              <div className="flex-grow border-t border-border/60"></div>
+          {/* STEP 3: Reset Password OR Show Email */}
+          {forgotStep === 3 && (
+            <div className="space-y-4 pt-2">
+              {forgotMode === "password" ? (
+                <form onSubmit={handleResetPassword} className="space-y-4">
+                  <p className="text-xs text-muted-foreground">
+                    Set a new password for account: <strong>{recoveredUser?.email || forgotIdentifier}</strong>
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">New Password</Label>
+                    <Input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="h-10 text-xs rounded-xl"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Confirm New Password</Label>
+                    <Input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="h-10 text-xs rounded-xl"
+                      required
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isOtpLoading}
+                    className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl cursor-pointer"
+                  >
+                    {isOtpLoading ? "Updating Database..." : "Reset Password & Save"}
+                  </Button>
+                </form>
+              ) : (
+                <div className="space-y-4 text-center py-2">
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl space-y-1">
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Registered Account Found</p>
+                    <p className="text-base font-black text-emerald-600 dark:text-emerald-400">{recoveredUser?.email}</p>
+                    <p className="text-xs text-muted-foreground">Name: {recoveredUser?.fullName}</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, email: recoveredUser?.email || "" }));
+                      setIsForgotModalOpen(false);
+                      toast.success("Email auto-filled in login form!");
+                    }}
+                    className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl cursor-pointer"
+                  >
+                    Auto-Fill Email in Login Form
+                  </Button>
+                </div>
+              )}
             </div>
-
-            {/* Google Sign In */}
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => {
-                  setIsSubmitting(true);
-                  setTimeout(() => {
-                    setIsSubmitting(false);
-                    setIsSuccess(true);
-                    setTimeout(() => {
-                      localStorage.setItem("isLoggedIn", "true");
-                      localStorage.setItem("userName", "Guest");
-                      if (loginType === "owner") navigate("/owner-dashboard");
-                      else navigate("/");
-                    }, 1500);
-                  }, 1200);
-                }}
-                className="w-1/2 h-11 rounded-full border border-border bg-card/30 hover:bg-muted/40 transition-all flex items-center justify-center gap-2.5 "
-              >
-                <Chrome className="h-4.5 w-4.5 text-primary" />
-                Login with Google
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Form Footer */}
-        {!isSuccess && (
-          <div className="text-center text-sm text-muted-foreground mt-4 pt-4 border-t border-border/40">
-            {loginType === "owner" ? (
-              <>
-                Want to add your turf to our platform?{" "}
-                <Link to="/register" className="text-primary hover:underline">
-                  Register your turf
-                </Link>
-              </>
-            ) : (
-              <>
-                Don't have an account yet?{" "}
-                <Link to="/register" className="text-primary hover:underline">
-                  Sign up
-                </Link>
-              </>
-            )}
-          </div>
-        )}
-      </div>
-      </div>
-      <AppDownloadCTA />
-      <Footer />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

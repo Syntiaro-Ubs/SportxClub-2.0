@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "next-themes";
 import {
@@ -8,6 +8,7 @@ import {
   Compass,
   Home,
   Menu,
+  MoreVertical,
   Trophy,
   UserCircle2,
   MapPin,
@@ -15,18 +16,24 @@ import {
   Check,
   X,
   ChevronRight,
+  ChevronLeft,
   ShoppingCart,
   Activity,
   Users,
   MessageSquare,
   Sparkles,
+  Search,
+  LocateFixed,
+  Building2,
 } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { cn } from "../ui/utils";
 import { ThemeToggleButton } from "../ui/theme-toggle-button";
+import { toast } from "sonner";
 import { Logo } from "../brand/Logo";
 import { useAuth } from "../../providers/auth-provider";
+import { LocationModal } from "../home/LocationModal";
 
 export const mobileNavigation = [
   { key: "home", label: "Home", href: "/", icon: Home },
@@ -34,7 +41,7 @@ export const mobileNavigation = [
   {
     key: "bookings",
     label: "Bookings",
-    href: "/bookings",
+    href: "/venues",
     icon: CalendarCheck2,
   },
   {
@@ -55,6 +62,15 @@ export function MobileAppBar() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { currentUser } = useAuth();
   const isDark = resolvedTheme !== "light";
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isHomePage = location.pathname === "/";
+  const logoTarget = location.pathname.startsWith("/admin-panel")
+    ? "/admin-panel"
+    : location.pathname.startsWith("/site-maker")
+      ? "/site-maker"
+      : "/";
+  const [locationQuery, setLocationQuery] = useState("");
 
   useEffect(() => {
     const handleCityChange = (e) => {
@@ -98,18 +114,20 @@ export function MobileAppBar() {
     "Jaipur",
   ];
 
+  const filteredCities = cities.filter((c) =>
+    c.toLowerCase().includes(locationQuery.toLowerCase())
+  );
+
   const menuItems = [
-    { label: "Dashboard", to: "/dashboard", icon: Home },
-    { label: "Player Details", to: "/player-dashboard", icon: Activity, requiresAuth: true },
+    // { label: "Player Details", to: "/player-dashboard", icon: Activity, requiresAuth: true },
     { label: "Turfs", to: "/venues", icon: MapPin },
     { label: "Tournaments", to: "/tournaments", icon: Trophy },
-    { label: "Players", to: "/players", icon: Users, requiresAuth: true },
     { label: "Community", to: "/community", icon: MessageSquare, requiresAuth: true },
     { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles },
-    { label: "Teams", to: "/teams", icon: Users, requiresAuth: true },
+
     {
       label: "Notifications",
-      to: "/dashboard",
+      to: "/profile",
       icon: Bell,
       badge: 3,
       requiresAuth: true,
@@ -121,6 +139,11 @@ export function MobileAppBar() {
       badge: 2,
       requiresAuth: true,
     },
+    {
+      label: currentUser?.role === "owner" ? "Admin Panel" : "Admin Login",
+      to: currentUser?.role === "owner" ? "/admin-panel" : "/admin-login",
+      icon: Building2,
+    },
   ].filter((item) => {
     if (item.requiresAuth && !currentUser) {
       return false;
@@ -130,41 +153,68 @@ export function MobileAppBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
-        <div className="flex h-16 items-center justify-between px-4">
-          {/* Left: Brand Identity */}
+      <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 dark:bg-black/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
+        <div className="flex h-[46px] sm:h-[50px] items-center justify-between px-3.5">
+          {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">
-            <Link to="/" className="shrink-0 flex items-center h-[58px] w-auto translate-y-[4px]">
-              <Logo className="h-full" />
-            </Link>
-            <div className="min-w-0 flex items-center">
-              {/* Preferred Location Selector (BookMyShow style) */}
+            {!isHomePage && (
               <button
-                onClick={() => setIsOpen(true)}
-                className="flex items-center gap-1 text-[11px] font-medium text-primary active:opacity-70 text-left leading-none cursor-pointer"
+                type="button"
+                onClick={() => navigate(-1)}
+                className="flex items-center justify-center h-9 w-9 rounded-full bg-muted/50 hover:bg-muted text-foreground transition-colors cursor-pointer shrink-0 -ml-1"
+                aria-label="Go Back"
               >
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate max-w-[90px] leading-none">
-                  {city === "All" ? "All Areas" : city}
-                </span>
-                <ChevronDown className="h-3 w-3 shrink-0 text-primary/80" />
+                <ChevronLeft className="h-5 w-5" />
               </button>
-            </div>
+            )}
+            <a href={logoTarget} className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
+              <Logo className="h-[50px] md:h-[80px]" />
+            </a>
+
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {isHomePage && (
+              <div className="min-w-0 flex items-center relative">
+                <LocationModal
+                  activeCity={city}
+                  onCitySelect={handleCitySelect}
+                  trigger={
+                    <button
+                      type="button"
+                      className="group relative flex items-center gap-1 text-xs font-bold text-foreground active:opacity-70 text-left leading-normal cursor-pointer transition-colors !bg-transparent hover:!bg-transparent focus:ring-0"
+                    >
+                      <MapPin className="h-4 w-4 shrink-0 text-foreground transition-all duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+                      <span className="truncate max-w-[100px] leading-normal font-bold text-foreground transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+                        {city === "All" ? "All Areas" : city}
+                      </span>
+                      <ChevronDown
+                        className="h-3.5 w-3.5 shrink-0 text-foreground/70 transition-all duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-y-0.5"
+                      />
+                    </button>
+                  }
+                />
+              </div>
+            )}
+
+            {/* Dark Mode / Light Mode Theme Toggle Button (No background, border, or hover fill) */}
+            <ThemeToggleButton
+              variant="ghost"
+              className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground p-0 cursor-pointer flex items-center justify-center shrink-0"
+            />
+
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMenuOpen(!menuOpen)}
-              className="h-10.5 w-10.5 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs backdrop-blur-md cursor-pointer"
+              className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground p-0 cursor-pointer flex items-center justify-center shrink-0"
               aria-label="Toggle Menu"
             >
               {menuOpen ? (
-                <X className="h-4.5 w-4.5" />
+                <X className="h-5 w-5" />
               ) : (
-                <Menu className="h-4.5 w-4.5" />
+                <MoreVertical className="h-5 w-5" />
               )}
             </Button>
           </div>
@@ -178,9 +228,9 @@ export function MobileAppBar() {
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 0.25 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              className="fixed inset-0 z-50 bg-black/25"
               onClick={() => setMenuOpen(false)}
             />
 
@@ -190,30 +240,30 @@ export function MobileAppBar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed inset-y-0 right-0 z-55 w-[280px] max-w-[80vw] bg-[#f8faf9] dark:bg-[#020617] border-l border-border shadow-2xl flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
+              className="fixed inset-y-0 right-0 z-55 w-[210px] max-w-[70vw] bg-[#f8faf9] dark:bg-[#020617] border-l border-border shadow-2xl flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]"
             >
               {/* Drawer Header */}
-              <div className="flex h-16 items-center justify-between px-5 border-b border-border/40">
-                <Link to="/" onClick={() => setMenuOpen(false)} className="shrink-0 flex items-center h-10 w-auto translate-y-[2px]">
-                  <Logo className="h-full" />
-                </Link>
+              <div className="flex h-[60px] items-center justify-between px-5 border-b border-border/40">
+                <a href={logoTarget} onClick={() => setMenuOpen(false)} className="shrink-0 flex items-center translate-y-[5px] md:translate-y-[8px]">
+                  <Logo className="h-[50px] md:h-[80px]" />
+                </a>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setMenuOpen(false)}
-                  className="h-10 w-10 rounded-full border border-border/60 bg-background/60 text-foreground shadow-xs cursor-pointer"
+                  className="h-8 w-8 bg-transparent hover:bg-primary/10 border-0 shadow-none text-foreground hover:text-primary p-0 cursor-pointer flex items-center justify-center shrink-0 rounded-full transition-colors duration-200"
                   aria-label="Close Menu"
                 >
-                  <X className="h-4.5 w-4.5" />
+                  <X className="h-5 w-5" />
                 </Button>
               </div>
 
               {/* Menu list items */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col divide-y divide-border/30">
+              <div className="flex-1 overflow-y-auto px-5 pt-1 pb-4 flex flex-col divide-y divide-border/30">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
                   const itemContent = (
-                    <div className="flex items-center justify-between w-full py-4 px-1 group transition-colors duration-150">
+                    <div className="flex items-center justify-between w-full py-1.5 px-1 group transition-colors duration-150">
                       <div className="flex items-center gap-3">
                         {Icon && (
                           <Icon className="h-5 w-5 text-primary" />
@@ -227,11 +277,10 @@ export function MobileAppBar() {
 
                       <div className="flex items-center gap-2">
                         {item.badge !== undefined && (
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] bg-primary text-primary-foreground">
+                          <span className="text-xs font-bold text-black dark:text-white">
                             {item.badge}
                           </span>
                         )}
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/50 transition-colors duration-150 group-hover:text-primary" />
                       </div>
                     </div>
                   );
@@ -249,98 +298,43 @@ export function MobileAppBar() {
                 })}
               </div>
 
-              {/* Theme Toggle inside Menu Drawer Footer */}
-              <div className="border-t border-border/40 p-5 bg-muted/20 flex items-center justify-between">
-                <span className="text-sm tracking-wide text-left text-foreground">Theme</span>
-                <ThemeToggleButton className="h-9 w-9 rounded-full border border-border/60 shadow-xs cursor-pointer" />
+              {/* Powered by Footer */}
+              <div className="border-t border-border/40 p-4 bg-muted/20 flex flex-col items-center justify-center gap-1.5 text-center">
+                <p className="text-[11px] uppercase tracking-wider text-muted-foreground/70 font-semibold whitespace-nowrap">
+                  Powered By{" "}
+                  <a
+                    href="https://www.syntiaro.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "font-extrabold transition-colors",
+                      isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-700 hover:text-teal-800"
+                    )}
+                  >
+                    SYNTIARO
+                  </a>
+                </p>
+                <span className="text-[10px] font-mono font-extrabold text-muted-foreground/70 tracking-normal lowercase px-2 py-0.5 rounded-full bg-muted/60 border border-border/40">v2.0.4</span>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Bottom Drawer Overlay for City Selection */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Dark glass backdrop closer */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsOpen(false)}
-              className="fixed inset-0 bg-black/60 z-50 backdrop-blur-xs"
-            />
 
-            {/* Native-style bottom sheet */}
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed bottom-0 inset-x-0 rounded-t-[32px] border-t border-border bg-card p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.3)] z-55 max-h-[85vh] overflow-y-auto"
-            >
-              <div className="mx-auto w-12 h-1 bg-muted rounded-full mb-4" />
-              <h3 className="text-lg  text-foreground">
-                Select Playing Region
-              </h3>
-              <p className="text-xs text-muted-foreground mt-1 mb-4">
-                Choose your city to view verified sports turfs near you.
-              </p>
-
-              <div className="space-y-2">
-                {cities.map((c) => {
-                  const isSelected = city === c;
-                  return (
-                    <button
-                      key={c}
-                      onClick={() => handleCitySelect(c)}
-                      className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left text-xs  transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-primary bg-primary/10 text-primary shadow-sm"
-                          : "border-border bg-background hover:bg-muted text-foreground"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <MapPin
-                          className={`h-4.5 w-4.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
-                        />
-                        <span>{c === "All" ? "All Cities" : c}</span>
-                      </div>
-                      {isSelected && (
-                        <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                          <Check className="h-3.5 w-3.5 stroke-[3]" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-                className="w-full mt-5 h-12 rounded-full border border-border text-sm  cursor-pointer"
-              >
-                Cancel
-              </Button>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </>
   );
 }
 
 export function MobileBottomNav
-({ activeTab }) {
+  ({ activeTab }) {
   const { currentUser } = useAuth();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 md:hidden">
-      <div className="mx-auto max-w-screen-xl px-3 pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
-        <div className="relative overflow-hidden rounded-[24px] border border-border/40 bg-background/80 shadow-[0_-18px_40px_-22px_rgba(15,23,42,0.4)] backdrop-blur-2xl">
+      <div className="mx-auto max-w-screen-xl pb-[env(safe-area-inset-bottom)]">
+        <div className="relative overflow-hidden border-t border-border/40 bg-background/80 shadow-[0_-18px_40px_-22px_rgba(15,23,42,0.4)] backdrop-blur-2xl">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-          <div className="grid grid-cols-5 px-2 py-2">
+          <div className="grid grid-cols-5">
             {mobileNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = item.key === activeTab;
@@ -353,17 +347,17 @@ export function MobileBottomNav
                   className="relative"
                 >
                   <Link
-                    to={item.key === 'profile' && currentUser?.role === 'owner' ? '/owner-dashboard' : item.href}
+                    to={item.key === 'profile' && currentUser?.role === 'owner' ? '/admin-panel' : item.href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "relative flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-[20px] px-1 text-[0.68rem]  transition-colors",
+                      "relative flex h-[50px] flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-[0.68rem] transition-colors",
                       isActive ? "text-primary" : "text-muted-foreground",
                     )}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="mobile-nav-active"
-                        className="absolute inset-0 rounded-[20px] bg-primary/10"
+                        className="absolute inset-0 rounded-2xl bg-primary/10"
                         transition={{
                           type: "spring",
                           stiffness: 520,
@@ -373,13 +367,13 @@ export function MobileBottomNav
                     )}
                     <span
                       className={cn(
-                        "relative z-10 flex h-9 w-9 items-center justify-center rounded-full transition-transform",
+                        "relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-transform",
                         isActive
                           ? "bg-primary/15 text-primary shadow-[0_8px_20px_-12px_rgba(34,197,94,0.8)]"
                           : "bg-transparent text-muted-foreground",
                       )}
                     >
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-4 w-4" />
                     </span>
                     <span className="relative z-10 leading-none">
                       {item.label}

@@ -1,0 +1,13 @@
+{
+  "logo": "SportXClub",
+  "aboutText": "SportXClub is your premier destination for booking sports facilities.",
+  "email": "support@sportxclub.com",
+  "phone": "+91 9876543210",
+  "address": "Mumbai, India",
+  "socialLinks": {
+    "facebook": "https://facebook.com",
+    "twitter": "https://twitter.com",
+    "instagram": "https://instagram.com"
+  },
+  "copyright": "© 2026 SportXClub. All rights reserved."
+}

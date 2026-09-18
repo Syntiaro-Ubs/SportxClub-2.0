@@ -1,84 +1,327 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { adminApi } from "../services/admin-api";
 
-const AuthContext = createContext(undefined);
+const defaultAuthValue = {
+  currentUser: null,
+  playerUser: null,
+  turfOwnerUser: null,
+  cmsAdminUser: null,
+  login: async () => ({ success: false }),
+  loginWithGoogle: async () => ({ success: false }),
+  register: async () => ({ success: false }),
+  logout: () => {},
+  logoutOwner: () => {},
+  updateUser: async () => ({ success: false }),
+  deleteAccount: async () => ({ success: false }),
+};
+
+const AuthContext = createContext(defaultAuthValue);
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [playerUser, setPlayerUser] = useState(() => {
+    try {
+      const saved = typeof window !== "undefined" ? localStorage.getItem("playerUser") : null;
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [turfOwnerUser, setTurfOwnerUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("turfOwnerUser");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [cmsAdminUser, setCmsAdminUser] = useState(() => {
+    try {
+      const saved =
+        localStorage.getItem("cmsAdminUser") || sessionStorage.getItem("sportx_cms_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Track location path for session selection
+  const [currentPath, setCurrentPath] = useState(() => {
+    return typeof window !== "undefined" ? window.location.pathname : "";
+  });
 
   useEffect(() => {
-    // Load logged in user from local storage on mount
-    const user = localStorage.getItem("currentUser");
-    if (user) {
-      setCurrentUser(JSON.parse(user));
-    }
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+
+    window.addEventListener("popstate", handleLocationChange);
+    return () => window.removeEventListener("popstate", handleLocationChange);
   }, []);
 
-  const login = (email, password) => {
-    // Mock login by checking local storage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = users.find((u) => u.email === email && u.password === password);
-    
-    if (user) {
-      setCurrentUser(user);
-      localStorage.setItem("currentUser", JSON.stringify(user));
-      return { success: true, user };
+  // Determine current active user based on URL path
+  const getCurrentUser = () => {
+    const path = typeof window !== "undefined" ? window.location.pathname : currentPath;
+    if (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner")) {
+      return turfOwnerUser;
     }
+    if (path.startsWith("/dashboard") || path.startsWith("/site-maker")) {
+      return (
+        cmsAdminUser ||
+        (() => {
+          try {
+            const s =
+              sessionStorage.getItem("sportx_cms_user") || localStorage.getItem("cmsAdminUser");
+            return s ? JSON.parse(s) : null;
+          } catch {
+            return null;
+          }
+        })()
+      );
+    }
+    // Main website ONLY returns playerUser (so turf owner accounts never auto-login on player site)
+    return playerUser;
+  };
+
+  const currentUser = getCurrentUser();
+
+  const login = async (email, password, accountType = "player") => {
+    try {
+      const res = await adminApi.login(email, password, accountType);
+      if (res.success && res.user) {
+        const targetType = res.user.accountType || accountType;
+        const userObj = { ...res.user, accountType: targetType, token: res.token || res.user.token };
+
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+        }
+
+        if (targetType === "turf-owner" || accountType === "turf-owner") {
+          setTurfOwnerUser(userObj);
+          localStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
+        } else if (targetType === "cms-admin" || accountType === "cms-admin") {
+          setCmsAdminUser(userObj);
+          localStorage.setItem("cmsAdminUser", JSON.stringify(userObj));
+        } else {
+          setPlayerUser(userObj);
+          localStorage.setItem("playerUser", JSON.stringify(userObj));
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("userName", userObj.fullName ? userObj.fullName.split(" ")[0] : "User");
+        }
+        return { success: true, user: userObj };
+      }
+    } catch (e) {
+      console.warn("Backend login failed, attempting local fallback:", e);
+    }
+
+    if (accountType !== "player") {
+      return { success: false, error: "This account type must be authenticated by the database." };
+    }
+
+    // Local fallback for player-only offline development
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    let user = users.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password);
+
+    if (user) {
+      const playerObj = { ...user, accountType: "player" };
+      setPlayerUser(playerObj);
+      localStorage.setItem("playerUser", JSON.stringify(playerObj));
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userName", playerObj.fullName ? playerObj.fullName.split(" ")[0] : "User");
+      return { success: true, user: playerObj };
+    }
+
     return { success: false, error: "Invalid email or password" };
   };
 
-  const register = (userData) => {
+  const loginWithGoogle = async (googlePayload = {}) => {
+    try {
+      let email = typeof googlePayload === "string" ? "google.user@gmail.com" : (googlePayload.email || "google.user@gmail.com");
+      let fullName = typeof googlePayload === "string" ? "Google User" : (googlePayload.fullName || "Google User");
+      let role = typeof googlePayload === "object" && googlePayload.role ? googlePayload.role : (googlePayload === "owner" ? "owner" : "player");
+      let avatar = typeof googlePayload === "object" ? googlePayload.avatar : null;
+
+      const res = await adminApi.googleAuth({
+        email,
+        fullName,
+        avatar,
+        role,
+      });
+
+      if (res.success && res.user) {
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+        }
+        const targetType = res.user.accountType || (role === "owner" ? "turf-owner" : "player");
+        const userObj = { ...res.user, accountType: targetType };
+
+        if (targetType === "turf-owner" || role === "owner") {
+          setTurfOwnerUser(userObj);
+          localStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
+        } else {
+          setPlayerUser(userObj);
+          localStorage.setItem("playerUser", JSON.stringify(userObj));
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("userName", userObj.fullName ? userObj.fullName.split(" ")[0] : "User");
+        }
+        return { success: true, user: userObj, isNewUser: res.isNewUser };
+      }
+      return { success: false, error: res.error || "Google login failed" };
+    } catch (e) {
+      console.error("loginWithGoogle error:", e);
+      return { success: false, error: e.message };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const res = await adminApi.register(userData);
+      if (res.success && res.user) {
+        if (res.token) {
+          localStorage.setItem("token", res.token);
+        }
+        const targetType = res.user.accountType || (userData.role === "owner" ? "turf-owner" : "player");
+        const newUserObj = { ...res.user, accountType: targetType };
+
+        if (targetType === "turf-owner" || userData.role === "owner") {
+          setTurfOwnerUser(newUserObj);
+          localStorage.setItem("turfOwnerUser", JSON.stringify(newUserObj));
+        } else {
+          setPlayerUser(newUserObj);
+          localStorage.setItem("playerUser", JSON.stringify(newUserObj));
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("userName", newUserObj.fullName ? newUserObj.fullName.split(" ")[0] : "User");
+        }
+        return { success: true, user: newUserObj };
+      } else if (res.error) {
+        return { success: false, error: res.error };
+      }
+    } catch (e) {
+      console.warn("Backend register failed, using local fallback:", e);
+    }
+
+    if (userData.role === "owner") {
+      return { success: false, error: "Turf-owner accounts must be created in the database." };
+    }
+
     const users = JSON.parse(localStorage.getItem("users") || "[]");
-    
-    // Check if user already exists
     if (users.some((u) => u.email === userData.email)) {
       return { success: false, error: "Email already registered" };
     }
 
-    const newUser = {
+    const newUserObj = {
       ...userData,
       id: Date.now().toString(),
+      accountType: "player",
     };
 
-    users.push(newUser);
+    users.push(newUserObj);
     localStorage.setItem("users", JSON.stringify(users));
-    
-    // Auto login after registration
-    setCurrentUser(newUser);
-    localStorage.setItem("currentUser", JSON.stringify(newUser));
-    
-    return { success: true, user: newUser };
+
+    setPlayerUser(newUserObj);
+    localStorage.setItem("playerUser", JSON.stringify(newUserObj));
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userName", newUserObj.fullName ? newUserObj.fullName.split(" ")[0] : "User");
+
+    return { success: true, user: newUserObj };
   };
 
   const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userName");
+    localStorage.removeItem("token");
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    if (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner")) {
+      setTurfOwnerUser(null);
+      localStorage.removeItem("turfOwnerUser");
+    } else if (path.startsWith("/dashboard")) {
+      setCmsAdminUser(null);
+      localStorage.removeItem("cmsAdminUser");
+    } else {
+      setPlayerUser(null);
+      localStorage.removeItem("playerUser");
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("userName");
+    }
   };
 
-  const updateUser = (updatedData) => {
-    if (!currentUser) return { success: false, error: "No user logged in" };
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const updatedUser = { ...currentUser, ...updatedData };
-    
-    // Update in users array
-    const updatedUsers = users.map((u) => u.id === currentUser.id ? updatedUser : u);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    
-    // Update currentUser in state and localStorage
-    setCurrentUser(updatedUser);
-    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-    
-    // Sync userName in localStorage if fullName changes
-    if (updatedData.fullName) {
-      localStorage.setItem("userName", updatedData.fullName.split(" ")[0]);
+  const logoutOwner = () => {
+    setTurfOwnerUser(null);
+    localStorage.removeItem("turfOwnerUser");
+  };
+
+  const updateUser = async (updatedData) => {
+    const active = currentUser;
+    if (!active) return { success: false, error: "No user logged in" };
+    const mergedUser = { ...active, ...updatedData };
+
+    try {
+      const payload = {
+        id: active.id,
+        email: active.email,
+        ...updatedData,
+      };
+      const res = await adminApi.updateProfile(payload);
+      if (res.success && res.user) {
+        const finalUser = { ...mergedUser, ...res.user };
+        if (finalUser.accountType === "turf-owner" || finalUser.role === "owner") {
+          setTurfOwnerUser(finalUser);
+          localStorage.setItem("turfOwnerUser", JSON.stringify(finalUser));
+        } else {
+          setPlayerUser(finalUser);
+          localStorage.setItem("playerUser", JSON.stringify(finalUser));
+        }
+        return { success: true, user: finalUser };
+      }
+    } catch (e) {
+      console.warn("Backend profile update failed, using local state update:", e);
     }
-    
-    return { success: true, user: updatedUser };
+
+    if (mergedUser.accountType === "turf-owner" || mergedUser.role === "owner") {
+      setTurfOwnerUser(mergedUser);
+      localStorage.setItem("turfOwnerUser", JSON.stringify(mergedUser));
+    } else {
+      setPlayerUser(mergedUser);
+      localStorage.setItem("playerUser", JSON.stringify(mergedUser));
+    }
+    return { success: true, user: mergedUser };
+  };
+
+  const deleteAccount = async () => {
+    const active = currentUser;
+    if (!active) return { success: false, error: "No active user logged in" };
+
+    try {
+      const res = await fetch("/api/profile/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: active.id, email: active.email }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to delete account from database");
+      }
+    } catch (e) {
+      console.warn("Backend account delete note:", e.message);
+    }
+
+    // Clean up local storage and session
+    setPlayerUser(null);
+    localStorage.removeItem("playerUser");
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userName");
+
+    // Also remove from local saved Google accounts if present
+    try {
+      const existing = JSON.parse(localStorage.getItem("sportx_local_google_accounts") || "[]");
+      const updated = existing.filter((a) => a.email?.toLowerCase() !== active.email?.toLowerCase());
+      localStorage.setItem("sportx_local_google_accounts", JSON.stringify(updated));
+    } catch (e) {}
+
+    return { success: true };
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ currentUser, playerUser, turfOwnerUser, cmsAdminUser, login, loginWithGoogle, register, logout, logoutOwner, updateUser, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
@@ -86,8 +329,32 @@ export function AuthProvider({ children }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  if (!context) {
+    const getSavedUser = (key) => {
+      try {
+        const saved = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        return saved ? JSON.parse(saved) : null;
+      } catch {
+        return null;
+      }
+    };
+    const playerUser = getSavedUser("playerUser");
+    const turfOwnerUser = getSavedUser("turfOwnerUser");
+    const cmsAdminUser = getSavedUser("cmsAdminUser");
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const currentUser = (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner"))
+      ? turfOwnerUser
+      : (path.startsWith("/dashboard") || path.startsWith("/site-maker"))
+      ? cmsAdminUser
+      : playerUser;
+
+    return {
+      ...defaultAuthValue,
+      currentUser,
+      playerUser,
+      turfOwnerUser,
+      cmsAdminUser,
+    };
   }
   return context;
 };

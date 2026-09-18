@@ -1,21 +1,43 @@
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: 'Poppins';
+  src: local('Inter'), local('Roboto'), local('Segoe UI'), local('Arial');
+  unicode-range: U+20B9;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif !important;
+}
+
+.rupee-symbol,
+.font-rupee {
+  font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 700;
+  display: inline-block;
+  margin-right: 0.5px;
+}
+
 :root {
   --font-size: 16px;
   color-scheme: light;
-  --background: #f8faf9;
+  --background: #ffffff;
   --foreground: #0f172a;
   --card: rgba(255, 255, 255, 0.94);
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
-  --primary: #6DFF3B;
+  --primary: #059669;
   --primary-foreground: #0f172a;
   --secondary: #0f172a;
   --secondary-foreground: #ffffff;
   --muted: #f3f4f6;
   --muted-foreground: #526075;
-  --accent: #6DFF3B;
+  --accent: #059669;
   --accent-foreground: #0f172a;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -25,7 +47,7 @@
   --switch-background: #e2e8f0;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #6DFF3B;
+  --ring: #059669;
   --radius: 0.75rem;
 
   /* Typography Scale */
@@ -48,7 +70,7 @@
   --card-foreground: #f8fafc;
   --popover: #0f172a;
   --popover-foreground: #f8fafc;
-  --primary: #6DFF3B;
+  --primary: #059669;
   --primary-foreground: #020617;
   --secondary: #334155;
   --secondary-foreground: #f8fafc;
@@ -60,7 +82,7 @@
   --destructive-foreground: #ffffff;
   --border: rgba(248, 250, 252, 0.15);
   --input: rgba(248, 250, 252, 0.15);
-  --ring: #6DFF3B;
+  --ring: #059669;
 }
 
 @theme inline {
@@ -110,22 +132,7 @@
   h5,
   h6 {
     @apply font-heading tracking-tight text-foreground;
-  }
-
-  h1 {
-    @apply text-4xl lg:text-5xl leading-tight;
-  }
-
-  h2 {
     @apply text-3xl lg:text-4xl leading-tight;
-  }
-
-  h3 {
-    @apply text-2xl leading-snug;
-  }
-
-  h4 {
-    @apply text-xl leading-snug;
   }
 
   p {
@@ -179,54 +186,78 @@ html:not(.dark) .theme-adaptive [class*="bg-[radial-gradient"]:not(.always-dark 
 }
 
 /* Ensure brand green text, icons, fills, and borders are readable in light mode */
-html:not(.dark) [class*="text-[#6DFF3B]"]:not([class*="hover"]),
+html:not(.dark) [class*="text-emerald-600"]:not([class*="hover"]),
 html:not(.dark) .text-primary {
-  color: #059669 !important; /* emerald-600 */
+  color: #059669 !important;
+  /* emerald-600 */
 }
 
 /* Hover states for brand green in light mode */
 html:not(.dark) [class*="hover:text-primary"]:hover,
-html:not(.dark) [class*="hover:text-[#6DFF3B]"]:hover {
+html:not(.dark) [class*="hover:text-emerald-600"]:hover {
   color: #059669 !important;
 }
 
 /* Group-hover states for brand green in light mode */
 html:not(.dark) .group:hover [class*="group-hover:text-primary"],
-html:not(.dark) .group:hover [class*="group-hover:text-[#6DFF3B]"] {
+html:not(.dark) .group:hover [class*="group-hover:text-emerald-600"] {
   color: #059669 !important;
 }
 
-html:not(.dark) [class*="fill-[#6DFF3B]"] {
+html:not(.dark) [class*="fill-emerald-600"] {
   fill: #059669 !important;
 }
 
-html:not(.dark) [class*="stroke-[#6DFF3B]"] {
+html:not(.dark) [class*="stroke-emerald-600"] {
   stroke: #059669 !important;
 }
 
-html:not(.dark) [class*="border-[#6DFF3B]"] {
+html:not(.dark) [class*="border-emerald-600"] {
   border-color: rgba(5, 150, 105, 0.3) !important;
 }
 
-/* Hide default browser scrollbar globally while maintaining full scroll functionality */
+/* Modern Transparent Neutral Scrollbar */
 ::-webkit-scrollbar {
-  display: none;
+  width: 7px;
+  height: 7px;
 }
-html, body {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+html,
+body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
 /* Always dark overrides for Hero card layout items to preserve high contrast text on image backgrounds */
 .text-always-white {
   color: #ffffff !important;
 }
+
 .text-always-white-90 {
   color: rgba(255, 255, 255, 0.9) !important;
 }
+
+.text-always-brand-green {
+  color: #059669 !important;
+}
+
 .bg-always-black-40 {
   background-color: rgba(0, 0, 0, 0.4) !important;
 }
+
 .border-always-white-20 {
   border-color: rgba(255, 255, 255, 0.2) !important;
 }
@@ -241,4 +272,41 @@ html, body {
   border: none !important;
   border-width: 0px !important;
   outline: none !important;
+}
+
+/* Enable visible custom scrollbar for designated scroll containers */
+.scrollbar-visible::-webkit-scrollbar {
+  display: block !important;
+  height: 6px !important;
+  width: 6px !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-radius: 9999px !important;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #10b981 !important;
+  /* emerald green in light mode */
+  border-radius: 9999px !important;
+}
+
+.dark .scrollbar-visible::-webkit-scrollbar-thumb {
+  background: #059669 !important;
+  /* neon green in dark mode */
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: #059669 !important;
+}
+
+/* Fallback scrollbar style for Firefox */
+.scrollbar-visible {
+  scrollbar-width: thin !important;
+  scrollbar-color: #10b981 rgba(0, 0, 0, 0.03) !important;
 }

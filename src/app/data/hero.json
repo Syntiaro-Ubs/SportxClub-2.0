@@ -1,0 +1,11 @@
+{
+  "hero": {
+    "desktopBanner": "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
+    "mobileBanner": "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    "heading": "Find Your Perfect Turf",
+    "subHeading": "Book premium sports venues near you instantly",
+    "buttonText": "Book Now",
+    "buttonLink": "/venues",
+    "enabled": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-07-18T00:00:00Z",
+  "sections": [
+    "hero",
+    "featuredTurfs",
+    "sports",
+    "nearbyGames",
+    "promotions",
+    "whyChooseUs",
+    "testimonials",
+    "partners",
+    "footer"
+  ]
+}

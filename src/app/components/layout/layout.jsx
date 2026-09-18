@@ -7,6 +7,7 @@ import {
   Trophy,
   Users,
   UserCircle,
+  User,
   MessageSquare,
   ChevronDown,
   Check,
@@ -21,16 +22,14 @@ import { useAuth } from "../../providers/auth-provider";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: Home },
-  { name: "Player Details", href: "/player-dashboard", icon: Activity },
+  // { name: "Player Details", href: "/player-dashboard", icon: Activity },
   { name: "Turfs", href: "/venues", icon: MapPin },
   { name: "Tournaments", href: "/tournaments", icon: Trophy },
-  { name: "Players", href: "/players", icon: Users },
   { name: "Community", href: "/community", icon: MessageSquare },
 ];
 
 function getMobileTab(pathname) {
-  if (pathname === "/" || pathname === "/dashboard") return "home";
+  if (pathname === "/") return "home";
   if (pathname.startsWith("/venues")) return "explore";
   if (pathname.startsWith("/bookings") || pathname.startsWith("/payment"))
     return "bookings";
@@ -69,12 +68,14 @@ function CitySelector() {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 rounded-full border border-border bg-card/40 px-3.5 py-2 text-xs  transition hover:bg-accent hover:text-foreground text-foreground cursor-pointer"
+        className="group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] md:text-[14px] font-medium text-black dark:text-white active:opacity-70 text-left leading-none cursor-pointer transition"
       >
-        <MapPin className="h-4 w-4 text-primary shrink-0" />
-        <span>{city === "All" ? "All Cities" : city}</span>
+        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-emerald-600" />
+        <span className="truncate max-w-[120px] leading-none text-black dark:text-white">
+          {city === "All" ? "All Areas" : city}
+        </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          className={`h-3.5 w-3.5 shrink-0 text-black dark:text-white transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -102,11 +103,10 @@ function CitySelector() {
                     <button
                       key={c}
                       onClick={() => handleCitySelect(c)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs  transition cursor-pointer ${
-                        isSelected
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground hover:bg-accent"
-                      }`}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs  transition cursor-pointer ${isSelected
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground hover:bg-accent"
+                        }`}
                     >
                       <span>{c === "All" ? "All Cities" : c}</span>
                       {isSelected && (
@@ -147,30 +147,19 @@ export function Layout() {
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
       {/* Desktop Top Navbar */}
-      <header className="hidden md:flex h-16 items-center justify-between border-b border-border/40 bg-background/80 backdrop-blur-xl px-6 sticky top-0 z-50 w-full">
+      <header className="hidden md:flex h-14 items-center justify-between border-b border-border/40 bg-background/80 dark:bg-black/80 backdrop-blur-xl px-6 sticky top-0 z-50 w-full">
         <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2 h-[58px] translate-y-[4px]">
-            <Logo className="h-full" />
-          </Link>
-          <CitySelector />
+          <a href="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
+            <Logo className="h-[50px] md:h-[80px]" />
+          </a>
         </div>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-8">
           {navigation
             .filter((item) => {
               if (
-                location.pathname === "/player-dashboard" &&
-                item.name === "Dashboard"
-              )
-                return false;
-              if (
-                location.pathname === "/dashboard" &&
-                item.name === "Player Dashboard"
-              )
-                return false;
-              if (
                 !currentUser &&
-                ["Player Dashboard", "Players", "Community"].includes(item.name)
+                ["Player Details", "Community"].includes(item.name)
               ) {
                 return false;
               }
@@ -186,34 +175,32 @@ export function Layout() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  }`}
+                  className={`group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isActive
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-primary"
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.name}
+                  <span>{item.name}</span>
                 </Link>
               );
             })}
         </nav>
 
         <div className="flex items-center gap-3">
+          <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
           {currentUser ? (
-            <Link to={currentUser.role === 'owner' ? '/owner-dashboard' : '/profile'}>
+            <Link to={currentUser.role === 'owner' ? '/admin-panel' : '/profile'}>
               <Button
                 variant="ghost"
-                className="rounded-full gap-2.5 text-muted-foreground hover:text-foreground px-2.5 h-10 cursor-pointer"
+                className="group relative rounded-md gap-2.5 text-muted-foreground hover:text-primary hover:bg-transparent px-3 h-10 cursor-pointer focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"
               >
-                <Avatar className="h-6 w-6 border border-border/80">
+                <Avatar className="h-6.5 w-6.5 border-0 bg-transparent flex items-center justify-center">
                   {currentUser?.profilePicture && (
                     <AvatarImage src={currentUser.profilePicture} className="object-cover" />
                   )}
-                  <AvatarFallback className="bg-primary text-[10px] font-bold text-primary-foreground">
-                    {currentUser?.fullName
-                      ? currentUser.fullName.trim().split(/\s+/).map((n) => n[0]).join("").slice(0, 2)
-                      : "U"}
+                  <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                    <User className="h-4 w-4 stroke-[2.2]" />
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-semibold leading-none">{displayName}</span>
@@ -221,9 +208,9 @@ export function Layout() {
             </Link>
           ) : (
             <Link to="/login">
-              <Button 
+              <Button
                 variant="outline"
-                className="rounded-full bg-transparent border border-[#6DFF3B] text-foreground hover:bg-[#6DFF3B] hover:text-[#050505] transition-all px-5 text-sm font-semibold"
+                className="rounded-full bg-transparent border border-emerald-600 text-foreground hover:bg-transparent hover:text-foreground hover:opacity-80 transition-all px-5 text-sm font-semibold"
               >
                 Login / Sign Up
               </Button>
@@ -242,15 +229,19 @@ export function Layout() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.22, ease: "easeOut" }}
-          className={`flex-1 md:pb-0 ${
-            hideMobileNav
-              ? "pb-[calc(76px+env(safe-area-inset-bottom))]"
-              : "pb-[calc(104px+env(safe-area-inset-bottom))]"
-          }`}
+          className={`flex-1 md:pb-0 ${hideMobileNav
+            ? "pb-0"
+            : "pb-[calc(104px+env(safe-area-inset-bottom))]"
+            }`}
         >
           <div
             className={
-              location.pathname.startsWith("/player-dashboard") || location.pathname.startsWith("/venues")
+              location.pathname.startsWith("/player-dashboard") ||
+                location.pathname.startsWith("/venues") ||
+                location.pathname.startsWith("/payment") ||
+                location.pathname.startsWith("/squad-booking") ||
+                location.pathname.startsWith("/booking-success") ||
+                location.pathname.startsWith("/profile")
                 ? "w-full"
                 : "px-4 py-5 md:px-6 md:py-6 lg:px-8 md:mx-auto md:max-w-7xl"
             }

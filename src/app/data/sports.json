@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Football",
+    "description": "5v5, 7v7, and 11v11 turfs",
+    "icon": "⚽",
+    "image": "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=500&q=80",
+    "displayOrder": 1,
+    "visibility": true
+  },
+  {
+    "id": 2,
+    "name": "Cricket",
+    "description": "Box cricket and full grounds",
+    "icon": "🏏",
+    "image": "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=500&q=80",
+    "displayOrder": 2,
+    "visibility": true
+  }
+]

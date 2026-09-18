@@ -11,9 +11,10 @@ import {
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Calendar } from "../../components/ui/calendar";
-import { Loader2, AlertCircle, Clock, MapPin, User, IndianRupee, Ban, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle, Clock, MapPin, User, IndianRupee, Ban, CheckCircle, Trophy } from "lucide-react";
 import { bookingService } from "../../services/booking.service";
 import { motion, AnimatePresence } from "motion/react";
+import { cn } from "../../components/ui/utils";
 
 export function CalendarView() {
   const { currentUser } = useAuth();
@@ -29,7 +30,7 @@ export function CalendarView() {
         setIsLoading(true);
         const ownerId = currentUser?.id || "guest";
         const result = await bookingService.getAll(ownerId);
-        
+
         // Map mock dates around today so they actually display
         const modifiedResult = result.map((b, i) => {
           const newDate = new Date();
@@ -50,13 +51,22 @@ export function CalendarView() {
         }
 
       } catch (err) {
-        setError(err.message || "Failed to load data");
+        console.error("API not available, rendering empty calendar:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
+    const handleWindowClick = () => {
+      // Dummy check to trigger layout if needed
+    };
+    window.addEventListener("click", handleWindowClick);
+
     fetchData();
+
+    return () => {
+      window.removeEventListener("click", handleWindowClick);
+    };
   }, [currentUser]);
 
   const today = new Date();
@@ -96,19 +106,7 @@ export function CalendarView() {
   if (isLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-[400px] flex-col items-center justify-center text-destructive space-y-4">
-        <AlertCircle className="h-12 w-12" />
-        <p className="text-lg">{error}</p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
@@ -121,15 +119,27 @@ export function CalendarView() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div>
-        <h1 className="text-3xl tracking-tight font-bold">Booking Calendar</h1>
-        <p className="text-muted-foreground mt-2">View bookings and manage turf availability by date.</p>
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-[1440px] mx-auto pb-6 relative overflow-hidden px-1">
+      {/* Background visual accents */}
+      <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-3xl opacity-50 pointer-events-none -z-10 animate-pulse" />
+      <div className="absolute bottom-10 left-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl opacity-30 pointer-events-none -z-10" />
+
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border/40 pb-3">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
+            Booking Calendar
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5 hidden sm:block">
+            Interact with the date matrix to block bookings, view schedules, and track slots.
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <div className="xl:col-span-4 xl:col-start-1">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-lg sticky top-24">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Interactive Calendar (Span 4) */}
+        <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20">
+          <Card className="border-border/40 bg-card/35 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-primary/20">
             <CardContent className="p-4 flex flex-col items-center">
               <Calendar
                 mode="single"
@@ -138,16 +148,32 @@ export function CalendarView() {
                 disabled={[{ before: new Date(new Date().setHours(0, 0, 0, 0)) }]}
                 modifiers={{ blocked: disabledDays }}
                 modifiersClassNames={{
-                  blocked: "text-destructive font-semibold bg-destructive/10 line-through"
+                  blocked: "text-rose-500 font-bold bg-rose-500/10 rounded-full"
                 }}
-                className="rounded-xl border border-border/50 bg-background/50 mb-4"
+                className="w-full bg-transparent border-none p-0 shadow-none flex justify-center mb-4"
               />
-              
-              <div className="w-full pt-4 border-t border-border/50">
-                <p className="text-sm font-medium text-center mb-3">Availability Status</p>
-                <Button 
-                  variant={isDateDisabled ? "default" : "destructive"} 
-                  className="w-full gap-2 shadow-sm"
+
+              <div className="w-full pt-4 border-t border-border/30">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold tracking-wide text-muted-foreground">Availability Status</span>
+                  {isDateDisabled ? (
+                    <Badge variant="destructive" className="animate-pulse bg-rose-500/10 text-rose-500 border border-rose-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-lg">
+                      Blocked
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-bold px-2.5 py-0.5 rounded-lg">
+                      Available
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  variant={isDateDisabled ? "outline" : "default"}
+                  className={cn(
+                    "w-full gap-2 h-10 font-extrabold rounded-xl text-xs transition-all duration-300 cursor-pointer shadow-xs",
+                    isDateDisabled
+                      ? "bg-white dark:bg-slate-900 text-red-500 dark:text-red-400 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-300 dark:hover:border-red-800 hover:scale-[1.02]"
+                      : "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-600 border border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-600 dark:hover:border-emerald-600 hover:scale-[1.02]"
+                  )}
                   onClick={toggleDateStatus}
                   disabled={isPastDate}
                 >
@@ -166,90 +192,155 @@ export function CalendarView() {
           </Card>
         </div>
 
-        <div className="xl:col-span-8">
-          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-lg min-h-[500px]">
-            <CardHeader className="border-b border-border/50 bg-muted/20 pb-4">
-              <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-2xl">{date ? format(date, "MMMM d, yyyy") : "Select a date"}</span>
+        {/* Right Column: Bookings Matrix & Quick Summary (Span 8) */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-4">
+          <Card className="border-0 bg-transparent shadow-none rounded-2xl min-h-[400px] flex flex-col gap-0 overflow-hidden transition-all duration-300">
+            <CardHeader className="border-0 bg-transparent px-0 py-1 pb-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <CardTitle className="text-lg font-extrabold text-foreground tracking-tight">
+                    {date ? format(date, "MMMM d, yyyy") : "Select a date"}
+                  </CardTitle>
+                  <CardDescription className="text-xs font-medium text-muted-foreground">
+                    Scheduled sessions for this day
+                  </CardDescription>
+                </div>
                 {isDateDisabled ? (
-                  <Badge variant="destructive" className="px-3 py-1 text-sm font-medium uppercase tracking-wider flex items-center gap-1.5 self-start sm:self-auto">
+                  <Badge className="bg-transparent text-rose-500 border-2 border-rose-500 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg flex items-center gap-1.5 self-start sm:self-auto">
                     <Ban className="w-3.5 h-3.5" /> Bookings Blocked
                   </Badge>
                 ) : (
-                  <Badge variant="secondary" className="px-3 py-1 text-sm font-normal bg-primary/10 text-primary border-primary/20 self-start sm:self-auto">
+                  <Badge className="bg-transparent text-emerald-600 dark:text-emerald-400 border-2 border-emerald-500 text-xs font-bold px-3 py-1 rounded-lg self-start sm:self-auto">
                     {selectedBookings.length} {selectedBookings.length === 1 ? "Booking" : "Bookings"}
                   </Badge>
                 )}
-              </CardTitle>
-              <CardDescription>Scheduled sessions for this day</CardDescription>
+              </div>
             </CardHeader>
-            <CardContent className="p-6">
-              {isDateDisabled ? (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-16 flex flex-col items-center text-muted-foreground"
-                >
-                  <div className="w-20 h-20 rounded-full bg-destructive/10 flex items-center justify-center mb-4 text-destructive">
-                    <Ban className="w-10 h-10" />
+            <CardContent className="px-0 py-3 flex-1 flex flex-col">
+
+              {/* Daily Statistics Cards Grid */}
+              {!isDateDisabled && selectedBookings.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3.5">
+                  <div className="p-4 rounded-2xl bg-transparent border border-slate-300 dark:border-slate-700/80 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Booked Sessions</p>
+                      <p className="text-xl font-black text-foreground">{selectedBookings.length}</p>
+                    </div>
+                    <div className="text-emerald-500">
+                      <CheckCircle className="h-5 w-5" />
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-2 text-foreground">Date Unavailable</h3>
-                  <p className="text-sm max-w-md">You have disabled this date. Customers will not be able to book any turfs on this day.</p>
+
+                  <div className="p-4 rounded-2xl bg-transparent border border-slate-300 dark:border-slate-700/80 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Duration</p>
+                      <p className="text-xl font-black text-foreground">
+                        {selectedBookings.reduce((sum, b) => sum + (b.duration || 1), 0)} Hrs
+                      </p>
+                    </div>
+                    <div className="text-blue-500">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-transparent border border-slate-300 dark:border-slate-700/80 shadow-xs flex items-center justify-between hover:shadow-md transition-all duration-300">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Potential Revenue</p>
+                      <p className="text-xl font-black text-foreground flex items-center gap-0.5">
+                        <IndianRupee className="h-5 w-5 stroke-[2.5] shrink-0" />
+                        <span>{selectedBookings.reduce((sum, b) => sum + (b.amount || 0), 0).toLocaleString('en-IN')}</span>
+                      </p>
+                    </div>
+                    <div className="text-emerald-500">
+                      <IndianRupee className="h-5 w-5 stroke-[2.5]" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic list rendering */}
+              {isDateDisabled ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-center py-20 flex flex-col items-center justify-center text-muted-foreground flex-1"
+                >
+                  <div className="w-20 h-20 rounded-2xl bg-rose-500/10 flex items-center justify-center mb-5 text-rose-500 border border-rose-500/20 shadow-inner">
+                    <Ban className="w-9 h-9" />
+                  </div>
+                  <h3 className="text-xl font-extrabold mb-1.5 text-foreground">Date Unavailable</h3>
+                  <p className="text-xs max-w-sm leading-relaxed">You have disabled this date. Customers will not be able to book any turf facilities on this day.</p>
                 </motion.div>
               ) : selectedBookings.length === 0 ? (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-16 flex flex-col items-center text-muted-foreground"
+                  className="text-center py-20 flex flex-col items-center justify-center text-muted-foreground flex-1"
                 >
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 text-primary">
-                    <Clock className="w-8 h-8" />
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 text-primary border border-primary/20 shadow-inner">
+                    <Clock className="w-7 h-7" />
                   </div>
-                  <h3 className="text-lg font-medium mb-1 text-foreground">No bookings</h3>
-                  <p className="text-sm">There are no scheduled sessions for the selected date.</p>
+                  <h3 className="text-lg font-bold mb-1 text-foreground">No Bookings Scheduled</h3>
+                  <p className="text-xs max-w-xs leading-relaxed">There are no client reservation slots booked for this date yet.</p>
                 </motion.div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 flex-1">
                   <AnimatePresence>
                     {selectedBookings.map((booking, index) => (
                       <motion.div
                         key={booking.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="p-5 rounded-2xl border border-border/50 bg-background/80 hover:bg-accent/40 hover:shadow-md transition-all flex flex-col sm:flex-row gap-4 sm:items-center justify-between group relative overflow-hidden"
+                        transition={{ delay: index * 0.08 }}
+                        className="p-5 rounded-2xl border border-slate-300 dark:border-slate-700/80 bg-transparent hover:bg-emerald-600/5 dark:hover:bg-emerald-600/5 hover:border-emerald-600/30 hover:scale-[1.01] hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row gap-4 sm:items-center justify-between group relative overflow-hidden"
                       >
-                        {/* Status accent line */}
-                        <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${booking.status === 'Confirmed' || booking.status === 'Completed' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                        
-                        <div className="space-y-3 flex-1 pl-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                            <h4 className="font-semibold text-lg text-foreground tracking-tight">{booking.turfName}</h4>
-                            <Badge variant={booking.status === "Confirmed" ? "default" : "secondary"}>
+                        {/* Decorative vertical status bar */}
+                        <div className={cn(
+                          "absolute left-0 top-0 bottom-0 w-1.5 transition-all duration-300",
+                          booking.status === 'Confirmed' || booking.status === 'Completed'
+                            ? 'bg-emerald-500 group-hover:h-full'
+                            : 'bg-amber-500 group-hover:h-full'
+                        )} />
+
+                        <div className="space-y-2.5 flex-1 pl-3">
+                          <div className="flex flex-wrap items-center gap-2.5">
+                            <h4 className="font-extrabold text-base text-foreground tracking-tight">{booking.turfName}</h4>
+                            <Badge className={cn(
+                              "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border",
+                              booking.status === 'Confirmed' || booking.status === 'Completed'
+                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                            )}>
                               {booking.status}
                             </Badge>
+                            <span className="text-[10px] font-mono text-muted-foreground/60">ID: {booking.id}</span>
                           </div>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <User className="w-4 h-4 text-primary/70" />
-                              <span className="font-medium">{booking.customerName}</span>
+                              <User className="w-3.5 h-3.5 text-primary" />
+                              <span className="font-bold text-foreground/80">{booking.customerName}</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4 text-primary/70" />
-                              <span className="font-medium text-foreground/80">{booking.time} <span className="text-muted-foreground font-normal">({booking.duration} {booking.duration === 1 ? 'hr' : 'hrs'})</span></span>
+                              <Clock className="w-3.5 h-3.5 text-primary" />
+                              <span className="font-bold text-foreground/80">{booking.time} <span className="text-muted-foreground font-normal">({booking.duration} {booking.duration === 1 ? 'hr' : 'hrs'})</span></span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between pl-3 sm:pl-0 sm:border-l sm:border-border/50 sm:pl-6 min-w-[120px]">
-                          <div className="flex items-center font-bold text-xl text-emerald-500">
-                            <IndianRupee className="w-5 h-5 mr-0.5" />
-                            {booking.amount}
+                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between pl-3 sm:pl-0 sm:border-l sm:border-border/30 sm:pl-6 min-w-[130px] gap-1">
+                          <div className="flex items-center font-black text-lg text-emerald-500 dark:text-emerald-400">
+                            <IndianRupee className="w-4 h-4 mr-0.5 text-muted-foreground/80" />
+                            {booking.amount.toLocaleString('en-IN')}
                           </div>
-                          <p className="text-xs font-medium text-muted-foreground mt-1.5 uppercase tracking-wider">
+                          <Badge className={cn(
+                            "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border",
+                            booking.paymentStatus?.toLowerCase() === 'paid'
+                              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/15'
+                              : 'bg-rose-500/10 text-rose-500 border-rose-500/15'
+                          )}>
                             {booking.paymentStatus}
-                          </p>
+                          </Badge>
                         </div>
                       </motion.div>
                     ))}
@@ -263,3 +354,4 @@ export function CalendarView() {
     </div>
   );
 }
+

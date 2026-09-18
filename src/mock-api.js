@@ -15,7 +15,7 @@ window.fetch = async (input, init) => {
   if (url.includes("/api/owner/disabled-dates")) {
     const urlObj = new URL(url.startsWith("http") ? url : `http://localhost${url}`);
     const ownerId = urlObj.searchParams.get("ownerId");
-    
+
     let dates = JSON.parse(localStorage.getItem("mock_disabled_dates") || "[]");
 
     if (init?.method === "POST") {
@@ -37,7 +37,7 @@ window.fetch = async (input, init) => {
     if (ownerId) {
       dates = dates.filter((d) => d.ownerId === ownerId);
     }
-    
+
     return new Response(JSON.stringify(dates), { status: 200 });
   }
 
@@ -101,78 +101,11 @@ window.fetch = async (input, init) => {
   if (url.includes("/api/owner/turf")) {
     const urlObj = new URL(url.startsWith("http") ? url : `http://localhost${url}`);
     const ownerId = urlObj.searchParams.get("ownerId");
-    
+
     let turfs = JSON.parse(localStorage.getItem("mock_turfs") || "null");
-    
+
     if (!turfs) {
-      turfs = [
-        {
-          id: "1",
-          ownerId: "owner-123",
-          name: "Premium Green Turf",
-          location: "Downtown Sports Complex",
-          price: 1500,
-          status: "Active",
-          rating: 4.8,
-          sportType: "Football",
-          image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop",
-        },
-        {
-          id: "2",
-          ownerId: "owner-123",
-          name: "Skyline Arena",
-          location: "Uptown Tech Park",
-          price: 2000,
-          status: "Active",
-          rating: 4.9,
-          sportType: "Cricket",
-          image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=600&auto=format&fit=crop",
-        },
-        {
-          id: "3",
-          ownerId: "owner-123",
-          name: "Community Pitch",
-          location: "Suburbs Recreation Center",
-          price: 800,
-          status: "Maintenance",
-          rating: 4.2,
-          sportType: "Badminton",
-          image: "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?q=80&w=600&auto=format&fit=crop",
-        },
-        {
-          id: "4",
-          ownerId: "owner-123",
-          name: "Neon Box",
-          location: "City Center Mall",
-          price: 2500,
-          status: "Active",
-          rating: 4.7,
-          sportType: "Box Cricket",
-          image: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?q=80&w=600&auto=format&fit=crop",
-        },
-        {
-          id: "5",
-          ownerId: "owner-123",
-          name: "Olympus Tennis Court",
-          location: "Westside Avenue",
-          price: 1200,
-          status: "Active",
-          rating: 4.6,
-          sportType: "Tennis",
-          image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=600&auto=format&fit=crop",
-        },
-        {
-          id: "6",
-          ownerId: "owner-123",
-          name: "Titan Basketball Gym",
-          location: "East End Campus",
-          price: 1800,
-          status: "Active",
-          rating: 4.9,
-          sportType: "Basketball",
-          image: "https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=600&auto=format&fit=crop",
-        },
-      ];
+      turfs = [];
       localStorage.setItem("mock_turfs", JSON.stringify(turfs));
     }
 
@@ -191,7 +124,7 @@ window.fetch = async (input, init) => {
       localStorage.setItem("mock_turfs", JSON.stringify(turfs));
       return new Response(JSON.stringify(updateData), { status: 200 });
     }
-    
+
     if (init?.method === "DELETE") {
       const turfId = url.split('/').pop().split('?')[0];
       turfs = turfs.filter(t => t.id !== turfId);
@@ -202,7 +135,7 @@ window.fetch = async (input, init) => {
     if (ownerId) {
       turfs = turfs.filter((t) => t.ownerId === ownerId);
     }
-    
+
     return new Response(JSON.stringify(turfs), { status: 200 });
   }
 
@@ -296,7 +229,7 @@ window.fetch = async (input, init) => {
           customerName: "Rahul Sharma",
           turfName: "Premium Green Turf",
           rating: 5,
-          comment: "Amazing turf quality, loved playing here.",
+          comment: "Amazing turf quality, loved playing here. The grass is well-maintained.",
           date: "2023-10-20",
         },
         {
@@ -307,6 +240,70 @@ window.fetch = async (input, init) => {
           comment: "Good lighting but could improve the changing rooms.",
           date: "2023-10-22",
         },
+        {
+          id: "r3",
+          customerName: "Vikas Patel",
+          turfName: "Football Arena",
+          rating: 5,
+          comment: "Best football turf in the city! Goal posts are sturdy.",
+          date: "2023-10-23",
+        },
+        {
+          id: "r4",
+          customerName: "Sneha Reddy",
+          turfName: "Tennis Court A",
+          rating: 3,
+          comment: "The net needs fixing, but the surface is okay.",
+          date: "2023-10-24",
+        },
+        {
+          id: "r5",
+          customerName: "Rohan Gupta",
+          turfName: "Badminton Center",
+          rating: 5,
+          comment: "Excellent indoor courts with great ventilation.",
+          date: "2023-10-25",
+        },
+        {
+          id: "r6",
+          customerName: "Amit Singh",
+          turfName: "Premium Green Turf",
+          rating: 4,
+          comment: "Nice place for cricket, though the boundaries are slightly short.",
+          date: "2023-10-25",
+        },
+        {
+          id: "r7",
+          customerName: "Priya Menon",
+          turfName: "Football Arena",
+          rating: 5,
+          comment: "Perfect for 5v5 matches. Will definitely book again.",
+          date: "2023-10-26",
+        },
+        {
+          id: "r8",
+          customerName: "Karan Johar",
+          turfName: "Skyline Arena",
+          rating: 2,
+          comment: "Too crowded and the staff was unhelpful.",
+          date: "2023-10-26",
+        },
+        {
+          id: "r9",
+          customerName: "Neha Sharma",
+          turfName: "Badminton Center",
+          rating: 4,
+          comment: "Good courts, but parking is a hassle during weekends.",
+          date: "2023-10-27",
+        },
+        {
+          id: "r10",
+          customerName: "Arjun Nair",
+          turfName: "Tennis Court A",
+          rating: 5,
+          comment: "Very professional setup. Great for training sessions.",
+          date: "2023-10-28",
+        }
       ]),
       { status: 200 },
     );
@@ -436,11 +433,6 @@ window.fetch = async (input, init) => {
       }),
       { status: 200 },
     );
-  }
-
-  // Fallback for any other API owner endpoints
-  if (url.includes("/api/owner")) {
-    return new Response(JSON.stringify([]), { status: 200 });
   }
 
   return originalFetch(input, init);
