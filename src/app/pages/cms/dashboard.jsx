@@ -61,6 +61,7 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../components/ui/dialog";
+import { Logo } from "../../components/brand/Logo";
 import { cmsService } from "../../services/cms-service";
 import { adminApi } from "../../services/admin-api";
 import { turfService } from "../../services/turf.service";
@@ -1552,15 +1553,10 @@ export function CMSDashboard() {
           }`}
       >
         {/* Brand Header */}
-        <div className="h-16 px-5 border-b border-[#e2e8f0] flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
-            S
-          </div>
-          {!isSidebarCollapsed && (
-            <span className="font-extrabold text-sm tracking-widest text-[#0f172a] uppercase">
-              SPORTX CONSOLE
-            </span>
-          )}
+        <div className="h-16 px-4 border-b border-[#e2e8f0] flex items-center justify-start overflow-hidden">
+          <Link to="/dashboard" className="flex items-center">
+            <Logo className={isSidebarCollapsed ? "h-8 max-w-[48px]" : "h-11 w-auto"} />
+          </Link>
         </div>
 
         {/* Sidebar Nav (Filtered by Permissions) */}
@@ -1603,6 +1599,25 @@ export function CMSDashboard() {
             <LogOut className="w-4 h-4 shrink-0" />
             {!isSidebarCollapsed && <span>Sign Out</span>}
           </button>
+
+          {!isSidebarCollapsed && (
+            <div className="pt-2 border-t border-[#e2e8f0] flex flex-col items-center justify-center gap-1 text-center">
+              <p className="text-[10px] uppercase tracking-wider text-[#64748b] font-semibold whitespace-nowrap">
+                Powered By{" "}
+                <a
+                  href="https://www.syntiaro.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-extrabold text-teal-600 hover:text-teal-700"
+                >
+                  SYNTIARO
+                </a>
+              </p>
+              <span className="text-[10px] font-mono font-extrabold text-[#64748b] tracking-normal lowercase px-2.5 py-0.5 rounded-full bg-[#f1f5f9] border border-[#e2e8f0]">
+                v2.0.4
+              </span>
+            </div>
+          )}
         </div>
       </aside>
 
