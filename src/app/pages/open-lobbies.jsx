@@ -603,7 +603,7 @@ export function OpenLobbiesPage() {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. rohan@okaxis"
+                      placeholder="Enter UPI ID (e.g. username@upi)"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                       className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-emerald-600"
@@ -616,7 +616,7 @@ export function OpenLobbiesPage() {
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Rohan Das"
+                        placeholder="Enter cardholder name"
                         value={cardName}
                         onChange={(e) => setCardName(e.target.value)}
                         className="h-11 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.03] px-3.5 text-sm outline-none focus:border-emerald-600"

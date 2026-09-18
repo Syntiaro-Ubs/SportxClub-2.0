@@ -412,7 +412,7 @@ export function StaffManagement() {
                 <Label htmlFor="firstName" className="text-xs font-semibold">First Name *</Label>
                 <Input
                   id="firstName"
-                  placeholder="e.g. John"
+                  placeholder="Enter first name"
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                   className="rounded-lg text-sm"
@@ -423,7 +423,7 @@ export function StaffManagement() {
                 <Label htmlFor="lastName" className="text-xs font-semibold">Last Name *</Label>
                 <Input
                   id="lastName"
-                  placeholder="e.g. Doe"
+                  placeholder="Enter last name"
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                   className="rounded-lg text-sm"
@@ -438,7 +438,7 @@ export function StaffManagement() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="john@example.com"
+                  placeholder="Enter email address"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="rounded-lg text-sm"

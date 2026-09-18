@@ -49,6 +49,11 @@ import { toast } from "sonner";
 
 const sportsOptions = ["football", "cricket", "badminton", "tennis", "basketball", "swimming", "gym", "volleyball"];
 
+const toTitleCase = (str) => {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
 const DEFAULT_MATCH_ADDONS = [
   {
     id: "addon-gatorade",
@@ -792,13 +797,15 @@ export function UserProfile() {
               <Button
                 key={cat}
                 size="sm"
-                variant={addonCategory === cat ? "default" : "ghost"}
-                className={`text-xs h-7 px-3 rounded-full cursor-pointer ${
-                  addonCategory === cat ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground"
+                variant="outline"
+                className={`text-xs h-7 px-3 rounded-md cursor-pointer transition-all duration-200 border ${
+                  addonCategory === cat
+                    ? "border-primary text-primary font-semibold bg-transparent shadow-none"
+                    : "border-border/80 text-muted-foreground hover:border-primary hover:text-primary bg-transparent"
                 }`}
                 onClick={() => setAddonCategory(cat)}
               >
-                {cat}
+                {toTitleCase(cat)}
               </Button>
             ))}
           </div>
@@ -1139,7 +1146,7 @@ export function UserProfile() {
               <label className="text-xs font-semibold text-muted-foreground block mb-1">Reviewer Name (Optional)</label>
               <Input
                 type="text"
-                placeholder="e.g. Teammate Name / Captain"
+                placeholder="Enter your name (optional)"
                 value={reviewerName}
                 onChange={(e) => setReviewerName(e.target.value)}
                 className="text-xs"
@@ -1455,13 +1462,15 @@ export function UserProfile() {
                 <Button
                   key={cat}
                   size="sm"
-                  variant={shopCategory === cat ? "default" : "outline"}
-                  className={`text-xs h-7 px-3 rounded-full cursor-pointer ${
-                    shopCategory === cat ? "bg-primary font-bold" : "text-muted-foreground"
+                  variant="outline"
+                  className={`text-xs h-7 px-3 rounded-md cursor-pointer transition-all duration-200 border ${
+                    shopCategory === cat
+                      ? "border-primary text-primary font-semibold bg-transparent shadow-none"
+                      : "border-border/80 text-muted-foreground hover:border-primary hover:text-primary bg-transparent"
                   }`}
                   onClick={() => setShopCategory(cat)}
                 >
-                  {cat}
+                  {toTitleCase(cat)}
                 </Button>
               ))}
             </div>
@@ -1486,8 +1495,8 @@ export function UserProfile() {
                   </Badge>
                 )}
                 {item.category && (
-                  <Badge variant="outline" className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm text-[9px] uppercase">
-                    {item.category}
+                  <Badge variant="outline" className="absolute bottom-2 left-2 bg-background/80 backdrop-blur-sm text-[9px] capitalize">
+                    {toTitleCase(item.category)}
                   </Badge>
                 )}
               </div>

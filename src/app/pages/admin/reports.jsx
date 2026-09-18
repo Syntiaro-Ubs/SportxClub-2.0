@@ -214,7 +214,7 @@ export function AdminReports() {
               </div>
               <div>
                 <Label>Reported By</Label>
-                <Input value={formData.reported_by} onChange={(e) => setFormData({ ...formData, reported_by: e.target.value })} placeholder="Rahul Sharma" />
+                <Input value={formData.reported_by} onChange={(e) => setFormData({ ...formData, reported_by: e.target.value })} placeholder="Enter reporter name" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

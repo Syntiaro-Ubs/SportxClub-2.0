@@ -4598,7 +4598,7 @@ export function CMSDashboard() {
               <Input
                 value={postForm.author}
                 onChange={(e) => setPostForm({ ...postForm, author: e.target.value })}
-                placeholder="e.g. Rahul Sharma"
+                placeholder="Enter author name"
                 className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
               />
             </div>
@@ -4909,7 +4909,7 @@ export function CMSDashboard() {
                     required
                     value={teamForm.full_name}
                     onChange={(e) => setTeamForm({ ...teamForm, full_name: e.target.value })}
-                    placeholder="e.g. Vikram Sharma"
+                    placeholder="Enter full name"
                     className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold h-10 rounded-xl"
                   />
                 </div>
@@ -4922,7 +4922,7 @@ export function CMSDashboard() {
                       required
                       value={teamForm.username}
                       onChange={(e) => setTeamForm({ ...teamForm, username: e.target.value.toLowerCase().replace(/\s+/g, "_") })}
-                      placeholder="vikram_turf"
+                      placeholder="username"
                       className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold pl-7 h-10 rounded-xl"
                     />
                   </div>
@@ -4939,7 +4939,7 @@ export function CMSDashboard() {
                       required
                       value={teamForm.email}
                       onChange={(e) => setTeamForm({ ...teamForm, email: e.target.value })}
-                      placeholder="vikram@sportxclub.com"
+                      placeholder="Enter email address"
                       className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold pl-9 h-10 rounded-xl"
                     />
                   </div>
@@ -4952,7 +4952,7 @@ export function CMSDashboard() {
                     <Input
                       value={teamForm.phone}
                       onChange={(e) => setTeamForm({ ...teamForm, phone: e.target.value })}
-                      placeholder="+91 98765 43210"
+                      placeholder="Enter phone number"
                       className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] font-semibold pl-9 h-10 rounded-xl"
                     />
                   </div>

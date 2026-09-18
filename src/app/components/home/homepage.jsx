@@ -487,14 +487,14 @@ export function Navbar() {
                 trigger={
                   <button
                     className={cn(
-                      "group relative flex items-center gap-1.5 px-3 py-2 rounded-md text-[13px] lg:text-[14px] font-medium transition-all cursor-pointer bg-transparent text-black dark:text-white"
+                      "group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[13px] lg:text-[14px] font-medium cursor-pointer !bg-transparent hover:!bg-transparent focus:outline-none focus:ring-0 text-foreground transition-colors"
                     )}
                   >
-                    <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-emerald-600 dark:text-white" />
-                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-black dark:text-white">
+                    <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-foreground transition-all duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+                    <span className="truncate max-w-[200px] lg:max-w-[250px] leading-normal pb-0.5 text-foreground transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 font-medium">
                       {activeCity === "All" ? "All Areas" : activeCity}
                     </span>
-                    <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-80 text-black dark:text-white" />
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-foreground/70 transition-all duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-y-0.5" />
                   </button>
                 }
               />
@@ -647,12 +647,12 @@ export function Navbar() {
               activeCity={activeCity}
               onCitySelect={handleCitySelect}
               trigger={
-                <button className="flex items-center gap-1.5 shrink-0 text-sm font-medium cursor-pointer text-black dark:text-white">
+                <button className="group flex items-center gap-1.5 shrink-0 text-sm font-medium cursor-pointer text-foreground transition-colors">
                   <MapPin
-                    className="h-4 w-4 shrink-0 text-emerald-600 dark:text-white"
+                    className="h-4 w-4 shrink-0 text-foreground transition-all duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
                   />
-                  <span className="truncate max-w-[200px] text-black dark:text-white">{activeCity === "All" ? "All Areas" : activeCity}</span>
-                  <ChevronDown className="h-4 w-4 shrink-0 opacity-80 text-black dark:text-white" />
+                  <span className="truncate max-w-[200px] text-foreground transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">{activeCity === "All" ? "All Areas" : activeCity}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 opacity-80 text-foreground/70 transition-all duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-y-0.5" />
                 </button>
               }
             />
@@ -1765,7 +1765,7 @@ export function DiscoveryRails() {
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden rounded-[28px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
+          <Card className="always-dark overflow-hidden rounded-[28px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
             <div className="relative aspect-[16/8.4] overflow-hidden">
               <ImageWithFallback
                 src={asset("/tournaments/tournaments-events-bg.png")}
@@ -1774,8 +1774,11 @@ export function DiscoveryRails() {
               />
 
               <div className="absolute inset-0 image-overlay bg-[linear-gradient(180deg,rgba(5,5,5,0.06),rgba(5,5,5,0.88))]" />
-              <div className="absolute left-5 top-5 rounded-full border border-emerald-600/20 bg-emerald-600/10 px-3 py-1 text-xs  uppercase tracking-[0.22em] text-emerald-600 dark:text-white">
-                Tournaments & events
+              <div
+                className="always-dark absolute left-5 top-5 z-20 rounded-full border border-white/40 bg-transparent px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-white"
+                style={{ color: '#ffffff', backgroundColor: 'transparent' }}
+              >
+                <span style={{ color: '#ffffff' }} className="text-white">Tournaments & events</span>
               </div>
             </div>
 
@@ -2621,7 +2624,7 @@ export function TurfGallery() {
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
               className={cn(
-                "group relative overflow-hidden rounded-3xl bg-[#101216]",
+                "always-dark group relative overflow-hidden rounded-3xl bg-[#101216]",
                 turf.className,
               )}
             >
@@ -2636,7 +2639,7 @@ export function TurfGallery() {
               <div className="absolute top-4 right-4 z-10">
                 <div className="flex flex-col items-end">
                   <Badge
-                    className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-600 dark:text-white border-emerald-600/30"
+                    className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-400 border-emerald-500/30"
                   >
                     <Star className="h-3.5 w-3.5 fill-current" />
                     <span className="text-sm">{turf.rating}</span>
@@ -2649,17 +2652,17 @@ export function TurfGallery() {
 
               <div className="absolute bottom-0 left-0 w-full p-6 z-10 translate-y-2 transition-transform duration-300 group-hover:translate-y-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-emerald-600 dark:text-white" />
+                  <MapPin className="h-4 w-4 text-emerald-400" />
                   <span className="text-sm text-[#ffffff]/90 drop-shadow-md">
                     {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
                   </span>
                 </div>
-                <h3 className="text-2xl text-[#ffffff] drop-shadow-lg">
+                <h3 className="text-2xl text-[#ffffff] drop-shadow-lg font-bold">
                   {turf.name}
                 </h3>
 
                 <div className="mt-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  <Button
+                  <button
                     onClick={() => {
                       if (!currentUser) {
                         toast.error("Please login first to view venue details and book.");
@@ -2668,11 +2671,11 @@ export function TurfGallery() {
                         navigate("/venues");
                       }
                     }}
-                    variant="outline"
-                    className="rounded-full bg-white/10 text-[#ffffff] border-white/20 hover:bg-emerald-600 hover:text-black hover:border-transparent backdrop-blur-sm transition-all cursor-pointer"
+                    className="always-dark rounded-xl bg-slate-800/60 text-white border border-white/20 hover:border-2 hover:border-emerald-500 hover:bg-slate-800/80 hover:text-white backdrop-blur-md px-5 py-2 text-sm font-semibold transition-all duration-300 cursor-pointer shadow-sm hover:shadow-[0_0_16px_rgba(16,185,129,0.4)] inline-flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(30, 41, 59, 0.65)', color: '#ffffff' }}
                   >
                     View Details
-                  </Button>
+                  </button>
                 </div>
               </div>
             </motion.div>

@@ -353,7 +353,7 @@ export function PlayerLoginPage() {
                   </label>
                   <Input
                     type="text"
-                    placeholder="athlete@sportx.club"
+                    placeholder="Enter email or username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-emerald-600 focus-visible:border-emerald-600 h-12 rounded-xl"
@@ -391,12 +391,13 @@ export function PlayerLoginPage() {
 
               <Button
                 type="submit"
+                variant="outline"
                 disabled={isLoading}
-                className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-all hover:shadow-[0_0_20px_rgba(5,150,105,0.4)] cursor-pointer"
+                className="w-full h-12 rounded-xl border-border bg-card hover:bg-muted text-foreground font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
                 {isLoading ? (
                   <span className="flex items-center gap-2">
-                    <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <div className="h-4 w-4 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
                     Authenticating...
                   </span>
                 ) : (
@@ -661,7 +662,7 @@ export function PlayerLoginPage() {
                 <Input
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
-                  placeholder="e.g. rahul@example.com or 9876543210"
+                  placeholder="Enter registered email or mobile number"
                   className="h-10 text-xs rounded-xl"
                   required
                 />

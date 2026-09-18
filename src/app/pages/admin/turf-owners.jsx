@@ -207,20 +207,20 @@ export function AdminTurfOwners() {
           <form onSubmit={handleCreateOwner} className="space-y-4 py-2">
             <div>
               <Label>Owner Name</Label>
-              <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Rajesh Mehta" />
+              <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter owner name" />
             </div>
             <div>
               <Label>Email</Label>
-              <Input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="rajesh@example.com" />
+              <Input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Enter email address" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Phone</Label>
-                <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 9820012345" />
+                <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="Enter phone number" />
               </div>
               <div>
                 <Label>City</Label>
-                <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Mumbai" />
+                <Input value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} placeholder="Enter city" />
               </div>
             </div>
             <DialogFooter>

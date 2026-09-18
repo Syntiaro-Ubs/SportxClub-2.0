@@ -557,7 +557,7 @@ export function OwnerProfile() {
                 name="phone"
                 value={editFormData.phone}
                 onChange={handleEditChange}
-                placeholder="+91 98765 43210"
+                placeholder="Enter phone number"
                 className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
               />
             </div>

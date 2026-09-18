@@ -7,7 +7,7 @@ import {
   CreditCard, FileCheck2, ChevronRight, ChevronLeft, UploadCloud, Map,
   Clock, Check, FileImage, Trash2, Crosshair, AlertTriangle, CheckCircle2,
   Mail, Lock, Eye, EyeOff, Copy, ArrowRight, Loader2, ExternalLink, Navigation,
-  RotateCcw, Edit3
+  RotateCcw, Edit3, Plus, AlertCircle, Calendar
 } from "lucide-react";
 import { Logo } from "../../components/brand/Logo";
 import { Button } from "../../components/ui/button";
@@ -17,6 +17,7 @@ import { Textarea } from "../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { Checkbox } from "../../components/ui/checkbox";
 import { Badge } from "../../components/ui/badge";
+import { Dialog, DialogContent } from "../../components/ui/dialog";
 import { cn } from "../../components/ui/utils";
 import { adminApi } from "../../services/admin-api";
 import { toast } from "sonner";
@@ -161,7 +162,11 @@ export function OwnerSetupPage() {
   const [emailOtpError, setEmailOtpError] = useState("");
   const [emailExistsError, setEmailExistsError] = useState("");
   const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [emailOtpCode, setEmailOtpCode] = useState("");
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
+  const otpRefs = React.useRef([]);
   const [showPassword, setShowPassword] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
@@ -361,6 +366,8 @@ export function OwnerSetupPage() {
       setEmailVerified(false);
       setEmailOtpSent(false);
       setEmailOtpCode("");
+      setOtpDigits(["", "", "", "", "", ""]);
+      setShowOtpModal(false);
       setEmailExistsError("");
       setCurrentStep(1);
       setCompletedSteps([]);
@@ -393,6 +400,9 @@ export function OwnerSetupPage() {
     setResendCountdown(0);
     setEmailOtpError("");
     setEmailVerified(false);
+    setEmailOtpCode("");
+    setOtpDigits(["", "", "", "", "", ""]);
+    setShowOtpModal(false);
     checkEmailAvailability(emailVal);
   };
 
@@ -407,17 +417,24 @@ export function OwnerSetupPage() {
       if (res.success) {
         setEmailOtpSent(true);
         setResendCountdown(60);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setShowOtpModal(true);
         toast.success(
           emailOtpSent
             ? `New verification code resent to ${emailVal}! Please check your inbox.`
             : `Verification code sent to ${emailVal}! Please check your inbox.`,
           { duration: 6000 }
         );
+        setTimeout(() => {
+          otpRefs.current[0]?.focus();
+        }, 300);
       } else {
         setEmailOtpError(res.error || "Failed sending OTP code");
+        toast.error(res.error || "Failed sending OTP code");
       }
     } catch (e) {
       setEmailOtpError("Failed requesting OTP");
+      toast.error("Failed requesting OTP");
     } finally {
       setIsSendingEmailOtp(false);
     }
@@ -425,21 +442,106 @@ export function OwnerSetupPage() {
 
   // Live OTP Verify
   const verifyEmailOtp = async (customOtp) => {
-    const code = typeof customOtp === "string" ? customOtp : emailOtpCode;
+    const code = typeof customOtp === "string" ? customOtp : (otpDigits.join("") || emailOtpCode);
     const emailVal = (formData?.personal?.email || "").trim();
-    if (!code || !code.trim() || !emailVal) return;
+    if (!code || code.trim().length !== 6 || !emailVal) return;
     try {
+      setIsVerifyingOtp(true);
+      setEmailOtpError("");
       const res = await adminApi.verifyOtp(emailVal, code.trim());
       if (res.success) {
         setEmailVerified(true);
         setEmailOtpError("");
         toast.success("Email verified successfully!");
+        setTimeout(() => {
+          setShowOtpModal(false);
+        }, 600);
       } else {
         setEmailOtpError(res.error || "Invalid verification code");
+        toast.error(res.error || "Invalid verification code");
       }
     } catch (e) {
       setEmailOtpError("Invalid verification code");
+      toast.error("Invalid verification code");
+    } finally {
+      setIsVerifyingOtp(false);
     }
+  };
+
+  // 6-digit OTP handlers for popup modal
+  const handleOtpDigitChange = (index, value) => {
+    const digits = value.replace(/\D/g, "");
+    if (digits.length > 1) {
+      const pasted = digits.slice(0, 6).split("");
+      const newDigits = [...otpDigits];
+      pasted.forEach((d, i) => {
+        if (index + i < 6) newDigits[index + i] = d;
+      });
+      setOtpDigits(newDigits);
+      const fullCode = newDigits.join("");
+      setEmailOtpCode(fullCode);
+      const focusIdx = Math.min(index + pasted.length, 5);
+      otpRefs.current[focusIdx]?.focus();
+      if (fullCode.length === 6) {
+        verifyEmailOtp(fullCode);
+      }
+      return;
+    }
+
+    const char = digits.slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = char;
+    setOtpDigits(newDigits);
+    const fullCode = newDigits.join("");
+    setEmailOtpCode(fullCode);
+
+    if (char && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+    if (fullCode.length === 6) {
+      verifyEmailOtp(fullCode);
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace") {
+      if (!otpDigits[index] && index > 0) {
+        otpRefs.current[index - 1]?.focus();
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pasted) return;
+    const newDigits = ["", "", "", "", "", ""];
+    pasted.split("").forEach((ch, idx) => {
+      newDigits[idx] = ch;
+    });
+    setOtpDigits(newDigits);
+    setEmailOtpCode(pasted);
+    const focusIdx = Math.min(pasted.length, 5);
+    otpRefs.current[focusIdx]?.focus();
+    if (pasted.length === 6) {
+      verifyEmailOtp(pasted);
+    }
+  };
+
+  // Date of Birth DD/MM/YYYY mask formatter
+  const handleDobChange = (e) => {
+    let val = e.target.value.replace(/\D/g, "");
+    if (val.length > 8) val = val.slice(0, 8);
+    if (val.length >= 5) {
+      val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4)}`;
+    } else if (val.length >= 3) {
+      val = `${val.slice(0, 2)}/${val.slice(2)}`;
+    }
+    updateSection('personal', 'dob', val);
   };
 
   // Location & Map Helpers
@@ -856,17 +958,17 @@ export function OwnerSetupPage() {
                 }}
               >
                 <div className={cn(
-                  "h-10 w-10 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors relative bg-background",
-                  isCompleted && !isFlagged ? "border-primary text-primary" : "",
-                  isCurrent && !isFlagged ? "border-primary bg-primary text-primary-foreground" : "",
+                  "h-10 w-10 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors relative bg-transparent",
+                  isCompleted && !isFlagged ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "",
+                  isCurrent && !isFlagged ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent" : "",
                   !isCompleted && !isCurrent && !isFlagged ? "border-border text-muted-foreground" : "",
                   isFlagged ? "border-rose-500 text-rose-500" : ""
                 )}>
-                  {isCompleted && !isCurrent && !isFlagged ? <Check className="h-5 w-5" /> :
+                  {isCompleted && !isCurrent && !isFlagged ? <Check className="h-5 w-5 stroke-[2.5]" /> :
                     isFlagged ? <AlertTriangle className="h-5 w-5" /> :
                       <StepIcon className="h-5 w-5" />}
 
-                  {isCurrent && <div className="absolute -inset-1 rounded-full border border-primary/30 animate-ping" />}
+                  {isCurrent && <div className="absolute -inset-1 rounded-full border border-emerald-500/30 animate-ping" />}
                 </div>
                 <div className="flex-1">
                   <p className={cn(
@@ -927,12 +1029,13 @@ export function OwnerSetupPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
-            className="border border-border/50 bg-card/40 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-sm mb-8"
+            className="mb-8"
           >
             {/* STEP 1: PERSONAL DETAILS & EMAIL OTP VERIFICATION */}
             {currentStep === 1 && (
               <div className="space-y-4">
-                <div className="space-y-1.5">
+                {/* Full Name with compact width */}
+                <div className="space-y-1.5 max-w-md">
                   <Label htmlFor="fullName" className="text-xs font-semibold">Full Name (As per ID) *</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
@@ -947,8 +1050,8 @@ export function OwnerSetupPage() {
                   </div>
                 </div>
 
-                {/* EMAIL ADDRESS WITH LIVE OTP VERIFICATION */}
-                <div className="space-y-1.5">
+                {/* EMAIL ADDRESS & OTP TRIGGER BUTTON */}
+                <div className="space-y-1.5 max-w-md">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="email" className="text-xs font-semibold">Email Address *</Label>
                     {emailVerified && (
@@ -958,6 +1061,8 @@ export function OwnerSetupPage() {
                           setEmailVerified(false);
                           setEmailOtpSent(false);
                           setEmailOtpCode("");
+                          setOtpDigits(["", "", "", "", "", ""]);
+                          setShowOtpModal(false);
                           setEmailExistsError("");
                           toast.info("Email unlocked. You can now edit your email address and verify with OTP.");
                         }}
@@ -967,14 +1072,14 @@ export function OwnerSetupPage() {
                       </button>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 min-w-0">
                       <Mail className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
                       <Input
                         id="email"
                         type="email"
                         disabled={emailVerified}
-                        placeholder="Enter your business/personal email"
+                        placeholder="Enter your email"
                         className={cn(
                           "pl-10 h-10 rounded-xl text-sm",
                           emailVerified ? "bg-muted/40 text-foreground/80 cursor-default" : "bg-background",
@@ -985,54 +1090,52 @@ export function OwnerSetupPage() {
                         required
                       />
                     </div>
+
                     {!emailVerified && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={
-                          !(formData.personal?.email || "").includes("@") ||
-                          Boolean(emailExistsError) ||
-                          isSendingEmailOtp ||
-                          (emailOtpSent && resendCountdown > 0)
-                        }
-                        onClick={sendEmailOtp}
-                        className={cn(
-                          "h-10 px-4 rounded-xl border text-xs font-bold shrink-0 transition-all cursor-pointer",
-                          emailOtpSent && resendCountdown === 0
-                            ? "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
-                            : "border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary dark:text-white"
-                        )}
-                      >
-                        {isSendingEmailOtp
-                          ? "Sending..."
-                          : emailOtpSent
-                            ? resendCountdown > 0
-                              ? `Resend (${resendCountdown}s)`
-                              : "Resend OTP"
-                            : "Send OTP"}
-                      </Button>
-                    )}
-                    {emailVerified && (
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <div className="h-10 px-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 text-xs font-bold">
-                          <Check className="h-4 w-4 stroke-[3]" /> Verified
-                        </div>
+                        {emailOtpSent && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowOtpModal(true)}
+                            className="h-10 px-3 rounded-xl border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 text-xs font-bold shrink-0 transition-all cursor-pointer shadow-none"
+                          >
+                            Enter Code
+                          </Button>
+                        )}
                         <Button
                           type="button"
                           variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEmailVerified(false);
-                            setEmailOtpSent(false);
-                            setEmailOtpCode("");
-                            setEmailExistsError("");
-                            toast.info("Email unlocked. You can now edit your email address.");
-                          }}
-                          className="h-10 px-3 rounded-xl border-border hover:bg-muted text-xs font-semibold cursor-pointer"
-                          title="Change email"
+                          disabled={
+                            !(formData.personal?.email || "").includes("@") ||
+                            Boolean(emailExistsError) ||
+                            isSendingEmailOtp ||
+                            (emailOtpSent && resendCountdown > 0)
+                          }
+                          onClick={sendEmailOtp}
+                          className={cn(
+                            "h-10 px-3.5 rounded-xl border text-xs font-bold shrink-0 transition-all cursor-pointer bg-transparent shadow-none",
+                            emailOtpSent && resendCountdown === 0
+                              ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20"
+                              : "border-border text-foreground hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400"
+                          )}
                         >
-                          Change
+                          {isSendingEmailOtp
+                            ? "Sending..."
+                            : emailOtpSent
+                              ? resendCountdown > 0
+                                ? `Resend (${resendCountdown}s)`
+                                : "Resend OTP"
+                              : "Send OTP"}
                         </Button>
+                      </div>
+                    )}
+
+                    {emailVerified && (
+                      <div className="flex items-center shrink-0">
+                        <div className="h-10 px-3.5 rounded-xl bg-transparent border border-emerald-500 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 text-xs font-bold">
+                          <Check className="h-4 w-4 stroke-[3]" /> Verified
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1044,58 +1147,6 @@ export function OwnerSetupPage() {
                     </div>
                   )}
                 </div>
-
-                {/* OTP INPUT SECTION */}
-                {emailOtpSent && !emailVerified && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-1.5 bg-emerald-500/5 border border-emerald-500/20 p-3.5 rounded-xl"
-                  >
-                    <Label htmlFor="otp" className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      Enter 6-Digit Verification Code
-                    </Label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
-                        <Input
-                          id="otp"
-                          type="text"
-                          maxLength={6}
-                          placeholder="******"
-                          className="pl-10 h-10 rounded-xl font-mono text-center tracking-[0.25em] text-sm"
-                          value={emailOtpCode}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setEmailOtpCode(val);
-                            if (val.trim().length === 6) {
-                              verifyEmailOtp(val.trim());
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              if (emailOtpCode.trim().length === 6) {
-                                verifyEmailOtp(emailOtpCode.trim());
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        disabled={emailOtpCode.trim().length !== 6}
-                        onClick={() => verifyEmailOtp(emailOtpCode)}
-                        className="h-10 px-4 rounded-xl border border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold shrink-0 cursor-pointer"
-                      >
-                        Verify Code
-                      </Button>
-                    </div>
-                    {emailOtpError && (
-                      <p className="text-xs text-rose-500 font-medium pt-1">{emailOtpError}</p>
-                    )}
-                  </motion.div>
-                )}
 
                 {/* PASSWORD & CONFIRM PASSWORD */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
@@ -1140,6 +1191,7 @@ export function OwnerSetupPage() {
                   </div>
                 </div>
 
+                {/* PHONE NUMBER & DATE OF BIRTH (DD/MM/YYYY) & GENDER */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">Phone Number</Label>
@@ -1154,12 +1206,17 @@ export function OwnerSetupPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold">Date of Birth</Label>
-                      <Input
-                        type="date"
-                        value={formData.personal?.dob || ""}
-                        onChange={(e) => updateSection('personal', 'dob', e.target.value)}
-                        className="h-10 rounded-xl text-sm"
-                      />
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          placeholder="DD/MM/YYYY"
+                          maxLength={10}
+                          value={formData.personal?.dob || ""}
+                          onChange={handleDobChange}
+                          className="h-10 rounded-xl text-sm pr-8 font-mono"
+                        />
+                        <Calendar className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold">Gender</Label>
@@ -1739,17 +1796,118 @@ export function OwnerSetupPage() {
                 </Button>
               ) : (
                 <Button
+                  variant="outline"
                   onClick={handleSubmit}
                   disabled={!termsAccepted}
-                  className="rounded-full px-8 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="rounded-full px-8 border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-bold shadow-none"
                 >
-                  Submit Profile <Check className="h-4 w-4 ml-2" />
+                  Submit Profile <Check className="h-4 w-4 ml-2 stroke-[2.5]" />
                 </Button>
               )}
             </div>
           </motion.div>
         </div>
       </div>
+
+      {/* 6-DIGIT OTP VERIFICATION POPUP MODAL (IMAGE 4 STYLE) */}
+      <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
+        <DialogContent className="sm:max-w-md p-6 bg-card border border-border/70 rounded-3xl shadow-2xl">
+          <div className="space-y-5">
+            {/* Header with Icon + Title + Email */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-emerald-400 flex items-center justify-center font-black text-xl shadow-sm shrink-0 border border-zinc-700/50">
+                  <Plus className="w-5 h-5 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-foreground tracking-tight">
+                    Verify to continue
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[220px] sm:max-w-[280px]">
+                    Code sent to <span className="font-medium text-foreground">{formData.personal?.email || "your email"}</span>
+                  </p>
+                </div>
+              </div>
+              {emailVerified && (
+                <div className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-extrabold flex items-center gap-1 shrink-0 animate-in fade-in">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" /> VERIFIED
+                </div>
+              )}
+            </div>
+
+            {/* 6 Individual Digit Input Boxes */}
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5 py-2">
+              {otpDigits.map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => (otpRefs.current[idx] = el)}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                  onPaste={handleOtpPaste}
+                  className={cn(
+                    "w-11 h-13 sm:w-12 sm:h-14 rounded-xl text-center text-xl sm:text-2xl font-black font-mono transition-all outline-none",
+                    "bg-muted/40 text-foreground",
+                    digit
+                      ? "border-2 border-emerald-500 bg-emerald-500/5 shadow-xs"
+                      : "border border-border/80 focus:border-2 focus:border-emerald-500 focus:bg-background"
+                  )}
+                />
+              ))}
+            </div>
+
+            {/* Security Banner (Exact from Image 4) */}
+            <div className="flex items-center gap-2.5 p-3 rounded-2xl bg-rose-500/5 border border-rose-500/15 text-rose-600 dark:text-rose-400 text-xs font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+              <span className="leading-tight">Fake numbers & burner emails — blocked automatically</span>
+            </div>
+
+            {emailOtpError && (
+              <p className="text-xs text-rose-500 font-semibold text-center animate-in fade-in">
+                {emailOtpError}
+              </p>
+            )}
+
+            {/* Action Verify Button - Outline with Green Border */}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={otpDigits.join("").length !== 6 || isVerifyingOtp || emailVerified}
+              onClick={() => verifyEmailOtp(otpDigits.join(""))}
+              className="w-full h-11 rounded-xl border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 bg-transparent hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 text-sm font-bold cursor-pointer transition-all shadow-none"
+            >
+              {isVerifyingOtp ? (
+                <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</span>
+              ) : emailVerified ? (
+                <span className="flex items-center gap-1.5"><Check className="w-4 h-4 stroke-[3]" /> Verified!</span>
+              ) : (
+                "Verify Code"
+              )}
+            </Button>
+
+            {/* Resend Link */}
+            <div className="text-center text-xs text-muted-foreground">
+              Didn't receive code?{" "}
+              {resendCountdown > 0 ? (
+                <span className="font-semibold text-foreground">Resend in {resendCountdown}s</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={sendEmailOtp}
+                  disabled={isSendingEmailOtp}
+                  className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
+                >
+                  {isSendingEmailOtp ? "Sending..." : "Resend OTP"}
+                </button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

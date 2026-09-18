@@ -1323,7 +1323,7 @@ export function VenueDetails() {
                         type="text"
                         value={reviewAuthor}
                         onChange={(e) => setReviewAuthor(e.target.value)}
-                        placeholder="Your Name (e.g. Rahul Sharma)"
+                        placeholder="Enter your name"
                         className={cn(
                           "w-full h-10 px-3 rounded-xl border text-xs font-medium outline-none transition-all",
                           isDark

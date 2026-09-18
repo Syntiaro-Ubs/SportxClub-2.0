@@ -257,16 +257,16 @@ export function AdminTurfs() {
           <form onSubmit={handleCreateTurf} className="space-y-4 py-2">
             <div>
               <Label>Turf Name</Label>
-              <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Green Field Arena" />
+              <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter turf name" />
             </div>
             <div>
               <Label>Location / Address</Label>
-              <Input required value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Andheri West, Mumbai" />
+              <Input required value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="Enter address or area" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Sports Offered</Label>
-                <Input value={formData.sport_type} onChange={(e) => setFormData({ ...formData, sport_type: e.target.value })} placeholder="Football, Cricket" />
+                <Input value={formData.sport_type} onChange={(e) => setFormData({ ...formData, sport_type: e.target.value })} placeholder="Enter sports offered" />
               </div>
               <div>
                 <Label>Price / Hour (₹)</Label>
@@ -276,11 +276,11 @@ export function AdminTurfs() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Owner Name</Label>
-                <Input value={formData.owner_name} onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })} placeholder="Rajesh Mehta" />
+                <Input value={formData.owner_name} onChange={(e) => setFormData({ ...formData, owner_name: e.target.value })} placeholder="Enter owner name" />
               </div>
               <div>
                 <Label>Owner Phone</Label>
-                <Input value={formData.owner_phone} onChange={(e) => setFormData({ ...formData, owner_phone: e.target.value })} placeholder="+91 9820012345" />
+                <Input value={formData.owner_phone} onChange={(e) => setFormData({ ...formData, owner_phone: e.target.value })} placeholder="Enter owner phone" />
               </div>
             </div>
             <div>

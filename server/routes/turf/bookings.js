@@ -1,6 +1,6 @@
 import express from "express";
 import { getPool } from "../../db.js";
-import { sendBookingEmails } from "../../services/booking-email-service.js";
+import { sendBookingEmails, sendCancellationEmails } from "../../services/booking-email-service.js";
 import { authenticateToken, requireRole, optionalAuth } from "../../middleware/auth.js";
 
 const router = express.Router();
@@ -110,6 +110,11 @@ router.put("/:id/status", authenticateToken, requireRole(["admin", "super admin"
 
     await pool.query("UPDATE bookings SET status = ? WHERE id = ?", [status, id]);
     const [updated] = await pool.query("SELECT * FROM bookings WHERE id = ?", [id]);
+
+    if (String(status).toLowerCase() === "cancelled" && updated.length > 0) {
+      sendCancellationEmails(id, updated[0]).catch((e) => console.error("[Booking Cancel Mail Error]:", e.message));
+    }
+
     return res.json({ success: true, data: updated[0] });
   } catch (err) {
     console.error("Update Booking Status Error:", err);

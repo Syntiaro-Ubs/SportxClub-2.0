@@ -488,21 +488,22 @@ export function LoginPage() {
 
               <Button
                 type="submit"
+                variant="outline"
                 disabled={isSubmitting || !isFormValid()}
                 className={cn(
-                  "w-full h-10 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer mt-3",
+                  "w-full h-10 rounded-lg border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer mt-3",
                   (!isFormValid() || isSubmitting) && "opacity-60 cursor-not-allowed"
                 )}
               >
                 {isSubmitting ? (
                   <div className="flex items-center gap-2">
-                    <span className="h-4 w-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    <span className="h-4 w-4 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
                     <span>Signing in...</span>
                   </div>
                 ) : (
                   <>
                     <span>{loginType === "owner" ? "Login to Turf Owner Portal" : "Login to SportX"}</span>
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </>
                 )}
               </Button>
@@ -792,7 +793,7 @@ export function LoginPage() {
                 <Input
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
-                  placeholder="e.g. rahul@example.com or 9876543210"
+                  placeholder="Enter registered email or mobile number"
                   className="h-10 text-xs rounded-xl"
                   required
                 />

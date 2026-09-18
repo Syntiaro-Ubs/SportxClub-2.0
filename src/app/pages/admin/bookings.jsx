@@ -222,16 +222,16 @@ export function AdminBookings() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>User Name</Label>
-                <Input required value={formData.user_name} onChange={(e) => setFormData({ ...formData, user_name: e.target.value })} placeholder="Rahul Sharma" />
+                <Input required value={formData.user_name} onChange={(e) => setFormData({ ...formData, user_name: e.target.value })} placeholder="Enter user name" />
               </div>
               <div>
                 <Label>User Email</Label>
-                <Input type="email" value={formData.user_email} onChange={(e) => setFormData({ ...formData, user_email: e.target.value })} placeholder="rahul@example.com" />
+                <Input type="email" value={formData.user_email} onChange={(e) => setFormData({ ...formData, user_email: e.target.value })} placeholder="Enter user email" />
               </div>
             </div>
             <div>
               <Label>Turf Name</Label>
-              <Input required value={formData.turf_name} onChange={(e) => setFormData({ ...formData, turf_name: e.target.value })} placeholder="Green Turf Arena" />
+              <Input required value={formData.turf_name} onChange={(e) => setFormData({ ...formData, turf_name: e.target.value })} placeholder="Enter turf name" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

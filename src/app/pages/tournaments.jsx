@@ -511,7 +511,7 @@ export function Tournaments() {
                         <Input
                           value={newTournament.organizerTeamName}
                           onChange={(e) => setNewTournament({ ...newTournament, organizerTeamName: e.target.value })}
-                          placeholder="e.g. Host Warriors"
+                          placeholder="Enter team name"
                           className="rounded-xl h-9 text-xs bg-muted/20"
                         />
                       </div>
@@ -520,7 +520,7 @@ export function Tournaments() {
                         <Input
                           value={newTournament.organizerCaptainName}
                           onChange={(e) => setNewTournament({ ...newTournament, organizerCaptainName: e.target.value })}
-                          placeholder="Captain Name"
+                          placeholder="Enter captain name"
                           className="rounded-xl h-9 text-xs bg-muted/20"
                         />
                       </div>
@@ -576,7 +576,7 @@ export function Tournaments() {
                 required
                 value={joinForm.teamName}
                 onChange={(e) => setJoinForm({ ...joinForm, teamName: e.target.value })}
-                placeholder="e.g. Mumbai Strikers"
+                placeholder="Enter team name"
                 className="rounded-xl h-10 text-xs bg-muted/30"
               />
             </div>
@@ -587,7 +587,7 @@ export function Tournaments() {
                 required
                 value={joinForm.captainName}
                 onChange={(e) => setJoinForm({ ...joinForm, captainName: e.target.value })}
-                placeholder="e.g. Rohit Sharma"
+                placeholder="Enter captain full name"
                 className="rounded-xl h-10 text-xs bg-muted/30"
               />
             </div>

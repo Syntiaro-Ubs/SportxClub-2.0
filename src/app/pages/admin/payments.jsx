@@ -208,7 +208,7 @@ export function AdminPayments() {
           <form onSubmit={handleCreatePayment} className="space-y-4 py-2">
             <div>
               <Label>User Name</Label>
-              <Input required value={formData.user_name} onChange={(e) => setFormData({ ...formData, user_name: e.target.value })} placeholder="Rahul Sharma" />
+              <Input required value={formData.user_name} onChange={(e) => setFormData({ ...formData, user_name: e.target.value })} placeholder="Enter user name" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

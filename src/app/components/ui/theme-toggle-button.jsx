@@ -26,7 +26,7 @@ export function ThemeToggleButton({
       {isDark ? (
         <Sun className="h-5 w-5 transition-transform duration-300 ease-out group-hover:scale-125 group-hover:rotate-12 text-foreground group-hover:text-amber-500" />
       ) : (
-        <Moon className="h-5 w-5 transition-transform duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 text-foreground group-hover:text-emerald-500" />
+        <Moon className="h-5 w-5 transition-transform duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
       )}
     </Button>
   );

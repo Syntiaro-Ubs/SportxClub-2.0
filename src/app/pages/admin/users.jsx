@@ -305,7 +305,7 @@ export function AdminUsers() {
                 required
                 value={formData.full_name}
                 onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                placeholder="e.g. John Doe"
+                placeholder="Enter full name"
               />
             </div>
             <div>
@@ -315,7 +315,7 @@ export function AdminUsers() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="e.g. john@example.com"
+                placeholder="Enter email address"
               />
             </div>
             <div>
@@ -333,7 +333,7 @@ export function AdminUsers() {
                 <Input
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+91 9876543210"
+                  placeholder="Enter phone number"
                 />
               </div>
               <div>
@@ -341,7 +341,7 @@ export function AdminUsers() {
                 <Input
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Mumbai"
+                  placeholder="Enter city"
                 />
               </div>
             </div>
