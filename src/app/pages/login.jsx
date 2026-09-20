@@ -399,11 +399,11 @@ export function LoginPage() {
           <div className="space-y-3 pt-1">
             <div className="space-y-0.5 mb-2">
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-tight">
-                {loginType === "owner" ? "Turf Owner Login" : "Player Login"}
+                {loginType === "owner" ? "Turf Owner & Staff Login" : "Player Login"}
               </h1>
               <p className="text-xs text-muted-foreground pt-1">
                 {loginType === "owner"
-                  ? "Enter your credentials below to access your Turf Owner dashboard."
+                  ? "Enter your credentials below to access your Turf Owner or Staff dashboard."
                   : "Enter your credentials below to access your player profile & bookings."}
               </p>
             </div>
@@ -411,7 +411,7 @@ export function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-[12px] font-medium text-foreground">
-                  {loginType === "owner" ? "Email or Turf Owner ID" : "Email Address, Phone or Username"}
+                  {loginType === "owner" ? "Email, Turf Owner ID or Staff ID" : "Email Address, Phone or Username"}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
@@ -419,7 +419,7 @@ export function LoginPage() {
                     id="email"
                     name="email"
                     type="text"
-                    placeholder={loginType === "owner" ? "Enter your email or Turf Owner ID" : "Enter your email or phone"}
+                    placeholder={loginType === "owner" ? "Enter your email, Owner ID, or Staff ID" : "Enter your email or phone"}
                     className="pl-11 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
@@ -502,7 +502,7 @@ export function LoginPage() {
                   </div>
                 ) : (
                   <>
-                    <span>{loginType === "owner" ? "Login to Turf Owner Portal" : "Login to SportX"}</span>
+                    <span>{loginType === "owner" ? "Login to Turf Owner & Staff Portal" : "Login to SportX"}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </>
                 )}

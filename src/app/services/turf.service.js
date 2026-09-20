@@ -68,8 +68,8 @@ export const turfService = {
         location: data.location || "Location",
         sport_type: data.sportType || data.sport_type || "Football",
         price_per_hour: Number(data.price || data.price_per_hour || 1200),
-        rating: Number(data.rating || 4.8),
-        reviews: Number(data.reviews || data.reviews_count || 25),
+        rating: Number(data.rating !== undefined && data.rating !== null ? data.rating : 0),
+        reviews: Number(data.reviews !== undefined && data.reviews !== null ? data.reviews : 0),
         status: data.status || "Active",
         owner_name: data.owner_name || activeUser.fullName || activeUser.name || "Owner",
         owner_email: data.owner_email || data.email || activeUser.email || "",
@@ -121,6 +121,18 @@ export const turfService = {
         payload.amenities = Array.isArray(data.amenities) ? JSON.stringify(data.amenities) : data.amenities;
       }
       if (data.rules !== undefined) payload.rules = data.rules;
+      if (data.opening_time !== undefined || data.openingTime !== undefined) payload.opening_time = data.opening_time || data.openingTime;
+      if (data.closing_time !== undefined || data.closingTime !== undefined) payload.closing_time = data.closing_time || data.closingTime;
+      if (data.slot_duration !== undefined || data.slotDuration !== undefined) payload.slot_duration = Number(data.slot_duration || data.slotDuration || 60);
+      if (data.peak_start_time !== undefined || data.peakStartTime !== undefined) payload.peak_start_time = data.peak_start_time || data.peakStartTime;
+      if (data.peak_end_time !== undefined || data.peakEndTime !== undefined) payload.peak_end_time = data.peak_end_time || data.peakEndTime;
+      if (data.peak_price !== undefined || data.peakPrice !== undefined) {
+        payload.peak_price = (data.peak_price || data.peakPrice) ? Number(data.peak_price || data.peakPrice) : null;
+      }
+      if (data.operational_days !== undefined || data.operationalDays !== undefined) {
+        const days = data.operational_days || data.operationalDays;
+        payload.operational_days = Array.isArray(days) ? days.join(",") : days;
+      }
       if (data.display_order !== undefined) payload.display_order = Number(data.display_order);
       if (data.all_display_order !== undefined) payload.all_display_order = Number(data.all_display_order);
 

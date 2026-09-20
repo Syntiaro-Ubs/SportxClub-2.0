@@ -101,16 +101,17 @@ const getBookingDetailsMock = (time) => {
 };
 
 // Format time range e.g. "06:00", durationHours = 2 -> "06:00 am - 08:00 am"
-const formatTimeRange = (time, durationHours = 1) => {
-  if (!time) return "";
-  const startHour = parseInt(time.split(':')[0], 10);
-  const startPeriod = startHour >= 12 ? 'pm' : 'am';
-  const start12 = startHour > 12 ? startHour - 12 : (startHour === 0 ? 12 : startHour);
+const formatTimeRange = (time, durationHours = 1, rawHour = null) => {
+  if (!time && rawHour === null) return "";
+  const startHour = rawHour !== null ? rawHour : parseInt(String(time).split(':')[0], 10);
+  const startH24 = startHour % 24;
+  const startPeriod = (startH24 >= 12 && startH24 < 24) ? 'pm' : 'am';
+  const start12 = startH24 % 12 === 0 ? 12 : startH24 % 12;
 
   const totalEndHours = startHour + (durationHours || 1);
-  const endHourRaw = totalEndHours % 24;
-  const endPeriod = (totalEndHours >= 12 && totalEndHours < 24) || totalEndHours >= 36 ? 'pm' : 'am';
-  const end12 = endHourRaw > 12 ? endHourRaw - 12 : (endHourRaw === 0 ? 12 : endHourRaw);
+  const endH24 = totalEndHours % 24;
+  const endPeriod = (endH24 >= 12 && endH24 < 24) ? 'pm' : 'am';
+  const end12 = endH24 % 12 === 0 ? 12 : endH24 % 12;
 
   return `${start12.toString().padStart(2, '0')}:00 ${startPeriod} - ${end12.toString().padStart(2, '0')}:00 ${endPeriod}`;
 };
@@ -207,9 +208,9 @@ export function TimeSlots() {
   const [selectedTurfId, setSelectedTurfId] = useState("");
   const [selectedLegendFilter, setSelectedLegendFilter] = useState("all"); // 'all', 'Available', 'Booked', 'Maintenance'
 
-  // Manual Booking State
+  // Manual Booking & Multi-Slot Selection State
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [selectedSlotForBooking, setSelectedSlotForBooking] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState([]); // Array of { turfId, turfName, turfLocation, turfSport, time, displayTime, price, duration, slot, slotIdx }
   const [playHours, setPlayHours] = useState(1);
   const [hoveredSlotInfo, setHoveredSlotInfo] = useState(null);
   const [selectedDurationOption, setSelectedDurationOption] = useState("1"); // "1", "2", "3", "custom"
@@ -283,60 +284,101 @@ export function TimeSlots() {
             return matchesTurf && isActiveBooking && matchesDate;
           });
 
+          const isToday = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
+          const currentLiveHour = new Date().getHours();
+
+          const parseHour = (str, fallback) => {
+            if (!str) return fallback;
+            const match = str.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+            if (!match) return fallback;
+            let h = parseInt(match[1], 10);
+            const period = match[3] ? match[3].toLowerCase() : (str.toLowerCase().includes("pm") ? "pm" : "am");
+            if (period === "pm" && h < 12) h += 12;
+            if (period === "am" && h === 12) h = 0;
+            return h;
+          };
+
+          const turfOpenHour = parseHour(t.opening_time, 6);
+          let turfCloseHour = parseHour(t.closing_time, 23);
+          if (turfCloseHour <= turfOpenHour) {
+            turfCloseHour += 24; // Handle post-midnight closing like 03:00 AM (= 27)
+          }
+
+          const startHour = isToday ? Math.max(turfOpenHour, currentLiveHour) : turfOpenHour;
+
           const slots = [];
-          for (let i = 6; i <= 22; i++) {
-            const timeStr = `${i.toString().padStart(2, '0')}:00`;
+          for (let i = startHour; i < turfCloseHour; i++) {
+            const h24 = i % 24;
+            const timeStr = `${h24.toString().padStart(2, '0')}:00`;
 
             const matchingBooking = turfBookings.find((b) => {
               const bTime = String(b.time_slot || b.slot_time || b.slotTime || b.time || "").toLowerCase().trim();
               if (!bTime) return false;
 
-              // Check time range e.g. "03:00 pm - 04:00 pm", "12:00 pm - 01:00 pm", "03:00 pm - 04:00 pm (1 hr)"
-              const rangeMatch = bTime.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
-              if (rangeMatch) {
-                let startH = parseInt(rangeMatch[1], 10);
-                let startPeriod = rangeMatch[3] ? rangeMatch[3].toLowerCase() : null;
-                let endH = parseInt(rangeMatch[4], 10);
-                let endPeriod = rangeMatch[6] ? rangeMatch[6].toLowerCase() : null;
+              // Check comma-separated multi-slots e.g. "05:00 pm - 06:00 pm, 06:00 pm - 07:00 pm"
+              const timeParts = bTime.split(",").map(p => p.trim()).filter(Boolean);
 
-                if (!endPeriod) {
-                  if (startPeriod) endPeriod = startPeriod;
-                  else endPeriod = (bTime.includes("pm") && !bTime.includes("am")) ? "pm" : "am";
+              return timeParts.some(part => {
+                // Check time range e.g. "03:00 pm - 04:00 pm", "12:00 pm - 01:00 pm", "03:00 pm - 04:00 pm (1 hr)"
+                const rangeMatch = part.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+                if (rangeMatch) {
+                  let startH = parseInt(rangeMatch[1], 10);
+                  let startPeriod = rangeMatch[3] ? rangeMatch[3].toLowerCase() : null;
+                  let endH = parseInt(rangeMatch[4], 10);
+                  let endPeriod = rangeMatch[6] ? rangeMatch[6].toLowerCase() : null;
+
+                  if (!endPeriod) {
+                    if (startPeriod) endPeriod = startPeriod;
+                    else endPeriod = (part.includes("pm") && !part.includes("am")) ? "pm" : "am";
+                  }
+                  if (!startPeriod) {
+                    if (endPeriod === "pm" && startH <= endH) startPeriod = "pm";
+                    else if (endPeriod === "pm" && startH > endH) startPeriod = "am";
+                    else startPeriod = "am";
+                  }
+
+                  if (startPeriod === "pm" && startH < 12) startH += 12;
+                  if (startPeriod === "am" && startH === 12) startH = 0;
+
+                  if (endPeriod === "pm" && endH < 12) endH += 12;
+                  if (endPeriod === "am" && endH === 12) endH = 0;
+
+                  if (endH <= startH) endH += 24;
+
+                  const hNorm = i;
+                  const hMod = i % 24;
+                  return (hNorm >= startH && hNorm < endH) || (hMod >= startH && hMod < endH);
                 }
-                if (!startPeriod) {
-                  if (endPeriod === "pm" && startH <= endH) startPeriod = "pm";
-                  else if (endPeriod === "pm" && startH > endH) startPeriod = "am";
-                  else startPeriod = "am";
+
+                // Single hour exact match (e.g. "15:00")
+                const singleMatch = part.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+                if (singleMatch) {
+                  let startH = parseInt(singleMatch[1], 10);
+                  const period = singleMatch[3] ? singleMatch[3].toLowerCase() : (part.includes("pm") ? "pm" : "am");
+                  if (period === "pm" && startH < 12) startH += 12;
+                  if (period === "am" && startH === 12) startH = 0;
+                  return (i % 24) === startH;
                 }
 
-                if (startPeriod === "pm" && startH < 12) startH += 12;
-                if (startPeriod === "am" && startH === 12) startH = 0;
-
-                if (endPeriod === "pm" && endH < 12) endH += 12;
-                if (endPeriod === "am" && endH === 12) endH = 0;
-
-                if (endH <= startH) endH += 24;
-
-                return i >= startH && i < endH;
-              }
-
-              // Single hour exact match (e.g. "15:00")
-              const singleMatch = bTime.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
-              if (singleMatch) {
-                let startH = parseInt(singleMatch[1], 10);
-                const period = singleMatch[3] ? singleMatch[3].toLowerCase() : (bTime.includes("pm") ? "pm" : "am");
-                if (period === "pm" && startH < 12) startH += 12;
-                if (period === "am" && startH === 12) startH = 0;
-                return i === startH;
-              }
-
-              return false;
+                return false;
+              });
             });
+
+            const isPeak = t.peak_start_time ? (() => {
+              const peakH = parseHour(t.peak_start_time, 17);
+              return i >= peakH;
+            })() : (i >= 17);
+
+            const baseRate = Number(t.price_per_hour || t.price || 1200);
+            const slotPrice = isPeak
+              ? (t.peak_price && Number(t.peak_price) > 0 ? Number(t.peak_price) : Math.round(baseRate * 1.15))
+              : baseRate;
 
             slots.push({
               time: timeStr,
+              rawHour: i,
               status: matchingBooking ? "Booked" : "Available",
-              price: i >= 17 ? Math.round((Number(t.price_per_hour || t.price || 1200)) * 1.1) : Number(t.price_per_hour || t.price || 800),
+              price: slotPrice,
               bookingDetails: matchingBooking ? {
                 id: matchingBooking.id,
                 name: matchingBooking.user_name || matchingBooking.customerName || "Customer",
@@ -405,7 +447,7 @@ export function TimeSlots() {
     return turfs.filter(t => t.id === selectedTurfId);
   }, [turfs, selectedTurfId]);
 
-  const handleSlotClick = (turf, slot, slotIdx) => {
+  const handleSlotClick = (turf, slot, slotIdx, displayTime, itemPrice, itemDuration = 1) => {
     if (turf.status === 'Closed') return;
 
     if (slot.status === 'Booked' || slot.status === 'Maintenance') {
@@ -414,24 +456,28 @@ export function TimeSlots() {
       return;
     }
 
-    let canBook = true;
-    for (let i = 0; i < playHours; i++) {
-      if (slotIdx + i >= turf.slots.length || turf.slots[slotIdx + i].status !== 'Available') {
-        canBook = false;
-        break;
+    // Toggle multi-slot selection
+    setSelectedSlots(prev => {
+      const exists = prev.some(s => s.turfId === turf.id && s.time === slot.time);
+      if (exists) {
+        return prev.filter(s => !(s.turfId === turf.id && s.time === slot.time));
+      } else {
+        const sameTurfOnly = prev.filter(s => s.turfId === turf.id);
+        const newSlot = {
+          turfId: turf.id,
+          turfName: turf.name,
+          turfLocation: turf.location,
+          turfSport: turf.sportType,
+          time: slot.time,
+          displayTime: displayTime || formatTimeRange(slot.time, itemDuration || playHours),
+          price: itemPrice || slot.price,
+          duration: itemDuration || playHours,
+          slot,
+          slotIdx
+        };
+        return [...sameTurfOnly, newSlot].sort((a, b) => a.time.localeCompare(b.time));
       }
-    }
-
-    if (!canBook) {
-      toast.error(`Cannot book/block ${playHours} consecutive hour(s) from this slot. Please select another slot or reduce duration.`);
-      return;
-    }
-
-    setSelectedSlotForBooking({ turf, slot, slotIdx });
-    setBookingDetails({ customerName: "", customerPhone: "", paymentMethod: "cash" });
-    setBookingActionType("booking"); // Default to walk-in booking
-    setIsBookingModalOpen(true);
-    setHoveredSlotInfo(null);
+    });
   };
 
   const handleSlotMouseEnter = (turf, slotIdx) => {
@@ -451,38 +497,29 @@ export function TimeSlots() {
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedSlotForBooking) return;
-
-    const { turf, slot, slotIdx } = selectedSlotForBooking;
-
-    let totalPrice = 0;
-    const isBlocking = bookingActionType === "block";
-
-    for (let i = 0; i < playHours; i++) {
-      if (turf.slots[slotIdx + i]) {
-        totalPrice += turf.slots[slotIdx + i].price;
-      }
+    if (selectedSlots.length === 0) {
+      toast.error("Please select at least one time slot.");
+      return;
     }
 
-    const endTime = turf.slots[slotIdx + playHours - 1]?.time || slot.time;
-    const endHour = parseInt(endTime.split(':')[0]) + 1;
-
-    const formatTime12 = (hour) => {
-      const h = hour % 24;
-      const period = h >= 12 ? 'pm' : 'am';
-      const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-      return `${h12.toString().padStart(2, '0')}:00 ${period}`;
+    const firstSlot = selectedSlots[0];
+    const turf = turfs.find(t => t.id === firstSlot.turfId) || {
+      id: firstSlot.turfId,
+      name: firstSlot.turfName,
+      location: firstSlot.turfLocation,
+      sportType: firstSlot.turfSport
     };
 
-    const startHour = parseInt(slot.time.split(':')[0]);
-    const passTimeStr = `${formatTime12(startHour)} - ${formatTime12(endHour)}`;
+    const totalPrice = selectedSlots.reduce((sum, s) => sum + s.price, 0);
+    const isBlocking = bookingActionType === "block";
+    const passTimeStr = selectedSlots.map(s => s.displayTime).join(", ");
 
     try {
       const bookingPayload = {
         booking_code: `SX-${Date.now().toString().slice(-6)}`,
         turf_id: turf.id,
         turf_name: turf.name,
-        user_name: bookingDetails.customerName || "Walk-in Customer",
+        user_name: bookingDetails.customerName || (isBlocking ? "Maintenance Hold" : "Walk-in Customer"),
         user_phone: bookingDetails.customerPhone || "+91 98765 43210",
         user_email: "walkin@example.com",
         sport: turf.sportType || "Football",
@@ -504,17 +541,20 @@ export function TimeSlots() {
         turfName: turf.name,
         location: turf.location,
         price: totalPrice,
-        customerName: bookingDetails.customerName || "Walk-in Customer",
+        slotCount: selectedSlots.length,
+        customerName: bookingDetails.customerName || (isBlocking ? "Maintenance Hold" : "Walk-in Customer"),
         customerPhone: bookingDetails.customerPhone || "N/A",
         paymentMethod: bookingDetails.paymentMethod
       };
 
       setGeneratedPass(pass);
       setIsBookingModalOpen(false);
+      setSelectedSlots([]);
       setIsPassModalOpen(true);
 
       window.dispatchEvent(new Event("storage"));
-      toast.success(`Booking created successfully for ${pass.customerName}!`);
+      window.dispatchEvent(new Event("turf_updated"));
+      toast.success(`Booking created successfully for ${pass.customerName} (${selectedSlots.length} slot${selectedSlots.length > 1 ? "s" : ""})!`);
     } catch (err) {
       console.error("Failed to save booking to MySQL", err);
       toast.error("Failed to save booking. Please try again.");
@@ -884,9 +924,60 @@ export function TimeSlots() {
 
 
 
+                  {/* Inline Multi-Slot Selection Action Bar inside Slot Section */}
+                  {(() => {
+                    const turfSelectedSlots = selectedSlots.filter(s => s.turfId === turf.id);
+                    if (turfSelectedSlots.length === 0) return null;
+                    const totalSelectedPrice = turfSelectedSlots.reduce((sum, s) => sum + s.price, 0);
+
+                    return (
+                      <div className="mb-3 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent flex flex-wrap items-center justify-between gap-2 transition-all">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+                          <span className="text-xs font-bold text-foreground">
+                            {turfSelectedSlots.length} {turfSelectedSlots.length === 1 ? 'Slot' : 'Slots'} Selected
+                          </span>
+                          <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                            (₹{totalSelectedPrice})
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSlots([])}
+                            className="px-2.5 py-1 text-xs font-bold text-muted-foreground hover:text-foreground bg-transparent border border-slate-300 dark:border-slate-700 hover:border-slate-400 rounded-lg transition-all cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBookingActionType("block");
+                              setIsBookingModalOpen(true);
+                            }}
+                            className="px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 bg-transparent border border-amber-500/50 hover:bg-amber-500/10 rounded-lg transition-all cursor-pointer"
+                          >
+                            Block Hold ({turfSelectedSlots.length})
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setBookingActionType("booking");
+                              setBookingDetails({ customerName: "", customerPhone: "", paymentMethod: "cash" });
+                              setIsBookingModalOpen(true);
+                            }}
+                            className="px-3.5 py-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-transparent border border-emerald-500/60 hover:bg-emerald-500/10 rounded-lg transition-all cursor-pointer"
+                          >
+                            Book Walk-In ({turfSelectedSlots.length})
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Grid Slots - Dynamically Grouped by Selected Duration */}
-                  <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-2.5 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''
-                    }`}>
+                  <div className={`space-y-3 transition-all duration-300 ${turf.status === 'Closed' ? 'opacity-20 pointer-events-none' : ''}`}>
                     {(() => {
                       const effectiveSlots = turf.slots.map(rawSlot => getEffectiveSlot(turf.id, rawSlot));
                       const groupedSlots = [];
@@ -916,30 +1007,56 @@ export function TimeSlots() {
                           duration: actualDur,
                           price: totalPrice,
                           status: groupStatus,
-                          displayTime: formatTimeRange(firstSlot.time, actualDur)
+                          displayTime: formatTimeRange(firstSlot.time, actualDur, firstSlot.rawHour)
                         });
                       }
 
-                      return groupedSlots.map((item, idx) => {
+                      if (groupedSlots.length === 0) {
+                        return (
+                          <div className="py-10 text-center px-4 rounded-xl border border-dashed border-border/60 bg-transparent">
+                            <Clock className="w-6 h-6 text-muted-foreground/60 mx-auto mb-2" />
+                            <p className="text-xs font-bold text-muted-foreground">
+                              All time slots for today have ended. Select another date from the calendar to view upcoming slots.
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      const renderGroupedSlot = (item, idx) => {
                         const { slot, startIndex, displayTime, status, price } = item;
                         const isFilteredOut = selectedLegendFilter !== "all" && status !== selectedLegendFilter;
 
                         // Available Grouped Slot
                         if (status === 'Available') {
+                          const isSelected = selectedSlots.some(s => s.turfId === turf.id && s.time === slot.time);
+
                           return (
                             <div
                               key={idx}
-                              onClick={() => handleSlotClick(turf, slot, startIndex)}
+                              onClick={() => handleSlotClick(turf, slot, startIndex, displayTime, price, item.duration)}
                               onMouseEnter={() => handleSlotMouseEnter(turf, startIndex)}
                               onMouseLeave={handleSlotMouseLeave}
-                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-emerald-500/40 bg-emerald-500/[0.02] dark:bg-emerald-500/5 hover:bg-emerald-500/5 hover:border-emerald-500 hover:shadow-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                              className={`relative p-2 sm:p-2.5 rounded-xl border bg-transparent flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-150 min-h-[68px] w-full max-w-full overflow-hidden ${
+                                isSelected
+                                  ? 'border-2 border-emerald-500 ring-1 ring-emerald-500/30'
+                                  : 'border-slate-300 dark:border-slate-700 hover:border-emerald-500/70'
+                              } ${isFilteredOut ? 'opacity-20 border-transparent pointer-events-none' : ''}`}
                             >
+                              {isSelected && (
+                                <span className="absolute top-1 right-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                  ✓
+                                </span>
+                              )}
                               <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{displayTime}</span>
                               <div className="flex items-center justify-center gap-1.5 w-full">
-                                <span className="text-[9px] uppercase tracking-wider font-extrabold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                                  Available {playHours > 1 ? `(${item.duration}h)` : ''}
+                                <span className={`text-[9px] uppercase tracking-wider font-extrabold whitespace-nowrap ${
+                                  isSelected ? 'text-emerald-600 dark:text-emerald-400' : 'text-emerald-600 dark:text-emerald-400'
+                                }`}>
+                                  {isSelected ? '✓ Selected' : `Available ${playHours > 1 ? `(${item.duration}h)` : ''}`}
                                 </span>
-                                <span className="text-[9px] font-mono font-black px-1.5 py-0.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">₹{price}</span>
+                                <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full border border-slate-300 dark:border-slate-700 bg-transparent text-foreground shrink-0">
+                                  ₹{price}
+                                </span>
                               </div>
                             </div>
                           );
@@ -947,17 +1064,16 @@ export function TimeSlots() {
 
                         // Booked Grouped Slot
                         if (status === 'Booked') {
-                          const bDetails = getBookingDetailsMock(slot.time);
                           return (
                             <div
                               key={idx}
                               onClick={() => handleSlotClick(turf, slot, startIndex)}
-                              className={`relative group/slot p-2 sm:p-2.5 rounded-xl border-2 border-rose-500/40 bg-rose-500/[0.02] dark:bg-rose-500/5 hover:bg-rose-500/5 hover:border-rose-500 hover:shadow-md flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                              className={`relative group/slot p-2 sm:p-2.5 rounded-xl border border-rose-500/50 hover:border-rose-500 bg-transparent flex flex-col items-center justify-center gap-1 cursor-pointer transition-all duration-150 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent pointer-events-none' : ''}`}
                             >
                               <span className="font-extrabold text-[10px] sm:text-xs text-foreground tracking-tight truncate max-w-full text-center px-0.5">{displayTime}</span>
                               <div className="flex items-center justify-center gap-1.5 w-full">
                                 <span className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500 whitespace-nowrap">BOOKED</span>
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center gap-1 shrink-0">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-rose-500/40 bg-transparent text-rose-600 dark:text-rose-400 flex items-center gap-1 shrink-0">
                                   <Lock className="w-2.5 h-2.5 text-rose-500 shrink-0" /> <span className="truncate">Release</span>
                                 </span>
                               </div>
@@ -971,7 +1087,7 @@ export function TimeSlots() {
                             <div
                               key={idx}
                               onClick={() => handleSlotClick(turf, slot, startIndex)}
-                              className={`p-2 sm:p-2.5 rounded-xl border-2 border-amber-500/40 bg-amber-500/[0.02] dark:bg-amber-500/5 hover:bg-amber-500/5 hover:border-amber-500 hover:shadow-md flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-200 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent shadow-none scale-[0.96] pointer-events-none' : ''}`}
+                              className={`p-2 sm:p-2.5 rounded-xl border border-amber-500/50 hover:border-amber-500 bg-transparent flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-150 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent pointer-events-none' : ''}`}
                             >
                               <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
                               <span className="font-extrabold text-[10px] sm:text-xs text-foreground text-center tracking-tight truncate max-w-full px-0.5">{displayTime}</span>
@@ -981,7 +1097,37 @@ export function TimeSlots() {
                         }
 
                         return null;
-                      });
+                      };
+
+                      const sameDayGrouped = groupedSlots.filter(item => (item.slot?.rawHour ?? 0) < 24);
+                      const nextDayGrouped = groupedSlots.filter(item => (item.slot?.rawHour ?? 0) >= 24);
+
+                      return (
+                        <div className="space-y-3">
+                          {/* Same Day Slots Grid */}
+                          {sameDayGrouped.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-2.5">
+                              {sameDayGrouped.map((item, idx) => renderGroupedSlot(item, idx))}
+                            </div>
+                          )}
+
+                          {/* Tomorrow / Post-Midnight Slots Divider & Grid */}
+                          {nextDayGrouped.length > 0 && (
+                            <div className="space-y-2.5 pt-1">
+                              <div className="relative flex py-2 items-center">
+                                <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+                                <span className="flex-shrink mx-3 text-[11px] font-extrabold px-3.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1.5 uppercase tracking-wider shadow-2xs">
+                                  <span>🌙</span> Tomorrow (Post-Midnight Slots)
+                                </span>
+                                <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-2.5">
+                                {nextDayGrouped.map((item, idx) => renderGroupedSlot(item, `next-${idx}`))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
                     })()}
                   </div>
                 </CardContent>
@@ -1001,24 +1147,26 @@ export function TimeSlots() {
           Manual Booking Dialog Modal
           ------------------------------------------------------------- */}
       <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
-        <DialogContent className="sm:max-w-[425px] !rounded-none border border-border/40 bg-popover shadow-xl">
+        <DialogContent className="sm:max-w-[460px] !rounded-2xl border border-border/40 bg-popover shadow-xl">
           <DialogHeader>
             <DialogTitle className="font-bold flex items-center gap-2">
               <Ticket className="h-5 w-5 text-primary" />
-              Manual Booking
+              {bookingActionType === "block" ? "Block Turf Slots" : "Walk-in Slot Booking"}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Configure slots for walk-in players. This updates database records immediately.
+              {bookingActionType === "block"
+                ? "Hold selected slots for maintenance or private event."
+                : "Confirm booking and generate customer entry voucher."}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleBookingSubmit} className="space-y-4 py-3">
+          <form onSubmit={handleBookingSubmit} className="space-y-4 py-2">
             {/* Toggle Action Type */}
-            <div className="grid grid-cols-2 gap-2 bg-muted/40 p-1 rounded-none border border-border/40 mb-4 max-w-[280px] mx-auto">
+            <div className="grid grid-cols-2 gap-2 bg-muted/40 p-1 rounded-xl border border-border/40 mb-3 max-w-[300px] mx-auto">
               <button
                 type="button"
                 onClick={() => setBookingActionType("booking")}
-                className={`py-2 text-xs font-bold rounded-none transition-all cursor-pointer border-2 ${bookingActionType === "booking"
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${bookingActionType === "booking"
                   ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent font-extrabold shadow-xs"
                   : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
@@ -1028,7 +1176,7 @@ export function TimeSlots() {
               <button
                 type="button"
                 onClick={() => setBookingActionType("block")}
-                className={`py-2 text-xs font-bold rounded-none transition-all cursor-pointer border-2 ${bookingActionType === "block"
+                className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${bookingActionType === "block"
                   ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-transparent font-extrabold shadow-xs"
                   : "border-transparent text-muted-foreground hover:bg-muted/40"
                   }`}
@@ -1037,10 +1185,31 @@ export function TimeSlots() {
               </button>
             </div>
 
+            {/* Selected Slots Summary Badges */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-foreground">
+                  Selected Slots ({selectedSlots.length})
+                </Label>
+                <span className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                  {selectedSlots[0]?.turfName}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-muted/30 border border-border/50 max-h-28 overflow-y-auto">
+                {selectedSlots.map((s, idx) => (
+                  <Badge key={idx} variant="outline" className="text-[11px] font-bold py-1 px-2.5 flex items-center gap-1.5 bg-background border-border shadow-2xs">
+                    <Clock className="w-3 h-3 text-emerald-500 shrink-0" />
+                    <span>{s.displayTime}</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-extrabold ml-1">₹{s.price}</span>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
             {bookingActionType === "block" ? (
               <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500 text-xs font-medium space-y-1.5">
                 <p className="font-bold flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Block Facility Hold</p>
-                <p>This will temporarily mark the selected slot(s) for the next {playHours} hour(s) as Maintenance/Blocked. Regular players won't be able to book it.</p>
+                <p>This will temporarily mark {selectedSlots.length} selected slot(s) as Maintenance/Blocked. Regular players won't be able to book them.</p>
               </div>
             ) : (
               <>
@@ -1085,20 +1254,16 @@ export function TimeSlots() {
               </>
             )}
 
-            <div className="flex justify-between items-center bg-muted/40 p-4 rounded-xl border border-border/50 mt-4 shadow-inner">
-              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Total Amount Due</span>
+            <div className="flex justify-between items-center bg-muted/40 p-4 rounded-xl border border-border/50 mt-3 shadow-inner">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
+                Total Amount Due ({selectedSlots.length} {selectedSlots.length === 1 ? 'Slot' : 'Slots'})
+              </span>
               <span className="text-lg font-black text-primary">
-                ₹{selectedSlotForBooking && Array.from({ length: playHours }).reduce((sum, _, i) => {
-                  const idx = selectedSlotForBooking.slotIdx + i;
-                  if (idx < selectedSlotForBooking.turf.slots.length) {
-                    return sum + selectedSlotForBooking.turf.slots[idx].price;
-                  }
-                  return sum;
-                }, 0)}
+                ₹{selectedSlots.reduce((sum, s) => sum + s.price, 0)}
               </span>
             </div>
 
-            <DialogFooter className="mt-6 gap-2">
+            <DialogFooter className="mt-5 gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -1164,7 +1329,9 @@ export function TimeSlots() {
                   <p className="font-bold text-xs text-foreground">{generatedPass?.date}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">Time</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold mb-0.5">
+                    Time {generatedPass?.slotCount > 1 ? `(${generatedPass.slotCount} Slots)` : ''}
+                  </p>
                   <p className="font-bold text-xs text-primary">{generatedPass?.time}</p>
                 </div>
               </div>

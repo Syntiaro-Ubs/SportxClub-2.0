@@ -121,6 +121,53 @@ const CANCEL_REASONS = [
   { id: "other", label: "Other reason (specify below)", icon: "✏️" },
 ];
 
+const SPORT_EMOJIS = {
+  Football: "⚽",
+  Cricket: "🏏",
+  "Box Cricket": "🏏",
+  Badminton: "🏸",
+  Tennis: "🎾",
+  "Lawn Tennis": "🎾",
+  Basketball: "🏀",
+  Swimming: "🏊",
+  Volleyball: "🏐",
+  "Table Tennis": "🏓",
+  Pickleball: "🏓",
+  Padel: "🎾",
+  Squash: "🎾",
+  "Box MMA": "🥊",
+  Boxing: "🥊",
+  Kabaddi: "🤼",
+  Hockey: "🏑",
+  Golf: "⛳",
+  Rugby: "🏉",
+  Baseball: "⚾",
+  Bowling: "🎳",
+  Archery: "🏹",
+  Skating: "⛸️",
+  Pool: "🎱",
+  Billiards: "🎱",
+  Snooker: "🎱",
+  Gym: "🏋️",
+  Yoga: "🧘",
+  "Multi-sport": "🏆",
+  Multisport: "🏆",
+  Athletics: "🏃",
+};
+
+const getSportEmoji = (sportName) => {
+  if (!sportName) return "🏅";
+  const clean = String(sportName).trim();
+  if (SPORT_EMOJIS[clean]) return SPORT_EMOJIS[clean];
+  const lower = clean.toLowerCase();
+  for (const [key, emoji] of Object.entries(SPORT_EMOJIS)) {
+    if (lower === key.toLowerCase() || lower.includes(key.toLowerCase()) || key.toLowerCase().includes(lower)) {
+      return emoji;
+    }
+  }
+  return "🏅";
+};
+
 export function VenueDetails() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
@@ -142,6 +189,24 @@ export function VenueDetails() {
 
   const passedVenue = location.state?.venue;
   const [fetchedTurf, setFetchedTurf] = useState(null);
+  const [cmsSports, setCmsSports] = useState([]);
+
+  useEffect(() => {
+    async function loadCmsSports() {
+      try {
+        const res = await fetch("/api/cms/sports");
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            setCmsSports(json.data.filter((s) => s.is_active !== 0));
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load CMS sports:", e);
+      }
+    }
+    loadCmsSports();
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -176,36 +241,168 @@ export function VenueDetails() {
       description: activeVenueData.description || `${activeVenueData.name} is built for fast discovery and confident booking.`,
       image: activeVenueData.image_url || activeVenueData.image || "/assets/venues/turf-1.webp",
       gallery: (() => {
+        let list = [];
         if (activeVenueData.gallery) {
-          if (Array.isArray(activeVenueData.gallery)) {
-            const clean = activeVenueData.gallery.filter(Boolean);
-            if (clean.length > 0) return clean;
-          }
-          if (typeof activeVenueData.gallery === "string") {
-            try {
-              const p = JSON.parse(activeVenueData.gallery);
-              if (Array.isArray(p) && p.length > 0) return p.filter(Boolean);
-            } catch {}
+          try {
+            let parsed = activeVenueData.gallery;
+            while (typeof parsed === "string") {
+              try {
+                parsed = JSON.parse(parsed);
+              } catch {
+                break;
+              }
+            }
+            if (Array.isArray(parsed)) {
+              list = parsed
+                .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+                .filter(Boolean);
+            }
+          } catch (e) {
+            console.error("Gallery parse error:", e);
           }
         }
-        if (activeVenueData.images && Array.isArray(activeVenueData.images) && activeVenueData.images.length > 0) {
-          return activeVenueData.images.filter(Boolean);
+        if (list.length === 0 && activeVenueData.images && Array.isArray(activeVenueData.images)) {
+          list = activeVenueData.images
+            .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+            .filter(Boolean);
         }
         const main = activeVenueData.image_url || activeVenueData.image;
-        return main ? [main] : [];
+        if (main && !list.includes(main)) {
+          list = [main, ...list];
+        }
+        return list.length > 0 ? list : (main ? [main] : ["/assets/venues/turf-1.webp"]);
       })(),
       area: activeVenueData.area || "8,500 Sq. Ft. (120ft × 70ft)",
       id: activeVenueData.id || id,
+      opening_time: activeVenueData.opening_time || "06:00 AM",
+      closing_time: activeVenueData.closing_time || "11:00 PM",
+      slot_duration: activeVenueData.slot_duration ? Number(activeVenueData.slot_duration) : 60,
+      operational_days: activeVenueData.operational_days || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      openingHour: (() => {
+        if (activeVenueData.opening_time) {
+          const match = activeVenueData.opening_time.match(/(\d{1,2})/);
+          if (match) {
+            let h = parseInt(match[1], 10);
+            if (activeVenueData.opening_time.toLowerCase().includes("pm") && h < 12) h += 12;
+            if (activeVenueData.opening_time.toLowerCase().includes("am") && h === 12) h = 0;
+            return h;
+          }
+        }
+        return activeVenueData.openingHour || 6;
+      })(),
+      closingHour: (() => {
+        let openH = 6;
+        if (activeVenueData.opening_time) {
+          const mOpen = activeVenueData.opening_time.match(/(\d{1,2})/);
+          if (mOpen) {
+            openH = parseInt(mOpen[1], 10);
+            if (activeVenueData.opening_time.toLowerCase().includes("pm") && openH < 12) openH += 12;
+            if (activeVenueData.opening_time.toLowerCase().includes("am") && openH === 12) openH = 0;
+          }
+        }
+        if (activeVenueData.closing_time) {
+          const match = activeVenueData.closing_time.match(/(\d{1,2})/);
+          if (match) {
+            let h = parseInt(match[1], 10);
+            if (activeVenueData.closing_time.toLowerCase().includes("pm") && h < 12) h += 12;
+            if (activeVenueData.closing_time.toLowerCase().includes("am") && h === 12) h = 0;
+            if (h <= openH) h += 24; // Handle late-night closing e.g. 03:00 AM (= 27)
+            return h;
+          }
+        }
+        return activeVenueData.closingHour || 23;
+      })(),
     }
     : { ...defaultVenue, id };
+
+  const venueSportsList = useMemo(() => {
+    if (!activeVenueData) return [];
+    const raw = activeVenueData.sports || activeVenueData.sport_type || activeVenueData.sportType || activeVenueData.sport || "";
+    let list = [];
+    if (Array.isArray(raw)) {
+      list = raw;
+    } else if (typeof raw === "string" && raw.trim()) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch {
+        list = raw.split(/[,•;/]+/).map((s) => s.trim()).filter(Boolean);
+      }
+    }
+    return list.map((s) => (typeof s === "object" && s !== null ? (s.name || s.label || "") : String(s)).trim()).filter(Boolean);
+  }, [activeVenueData]);
+
+  const availableSports = useMemo(() => {
+    const result = [];
+    const seen = new Set();
+
+    const addSport = (name, icon = null) => {
+      if (!name) return;
+      const cleanName = String(name).trim();
+      if (!cleanName) return;
+      const key = cleanName.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push({
+        name: cleanName,
+        icon: icon || getSportEmoji(cleanName),
+      });
+    };
+
+    // 1. Venue specific sports first
+    venueSportsList.forEach((s) => {
+      if (s.toLowerCase() === "multi-sport" || s.toLowerCase() === "multisport") {
+        ["Football", "Cricket", "Badminton", "Basketball", "Tennis", "Volleyball", "Table Tennis"].forEach((m) => addSport(m));
+      } else {
+        addSport(s);
+      }
+    });
+
+    // 2. CMS sports from database
+    cmsSports.forEach((s) => addSport(s.name, s.icon));
+
+    // 3. Platform default sports to ensure full dynamic coverage
+    const defaultSports = [
+      "Football",
+      "Cricket",
+      "Box Cricket",
+      "Badminton",
+      "Tennis",
+      "Basketball",
+      "Swimming",
+      "Volleyball",
+      "Table Tennis",
+      "Pickleball",
+      "Padel",
+      "Squash",
+      "Box MMA",
+      "Kabaddi",
+      "Hockey",
+    ];
+    defaultSports.forEach((s) => addSport(s));
+
+    return result;
+  }, [venueSportsList, cmsSports]);
 
   const [selectedSport, setSelectedSport] = useState(
     venue.sport || "Football",
   );
+
+  useEffect(() => {
+    if (venueSportsList.length > 0) {
+      const firstSport = venueSportsList[0];
+      const initial = (firstSport.toLowerCase() === "multi-sport" || firstSport.toLowerCase() === "multisport")
+        ? "Football"
+        : firstSport;
+      setSelectedSport(initial);
+    } else if (venue.sport && venue.sport !== "Multi-sport") {
+      setSelectedSport(venue.sport);
+    }
+  }, [venueSportsList, venue.sport]);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0],
   );
-  const [startTime, setStartTime] = useState(null);
+  const [selectedSlots, setSelectedSlots] = useState([]); // Array of startHour numbers, e.g. [17, 18]
   const [playHours, setPlayHours] = useState(1);
   const [tempDuration, setTempDuration] = useState("1");
 
@@ -647,19 +844,13 @@ export function VenueDetails() {
       return isSameVenue && isNotCancelled && matchesDate;
     });
 
-    for (let h = venueOpeningHour; h < venueClosingHour; h++) {
-      const formatHour = (hourNum) => {
-        let h12 = hourNum % 12;
-        if (h12 === 0) h12 = 12;
-        const ampm = hourNum >= 12 && hourNum < 24 ? "PM" : "AM";
-        return `${String(h12).padStart(2, "0")}:00 ${ampm}`;
-      };
-
-      let matchingBkg = venueBookings.find((b) => {
-        const bTime = String(b.time_slot || b.slot_time || b.slotTime || b.time || "").toLowerCase().trim();
-        if (!bTime) return false;
-
-        const rangeMatch = bTime.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    const isHourInTimeSlotString = (h, timeStr) => {
+      if (!timeStr) return false;
+      const segments = String(timeStr).split(/[,;]+/);
+      for (const seg of segments) {
+        const s = seg.trim();
+        if (!s) continue;
+        const rangeMatch = s.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*-\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
         if (rangeMatch) {
           let startH = parseInt(rangeMatch[1], 10);
           let startPeriod = rangeMatch[3] ? rangeMatch[3].toLowerCase() : null;
@@ -668,7 +859,7 @@ export function VenueDetails() {
 
           if (!endPeriod) {
             if (startPeriod) endPeriod = startPeriod;
-            else endPeriod = (bTime.includes("pm") && !bTime.includes("am")) ? "pm" : "am";
+            else endPeriod = (s.toLowerCase().includes("pm") && !s.toLowerCase().includes("am")) ? "pm" : "am";
           }
           if (!startPeriod) {
             if (endPeriod === "pm" && startH <= endH) startPeriod = "pm";
@@ -684,19 +875,33 @@ export function VenueDetails() {
 
           if (endH <= startH) endH += 24;
 
-          return h >= startH && h < endH;
+          if (h >= startH && h < endH) return true;
         }
 
-        const singleMatch = bTime.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+        const singleMatch = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
         if (singleMatch) {
           let startH = parseInt(singleMatch[1], 10);
-          const period = singleMatch[3] ? singleMatch[3].toLowerCase() : (bTime.includes("pm") ? "pm" : "am");
+          const period = singleMatch[3] ? singleMatch[3].toLowerCase() : (s.toLowerCase().includes("pm") ? "pm" : "am");
           if (period === "pm" && startH < 12) startH += 12;
           if (period === "am" && startH === 12) startH = 0;
-          return h === startH;
+          if (h === startH) return true;
         }
+      }
+      return false;
+    };
 
-        return false;
+    for (let h = venueOpeningHour; h < venueClosingHour; h++) {
+      const formatHour = (hourNum) => {
+        const h24 = hourNum % 24;
+        let h12 = h24 % 12;
+        if (h12 === 0) h12 = 12;
+        const ampm = (h24 >= 12 && h24 < 24) ? "PM" : "AM";
+        return `${String(h12).padStart(2, "0")}:00 ${ampm}`;
+      };
+
+      let matchingBkg = venueBookings.find((b) => {
+        const bTime = String(b.time_slot || b.slot_time || b.slotTime || b.time || "").toLowerCase().trim();
+        return isHourInTimeSlotString(h, bTime);
       });
 
       if (cancelledSlots.includes(h)) {
@@ -734,11 +939,11 @@ export function VenueDetails() {
 
   const formatSlotRange = (startHour, hours) => {
     const formatHour = (h) => {
-      let hourNum = h % 12;
+      const h24 = h % 24;
+      let hourNum = h24 % 12;
       if (hourNum === 0) hourNum = 12;
-      const amPm = h >= 24 || h < 12 ? "AM" : "PM";
-      const displayHour = h === 24 ? "12" : hourNum.toString();
-      return `${displayHour.padStart(2, "0")}:00 ${amPm}`;
+      const amPm = (h24 >= 12 && h24 < 24) ? "PM" : "AM";
+      return `${String(hourNum).padStart(2, "0")}:00 ${amPm}`;
     };
     return `${formatHour(startHour)} - ${formatHour(startHour + hours)}`;
   };
@@ -776,33 +981,35 @@ export function VenueDetails() {
     return false;
   };
 
-  const isOutOfBounds = (startHour) => startHour + playHours > 23;
+  const isOutOfBounds = (startHour) => startHour + playHours > venueClosingHour;
 
-  const selectedStartHour = startTime ? getStartHour(startTime) : null;
-  const isSlotSelected = useMemo(() => {
-    if (selectedStartHour === null) return false;
-    const matchingSlot = timeSlots.find((s) => s.startHour === selectedStartHour);
-    if (!matchingSlot) return false;
-    const isBooked = !!matchingSlot.bookedBy && !cancelledSlots.includes(selectedStartHour);
-    const overlaps = isOverlapping(selectedStartHour);
-    const outOfBounds = isOutOfBounds(selectedStartHour);
-    return !isBooked && !overlaps && !outOfBounds;
-  }, [selectedStartHour, timeSlots, cancelledSlots, playHours]);
+  const handleToggleSlot = (slotHour) => {
+    setSelectedSlots((prev) => {
+      if (prev.includes(slotHour)) {
+        return prev.filter((h) => h !== slotHour);
+      } else {
+        if (playHours > 1) {
+          const filtered = prev.filter((h) => !((slotHour < h + playHours) && (slotHour + playHours > h)));
+          return [...filtered, slotHour].sort((a, b) => a - b);
+        }
+        return [...prev, slotHour].sort((a, b) => a - b);
+      }
+    });
+  };
+
+  const totalSlotPrice = useMemo(() => {
+    if (selectedSlots.length === 0) return 0;
+    return selectedSlots.reduce((sum, h) => sum + getSlotPrice(h, playHours), 0);
+  }, [selectedSlots, playHours, venue.price]);
+
+  const hasSelectedSlots = selectedSlots.length > 0;
 
   useEffect(() => {
-    if (startTime) {
-      const currentHour = getStartHour(startTime);
-      const isValid = currentHour !== null && timeSlots.some(
-        (s) =>
-          s.startHour === currentHour &&
-          (!s.bookedBy || cancelledSlots.includes(s.startHour)) &&
-          !isOverlapping(s.startHour) &&
-          !isOutOfBounds(s.startHour)
-      );
-      if (!isValid) {
-        setStartTime(null);
-      }
-    }
+    setSelectedSlots((prev) =>
+      prev.filter((h) =>
+        timeSlots.some((s) => s.startHour === h && (!s.bookedBy || cancelledSlots.includes(h)))
+      )
+    );
   }, [selectedDate, playHours, timeSlots, cancelledSlots]);
 
   const handleFavoriteClick = () => {
@@ -1026,29 +1233,28 @@ export function VenueDetails() {
                     </div>
                     <div
                       className={cn(
-                        "flex items-center gap-1 px-1 rounded-full",
-                        isDark
-                          ? "bg-transparent text-white"
-                          : "bg-transparent text-[#10B981]",
+                        "flex items-center gap-1.5 px-1 rounded-full",
+                        isDark ? "text-white" : "text-white"
                       )}
                     >
-                      <Star
-                        className={cn(
-                          "h-3.5 w-3.5 fill-current",
-                          isDark ? "text-white" : "text-[#10B981]",
-                        )}
-                      />
-                      <span className="font-bold">
-                        {totalVenueReviews > 0 ? averageVenueRating.toFixed(1) : (venue.rating ? Number(venue.rating).toFixed(1) : "0.0")}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-[10px]",
-                          isDark ? "text-white/80" : "text-white/80",
-                        )}
-                      >
-                        ({totalVenueReviews})
-                      </span>
+                      {totalVenueReviews > 0 ? (
+                        <>
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          <span className="font-bold text-white">
+                            {averageVenueRating.toFixed(1)}
+                          </span>
+                          <span className="text-[10px] text-white/80">
+                            ({totalVenueReviews})
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Star className="h-3.5 w-3.5 text-white/40" />
+                          <span className="text-xs font-semibold text-white/80">
+                            New (0 reviews)
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1225,35 +1431,30 @@ export function VenueDetails() {
                     Verified players who booked this venue
                   </p>
                 </div>
-                <div
-                  className={cn(
-                    "flex items-center gap-2 border px-3 py-1.5 rounded-2xl",
-                    isDark
-                      ? "bg-emerald-600/10 border-emerald-600/30"
-                      : "bg-emerald-50 border-emerald-200",
-                  )}
-                >
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-transparent">
                   <Star
                     className={cn(
-                      "h-4 w-4 fill-current",
-                      isDark ? "text-emerald-600" : "text-emerald-600",
+                      "h-3.5 w-3.5",
+                      totalVenueReviews > 0 ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-white/30",
                     )}
                   />
                   <span
                     className={cn(
                       "text-sm font-black",
-                      isDark ? "text-emerald-600" : "text-emerald-700",
+                      totalVenueReviews > 0
+                        ? (isDark ? "text-emerald-400" : "text-emerald-700")
+                        : (isDark ? "text-white/60" : "text-slate-500"),
                     )}
                   >
-                    {totalVenueReviews > 0 ? averageVenueRating.toFixed(1) : (venue.rating ? Number(venue.rating).toFixed(1) : "0.0")}
+                    {totalVenueReviews > 0 ? averageVenueRating.toFixed(1) : "0.0"}
                   </span>
                   <span
                     className={cn(
-                      "text-xs",
-                      isDark ? "text-white/60" : "text-slate-600",
+                      "text-xs font-semibold",
+                      isDark ? "text-white/60" : "text-slate-500",
                     )}
                   >
-                    ({totalVenueReviews})
+                    ({totalVenueReviews} {totalVenueReviews === 1 ? "review" : "reviews"})
                   </span>
                 </div>
               </div>
@@ -1691,12 +1892,26 @@ export function VenueDetails() {
                               : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
                           )}
                         >
-                          <SelectValue placeholder="Select Sport" />
+                          <SelectValue placeholder="Select Sport">
+                            <span className="truncate flex items-center gap-1.5 font-bold">
+                              <span className="shrink-0">{getSportEmoji(selectedSport)}</span>
+                              <span className="truncate">{selectedSport}</span>
+                            </span>
+                          </SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700">
-                          <SelectItem value="Football" className="text-sm font-medium py-2">⚽ Football</SelectItem>
-                          <SelectItem value="Cricket" className="text-sm font-medium py-2">🏏 Cricket</SelectItem>
-                          <SelectItem value="Basketball" className="text-sm font-medium py-2">🏀 Basketball</SelectItem>
+                        <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 max-h-60 overflow-y-auto z-50 p-1 shadow-2xl bg-white dark:bg-slate-900">
+                          {availableSports.map((sportItem) => (
+                            <SelectItem
+                              key={sportItem.name}
+                              value={sportItem.name}
+                              className="text-xs sm:text-sm font-semibold py-2 px-2.5 rounded-lg cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/40 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-base shrink-0">{sportItem.icon}</span>
+                                <span className="truncate">{sportItem.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1941,156 +2156,325 @@ export function VenueDetails() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
-                    {timeSlots.length === 0 ? (
-                      <div className="col-span-full py-8 text-center px-4 rounded-2xl border border-dashed border-border bg-muted/20">
-                        <p className="text-xs font-bold text-muted-foreground">
-                          ⏰ All time slots for today have passed. Please select Tomorrow or pick a custom date.
-                        </p>
-                      </div>
-                    ) : (
-                      (showAllSlots ? timeSlots : timeSlots.slice(0, 16)).map((slot) => {
-                        const slotHour = slot.startHour;
-                        const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
-                        const overlaps = isOverlapping(slotHour);
-                        const outOfBounds = isOutOfBounds(slotHour);
-                        const cannotSelect = isBooked || overlaps || outOfBounds;
-                        const isSelected = selectedStartHour !== null && slotHour === selectedStartHour;
-                        const slotPrice = getSlotPrice(slotHour, playHours);
+                  {timeSlots.length === 0 ? (
+                    <div className="py-8 text-center px-4 rounded-2xl border border-dashed border-border bg-muted/20">
+                      <p className="text-xs font-bold text-muted-foreground">
+                        ⏰ All time slots for today have passed. Please select Tomorrow or pick a custom date.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* Same Day / Today Slots */}
+                      {timeSlots.filter(s => s.startHour < 24).length > 0 && (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
+                          {timeSlots.filter(s => s.startHour < 24).map((slot) => {
+                            const slotHour = slot.startHour;
+                            const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
+                            const overlaps = isOverlapping(slotHour);
+                            const outOfBounds = isOutOfBounds(slotHour);
+                            const cannotSelect = isBooked || overlaps || outOfBounds;
+                            const isSelected = selectedSlots.includes(slotHour);
+                            const slotPrice = getSlotPrice(slotHour, playHours);
 
-                        // Only the user who booked this slot can cancel it
-                        const currentEmail = String(activePlayer?.email || localStorage.getItem("userEmail") || "").toLowerCase().trim();
-                        const currentName = String(activePlayer?.fullName || activePlayer?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
-                        const currentPhone = String(activePlayer?.phone || activePlayer?.phoneNumber || localStorage.getItem("userPhone") || "").replace(/\D/g, "");
-                        const currentUserId = activePlayer?.id;
+                            // Only the user who booked this slot can cancel it
+                            const currentEmail = String(activePlayer?.email || localStorage.getItem("userEmail") || "").toLowerCase().trim();
+                            const currentName = String(activePlayer?.fullName || activePlayer?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
+                            const currentPhone = String(activePlayer?.phone || activePlayer?.phoneNumber || localStorage.getItem("userPhone") || "").replace(/\D/g, "");
+                            const currentUserId = activePlayer?.id;
 
-                        const bookedEmail = String(slot.bookedByEmail || slot.booking?.user_email || "").toLowerCase().trim();
-                        const bookedName = String(slot.bookedBy || slot.booking?.user_name || "").toLowerCase().trim();
-                        const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
-                        const bookedUserId = slot.booking?.user_id;
+                            const bookedEmail = String(slot.bookedByEmail || slot.booking?.user_email || "").toLowerCase().trim();
+                            const bookedName = String(slot.bookedBy || slot.booking?.user_name || "").toLowerCase().trim();
+                            const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
+                            const bookedUserId = slot.booking?.user_id;
 
-                        const isMyBooking = isBooked && Boolean(
-                          (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
-                          (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
-                          (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
-                          (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName))) ||
-                          (sessionStorage.getItem("sportxclub_last_booking") && (() => {
-                            try {
-                              const lb = JSON.parse(sessionStorage.getItem("sportxclub_last_booking") || "{}");
-                              return (
-                                lb.venue === venue.name &&
-                                lb.date === selectedDate &&
-                                (lb.time === formatSlotRange(slotHour, playHours) || lb.time?.includes(formatHour(slotHour)))
-                              );
-                            } catch { return false; }
-                          })())
-                        );
+                            const isMyBooking = isBooked && Boolean(
+                              (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
+                              (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
+                              (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
+                              (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName))) ||
+                              (sessionStorage.getItem("sportxclub_last_booking") && (() => {
+                                try {
+                                  const lb = JSON.parse(sessionStorage.getItem("sportxclub_last_booking") || "{}");
+                                  return (
+                                    lb.venue === venue.name &&
+                                    lb.date === selectedDate &&
+                                    (lb.time === formatSlotRange(slotHour, playHours) || lb.time?.includes(formatHour(slotHour)))
+                                  );
+                                } catch { return false; }
+                              })())
+                            );
 
-                        return (
-                          <div
-                            key={slotHour}
-                            role="button"
-                            tabIndex={!cannotSelect ? 0 : -1}
-                            onClick={() => {
-                              if (cannotSelect) return;
-                              setStartTime(isSelected ? null : hourToTimeStr(slotHour));
-                            }}
-                            onKeyDown={(e) => {
-                              if (!cannotSelect && (e.key === "Enter" || e.key === " ")) {
-                                e.preventDefault();
-                                setStartTime(isSelected ? null : hourToTimeStr(slotHour));
-                              }
-                            }}
-                            className={cn(
-                              "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
-                              !cannotSelect ? "cursor-pointer" : "cursor-default",
-                              isSelected
-                                ? isDark
-                                  ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
-                                  : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
-                                : cannotSelect
-                                  ? isDark
-                                    ? "border-red-500/60 bg-red-500/10 opacity-70"
-                                    : "border-red-200 bg-red-50 text-red-700 opacity-70"
-                                  : isDark
-                                    ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
-                                    : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "text-xs font-bold",
-                                cannotSelect
-                                  ? isDark
-                                    ? "text-white"
-                                    : "text-red-400"
-                                  : isDark
-                                    ? "text-white"
-                                    : "text-slate-800",
-                              )}
-                            >
-                              {formatSlotRange(slotHour, playHours).replace(/ PM -| AM -/g, " -")}
-                            </span>
-
-                            {!cannotSelect && (
-                              <span
+                            return (
+                              <div
+                                key={slotHour}
+                                role="button"
+                                tabIndex={!cannotSelect ? 0 : -1}
+                                onClick={() => {
+                                  if (cannotSelect) return;
+                                  handleToggleSlot(slotHour);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (!cannotSelect && (e.key === "Enter" || e.key === " ")) {
+                                    e.preventDefault();
+                                    handleToggleSlot(slotHour);
+                                  }
+                                }}
                                 className={cn(
-                                  "text-[11px] font-black mt-0.5",
-                                  isDark
-                                    ? "text-white"
-                                    : "text-emerald-700",
+                                  "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
+                                  !cannotSelect ? "cursor-pointer" : "cursor-default",
+                                  isSelected
+                                    ? isDark
+                                      ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                                      : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
+                                    : cannotSelect
+                                      ? isDark
+                                        ? "border-red-500/60 bg-red-500/10 opacity-70"
+                                        : "border-red-200 bg-red-50 text-red-700 opacity-70"
+                                      : isDark
+                                        ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
+                                        : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
                                 )}
                               >
-                                <span className="rupee-symbol">₹</span>{slotPrice}
-                              </span>
-                            )}
+                                <span
+                                  className={cn(
+                                    "text-xs font-bold",
+                                    cannotSelect
+                                      ? isDark
+                                        ? "text-white"
+                                        : "text-red-400"
+                                      : isDark
+                                        ? "text-white"
+                                        : "text-slate-800",
+                                  )}
+                                >
+                                  {formatSlotRange(slotHour, playHours).replace(/ PM -| AM -/g, " -")}
+                                </span>
 
+                                {!cannotSelect && (
+                                  <span
+                                    className={cn(
+                                      "text-[11px] font-black mt-0.5",
+                                      isDark
+                                        ? "text-white"
+                                        : "text-emerald-700",
+                                    )}
+                                  >
+                                    <span className="rupee-symbol">₹</span>{slotPrice}
+                                  </span>
+                                )}
+
+                                <span
+                                  className={cn(
+                                    "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
+                                    isSelected
+                                      ? isDark
+                                        ? "text-white"
+                                        : "text-emerald-600"
+                                      : cannotSelect
+                                        ? isDark ? "text-white" : "text-red-500"
+                                        : isDark
+                                          ? "text-white"
+                                          : "text-emerald-600/70",
+                                  )}
+                                >
+                                  {cannotSelect ? (
+                                    <div className="flex flex-col items-center w-full">
+                                      <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
+                                      {isBooked && isMyBooking && (
+                                        <div className="flex flex-col items-center mt-1 w-full gap-0.5">
+                                          <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
+                                            Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
+                                          </span>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              e.preventDefault();
+                                              handleOpenCancelModal(slot);
+                                            }}
+                                            className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/35 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer shadow-xs border border-red-500/30 active:scale-95 mt-0.5 z-20"
+                                          >
+                                            CANCEL
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : isSelected ? (
+                                    "Selected ✓"
+                                  ) : (
+                                    "Available"
+                                  )}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Tomorrow (Post-Midnight Slots) Horizontal Line & Section */}
+                      {timeSlots.filter(s => s.startHour >= 24).length > 0 && (
+                        <div className="space-y-2 pt-1.5">
+                          <div className="relative flex py-2 items-center">
+                            <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
                             <span
                               className={cn(
-                                "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
-                                isSelected
-                                  ? isDark
-                                    ? "text-white"
-                                    : "text-emerald-600"
-                                  : cannotSelect
-                                    ? isDark ? "text-white" : "text-red-500"
-                                    : isDark
-                                      ? "text-white"
-                                      : "text-emerald-600/70",
+                                "flex-shrink mx-3 text-[11px] font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 uppercase tracking-wider shadow-2xs",
+                                isDark
+                                  ? "bg-indigo-950/70 text-indigo-300 border border-indigo-500/40"
+                                  : "bg-indigo-50 text-indigo-700 border border-indigo-200"
                               )}
                             >
-                              {cannotSelect ? (
-                                <div className="flex flex-col items-center w-full">
-                                  <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
-                                  {isBooked && isMyBooking && (
-                                    <div className="flex flex-col items-center mt-1 w-full gap-0.5">
-                                      <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
-                                        Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                          handleOpenCancelModal(slot);
-                                        }}
-                                        className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/35 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer shadow-xs border border-red-500/30 active:scale-95 mt-0.5 z-20"
-                                      >
-                                        CANCEL
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              ) : isSelected ? (
-                                "Selected ✓"
-                              ) : (
-                                "Available"
-                              )}
+                              <span>🌙</span> Tomorrow (Post-Midnight Slots)
                             </span>
+                            <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
                           </div>
-                        );
-                      }))}
-                  </div>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
+                            {timeSlots.filter(s => s.startHour >= 24).map((slot) => {
+                              const slotHour = slot.startHour;
+                              const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
+                              const overlaps = isOverlapping(slotHour);
+                              const outOfBounds = isOutOfBounds(slotHour);
+                              const cannotSelect = isBooked || overlaps || outOfBounds;
+                              const isSelected = selectedSlots.includes(slotHour);
+                              const slotPrice = getSlotPrice(slotHour, playHours);
+
+                              // Only the user who booked this slot can cancel it
+                              const currentEmail = String(activePlayer?.email || localStorage.getItem("userEmail") || "").toLowerCase().trim();
+                              const currentName = String(activePlayer?.fullName || activePlayer?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
+                              const currentPhone = String(activePlayer?.phone || activePlayer?.phoneNumber || localStorage.getItem("userPhone") || "").replace(/\D/g, "");
+                              const currentUserId = activePlayer?.id;
+
+                              const bookedEmail = String(slot.bookedByEmail || slot.booking?.user_email || "").toLowerCase().trim();
+                              const bookedName = String(slot.bookedBy || slot.booking?.user_name || "").toLowerCase().trim();
+                              const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
+                              const bookedUserId = slot.booking?.user_id;
+
+                              const isMyBooking = isBooked && Boolean(
+                                (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
+                                (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
+                                (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
+                                (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName))) ||
+                                (sessionStorage.getItem("sportxclub_last_booking") && (() => {
+                                  try {
+                                    const lb = JSON.parse(sessionStorage.getItem("sportxclub_last_booking") || "{}");
+                                    return (
+                                      lb.venue === venue.name &&
+                                      lb.date === selectedDate &&
+                                      (lb.time === formatSlotRange(slotHour, playHours) || lb.time?.includes(formatHour(slotHour)))
+                                    );
+                                  } catch { return false; }
+                                })())
+                              );
+
+                              return (
+                                <div
+                                  key={slotHour}
+                                  role="button"
+                                  tabIndex={!cannotSelect ? 0 : -1}
+                                  onClick={() => {
+                                    if (cannotSelect) return;
+                                    handleToggleSlot(slotHour);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (!cannotSelect && (e.key === "Enter" || e.key === " ")) {
+                                      e.preventDefault();
+                                      handleToggleSlot(slotHour);
+                                    }
+                                  }}
+                                  className={cn(
+                                    "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
+                                    !cannotSelect ? "cursor-pointer" : "cursor-default",
+                                    isSelected
+                                      ? isDark
+                                        ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
+                                        : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
+                                      : cannotSelect
+                                        ? isDark
+                                          ? "border-red-500/60 bg-red-500/10 opacity-70"
+                                          : "border-red-200 bg-red-50 text-red-700 opacity-70"
+                                        : isDark
+                                          ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
+                                          : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
+                                  )}
+                                >
+                                  <span
+                                    className={cn(
+                                      "text-xs font-bold",
+                                      cannotSelect
+                                        ? isDark
+                                          ? "text-white"
+                                          : "text-red-400"
+                                        : isDark
+                                          ? "text-white"
+                                          : "text-slate-800",
+                                    )}
+                                  >
+                                    {formatSlotRange(slotHour, playHours).replace(/ PM -| AM -/g, " -")}
+                                  </span>
+
+                                  {!cannotSelect && (
+                                    <span
+                                      className={cn(
+                                        "text-[11px] font-black mt-0.5",
+                                        isDark
+                                          ? "text-white"
+                                          : "text-emerald-700",
+                                      )}
+                                    >
+                                      <span className="rupee-symbol">₹</span>{slotPrice}
+                                    </span>
+                                  )}
+
+                                  <span
+                                    className={cn(
+                                      "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
+                                      isSelected
+                                        ? isDark
+                                          ? "text-white"
+                                          : "text-emerald-600"
+                                        : cannotSelect
+                                          ? isDark ? "text-white" : "text-red-500"
+                                          : isDark
+                                            ? "text-white"
+                                            : "text-emerald-600/70",
+                                    )}
+                                  >
+                                    {cannotSelect ? (
+                                      <div className="flex flex-col items-center w-full">
+                                        <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
+                                        {isBooked && isMyBooking && (
+                                          <div className="flex flex-col items-center mt-1 w-full gap-0.5">
+                                            <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
+                                              Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
+                                            </span>
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                                handleOpenCancelModal(slot);
+                                              }}
+                                              className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/35 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer shadow-xs border border-red-500/30 active:scale-95 mt-0.5 z-20"
+                                            >
+                                              CANCEL
+                                            </button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : isSelected ? (
+                                      "Selected ✓"
+                                    ) : (
+                                      "Available"
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {timeSlots.length > 16 && (
                     <div className="flex justify-end mt-2">
                       <button
@@ -2121,25 +2505,32 @@ export function VenueDetails() {
                       isDark ? "border-white/10" : "border-slate-200",
                     )}
                   >
-                    <span
-                      className={cn(
-                        "text-sm font-bold tracking-wider",
-                        isDark ? "text-white" : "text-slate-900",
+                    <div className="flex flex-col min-w-0 pr-2">
+                      <span
+                        className={cn(
+                          "text-sm font-bold tracking-wider",
+                          isDark ? "text-white" : "text-slate-900",
+                        )}
+                      >
+                        Total payable:
+                      </span>
+                      {selectedSlots.length > 0 && (
+                        <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 truncate">
+                          {selectedSlots.length} {selectedSlots.length === 1 ? "Slot" : "Slots"} Selected
+                        </span>
                       )}
-                    >
-                      Total payable:
-                    </span>
+                    </div>
                     <span
                       className={cn(
-                        "text-xl font-black",
-                        isSlotSelected
+                        "text-xl font-black shrink-0",
+                        hasSelectedSlots
                           ? isDark ? "text-white" : "text-emerald-600"
                           : isDark ? "text-white/40" : "text-slate-400",
                       )}
                     >
-                      {isSlotSelected ? (
+                      {hasSelectedSlots ? (
                         <>
-                          <span className="rupee-symbol">₹</span>{getSlotPrice(selectedStartHour, playHours)}
+                          <span className="rupee-symbol">₹</span>{totalSlotPrice}
                         </>
                       ) : (
                         <span className="text-sm font-semibold text-muted-foreground">
@@ -2148,9 +2539,9 @@ export function VenueDetails() {
                       )}
                     </span>
                   </div>
-                  {!isSlotSelected && (
+                  {!hasSelectedSlots && (
                     <p className="text-[11px] font-medium text-amber-500/90 dark:text-amber-400/90 flex items-center gap-1">
-                      <span>⚠️</span> Please select an available time slot
+                      <span>⚠️</span> Please select one or more available time slots
                     </p>
                   )}
                 </div>
@@ -2158,10 +2549,10 @@ export function VenueDetails() {
                 {/* CTA Button */}
                 <Button
                   variant="outline"
-                  disabled={!isSlotSelected}
+                  disabled={!hasSelectedSlots}
                   onClick={() => {
-                    if (!isSlotSelected || selectedStartHour === null) {
-                      toast.error("Please select an available time slot first.");
+                    if (!hasSelectedSlots) {
+                      toast.error("Please select at least one available time slot first.");
                       return;
                     }
                     if (!activePlayer && !currentUser) {
@@ -2169,8 +2560,7 @@ export function VenueDetails() {
                       navigate("/login");
                       return;
                     }
-                    const computedPrice = getSlotPrice(selectedStartHour, playHours);
-                    const formattedSlotTime = formatSlotRange(selectedStartHour, playHours);
+                    const formattedSlotTimes = selectedSlots.map((h) => formatSlotRange(h, playHours)).join(", ");
                     const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
                       ? venue.image
                       : asset("/venues/turf-1.webp");
@@ -2181,10 +2571,18 @@ export function VenueDetails() {
                       location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
                       sport: selectedSport,
                       date: selectedDate,
-                      time: formattedSlotTime,
-                      price: computedPrice,
+                      time: formattedSlotTimes,
+                      slots: selectedSlots.map((h) => ({
+                        startHour: h,
+                        time: formatSlotRange(h, playHours),
+                        price: getSlotPrice(h, playHours),
+                      })),
+                      slotCount: selectedSlots.length,
+                      price: totalSlotPrice,
+                      amount: totalSlotPrice,
                       userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
                       userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
+                      userPhone: activePlayer?.phone || activePlayer?.phoneNumber || currentUser?.phone || '9876543210',
                       venueId: venue.id,
                     };
 
@@ -2210,7 +2608,7 @@ export function VenueDetails() {
                   }}
                   className={cn(
                     "group h-11 w-fit px-6 ml-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 flex items-center justify-center select-none border-2",
-                    isSlotSelected
+                    hasSelectedSlots
                       ? isDark
                         ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97] cursor-pointer"
                         : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97] cursor-pointer"

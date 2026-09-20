@@ -281,14 +281,21 @@ export function VenueBooking() {
     return turfs.map((t) => {
       let galleryList = [];
       if (t.gallery) {
-        if (Array.isArray(t.gallery)) {
-          galleryList = t.gallery.filter(Boolean);
-        } else if (typeof t.gallery === "string") {
-          try {
-            const parsed = JSON.parse(t.gallery);
-            if (Array.isArray(parsed)) galleryList = parsed.filter(Boolean);
-          } catch {}
-        }
+        try {
+          let parsed = t.gallery;
+          while (typeof parsed === "string") {
+            try {
+              parsed = JSON.parse(parsed);
+            } catch {
+              break;
+            }
+          }
+          if (Array.isArray(parsed)) {
+            galleryList = parsed
+              .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+              .filter(Boolean);
+          }
+        } catch {}
       }
       if (galleryList.length === 0 && (t.image_url || t.image)) {
         galleryList = [t.image_url || t.image];
@@ -301,7 +308,7 @@ export function VenueBooking() {
         name: t.name,
         location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Arena"),
         price: Number(t.price_per_hour !== undefined ? t.price_per_hour : (t.price !== undefined ? t.price : 1500)),
-        rating: Number(t.rating || 4.8),
+        rating: Number(t.rating !== undefined && t.rating !== null ? t.rating : 0),
         sports: (t.sport_type || t.sportType || "Football").toUpperCase(),
         image: mainImage,
         gallery: galleryList,
@@ -318,7 +325,34 @@ export function VenueBooking() {
     });
   }, [turfs]);
 
-  const sportsList = ["All Sports", "Football", "Cricket", "Badminton", "Tennis", "Basketball", "Volleyball", "Padel"];
+  const sportsList = useMemo(() => {
+    const list = ["All Sports"];
+    const seen = new Set(["all sports"]);
+    
+    // Add all sports from turfs in DB
+    (turfs || []).forEach((t) => {
+      const raw = t.sport_type || t.sportType || t.sports || "";
+      const parts = String(raw).split(/[,•;/]+/).map((s) => s.trim()).filter(Boolean);
+      parts.forEach((p) => {
+        if (p.toLowerCase() === "multi-sport" || p.toLowerCase() === "multisport") return;
+        if (!seen.has(p.toLowerCase())) {
+          seen.add(p.toLowerCase());
+          list.push(p);
+        }
+      });
+    });
+
+    const standard = ["Football", "Cricket", "Box Cricket", "Badminton", "Tennis", "Basketball", "Swimming", "Volleyball", "Table Tennis", "Pickleball", "Padel", "Squash", "Box MMA", "Kabaddi", "Hockey"];
+    standard.forEach((s) => {
+      if (!seen.has(s.toLowerCase())) {
+        seen.add(s.toLowerCase());
+        list.push(s);
+      }
+    });
+
+    return list;
+  }, [turfs]);
+
   const citiesList = ["All Cities", "Mumbai", "Delhi-NCR", "Bengaluru", "Hyderabad", "Chandigarh", "Ahmedabad", "Pune", "Chennai", "Kolkata", "Kochi"];
 
   const filteredVenues = dynamicVenues.filter((venue) => {
@@ -418,9 +452,18 @@ export function VenueBooking() {
                 </span>
                 <div className="flex flex-col items-center gap-0.5 shrink-0">
                   <div className="flex items-center gap-0.5 text-white font-semibold">
-                    <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400 shrink-0" />
-                    <span>{venue.rating ? Number(venue.rating).toFixed(1) : "0.0"}</span>
-                    <span className="text-white/70 font-medium ml-0.5">({venue.reviews || 0})</span>
+                    {venue.reviews > 0 && Number(venue.rating) > 0 ? (
+                      <>
+                        <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                        <span>{Number(venue.rating).toFixed(1)}</span>
+                        <span className="text-white/70 font-medium ml-0.5">({venue.reviews})</span>
+                      </>
+                    ) : (
+                      <>
+                        <Star className="w-2.5 h-2.5 text-white/40 shrink-0" />
+                        <span className="text-[10px] text-white/80 font-medium">New</span>
+                      </>
+                    )}
                   </div>
                   <button
                     onClick={(e) => {
@@ -540,9 +583,18 @@ export function VenueBooking() {
                 </div>
                 <div className="flex flex-col items-end gap-0.5 mt-0.5">
                   <div className="flex items-center justify-end gap-1 text-slate-800 dark:text-slate-200 font-semibold text-[10px] sm:text-xs">
-                    <span>{venue.rating ? Number(venue.rating).toFixed(1) : "0.0"}</span>
-                    <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
-                    <span className="text-slate-500 font-medium">({venue.reviews || 0})</span>
+                    {venue.reviews > 0 && Number(venue.rating) > 0 ? (
+                      <>
+                        <span>{Number(venue.rating).toFixed(1)}</span>
+                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                        <span className="text-slate-500 font-medium">({venue.reviews})</span>
+                      </>
+                    ) : (
+                      <>
+                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-300 dark:text-slate-600 shrink-0" />
+                        <span className="text-slate-500 font-medium">New</span>
+                      </>
+                    )}
                   </div>
                   <button
                     onClick={(e) => {
@@ -615,9 +667,18 @@ export function VenueBooking() {
               <div className="flex items-start justify-between w-full">
                 <div className="flex flex-col gap-0.5 items-start">
                   <div className="flex items-center gap-1">
-                    <span className="text-white font-bold text-sm">{venue.rating ? Number(venue.rating).toFixed(1) : "0.0"}</span>
-                    <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
-                    <span className="text-white/80 text-xs ml-0.5">({venue.reviews || 0} Reviews)</span>
+                    {venue.reviews > 0 && Number(venue.rating) > 0 ? (
+                      <>
+                        <span className="text-white font-bold text-sm">{Number(venue.rating).toFixed(1)}</span>
+                        <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                        <span className="text-white/80 text-xs ml-0.5">({venue.reviews} Reviews)</span>
+                      </>
+                    ) : (
+                      <>
+                        <Star className="w-3.5 h-3.5 text-white/40 shrink-0" />
+                        <span className="text-white/80 text-xs ml-0.5">New (0 reviews)</span>
+                      </>
+                    )}
                   </div>
                   <button
                     onClick={(e) => {

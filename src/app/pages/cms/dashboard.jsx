@@ -3320,10 +3320,10 @@ export function CMSDashboard() {
 
                   <Button
                     onClick={handleOpenAddTeamMember}
-                    className="h-10 bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02]"
+                    className="h-10 bg-[#0f172a] hover:bg-[#1e293b] !text-white hover:!text-white font-extrabold text-xs px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02]"
                   >
                     <UserPlus className="w-4 h-4 mr-2 text-emerald-400" />
-                    Add Console User
+                    <span className="!text-white">Add Console User</span>
                   </Button>
                 </div>
               </div>

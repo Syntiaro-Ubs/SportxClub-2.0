@@ -279,10 +279,10 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
 
           <Button
             onClick={handleOpenAdd}
-            className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02]"
+            className="h-10 bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white font-extrabold text-xs px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02]"
           >
-            <Plus className="w-4 h-4 mr-1.5" />
-            Add New Review
+            <Plus className="w-4 h-4 mr-1.5 !text-white" />
+            <span className="!text-white">Add New Review</span>
           </Button>
         </div>
       </div>

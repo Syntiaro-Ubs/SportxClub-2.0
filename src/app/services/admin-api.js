@@ -229,6 +229,20 @@ export const adminApi = {
     }
   },
 
+  submitOwnerSetup: async (payload) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/owner/setup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      return await res.json();
+    } catch (err) {
+      console.error("adminApi.submitOwnerSetup error:", err);
+      return { success: false, error: err.message || "Network error" };
+    }
+  },
+
   // OTP & Recovery APIs
   requestOtp: async (identifier, mode = "recovery") => {
     try {

@@ -124,7 +124,8 @@ export function TurfList() {
             const sport = turf.sport_type || turf.sportType || "Football";
             const image = turf.image_url || turf.image || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600";
             const status = turf.status || "Active";
-            const rating = turf.rating || 4.5;
+            const rating = Number(turf.rating) || 0;
+            const reviewsCount = Number(turf.reviews) || 0;
             const locationStr = typeof turf.location === "object" ? (turf.location?.city || turf.location?.address || "Location unavailable") : turf.location;
 
             return (
@@ -189,9 +190,19 @@ export function TurfList() {
                   </div>
 
                   <div className="flex items-center gap-4 mt-4 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                      <span className="font-semibold">{rating}</span>
+                    <div className="flex items-center gap-1.5">
+                      {reviewsCount > 0 && rating > 0 ? (
+                        <>
+                          <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
+                          <span className="font-semibold text-foreground">{rating.toFixed(1)}</span>
+                          <span className="text-xs text-muted-foreground">({reviewsCount})</span>
+                        </>
+                      ) : (
+                        <>
+                          <Star className="h-4 w-4 text-muted-foreground/30" />
+                          <span className="text-xs font-semibold text-muted-foreground">New (No reviews)</span>
+                        </>
+                      )}
                     </div>
                     <div className="w-1 h-1 rounded-full bg-border" />
                     <span className="text-muted-foreground font-medium">{sport}</span>

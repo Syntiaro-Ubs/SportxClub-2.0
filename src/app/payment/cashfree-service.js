@@ -54,6 +54,8 @@ export const cashfreeService = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: bookingPayload.price || bookingPayload.amount || 1200,
+          slotCount: bookingPayload.slotCount || (Array.isArray(bookingPayload.slots) ? bookingPayload.slots.length : 1),
+          slots: bookingPayload.slots,
           userEmail: bookingPayload.userEmail || "user@sportxclub.com",
           userName: bookingPayload.userName || "SportX Player",
           userPhone: bookingPayload.userPhone || "9876543210",

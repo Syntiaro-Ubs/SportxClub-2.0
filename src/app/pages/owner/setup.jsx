@@ -745,21 +745,12 @@ export function OwnerSetupPage() {
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     try {
-      const apiBase = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
-      const response = await fetch(`${apiBase}/api/auth/owner/setup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ownerId: currentUser?.ownerId || currentUser?.id || "",
-          email: formData.personal.email || "",
-          password: formData.personal.password || "",
-          setupData: formData
-        }),
-        signal: controller.signal
+      const data = await adminApi.submitOwnerSetup({
+        ownerId: currentUser?.ownerId || currentUser?.id || "",
+        email: formData.personal.email || "",
+        password: formData.personal.password || "",
+        setupData: formData
       });
-      clearTimeout(timeoutId);
-
-      const data = await response.json();
 
       if (data.success) {
         const assignedId = data.ownerId || "26090001";
@@ -776,7 +767,6 @@ export function OwnerSetupPage() {
         setStatus("draft");
       }
     } catch (e) {
-      clearTimeout(timeoutId);
       console.error("Network error: ", e.message);
       toast.error("Network error: " + e.message);
       setStatus("draft");

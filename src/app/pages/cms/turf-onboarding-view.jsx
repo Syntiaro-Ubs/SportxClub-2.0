@@ -4,7 +4,7 @@ import {
   Building2, User, Phone, Mail, MapPin,
   CalendarDays, CheckCircle2, XCircle, FileText,
   CreditCard, Search, Eye, AlertTriangle, Shield, Hash,
-  Trash2, Loader2, Sparkles, RefreshCw
+  Trash2, Loader2, Sparkles, RefreshCw, Image as ImageIcon, Star
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -136,8 +136,24 @@ export function TurfOnboardingView() {
       const ownerName = req.business?.ownerName || req.personal?.fullName || "Turf Owner";
       const ownerEmail = req.ownerEmail || req.business?.email || req.personal?.email || "";
       const ownerPhone = req.business?.phone || req.personal?.phone || "";
-      const coverImage = req.images?.cover?.data || req.images?.turf?.[0] || req.images?.gallery?.[0]?.data || "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800";
-      const galleryList = Array.isArray(req.images?.gallery) ? req.images.gallery.map(g => g.data || g).filter(Boolean) : [];
+
+      // Robustly extract all uploaded photos (cover + gallery)
+      const rawCover = req.images?.cover;
+      const rawCoverUrl = typeof rawCover === 'string' ? rawCover : (rawCover?.data || rawCover?.url || null);
+
+      const rawGallery = Array.isArray(req.images?.gallery)
+        ? req.images.gallery
+        : (Array.isArray(req.images?.turf) ? req.images.turf : []);
+
+      const galleryList = rawGallery
+        .map(g => (typeof g === 'string' ? g : (g?.data || g?.url || null)))
+        .filter(Boolean);
+
+      const coverImage = rawCoverUrl || (galleryList.length > 0 ? galleryList[0] : null) || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800";
+
+      const finalGallery = galleryList.length > 0
+        ? (galleryList.includes(coverImage) ? galleryList : [coverImage, ...galleryList])
+        : [coverImage];
 
       const mappedData = {
         name: turfName,
@@ -151,7 +167,9 @@ export function TurfOnboardingView() {
         owner_email: ownerEmail,
         owner_phone: ownerPhone,
         image_url: coverImage,
-        gallery: JSON.stringify(galleryList)
+        gallery: JSON.stringify(finalGallery),
+        description: req.turf?.description || req.business?.description || "High quality sports turf with FIFA certified artificial grass, floodlights, and professional amenities.",
+        amenities: JSON.stringify(req.location?.facilities || req.turf?.facilities || ["Parking", "Floodlights", "Washroom", "Drinking Water"]),
       };
 
       await turfService.create("admin", mappedData);
@@ -266,15 +284,14 @@ export function TurfOnboardingView() {
             <h2 className="text-2xl font-black tracking-tight text-[#0f172a]">
               Turf Onboarding Requests
             </h2>
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
+              type="button"
               onClick={() => loadRequests(true)}
-              className="h-8 w-8 text-slate-400 hover:text-emerald-600 rounded-full"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-950/40 transition-all duration-200 cursor-pointer shadow-2xs group"
               title="Refresh requests"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
-            </Button>
+              <RefreshCw className={`h-4 w-4 text-slate-500 group-hover:text-emerald-600 transition-transform duration-300 group-hover:rotate-180 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+            </button>
           </div>
           <p className="text-sm text-[#64748b] mt-0.5">
             Review, verify, and approve new turf listings submitted by owners.
@@ -474,10 +491,10 @@ export function TurfOnboardingView() {
                           </Button>
                           <Button
                             onClick={() => handleReview(req)}
-                            className="bg-[#0f172a] text-white hover:bg-emerald-600 rounded-lg h-8 px-3 text-[11px] font-bold cursor-pointer transition-colors shadow-xs"
+                            className="bg-[#0f172a] !text-white hover:!bg-emerald-600 hover:!text-white border-none rounded-lg h-8 px-3 text-[11px] font-bold cursor-pointer transition-colors shadow-xs group"
                           >
-                            <Eye className="w-3.5 h-3.5 mr-1.5" />
-                            Review Profile
+                            <Eye className="w-3.5 h-3.5 mr-1.5 !text-white group-hover:!text-white shrink-0" />
+                            <span className="!text-white group-hover:!text-white">Review Profile</span>
                           </Button>
                         </div>
                       </div>
@@ -601,6 +618,59 @@ export function TurfOnboardingView() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Uploaded Turf Photos & Gallery */}
+                    <div className="bg-white p-5 rounded-2xl border border-[#e2e8f0] shadow-xs">
+                      <h3 className="text-sm font-black uppercase tracking-wider text-[#0f172a] mb-4 flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4 text-emerald-500" />
+                        Uploaded Turf Photos & Gallery
+                      </h3>
+                      {(() => {
+                        const rawCover = selectedRequest.images?.cover;
+                        const coverUrl = typeof rawCover === "string" ? rawCover : (rawCover?.data || rawCover?.url || null);
+                        const rawGal = Array.isArray(selectedRequest.images?.gallery)
+                          ? selectedRequest.images.gallery
+                          : (Array.isArray(selectedRequest.images?.turf) ? selectedRequest.images.turf : []);
+                        const galList = rawGal
+                          .map((g) => (typeof g === "string" ? g : (g?.data || g?.url || null)))
+                          .filter(Boolean);
+
+                        const allImages = [];
+                        if (coverUrl) allImages.push({ url: coverUrl, isCover: true });
+                        galList.forEach((img, i) => {
+                          if (img !== coverUrl) {
+                            allImages.push({ url: img, isCover: false, index: i + 1 });
+                          }
+                        });
+
+                        if (allImages.length === 0) {
+                          return (
+                            <p className="text-xs text-muted-foreground italic">No turf photos uploaded during registration.</p>
+                          );
+                        }
+
+                        return (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {allImages.map((item, idx) => (
+                              <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200 group bg-slate-100 shadow-2xs">
+                                <img src={item.url} alt={`Turf Photo ${idx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                <div className="absolute top-1.5 left-1.5 z-10">
+                                  {item.isCover ? (
+                                    <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow flex items-center gap-0.5">
+                                      <Star className="w-2.5 h-2.5 fill-white" /> Cover
+                                    </span>
+                                  ) : (
+                                    <span className="bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                      #{idx + 1}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
 
                   {/* Right Column (Documents) */}
@@ -673,20 +743,20 @@ export function TurfOnboardingView() {
                         onClick={() => handleReject(selectedRequest)}
                         disabled={isProcessing}
                         variant="destructive"
-                        className="rounded-xl font-bold h-11 px-6 bg-rose-600 hover:bg-rose-700 cursor-pointer"
+                        className="rounded-xl font-bold h-11 px-6 bg-rose-600 hover:bg-rose-700 !text-white hover:!text-white cursor-pointer"
                       >
-                        <XCircle className="w-4 h-4 mr-2" />
-                        Reject Request
+                        <XCircle className="w-4 h-4 mr-2 !text-white" />
+                        <span className="!text-white">Reject Request</span>
                       </Button>
                       <Button
                         onClick={() => handleAccept(selectedRequest)}
                         disabled={isProcessing}
-                        className="rounded-xl font-bold h-11 px-6 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer shadow-xs"
+                        className="rounded-xl font-bold h-11 px-6 bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white cursor-pointer shadow-xs"
                       >
                         {isProcessing ? "Processing..." : (
                           <>
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Approve & List Turf
+                            <CheckCircle2 className="w-4 h-4 mr-2 !text-white" />
+                            <span className="!text-white">Approve & List Turf</span>
                           </>
                         )}
                       </Button>

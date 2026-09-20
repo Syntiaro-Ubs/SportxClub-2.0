@@ -306,23 +306,30 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
     const isApproved = String(status).toLowerCase() === "approved";
     const isRejected = String(status).toLowerCase() === "rejected";
 
-    if (isApproved) {
-      await pool.query("UPDATE turf_owners SET status = 'Approved' WHERE id = ?", [id]);
-      await pool.query("UPDATE turf_owner_accounts SET status = 'Active' WHERE owner_profile_id = ? OR owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?)", [id, id]);
-      await pool.query("UPDATE turf_onboarding_requests SET status = 'approved' WHERE owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?) OR owner_email = (SELECT email FROM turf_owners WHERE id = ?)", [id, id]);
-    } else if (isRejected) {
-      await pool.query("UPDATE turf_owners SET status = 'Rejected' WHERE id = ?", [id]);
-      await pool.query("UPDATE turf_owner_accounts SET status = 'Rejected' WHERE owner_profile_id = ? OR owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?)", [id, id]);
-      await pool.query("UPDATE turf_onboarding_requests SET status = 'rejected' WHERE owner_id = (SELECT owner_id FROM turf_owners WHERE id = ?) OR owner_email = (SELECT email FROM turf_owners WHERE id = ?)", [id, id]);
-    }
+    const [ownerRows] = await pool.query("SELECT id, owner_id, email, name FROM turf_owners WHERE id = ?", [id]);
+    const owner = ownerRows[0];
 
-    try {
-      const [ownerRows] = await pool.query("SELECT email, name FROM turf_owners WHERE id = ?", [id]);
-      if (ownerRows.length > 0 && ownerRows[0].email) {
-        await sendOnboardingStatusEmail(ownerRows[0].email, ownerRows[0].name || "Turf Owner", status);
+    if (owner) {
+      const ownerId = owner.owner_id;
+      const ownerEmail = owner.email;
+
+      if (isApproved) {
+        await pool.query("UPDATE turf_owners SET status = 'Approved' WHERE id = ?", [id]);
+        await pool.query("UPDATE turf_owner_accounts SET status = 'Active' WHERE owner_profile_id = ? OR (owner_id IS NOT NULL AND owner_id = ?) OR (email IS NOT NULL AND LOWER(email) = LOWER(?))", [id, ownerId, ownerEmail]);
+        await pool.query("UPDATE turf_onboarding_requests SET status = 'approved' WHERE (owner_id IS NOT NULL AND owner_id = ?) OR (owner_email IS NOT NULL AND LOWER(owner_email) = LOWER(?))", [ownerId, ownerEmail]);
+      } else if (isRejected) {
+        await pool.query("UPDATE turf_owners SET status = 'Rejected' WHERE id = ?", [id]);
+        await pool.query("UPDATE turf_owner_accounts SET status = 'Rejected' WHERE owner_profile_id = ? OR (owner_id IS NOT NULL AND owner_id = ?) OR (email IS NOT NULL AND LOWER(email) = LOWER(?))", [id, ownerId, ownerEmail]);
+        await pool.query("UPDATE turf_onboarding_requests SET status = 'rejected' WHERE (owner_id IS NOT NULL AND owner_id = ?) OR (owner_email IS NOT NULL AND LOWER(owner_email) = LOWER(?))", [ownerId, ownerEmail]);
       }
-    } catch (e) {
-      console.error("Failed to send onboarding status email", e);
+
+      try {
+        if (ownerEmail) {
+          await sendOnboardingStatusEmail(ownerEmail, owner.name || "Turf Owner", status);
+        }
+      } catch (e) {
+        console.error("Failed to send onboarding status email", e);
+      }
     }
 
     return res.json({ success: true });

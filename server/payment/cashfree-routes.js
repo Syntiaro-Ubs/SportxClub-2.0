@@ -57,9 +57,10 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
 
     const pool = getPool();
 
-    // Authoritative Server-Side Pricing: Fetch true price from MySQL database
+    // Server-Side Pricing Calculation
     let authoritativeAmount = parseFloat(amount || 1200);
     let resolvedTurfName = String(turfName || "SportX Turf").trim();
+    const count = parseInt(req.body.slotCount || (Array.isArray(req.body.slots) ? req.body.slots.length : 1), 10) || 1;
 
     if (venueId || turfName) {
       try {
@@ -73,13 +74,17 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
         if (rows.length > 0) {
           const dbPrice = parseFloat(rows[0].price_per_hour);
           if (Number.isFinite(dbPrice) && dbPrice > 0) {
-            authoritativeAmount = dbPrice;
+            authoritativeAmount = dbPrice * count;
           }
           resolvedTurfName = rows[0].name || resolvedTurfName;
         }
       } catch (dbLookupErr) {
         console.warn("DB Price lookup note:", dbLookupErr.message);
       }
+    }
+
+    if (amount && parseFloat(amount) > 0) {
+      authoritativeAmount = parseFloat(amount);
     }
 
     const numericAmount = Math.max(1, authoritativeAmount);

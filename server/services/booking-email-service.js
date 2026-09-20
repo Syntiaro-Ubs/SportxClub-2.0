@@ -28,27 +28,52 @@ function getTransporter() {
 }
 
 /**
- * Helper to parse slot times into startTime, endTime and duration
+ * Helper to parse slot times into startTime, endTime, duration, slotCount, and displaySlotText
  */
 function parseSlotDetails(timeSlot = "") {
   let startTime = "Scheduled Time";
   let endTime = "Scheduled End";
   let duration = "1 Hour";
+  let slotCount = 1;
+  let slotList = [];
+  let displaySlotText = String(timeSlot || "Scheduled Time").trim();
 
   if (!timeSlot) {
-    return { startTime, endTime, duration };
+    return { startTime, endTime, duration, slotCount, slotList, displaySlotText };
   }
 
   const str = String(timeSlot).trim();
-  
-  // Example: "06:00 PM - 07:00 PM" or "06:00 PM – 07:00 PM"
+
+  // 1. Multiple slots separated by comma or semicolon e.g. "05:00 PM - 06:00 PM, 06:00 PM - 07:00 PM"
+  if (str.includes(",") || str.includes(";")) {
+    const slots = str.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+    slotList = slots;
+    slotCount = slots.length;
+
+    const parseSingle = (singleStr) => {
+      const match = singleStr.match(/(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*[-–to]+\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)/i);
+      if (match) return { start: match[1].trim(), end: match[2].trim() };
+      return { start: singleStr, end: singleStr };
+    };
+
+    const firstParsed = parseSingle(slots[0]);
+    const lastParsed = parseSingle(slots[slots.length - 1]);
+
+    startTime = firstParsed.start;
+    endTime = lastParsed.end;
+    duration = `${slotCount} ${slotCount === 1 ? "Hour" : "Hours"}`;
+    displaySlotText = slots.join(", ");
+
+    return { startTime, endTime, duration, slotCount, slotList, displaySlotText };
+  }
+
+  // 2. Single range e.g. "06:00 PM - 07:00 PM" or "06:00 PM – 08:00 PM"
   if (str.includes("-") || str.includes("–") || str.includes("to")) {
     const parts = str.split(/[-–]|to/).map((p) => p.trim());
     if (parts.length >= 2) {
       startTime = parts[0];
       endTime = parts[1];
       
-      // Try to compute approximate duration in hours
       const parseHour = (t) => {
         const match = t.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?/i);
         if (!match) return null;
@@ -66,23 +91,20 @@ function parseSlotDetails(timeSlot = "") {
         let diff = endH - startH;
         if (diff < 0) diff += 24;
         if (diff > 0) {
+          slotCount = Math.round(diff);
           duration = diff === 1 ? "1 Hour" : `${diff} Hours`;
         }
       }
     }
-  } else if (str.includes(",")) {
-    // Comma-separated slots e.g. "06:00 PM, 07:00 PM"
-    const slots = str.split(",").map((s) => s.trim()).filter(Boolean);
-    startTime = slots[0];
-    endTime = slots[slots.length - 1];
-    duration = slots.length === 1 ? "1 Hour" : `${slots.length} Hours`;
   } else {
     startTime = str;
     endTime = "End of Slot";
     duration = "1 Hour";
+    slotCount = 1;
   }
 
-  return { startTime, endTime, duration };
+  displaySlotText = `${startTime} – ${endTime}`;
+  return { startTime, endTime, duration, slotCount, slotList, displaySlotText };
 }
 
 /**
@@ -398,8 +420,12 @@ function getPlayerBookingConfirmationHtml({
                   <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${bookingDate}</td>
                 </tr>
                 <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${startTime} – ${endTime}</td>
+                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booked Slots:</td>
+                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"}</td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot(s):</td>
+                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${displaySlotText || `${startTime} – ${endTime}`}</td>
                 </tr>
                 <tr>
                   <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Duration:</td>
@@ -537,8 +563,12 @@ function getOwnerNewBookingHtml({
                   <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${bookingDate}</td>
                 </tr>
                 <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${startTime} – ${endTime}</td>
+                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booked Slots:</td>
+                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"}</td>
+                </tr>
+                <tr>
+                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot(s):</td>
+                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${displaySlotText || `${startTime} – ${endTime}`}</td>
                 </tr>
                 <tr>
                   <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Duration:</td>
@@ -931,7 +961,7 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
     const paymentDateTime = bookingCreatedAt;
 
     // Slot parse
-    const { startTime, endTime, duration } = parseSlotDetails(rawTimeSlot);
+    const { startTime, endTime, duration, slotCount, displaySlotText } = parseSlotDetails(rawTimeSlot);
 
     // 2. Prevent duplicate emails if already sent
     if (booking && booking.email_sent === 1) {
@@ -1002,6 +1032,8 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
         startTime,
         endTime,
         duration,
+        slotCount,
+        displaySlotText,
       });
 
       // Generate PDF Match Pass
@@ -1068,6 +1100,8 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
         startTime,
         endTime,
         duration,
+        slotCount,
+        displaySlotText,
         userName,
         userEmail,
         userPhone,

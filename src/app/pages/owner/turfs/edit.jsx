@@ -58,11 +58,71 @@ import {
   Trophy,
   Layers,
   Sparkle,
+  Activity,
+  Clock,
+  CalendarDays,
+  Sun,
+  Moon,
+  Zap,
 } from "lucide-react";
 import { turfService } from "../../../services/turf.service";
 import { toast } from "sonner";
 
 const OWNER_ID = "owner-123";
+
+const OPENING_TIMES = [
+  "04:00 AM",
+  "05:00 AM",
+  "06:00 AM",
+  "07:00 AM",
+  "08:00 AM",
+  "09:00 AM",
+  "10:00 AM",
+  "11:00 AM",
+];
+
+const CLOSING_TIMES = [
+  "07:00 PM",
+  "08:00 PM",
+  "09:00 PM",
+  "10:00 PM",
+  "11:00 PM",
+  "12:00 AM",
+  "01:00 AM",
+  "02:00 AM",
+  "03:00 AM",
+  "04:00 AM",
+  "05:00 AM",
+];
+
+const PEAK_TIMES = [
+  "04:00 PM",
+  "05:00 PM",
+  "06:00 PM",
+  "07:00 PM",
+  "08:00 PM",
+  "09:00 PM",
+  "10:00 PM",
+  "11:00 PM",
+  "12:00 AM",
+];
+
+const SLOT_DURATIONS = [
+  { value: 30, label: "30 Minutes (Quick Match)" },
+  { value: 60, label: "60 Minutes (Standard 1 hr)" },
+  { value: 90, label: "90 Minutes (1.5 Hours)" },
+  { value: 120, label: "120 Minutes (Full 2 hrs)" },
+];
+
+const WEEK_DAYS = [
+  { id: "Mon", label: "Mon", fullLabel: "Monday" },
+  { id: "Tue", label: "Tue", fullLabel: "Tuesday" },
+  { id: "Wed", label: "Wed", fullLabel: "Wednesday" },
+  { id: "Thu", label: "Thu", fullLabel: "Thursday" },
+  { id: "Fri", label: "Fri", fullLabel: "Friday" },
+  { id: "Sat", label: "Sat", fullLabel: "Saturday" },
+  { id: "Sun", label: "Sun", fullLabel: "Sunday" },
+];
 
 const AMENITIES = [
   { id: "Parking", label: "Parking Space", icon: "🚗", desc: "Dedicated vehicle parking" },
@@ -83,6 +143,53 @@ const SPORTS = [
   "Basketball",
   "Swimming",
 ];
+
+function generatePreviewSlots(openingTime = "06:00 AM", closingTime = "11:00 PM", duration = 60, basePrice = 1500, peakStartTime = "05:00 PM", peakPrice = null) {
+  const parseHour = (str) => {
+    if (!str) return 6;
+    const match = str.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    if (!match) return 6;
+    let h = parseInt(match[1], 10);
+    const period = match[3] ? match[3].toLowerCase() : (str.toLowerCase().includes("pm") ? "pm" : "am");
+    if (period === "pm" && h < 12) h += 12;
+    if (period === "am" && h === 12) h = 0;
+    return h;
+  };
+
+  const startHour = parseHour(openingTime);
+  let endHour = parseHour(closingTime);
+  if (endHour <= startHour) endHour += 24;
+  const peakStart = parseHour(peakStartTime);
+
+  const slots = [];
+  const step = Math.max(1, Number(duration || 60) / 60);
+
+  for (let h = startHour; h < endHour; h += step) {
+    const sH = Math.floor(h) % 24;
+    const eH = Math.floor(h + step) % 24;
+
+    const formatH = (hour) => {
+      const p = hour >= 12 && hour < 24 ? "pm" : "am";
+      const h12 = hour % 12 === 0 ? 12 : hour % 12;
+      return `${h12.toString().padStart(2, "0")}:00 ${p}`;
+    };
+
+    const isPeak = h >= peakStart;
+    const slotPrice = isPeak
+      ? (peakPrice && Number(peakPrice) > 0 ? Number(peakPrice) : Math.round(Number(basePrice) * 1.15))
+      : Number(basePrice);
+
+    slots.push({
+      timeRange: `${formatH(sH)} - ${formatH(eH)}`,
+      startHour: sH,
+      rawHour: h,
+      isPeak,
+      price: slotPrice,
+    });
+  }
+
+  return slots;
+}
 
 export function EditTurf() {
   const { id } = useParams();
@@ -122,6 +229,13 @@ export function EditTurf() {
       rules: "",
       status: "Active",
       image: "",
+      opening_time: "06:00 AM",
+      closing_time: "11:00 PM",
+      slot_duration: 60,
+      peak_start_time: "05:00 PM",
+      peak_end_time: "11:00 PM",
+      peak_price: "",
+      operational_days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     },
   });
 
@@ -131,19 +245,32 @@ export function EditTurf() {
   const turfPrice = watch("price") || 1500;
   const turfLocation = watch("location") || "";
   const turfStatus = watch("status") || "Active";
+  const openingTime = watch("opening_time") || "06:00 AM";
+  const closingTime = watch("closing_time") || "11:00 PM";
+  const slotDuration = watch("slot_duration") || 60;
+  const peakStartTime = watch("peak_start_time") || "05:00 PM";
+  const peakEndTime = watch("peak_end_time") || "11:00 PM";
+  const peakPrice = watch("peak_price") || "";
+  const operationalDays = watch("operational_days") || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const primaryCoverImage = uploadedImages[0] || watch("image") || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800";
+
+  // Dynamic preview slots calculated from time management settings
+  const previewSlots = useMemo(() => {
+    return generatePreviewSlots(openingTime, closingTime, slotDuration, turfPrice, peakStartTime, peakPrice);
+  }, [openingTime, closingTime, slotDuration, turfPrice, peakStartTime, peakPrice]);
 
   // Calculate profile completeness score
   const completenessScore = useMemo(() => {
     let score = 0;
-    if (turfName?.trim()) score += 25;
-    if (turfLocation?.trim()) score += 20;
-    if (turfPrice) score += 20;
+    if (turfName?.trim()) score += 20;
+    if (turfLocation?.trim()) score += 15;
+    if (turfPrice) score += 15;
+    if (openingTime && closingTime) score += 15;
+    if (operationalDays.length > 0) score += 10;
     if (selectedAmenities.length > 0) score += 15;
     if (uploadedImages.length > 0) score += 10;
-    if (watch("description")?.trim()) score += 10;
     return score;
-  }, [turfName, turfLocation, turfPrice, selectedAmenities, uploadedImages, watch("description")]);
+  }, [turfName, turfLocation, turfPrice, openingTime, closingTime, operationalDays, selectedAmenities, uploadedImages]);
 
   useEffect(() => {
     const fetchTurf = async () => {
@@ -155,12 +282,29 @@ export function EditTurf() {
         if (result) {
           reset({
             name: result.name || "",
-            description: result.description || "Premium sports arena with state-of-the-art turf turf surface and night floodlights.",
+            description: result.description || "Premium sports arena with state-of-the-art turf surface and night floodlights.",
             sportType: result.sport_type || result.sportType || "Football",
             price: result.price_per_hour || result.price || 1500,
             location: typeof result.location === "object" ? (result.location?.city || result.location?.address || "") : result.location || "",
             contactNumber: result.owner_phone || result.contactNumber || "",
             email: result.email || result.owner_email || "",
+            opening_time: result.opening_time || "06:00 AM",
+            closing_time: result.closing_time || "11:00 PM",
+            slot_duration: result.slot_duration ? Number(result.slot_duration) : 60,
+            peak_start_time: result.peak_start_time || "05:00 PM",
+            peak_end_time: result.peak_end_time || "11:00 PM",
+            peak_price: result.peak_price || "",
+            operational_days: (() => {
+              if (Array.isArray(result.operational_days)) return result.operational_days;
+              if (typeof result.operational_days === "string") {
+                try {
+                  const p = JSON.parse(result.operational_days);
+                  if (Array.isArray(p)) return p;
+                } catch { }
+                return result.operational_days.split(",").map((s) => s.trim()).filter(Boolean);
+              }
+              return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            })(),
             amenities: (() => {
               if (Array.isArray(result.amenities)) return result.amenities;
               if (typeof result.amenities === "string") {
@@ -181,16 +325,29 @@ export function EditTurf() {
           let initialImages = [];
           if (result.gallery) {
             try {
-              const parsed = typeof result.gallery === "string" ? JSON.parse(result.gallery) : result.gallery;
+              let parsed = result.gallery;
+              while (typeof parsed === "string") {
+                try {
+                  parsed = JSON.parse(parsed);
+                } catch {
+                  break;
+                }
+              }
               if (Array.isArray(parsed) && parsed.length > 0) {
-                initialImages = parsed.filter(Boolean);
+                initialImages = parsed
+                  .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+                  .filter(Boolean);
               }
             } catch (e) {
               console.error("Failed parsing turf gallery:", e);
             }
           }
-          if (initialImages.length === 0 && (result.image_url || result.image)) {
-            initialImages = [result.image_url || result.image];
+          const mainImg = result.image_url || result.image;
+          if (mainImg && !initialImages.includes(mainImg)) {
+            initialImages = [mainImg, ...initialImages];
+          }
+          if (initialImages.length === 0 && mainImg) {
+            initialImages = [mainImg];
           }
           setUploadedImages(initialImages);
         }
@@ -341,12 +498,19 @@ export function EditTurf() {
       const mainImage = uploadedImages[0] || data.image || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600";
       const payload = {
         ...data,
+        opening_time: data.opening_time || "06:00 AM",
+        closing_time: data.closing_time || "11:00 PM",
+        slot_duration: Number(data.slot_duration) || 60,
+        peak_start_time: data.peak_start_time || "05:00 PM",
+        peak_end_time: data.peak_end_time || "11:00 PM",
+        peak_price: data.peak_price ? Number(data.peak_price) : null,
+        operational_days: Array.isArray(data.operational_days) ? data.operational_days : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
         image: mainImage,
         image_url: mainImage,
         gallery: uploadedImages.length > 0 ? uploadedImages : [mainImage],
       };
       await turfService.update(OWNER_ID, id, payload);
-      toast.success("Turf details & gallery photos updated successfully!");
+      toast.success("Turf details, schedule & gallery photos updated successfully!");
       navigate("/admin-panel/turfs");
     } catch (err) {
       setError(err.message || "Failed to update turf.");
@@ -364,6 +528,28 @@ export function EditTurf() {
       );
     } else {
       setValue("amenities", [...selectedAmenities, amenityId]);
+    }
+  };
+
+  const toggleDay = (dayId) => {
+    if (operationalDays.includes(dayId)) {
+      if (operationalDays.length === 1) {
+        toast.error("At least one operating day must remain active.");
+        return;
+      }
+      setValue("operational_days", operationalDays.filter((d) => d !== dayId));
+    } else {
+      setValue("operational_days", [...operationalDays, dayId]);
+    }
+  };
+
+  const handleSelectDaysPreset = (preset) => {
+    if (preset === "all") {
+      setValue("operational_days", ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]);
+    } else if (preset === "weekdays") {
+      setValue("operational_days", ["Mon", "Tue", "Wed", "Thu", "Fri"]);
+    } else if (preset === "weekends") {
+      setValue("operational_days", ["Sat", "Sun"]);
     }
   };
 
@@ -548,45 +734,45 @@ export function EditTurf() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               {/* Stepper Tabs Bar */}
               <div className="w-full overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full h-auto p-1 bg-card/60 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl gap-1 shadow-xs">
+                <TabsList className="grid grid-cols-2 sm:grid-cols-5 w-full h-auto p-1 bg-card/60 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800/80 rounded-2xl gap-1 shadow-xs">
                   <TabsTrigger
                     value="basic"
-                    className="flex flex-col sm:flex-row items-center justify-center gap-2 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
                   >
-                    <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">1</span>
-                    <div className="text-center sm:text-left">
-                      <span className="block leading-tight">Basic Info</span>
-                    </div>
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">1</span>
+                    <span className="block leading-tight truncate">Basic Info</span>
                   </TabsTrigger>
 
                   <TabsTrigger
-                    value="details"
-                    className="flex flex-col sm:flex-row items-center justify-center gap-2 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
+                    value="timing"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
                   >
-                    <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">2</span>
-                    <div className="text-center sm:text-left">
-                      <span className="block leading-tight">Amenities & Rules</span>
-                    </div>
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">2</span>
+                    <span className="block leading-tight truncate">Time & Slots</span>
                   </TabsTrigger>
 
                   <TabsTrigger
                     value="pricing"
-                    className="flex flex-col sm:flex-row items-center justify-center gap-2 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
                   >
-                    <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">3</span>
-                    <div className="text-center sm:text-left">
-                      <span className="block leading-tight">Pricing & Rates</span>
-                    </div>
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">3</span>
+                    <span className="block leading-tight truncate">Pricing & Rates</span>
+                  </TabsTrigger>
+
+                  <TabsTrigger
+                    value="details"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
+                  >
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">4</span>
+                    <span className="block leading-tight truncate">Amenities</span>
                   </TabsTrigger>
 
                   <TabsTrigger
                     value="media"
-                    className="flex flex-col sm:flex-row items-center justify-center gap-2 py-1.5 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 border-transparent text-muted-foreground data-[state=active]:border-emerald-500 data-[state=active]:bg-emerald-500/5 data-[state=active]:text-emerald-600 dark:data-[state=active]:text-emerald-400 data-[state=active]:font-extrabold hover:text-foreground hover:bg-muted/40"
                   >
-                    <span className="flex items-center justify-center w-4.5 h-4.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">4</span>
-                    <div className="text-center sm:text-left">
-                      <span className="block leading-tight">Photos ({uploadedImages.length})</span>
-                    </div>
+                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black shrink-0">5</span>
+                    <span className="block leading-tight truncate">Photos ({uploadedImages.length})</span>
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -706,16 +892,394 @@ export function EditTurf() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setActiveTab("details")}
+                      onClick={() => setActiveTab("timing")}
                       className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
                     >
-                      Next <ChevronRight className="h-4 w-4 text-emerald-500" />
+                      Next: Time Management <ChevronRight className="h-4 w-4 text-emerald-500" />
                     </Button>
                   </div>
                 </Card>
               </TabsContent>
 
-              {/* TAB 2: DETAILS & RULES */}
+              {/* TAB 2: TIME MANAGEMENT */}
+              <TabsContent value="timing" className="mt-2 space-y-3">
+                <Card className="border border-slate-200/80 dark:border-slate-800/80 bg-card/60 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+                  <div className="border-b border-border/60 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm sm:text-base font-extrabold text-foreground flex items-center gap-2">
+                        <Clock className="h-4.5 w-4.5 text-emerald-500" /> Time Management & Slot Schedule
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Configure daily operating hours, slot session intervals, operational days, and peak night timings.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                        <Zap className="w-3 h-3" /> {previewSlots.length} Bookable Slots/Day
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Operational Timings & Slot Duration */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Sun className="h-3.5 w-3.5 text-amber-500" /> Daily Opening Time *
+                      </Label>
+                      <Select
+                        value={openingTime}
+                        onValueChange={(val) => setValue("opening_time", val)}
+                      >
+                        <SelectTrigger className="h-10 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-semibold bg-background/80">
+                          <SelectValue placeholder="Opening time" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border-border max-h-56">
+                          {OPENING_TIMES.map((time) => (
+                            <SelectItem key={time} value={time} className="text-xs font-medium cursor-pointer">
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground">First match of the day begins at this time.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Moon className="h-3.5 w-3.5 text-indigo-500" /> Daily Closing Time *
+                      </Label>
+                      <Select
+                        value={closingTime}
+                        onValueChange={(val) => setValue("closing_time", val)}
+                      >
+                        <SelectTrigger className="h-10 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-semibold bg-background/80">
+                          <SelectValue placeholder="Closing time" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border-border max-h-56">
+                          {CLOSING_TIMES.map((time) => (
+                            <SelectItem key={time} value={time} className="text-xs font-medium cursor-pointer">
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground">Last match ends and floodlights turn off.</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-emerald-500" /> Slot Session Duration
+                      </Label>
+                      <Select
+                        value={String(slotDuration)}
+                        onValueChange={(val) => setValue("slot_duration", Number(val))}
+                      >
+                        <SelectTrigger className="h-10 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-semibold bg-background/80">
+                          <SelectValue placeholder="Slot duration" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover border-border">
+                          {SLOT_DURATIONS.map((slot) => (
+                            <SelectItem key={slot.value} value={String(slot.value)} className="text-xs font-medium cursor-pointer">
+                              {slot.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[10px] text-muted-foreground">Length of each individual bookable slot.</p>
+                    </div>
+                  </div>
+
+                  {/* Operational Days of Week */}
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <Label className="text-xs font-extrabold text-foreground flex items-center gap-1.5">
+                        <CalendarDays className="h-3.5 w-3.5 text-emerald-500" /> Operational Days of the Week
+                      </Label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDaysPreset("all")}
+                          className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                        >
+                          All 7 Days
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDaysPreset("weekdays")}
+                          className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                        >
+                          Mon - Fri
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSelectDaysPreset("weekends")}
+                          className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors cursor-pointer"
+                        >
+                          Weekends
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+                      {WEEK_DAYS.map((day) => {
+                        const isDayActive = operationalDays.includes(day.id);
+                        return (
+                          <button
+                            key={day.id}
+                            type="button"
+                            onClick={() => toggleDay(day.id)}
+                            className={`py-2 px-1 rounded-xl text-center font-black text-xs transition-all cursor-pointer border ${isDayActive
+                              ? "bg-emerald-500/15 border-emerald-500 text-emerald-700 dark:text-emerald-400 shadow-xs ring-1 ring-emerald-500/30 scale-[1.02]"
+                              : "bg-background/80 border-slate-200 dark:border-slate-800 text-muted-foreground hover:border-slate-400 opacity-60"
+                              }`}
+                          >
+                            <span className="block text-xs font-black">{day.label}</span>
+                            <span className="text-[9px] block font-bold opacity-80 mt-0.5">
+                              {isDayActive ? "Open" : "Off"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Peak / Evening Floodlight Hours & Pricing */}
+                  <div className="space-y-2.5 pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-extrabold text-foreground flex items-center gap-1.5">
+                        <Zap className="h-3.5 w-3.5 text-amber-500" /> Peak / Evening Floodlight Timing & Pricing
+                      </Label>
+                      <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                        Optional Evening Surge
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                          <Moon className="w-3 h-3 text-amber-500" /> Peak Start Time
+                        </Label>
+                        <Select
+                          value={peakStartTime}
+                          onValueChange={(val) => setValue("peak_start_time", val)}
+                        >
+                          <SelectTrigger className="h-9 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-semibold bg-background/90">
+                            <SelectValue placeholder="Peak start" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border-border">
+                            {PEAK_TIMES.map((time) => (
+                              <SelectItem key={time} value={time} className="text-xs font-medium cursor-pointer">
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                          <Moon className="w-3 h-3 text-indigo-500" /> Peak End Time
+                        </Label>
+                        <Select
+                          value={peakEndTime}
+                          onValueChange={(val) => setValue("peak_end_time", val)}
+                        >
+                          <SelectTrigger className="h-9 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-semibold bg-background/90">
+                            <SelectValue placeholder="Peak end" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover border-border">
+                            {CLOSING_TIMES.map((time) => (
+                              <SelectItem key={time} value={time} className="text-xs font-medium cursor-pointer">
+                                {time}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <Label className="text-[11px] font-bold text-foreground flex items-center gap-1">
+                          <IndianRupee className="w-3 h-3 text-emerald-500" /> Peak Slot Rate (₹/slot)
+                        </Label>
+                        <div className="relative">
+                          <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                          <Input
+                            type="number"
+                            placeholder={`e.g. ${Math.round(Number(turfPrice) * 1.15)}`}
+                            className="pl-8 h-9 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-bold bg-background/90"
+                            {...register("peak_price")}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Slot Schedule Preview Matrix */}
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-extrabold text-foreground flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-emerald-500" /> Daily Slot Schedule Preview ({previewSlots.length} Slots Generated)
+                      </Label>
+                      <div className="flex items-center gap-2 text-[10px] font-bold">
+                        <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
+                          <span className="w-2 h-2 rounded-full bg-slate-400" /> Daytime (₹{turfPrice})
+                        </span>
+                        <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                          <span className="w-2 h-2 rounded-full bg-amber-500" /> Peak Floodlights (₹{peakPrice || Math.round(Number(turfPrice) * 1.15)})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="max-h-56 overflow-y-auto p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-background/60 space-y-2.5">
+                      {(() => {
+                        const sameDay = previewSlots.filter(s => (s.rawHour ?? 0) < 24);
+                        const nextDay = previewSlots.filter(s => (s.rawHour ?? 0) >= 24);
+
+                        const renderPreviewSlotCard = (slot, sIdx) => (
+                          <div
+                            key={sIdx}
+                            className={`p-2 rounded-lg border text-center transition-all ${slot.isPeak
+                              ? "bg-amber-500/10 border-amber-500/40 text-amber-900 dark:text-amber-300"
+                              : "bg-card border-slate-200 dark:border-slate-800 text-foreground"
+                              }`}
+                          >
+                            <div className="flex items-center justify-center gap-1 text-[11px] font-bold">
+                              {slot.isPeak ? <Moon className="w-3 h-3 text-amber-500" /> : <Sun className="w-3 h-3 text-amber-400" />}
+                              <span>{slot.timeRange}</span>
+                            </div>
+                            <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                              ₹{slot.price}
+                            </span>
+                          </div>
+                        );
+
+                        return (
+                          <>
+                            {sameDay.length > 0 && (
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                {sameDay.map((slot, idx) => renderPreviewSlotCard(slot, `same-${idx}`))}
+                              </div>
+                            )}
+
+                            {nextDay.length > 0 && (
+                              <div className="space-y-2 pt-1">
+                                <div className="relative flex py-1.5 items-center">
+                                  <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+                                  <span className="flex-shrink mx-2.5 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 flex items-center gap-1 uppercase tracking-wider">
+                                    🌙 Tomorrow (Post-Midnight Slots)
+                                  </span>
+                                  <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                  {nextDay.map((slot, idx) => renderPreviewSlotCard(slot, `next-${idx}`))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between pt-2.5 border-t border-border/60">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("basic")}
+                      className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-emerald-500" /> Previous: Basic Info
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("pricing")}
+                      className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
+                    >
+                      Next: Pricing & Rates <ChevronRight className="h-4 w-4 text-emerald-500" />
+                    </Button>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* TAB 3: PRICING */}
+              <TabsContent value="pricing" className="mt-2 space-y-2">
+                <Card className="border border-slate-200/80 dark:border-slate-800/80 bg-card/60 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
+                  <div className="border-b border-border/60 pb-2">
+                    <h3 className="text-sm sm:text-base font-extrabold text-foreground flex items-center gap-2">
+                      <IndianRupee className="h-4.5 w-4.5 text-emerald-500 stroke-[2.5]" /> Hourly Rate & Slot Pricing
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Define the standard base rate per hour charged to players when reserving daytime slots.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="price" className="text-xs font-bold text-foreground">
+                        Standard Base Price per Hour (₹) *
+                      </Label>
+                      <div className="relative">
+                        <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
+                        <Input
+                          id="price"
+                          type="number"
+                          className="pl-10 h-10 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-extrabold focus:border-emerald-500 bg-background/80"
+                          {...register("price", { required: true })}
+                        />
+                      </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        Players will be charged this base amount per standard daytime slot.
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 dark:text-emerald-400">
+                        <Sparkles className="w-3.5 h-3.5" /> Pricing Calculation Summary
+                      </div>
+                      <div className="text-xs space-y-1 text-muted-foreground">
+                        <div className="flex justify-between">
+                          <span>Base Daytime Slot:</span>
+                          <span className="font-bold text-foreground">₹{turfPrice}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Peak Evening Slot:</span>
+                          <span className="font-bold text-amber-600 dark:text-amber-400">₹{peakPrice || Math.round(Number(turfPrice) * 1.15)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Daily Operational Window:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{openingTime} - {closingTime}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Platform Fee:</span>
+                          <span className="font-bold text-foreground">0% Direct Bank Transfer</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between pt-2.5 border-t border-border/60">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("timing")}
+                      className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-emerald-500" /> Previous: Time Management
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setActiveTab("details")}
+                      className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
+                    >
+                      Next: Amenities & Rules <ChevronRight className="h-4 w-4 text-emerald-500" />
+                    </Button>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* TAB 4: DETAILS & RULES */}
               <TabsContent value="details" className="mt-2 space-y-2">
                 <Card className="border border-slate-200/80 dark:border-slate-800/80 bg-card/60 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
                   <div className="border-b border-border/60 pb-2">
@@ -804,83 +1368,10 @@ export function EditTurf() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setActiveTab("basic")}
-                      className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
-                    >
-                      <ChevronLeft className="h-4 w-4 text-emerald-500" /> Previous
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
                       onClick={() => setActiveTab("pricing")}
                       className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
                     >
-                      Next <ChevronRight className="h-4 w-4 text-emerald-500" />
-                    </Button>
-                  </div>
-                </Card>
-              </TabsContent>
-
-              {/* TAB 3: PRICING */}
-              <TabsContent value="pricing" className="mt-2 space-y-2">
-                <Card className="border border-slate-200/80 dark:border-slate-800/80 bg-card/60 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
-                  <div className="border-b border-border/60 pb-2">
-                    <h3 className="text-sm sm:text-base font-extrabold text-foreground flex items-center gap-2">
-                      <IndianRupee className="h-4.5 w-4.5 text-emerald-500 stroke-[2.5]" /> Hourly Rate & Slot Pricing
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Define the standard per-hour price charged to players when reserving time slots.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="price" className="text-xs font-bold text-foreground">
-                        Standard Price per Hour (₹) *
-                      </Label>
-                      <div className="relative">
-                        <IndianRupee className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600 dark:text-emerald-400 stroke-[2.5]" />
-                        <Input
-                          id="price"
-                          type="number"
-                          className="pl-10 h-10 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-extrabold focus:border-emerald-500 bg-background/80"
-                          {...register("price", { required: true })}
-                        />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Players will be charged this base amount per 60-minute session.
-                      </p>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 dark:text-emerald-400">
-                        <Sparkles className="w-3.5 h-3.5" /> Pricing Calculation Summary
-                      </div>
-                      <div className="text-xs space-y-1 text-muted-foreground">
-                        <div className="flex justify-between">
-                          <span>Base Hourly Slot:</span>
-                          <span className="font-bold text-foreground">₹{turfPrice}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Est. 8h Daily Revenue:</span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">₹{(Number(turfPrice) * 8).toLocaleString("en-IN")}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Platform Fee:</span>
-                          <span className="font-bold text-foreground">0% Direct Bank Transfer</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between pt-2.5 border-t border-border/60">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setActiveTab("details")}
-                      className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
-                    >
-                      <ChevronLeft className="h-4 w-4 text-emerald-500" /> Previous
+                      <ChevronLeft className="h-4 w-4 text-emerald-500" /> Previous: Pricing
                     </Button>
                     <Button
                       type="button"
@@ -888,13 +1379,13 @@ export function EditTurf() {
                       onClick={() => setActiveTab("media")}
                       className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
                     >
-                      Next <ChevronRight className="h-4 w-4 text-emerald-500" />
+                      Next: Photos <ChevronRight className="h-4 w-4 text-emerald-500" />
                     </Button>
                   </div>
                 </Card>
               </TabsContent>
 
-              {/* TAB 4: PHOTOS */}
+              {/* TAB 5: PHOTOS */}
               <TabsContent value="media" className="mt-2 space-y-2">
                 <Card className="border border-slate-200/80 dark:border-slate-800/80 bg-card/60 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-xs space-y-3.5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-2">
@@ -1089,10 +1580,10 @@ export function EditTurf() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setActiveTab("pricing")}
+                      onClick={() => setActiveTab("details")}
                       className="rounded-xl px-5 h-9 border-2 border-emerald-500 bg-transparent text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-600 font-extrabold text-xs gap-1.5 cursor-pointer transition-all shadow-xs"
                     >
-                      <ChevronLeft className="h-4 w-4 text-emerald-500" /> Previous
+                      <ChevronLeft className="h-4 w-4 text-emerald-500" /> Previous: Amenities
                     </Button>
                     <Button
                       type="submit"
@@ -1163,6 +1654,24 @@ export function EditTurf() {
               </div>
 
               <div className="p-4 space-y-3">
+                {/* Operational Timing & Days Badge in Live Preview */}
+                <div className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="font-extrabold text-foreground flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-emerald-500" /> {openingTime} - {closingTime}
+                    </span>
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 text-[10px]">
+                      {slotDuration}m slots
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <CalendarDays className="w-3 h-3 text-muted-foreground" />
+                    <span>
+                      {operationalDays.length === 7 ? "Open Everyday (Mon - Sun)" : `${operationalDays.join(", ")}`}
+                    </span>
+                  </div>
+                </div>
+
                 {/* Amenities pills */}
                 <div className="flex flex-wrap gap-1.5">
                   {selectedAmenities.slice(0, 3).map((amenityId) => {

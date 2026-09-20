@@ -61,9 +61,17 @@ router.get("/stats", authenticateToken, async (req, res) => {
 
     const confirmedBookings = bookings.filter((b) => String(b.status).toLowerCase() === "confirmed");
     const totalRevenue = confirmedBookings.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-    const avgRating = turfs.length
-      ? (turfs.reduce((sum, t) => sum + (Number(t.rating) || 0), 0) / turfs.length).toFixed(1)
-      : 0;
+
+    let totalReviews = 0;
+    let avgRating = 0;
+    if (turfNames.length > 0) {
+      const [reviewRows] = await pool.query(
+        `SELECT COUNT(*) as count, AVG(rating) as avg_rating FROM reviews WHERE turf_name IN (${turfNames.map(() => "?").join(",")})`,
+        turfNames
+      );
+      totalReviews = reviewRows[0]?.count || 0;
+      avgRating = totalReviews > 0 && reviewRows[0]?.avg_rating ? Number(Number(reviewRows[0].avg_rating).toFixed(1)) : 0;
+    }
 
     return res.json({
       success: true,
@@ -73,6 +81,7 @@ router.get("/stats", authenticateToken, async (req, res) => {
         totalRevenue: totalRevenue,
         totalStaff: 0,
         avgRating: Number(avgRating),
+        totalReviews: totalReviews,
       },
       recentBookings: bookings.slice(0, 5),
       recentTurfs: turfs.slice(0, 5),

@@ -80,6 +80,27 @@ export async function initDatabase() {
       await pool.query("ALTER TABLE turfs ADD COLUMN gallery LONGTEXT");
     } catch (e) {}
     try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN opening_time VARCHAR(50) DEFAULT '06:00 AM'");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN closing_time VARCHAR(50) DEFAULT '11:00 PM'");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN slot_duration INT DEFAULT 60");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN peak_start_time VARCHAR(50) DEFAULT '05:00 PM'");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN peak_end_time VARCHAR(50) DEFAULT '11:00 PM'");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN peak_price DECIMAL(10,2) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN operational_days LONGTEXT");
+    } catch (e) {}
+    try {
       await pool.query("ALTER TABLE reviews ADD COLUMN owner_reply TEXT");
     } catch (e) {}
     try {
@@ -175,7 +196,7 @@ async function createTables() {
       location VARCHAR(255),
       sport_type VARCHAR(100),
       price_per_hour DECIMAL(10,2),
-      rating DECIMAL(3,2) DEFAULT 4.5,
+      rating DECIMAL(3,2) DEFAULT 0.0,
       reviews INT DEFAULT 0,
       status VARCHAR(50) DEFAULT 'Active',
       owner_name VARCHAR(255),
@@ -692,6 +713,27 @@ async function createTables() {
   } catch (e) { }
   try {
     await conn.query("ALTER TABLE turfs ADD COLUMN reviews INT DEFAULT 25;");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN opening_time VARCHAR(50) DEFAULT '06:00 AM';");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN closing_time VARCHAR(50) DEFAULT '11:00 PM';");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN slot_duration INT DEFAULT 60;");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN peak_start_time VARCHAR(50) DEFAULT '05:00 PM';");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN peak_end_time VARCHAR(50) DEFAULT '11:00 PM';");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN peak_price DECIMAL(10,2);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE turfs ADD COLUMN operational_days VARCHAR(255) DEFAULT 'Mon,Tue,Wed,Thu,Fri,Sat,Sun';");
   } catch (e) { }
 
   // Update existing turfs with realistic distinct review counts if needed

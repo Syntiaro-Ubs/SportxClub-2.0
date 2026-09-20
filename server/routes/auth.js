@@ -53,8 +53,8 @@ async function accountEmailExists(pool, email, targetAccountType = "player") {
   const accType = normalizeAccountType(targetAccountType);
   if (accType === "turf-owner") {
     const [ownerRows] = await pool.query(
-      "SELECT id FROM turf_owners WHERE LOWER(email) = ? UNION SELECT id FROM turf_owner_accounts WHERE LOWER(email) = ? LIMIT 1",
-      [cleanEmail, cleanEmail]
+      "SELECT id FROM turf_owners WHERE LOWER(email) = ? UNION SELECT id FROM turf_owner_accounts WHERE LOWER(email) = ? UNION SELECT id FROM staff WHERE LOWER(email) = ? LIMIT 1",
+      [cleanEmail, cleanEmail, cleanEmail]
     );
     return ownerRows.length > 0;
   } else if (accType === "cms-admin") {
@@ -304,87 +304,182 @@ router.post("/login", async (req, res) => {
     }
 
     const cleanInput = email.trim();
+    const strippedId = cleanInput.replace(/^#\s*/, '').trim();
 
     if (accountType === "turf-owner") {
+      // 1. Check Turf Owner Accounts
       const [rows] = await pool.query(
         `SELECT oa.id AS account_id, oa.owner_profile_id, oa.email, oa.full_name, oa.password, oa.status AS account_status,
                 o.owner_id, o.phone, o.city, o.status, o.total_turfs, o.earnings
          FROM turf_owner_accounts oa
          LEFT JOIN turf_owners o ON o.id = oa.owner_profile_id
-         WHERE (LOWER(oa.email) = LOWER(?) OR o.owner_id = ? OR oa.owner_id = ?)
+         WHERE (LOWER(oa.email) = LOWER(?) OR o.owner_id = ? OR oa.owner_id = ? OR o.owner_id = ? OR oa.owner_id = ?)
          LIMIT 1`,
-        [cleanInput, cleanInput, cleanInput]
+        [cleanInput, cleanInput, cleanInput, strippedId, strippedId]
       );
 
-      if (!rows[0]) {
-        // Check if user is registered as Player
-        const [playerExists] = await pool.query(
-          `SELECT id FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1`,
-          [cleanInput]
-        );
-        if (playerExists.length > 0) {
-          return res.status(400).json({
+      if (rows[0]) {
+        const owner = rows[0];
+        const isPasswordValid = await verifyPassword(password, owner.password);
+
+        if (!isPasswordValid) {
+          return res.status(401).json({ success: false, error: "Invalid Turf Owner email/ID or password" });
+        }
+
+        // Check account approval status
+        const effectiveStatus = String(owner.status || owner.account_status || "Pending").trim();
+        if (effectiveStatus.toLowerCase().includes("pending")) {
+          return res.status(403).json({
             success: false,
-            error: "This account is registered as a Player. Please log in through the Player login page (/login)."
+            error: "Your turf onboarding application is pending approval by the Admin. Once approved, you can log in with your credentials."
           });
         }
-        return res.status(401).json({ success: false, error: "Invalid Turf Owner email/ID or password" });
-      }
 
-      const owner = rows[0];
-      const isPasswordValid = await verifyPassword(password, owner.password);
+        if (effectiveStatus.toLowerCase().includes("reject")) {
+          return res.status(403).json({
+            success: false,
+            error: "Your turf onboarding application has been rejected. Please contact support."
+          });
+        }
 
-      if (!isPasswordValid) {
-        return res.status(401).json({ success: false, error: "Invalid Turf Owner email/ID or password" });
-      }
+        // Upgrade password to bcrypt hash if plaintext
+        await maybeUpgradePassword(pool, "turf_owner_accounts", owner.account_id, password, owner.password);
 
-      // Check account approval status
-      const effectiveStatus = String(owner.status || owner.account_status || "Pending").trim();
-      if (effectiveStatus.toLowerCase().includes("pending")) {
-        return res.status(403).json({
-          success: false,
-          error: "Your turf onboarding application is pending approval by the Admin. Once approved, you can log in with your credentials."
+        const userObj = {
+          id: owner.owner_profile_id,
+          accountId: owner.account_id,
+          ownerId: owner.owner_id,
+          userId: owner.owner_id,
+          fullName: owner.full_name,
+          email: owner.email,
+          role: "owner",
+          accountType: "turf-owner",
+          phone: owner.phone || "",
+          city: owner.city || "",
+          status: owner.status || owner.account_status,
+          totalTurfs: owner.total_turfs || 0,
+          earnings: owner.earnings || "₹0",
+        };
+
+        const token = generateToken({
+          id: owner.owner_profile_id,
+          email: owner.email,
+          role: "owner",
+          accountType: "turf-owner",
+        });
+
+        return res.json({
+          success: true,
+          user: userObj,
+          token,
         });
       }
 
-      if (effectiveStatus.toLowerCase().includes("reject")) {
-        return res.status(403).json({
-          success: false,
-          error: "Your turf onboarding application has been rejected. Please contact support."
+      // 2. Check Staff & Job Roles Table
+      const rawDigits = strippedId.replace(/\D/g, "");
+      const parsedStaffId = rawDigits ? parseInt(rawDigits, 10) : -1;
+      const [staffRows] = await pool.query(
+        `SELECT s.id, s.first_name, s.last_name, s.email, s.phone, s.password, s.role, s.turf, s.turfs, s.is_active, s.permissions,
+                t.owner_name, t.owner_email, t.name as matched_turf_name
+         FROM staff s
+         LEFT JOIN turfs t ON LOWER(t.name) = LOWER(s.turf)
+         WHERE LOWER(s.email) = LOWER(?)
+            OR s.phone = ?
+            OR s.id = ?
+            OR LOWER(s.email) = LOWER(?)
+         LIMIT 1`,
+        [
+          cleanInput,
+          cleanInput,
+          !isNaN(parsedStaffId) ? parsedStaffId : -1,
+          strippedId
+        ]
+      );
+
+      if (staffRows[0]) {
+        const staff = staffRows[0];
+        const isStaffPasswordValid = await verifyPassword(password, staff.password);
+
+        if (!isStaffPasswordValid) {
+          return res.status(401).json({ success: false, error: "Invalid Turf Staff email/ID or password" });
+        }
+
+        if (!staff.is_active) {
+          return res.status(403).json({
+            success: false,
+            error: "Your staff account has been deactivated. Please contact your Turf Owner/Manager."
+          });
+        }
+
+        // Upgrade staff password to bcrypt hash if plaintext
+        await maybeUpgradePassword(pool, "staff", staff.id, password, staff.password);
+
+        let perms = [];
+        try {
+          perms = typeof staff.permissions === "string" ? JSON.parse(staff.permissions) : (staff.permissions || []);
+        } catch (e) {
+          perms = staff.permissions || [];
+        }
+
+        let turfsArr = [];
+        try {
+          turfsArr = typeof staff.turfs === "string" ? JSON.parse(staff.turfs) : (staff.turfs || [staff.turf]);
+        } catch (e) {
+          turfsArr = [staff.turf || ""];
+        }
+
+        const fullName = `${staff.first_name || ""} ${staff.last_name || ""}`.trim() || staff.email;
+        const staffIdStr = `STAFF-${String(staff.id).padStart(4, "0")}`;
+
+        const userObj = {
+          id: staff.id,
+          staffId: staff.id,
+          ownerId: staffIdStr,
+          userId: staffIdStr,
+          fullName,
+          name: fullName,
+          email: staff.email,
+          role: (staff.role || "staff").toLowerCase(),
+          displayRole: staff.role || "Receptionist",
+          accountType: "turf-owner",
+          isStaff: true,
+          phone: staff.phone || "",
+          turf: staff.turf || turfsArr[0] || "",
+          turfs: turfsArr,
+          permissions: perms,
+          status: staff.is_active ? "Active" : "Inactive",
+          ownerName: staff.owner_name || "",
+          ownerEmail: staff.owner_email || "",
+        };
+
+        const token = generateToken({
+          id: staff.id,
+          email: staff.email,
+          role: (staff.role || "staff").toLowerCase(),
+          accountType: "turf-owner",
+          isStaff: true,
+        });
+
+        return res.json({
+          success: true,
+          user: userObj,
+          token,
         });
       }
 
-      // Upgrade password to bcrypt hash if plaintext
-      await maybeUpgradePassword(pool, "turf_owner_accounts", owner.account_id, password, owner.password);
+      // 3. If neither Turf Owner nor Staff, check if user is registered as Player
+      const [playerExists] = await pool.query(
+        `SELECT id FROM users WHERE LOWER(email) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1`,
+        [cleanInput, strippedId]
+      );
+      if (playerExists.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "This account is registered as a Player. Please log in through the Player login page (/login)."
+        });
+      }
 
-      const userObj = {
-        id: owner.owner_profile_id,
-        accountId: owner.account_id,
-        ownerId: owner.owner_id,
-        userId: owner.owner_id,
-        fullName: owner.full_name,
-        email: owner.email,
-        role: "owner",
-        accountType: "turf-owner",
-        phone: owner.phone || "",
-        city: owner.city || "",
-        status: owner.status || owner.account_status,
-        totalTurfs: owner.total_turfs || 0,
-        earnings: owner.earnings || "₹0",
-      };
-
-      const token = generateToken({
-        id: owner.owner_profile_id,
-        email: owner.email,
-        role: "owner",
-        accountType: "turf-owner",
-      });
-
-      return res.json({
-        success: true,
-        user: userObj,
-        token,
-      });
+      return res.status(401).json({ success: false, error: "Invalid Turf Owner / Staff email/ID or password" });
     }
 
     // Normal Player / User Login
@@ -447,6 +542,19 @@ router.post("/login", async (req, res) => {
           error: "This account is registered as a Turf Owner. Please log in through the Turf Owner Portal (/admin-login)."
         });
       }
+
+      // Check if user is Staff
+      const [staffExists] = await pool.query(
+        `SELECT id FROM staff WHERE LOWER(email) = LOWER(?) OR phone = ? LIMIT 1`,
+        [cleanInput, cleanInput]
+      );
+      if (staffExists.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "This account is registered as Turf Staff. Please log in through the Turf Owner / Staff Portal (/admin-login)."
+        });
+      }
+
       return res.status(401).json({ success: false, error: "Invalid player email or password" });
     }
 

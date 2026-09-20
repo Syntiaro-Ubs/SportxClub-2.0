@@ -48,7 +48,7 @@ router.post("/", async (req, res) => {
             [turf_name]
           );
           const count = avgRows[0]?.count || 0;
-          const avgRating = avgRows[0]?.avg_rating ? Number(avgRows[0].avg_rating).toFixed(1) : 4.8;
+          const avgRating = avgRows[0]?.avg_rating ? Number(avgRows[0].avg_rating).toFixed(2) : 0.0;
           await pool.query(
             "UPDATE turfs SET reviews = ?, rating = ? WHERE LOWER(name) = LOWER(?)",
             [count, avgRating, turf_name]
@@ -106,7 +106,7 @@ router.put("/:id", async (req, res) => {
           [targetTurf]
         );
         const count = avgRows[0]?.count || 0;
-        const avgRating = avgRows[0]?.avg_rating ? Number(avgRows[0].avg_rating).toFixed(1) : (count === 0 ? 0.0 : 4.8);
+        const avgRating = avgRows[0]?.avg_rating ? Number(avgRows[0].avg_rating).toFixed(2) : 0.0;
         await pool.query(
           "UPDATE turfs SET reviews = ?, rating = ? WHERE LOWER(name) = LOWER(?)",
           [count, avgRating, targetTurf]
@@ -159,7 +159,7 @@ router.delete("/:id", async (req, res) => {
           [turf_name]
         );
         const count = avgRows[0]?.count || 0;
-        const avgRating = avgRows[0]?.avg_rating ? Number(avgRows[0].avg_rating).toFixed(1) : (count === 0 ? 0.0 : 4.8);
+        const avgRating = avgRows[0]?.avg_rating ? Number(avgRows[0].avg_rating).toFixed(2) : 0.0;
         await pool.query(
           "UPDATE turfs SET reviews = ?, rating = ? WHERE LOWER(name) = LOWER(?)",
           [count, avgRating, turf_name]

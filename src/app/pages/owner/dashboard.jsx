@@ -172,15 +172,11 @@ export function Dashboard() {
 
   const averageRating = useMemo(() => {
     if (reviews.length > 0) {
-      const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
+      const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
       return (sum / reviews.length).toFixed(1);
     }
-    if (turfs.length > 0) {
-      const sum = turfs.reduce((acc, t) => acc + (Number(t.rating) || 4.5), 0);
-      return (sum / turfs.length).toFixed(1);
-    }
-    return "4.8";
-  }, [reviews, turfs]);
+    return "0.0";
+  }, [reviews]);
 
   // Dynamic Chart Data Hooks based on MySQL records
   const sportPopularityData = useMemo(() => {

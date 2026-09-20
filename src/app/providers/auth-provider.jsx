@@ -111,12 +111,15 @@ export function AuthProvider({ children }) {
         }
         return { success: true, user: userObj };
       }
+      if (res && res.error) {
+        return { success: false, error: res.error };
+      }
     } catch (e) {
       console.warn("Backend login failed, attempting local fallback:", e);
     }
 
     if (accountType !== "player") {
-      return { success: false, error: "This account type must be authenticated by the database." };
+      return { success: false, error: "Authentication failed. Please check your credentials." };
     }
 
     // Local fallback for player-only offline development

@@ -21,11 +21,26 @@ async function filterTurfColumns(pool, rawBody) {
   return filtered;
 }
 
-// GET /api/turf/turfs - Get all turfs (Public)
+// GET /api/turf/turfs - Get all turfs (Public) with dynamic reviews & rating
 router.get("/", async (req, res) => {
   try {
     const pool = getPool();
-    const [rows] = await pool.query("SELECT * FROM turfs ORDER BY id DESC");
+    const [rows] = await pool.query(`
+      SELECT t.*, 
+        COALESCE(r.review_count, t.reviews, 0) AS reviews,
+        CASE 
+          WHEN r.review_count > 0 THEN ROUND(r.avg_rating, 2)
+          WHEN t.reviews > 0 AND t.rating > 0 THEN t.rating
+          ELSE 0.00
+        END AS rating
+      FROM turfs t
+      LEFT JOIN (
+        SELECT turf_name, COUNT(*) AS review_count, AVG(rating) AS avg_rating 
+        FROM reviews 
+        GROUP BY turf_name
+      ) r ON LOWER(TRIM(r.turf_name)) = LOWER(TRIM(t.name))
+      ORDER BY t.id DESC
+    `);
     return res.json({ success: true, data: rows });
   } catch (err) {
     console.error("Fetch Turfs Error:", err);
@@ -33,11 +48,26 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET /api/turf/turfs/:id - Get turf by ID (Public)
+// GET /api/turf/turfs/:id - Get turf by ID (Public) with dynamic reviews & rating
 router.get("/:id", async (req, res) => {
   try {
     const pool = getPool();
-    const [rows] = await pool.query("SELECT * FROM turfs WHERE id = ?", [req.params.id]);
+    const [rows] = await pool.query(`
+      SELECT t.*, 
+        COALESCE(r.review_count, t.reviews, 0) AS reviews,
+        CASE 
+          WHEN r.review_count > 0 THEN ROUND(r.avg_rating, 2)
+          WHEN t.reviews > 0 AND t.rating > 0 THEN t.rating
+          ELSE 0.00
+        END AS rating
+      FROM turfs t
+      LEFT JOIN (
+        SELECT turf_name, COUNT(*) AS review_count, AVG(rating) AS avg_rating 
+        FROM reviews 
+        GROUP BY turf_name
+      ) r ON LOWER(TRIM(r.turf_name)) = LOWER(TRIM(t.name))
+      WHERE t.id = ?
+    `, [req.params.id]);
     if (rows.length === 0) {
       return res.status(404).json({ success: false, error: "Turf not found" });
     }
@@ -53,6 +83,8 @@ router.post("/", authenticateToken, requireRole(["admin", "super admin", "cms-ad
   try {
     const pool = getPool();
     const body = await filterTurfColumns(pool, req.body);
+    if (body.rating === undefined || body.rating === null) body.rating = 0;
+    if (body.reviews === undefined || body.reviews === null) body.reviews = 0;
     const keys = Object.keys(body);
     if (keys.length === 0) {
       return res.status(400).json({ success: false, error: "No valid turf fields provided" });
