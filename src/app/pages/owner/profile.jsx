@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { Button } from "../../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
+import { isValidProfileImage } from "../../components/ui/utils";
 import { Card } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { useAuth } from "../../providers/auth-provider";
@@ -229,7 +230,7 @@ export function OwnerProfile() {
           {/* Left Block: Avatar + Name + Badges */}
           <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left w-full sm:w-auto">
             <Avatar className="h-24 w-24 sm:h-28 sm:w-28 rounded-full border-2 border-border/60 shadow-lg ring-2 ring-emerald-500/20 bg-background shrink-0">
-              {activeProfile?.profilePicture || editFormData.profilePicture ? (
+              {isValidProfileImage(activeProfile?.profilePicture || editFormData.profilePicture) ? (
                 <AvatarImage src={activeProfile?.profilePicture || editFormData.profilePicture} className="object-cover rounded-full" />
               ) : (
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-600 dark:text-emerald-400 text-2xl font-black rounded-full">
@@ -516,7 +517,7 @@ export function OwnerProfile() {
               <Label className="text-right text-xs font-bold">Photo</Label>
               <div className="col-span-3 flex items-center gap-4">
                 <Avatar className="h-14 w-14">
-                  {editFormData.profilePicture ? (
+                  {isValidProfileImage(editFormData.profilePicture) ? (
                     <AvatarImage src={editFormData.profilePicture} className="object-cover" />
                   ) : (
                     <AvatarFallback className="bg-primary/10 text-primary font-bold">

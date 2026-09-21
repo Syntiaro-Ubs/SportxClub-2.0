@@ -189,7 +189,7 @@ export function PlayerLoginPage() {
     await selectGoogleAccount(
       googleEmailInput.trim(),
       googleNameInput.trim() || googleEmailInput.split("@")[0],
-      `https://i.pravatar.cc/150?u=${encodeURIComponent(googleEmailInput.trim())}`
+      null
     );
   };
 
@@ -524,11 +524,17 @@ export function PlayerLoginPage() {
                           className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#2b2b2b] hover:bg-[#363636] border border-[#444746] transition-all cursor-pointer text-left group"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <img
-                              src={acc.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(acc.email)}`}
-                              alt={acc.name}
-                              className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20"
-                            />
+                            {acc.avatar && !acc.avatar.includes("pravatar.cc") ? (
+                              <img
+                                src={acc.avatar}
+                                alt={acc.name}
+                                className="w-10 h-10 rounded-full object-cover shrink-0 border border-white/20"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-sm shrink-0 border border-emerald-500/30">
+                                {acc.name ? acc.name.trim().charAt(0).toUpperCase() : "U"}
+                              </div>
+                            )}
                             <div className="min-w-0 truncate">
                               <p className="font-bold text-xs text-white truncate group-hover:text-blue-400">
                                 {acc.name}

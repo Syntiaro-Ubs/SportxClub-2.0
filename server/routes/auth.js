@@ -569,7 +569,7 @@ router.post("/login", async (req, res) => {
       await maybeUpgradePassword(pool, "player_accounts", userIdToUpgrade, password, storedPassword).catch(() => {});
     }
 
-    const avatarUrl = player.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(player.email)}`;
+    const avatarUrl = player.avatar || null;
     const userObj = {
       id: player.id,
       accountId: player.id,
@@ -657,7 +657,7 @@ router.put("/update-profile", authenticateToken, async (req, res) => {
       }
     } catch (e) { }
 
-    const finalAvatar = updatedRow.avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(updatedRow.email)}`;
+    const finalAvatar = updatedRow.avatar || null;
 
     const updatedUser = {
       id: updatedRow.id,
@@ -930,7 +930,7 @@ router.post("/google", async (req, res) => {
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = fullName ? fullName.trim() : cleanEmail.split("@")[0];
-    const cleanAvatar = avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(cleanEmail)}`;
+    const cleanAvatar = avatar || null;
     const isOwnerRole = String(role).toLowerCase() === "owner" || String(role).toLowerCase() === "turf-owner";
     const accountType = isOwnerRole ? "turf-owner" : "player";
 

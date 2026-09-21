@@ -17,11 +17,23 @@ const defaultAuthValue = {
 
 const AuthContext = createContext(defaultAuthValue);
 
+const sanitizeUser = (user) => {
+  if (!user || typeof user !== "object") return user;
+  const cleaned = { ...user };
+  if (typeof cleaned.avatar === "string" && (cleaned.avatar.includes("pravatar.cc") || cleaned.avatar.includes("placeholder"))) {
+    cleaned.avatar = "";
+  }
+  if (typeof cleaned.profilePicture === "string" && (cleaned.profilePicture.includes("pravatar.cc") || cleaned.profilePicture.includes("placeholder"))) {
+    cleaned.profilePicture = "";
+  }
+  return cleaned;
+};
+
 export function AuthProvider({ children }) {
   const [playerUser, setPlayerUser] = useState(() => {
     try {
       const saved = typeof window !== "undefined" ? localStorage.getItem("playerUser") : null;
-      return saved ? JSON.parse(saved) : null;
+      return saved ? sanitizeUser(JSON.parse(saved)) : null;
     } catch (e) {
       return null;
     }
@@ -30,7 +42,7 @@ export function AuthProvider({ children }) {
   const [turfOwnerUser, setTurfOwnerUser] = useState(() => {
     try {
       const saved = localStorage.getItem("turfOwnerUser");
-      return saved ? JSON.parse(saved) : null;
+      return saved ? sanitizeUser(JSON.parse(saved)) : null;
     } catch (e) {
       return null;
     }
@@ -40,7 +52,7 @@ export function AuthProvider({ children }) {
     try {
       const saved =
         localStorage.getItem("cmsAdminUser") || sessionStorage.getItem("sportx_cms_user");
-      return saved ? JSON.parse(saved) : null;
+      return saved ? sanitizeUser(JSON.parse(saved)) : null;
     } catch (e) {
       return null;
     }

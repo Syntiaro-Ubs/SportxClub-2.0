@@ -68,7 +68,7 @@ export function AdminUsers() {
       const newUser = await adminApi.create("users", {
         ...formData,
         joined_date: new Date().toISOString().split("T")[0],
-        avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(formData.email)}`
+        avatar: formData.avatar || null
       });
       setUsers([newUser, ...users]);
       setIsAddOpen(false);
@@ -209,8 +209,10 @@ export function AdminUsers() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10 border border-border/40">
-                              <AvatarImage src={user.avatar} alt={userName} />
-                              <AvatarFallback className="bg-primary/10 text-primary">{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                              {user.avatar && !user.avatar.includes("pravatar.cc") && (
+                                <AvatarImage src={user.avatar} alt={userName} />
+                              )}
+                              <AvatarFallback className="bg-primary/10 text-primary font-bold">{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
                             <div>
                               <div className="font-semibold text-foreground">{userName}</div>

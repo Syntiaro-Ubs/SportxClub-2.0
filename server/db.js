@@ -848,6 +848,14 @@ async function createTables() {
     `);
   } catch (e) { }
 
+  // Clean up any existing dummy/pravatar avatars in database
+  try {
+    const conn = getPool();
+    await conn.query("UPDATE users SET avatar = NULL WHERE avatar LIKE '%pravatar.cc%' OR avatar = ''");
+    await conn.query("UPDATE dashboard_users SET avatar = NULL WHERE avatar LIKE '%pravatar.cc%' OR avatar = ''");
+    await conn.query("UPDATE turf_owners SET avatar = NULL WHERE avatar LIKE '%pravatar.cc%' OR avatar = ''");
+  } catch (e) { }
+
   console.log("Database schema checked/created successfully.");
 }
 
@@ -860,12 +868,12 @@ async function seedData() {
     await conn.query(`
       INSERT INTO users (full_name, email, password, role, phone, city, status, games_played, bookings, joined_date, avatar)
       VALUES 
-      ('System Admin', 'admin@sportxclub.com', 'admin123', 'admin', '+91 9999999999', 'Mumbai', 'Active', 0, 0, '2023-01-01', 'https://i.pravatar.cc/150?u=admin'),
-      ('Rahul Sharma', 'rahul.s@example.com', 'user123', 'Player', '+91 9876543210', 'Mumbai', 'Active', 45, 12, '2023-01-15', 'https://i.pravatar.cc/150?u=1'),
-      ('Priya Patel', 'priya.p@example.com', 'user123', 'Captain', '+91 8765432109', 'Delhi', 'Active', 120, 34, '2023-03-22', 'https://i.pravatar.cc/150?u=2'),
-      ('Amit Kumar', 'amit.k@example.com', 'user123', 'Player', '+91 7654321098', 'Bangalore', 'Suspended', 15, 2, '2023-06-10', 'https://i.pravatar.cc/150?u=3'),
-      ('Sneha Reddy', 'sneha.r@example.com', 'user123', 'Player', '+91 6543210987', 'Hyderabad', 'Active', 8, 1, '2023-08-05', 'https://i.pravatar.cc/150?u=4'),
-      ('Vikram Singh', 'vikram.s@example.com', 'user123', 'Captain', '+91 5432109876', 'Pune', 'Active', 210, 85, '2022-11-20', 'https://i.pravatar.cc/150?u=5')
+      ('System Admin', 'admin@sportxclub.com', 'admin123', 'admin', '+91 9999999999', 'Mumbai', 'Active', 0, 0, '2023-01-01', NULL),
+      ('Rahul Sharma', 'rahul.s@example.com', 'user123', 'Player', '+91 9876543210', 'Mumbai', 'Active', 45, 12, '2023-01-15', NULL),
+      ('Priya Patel', 'priya.p@example.com', 'user123', 'Captain', '+91 8765432109', 'Delhi', 'Active', 120, 34, '2023-03-22', NULL),
+      ('Amit Kumar', 'amit.k@example.com', 'user123', 'Player', '+91 7654321098', 'Bangalore', 'Suspended', 15, 2, '2023-06-10', NULL),
+      ('Sneha Reddy', 'sneha.r@example.com', 'user123', 'Player', '+91 6543210987', 'Hyderabad', 'Active', 8, 1, '2023-08-05', NULL),
+      ('Vikram Singh', 'vikram.s@example.com', 'user123', 'Captain', '+91 5432109876', 'Pune', 'Active', 210, 85, '2022-11-20', NULL)
     `);
   }
 

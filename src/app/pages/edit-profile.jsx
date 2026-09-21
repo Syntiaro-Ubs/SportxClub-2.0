@@ -19,6 +19,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Container } from "../components/ui/container";
+import { isValidProfileImage } from "../components/ui/utils";
 import {
   Dialog,
   DialogContent,
@@ -90,7 +91,7 @@ export function EditProfilePage() {
       setPhone(currentUser.phone || "");
       setBio(currentUser.bio || "");
       setSelectedSports(currentUser.selectedSports || []);
-      setProfilePicture(currentUser.profilePicture || "");
+      setProfilePicture(isValidProfileImage(currentUser.profilePicture) ? currentUser.profilePicture : "");
     }
   }, [currentUser]);
 
@@ -196,7 +197,7 @@ export function EditProfilePage() {
                 <div className="flex flex-col items-center gap-2 mb-2">
                   <div className="relative group">
                     <div className="h-24 w-24 rounded-full overflow-hidden border-2 border-primary/20 bg-background flex items-center justify-center relative shadow-inner">
-                      {profilePicture ? (
+                      {isValidProfileImage(profilePicture) ? (
                         <img
                           src={profilePicture}
                           alt="Profile Preview"

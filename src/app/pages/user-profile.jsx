@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { isValidProfileImage } from "../components/ui/utils";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -1244,7 +1245,9 @@ export function UserProfile() {
           <div className="flex flex-col gap-6 md:flex-row md:items-start justify-between">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
               <Avatar className="h-24 w-24 border border-primary/15 bg-background">
-                <AvatarImage src={user?.profilePicture} className="object-cover" />
+                {isValidProfileImage(user?.profilePicture || user?.avatar) && (
+                  <AvatarImage src={user?.profilePicture || user?.avatar} className="object-cover" />
+                )}
                 <AvatarFallback className="bg-primary/10 text-2xl text-primary font-black">{getInitials(displayName)}</AvatarFallback>
               </Avatar>
               <div className="space-y-1">

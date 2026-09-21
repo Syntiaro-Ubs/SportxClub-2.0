@@ -25,6 +25,7 @@ import {
 import { Logo } from "../brand/Logo";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { isValidProfileImage } from "../ui/utils";
 import { Switch } from "../ui/switch";
 import { ThemeToggleButton } from "../ui/theme-toggle-button";
 import { useAuth } from "../../providers/auth-provider";
@@ -283,7 +284,7 @@ export function OwnerLayout() {
                 <DropdownMenuTrigger className="outline-none focus:outline-none flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 p-1 transition-all duration-200 cursor-pointer group">
                   <div className="relative">
                     <Avatar className="h-6 w-6 sm:h-9 sm:w-9 border-0 bg-transparent flex items-center justify-center">
-                      {activeProfile.profilePicture ? (
+                      {isValidProfileImage(activeProfile.profilePicture) ? (
                         <AvatarImage src={activeProfile.profilePicture} alt={ownerName} className="object-cover" />
                       ) : (
                         <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center">

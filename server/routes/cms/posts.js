@@ -70,7 +70,7 @@ router.post("/", async (req, res) => {
       [
         author_user_id || null,
         author,
-        author_avatar || `https://i.pravatar.cc/150?u=${encodeURIComponent(author)}`,
+        author_avatar || null,
         time || "Just now",
         content,
         image_url || null,
