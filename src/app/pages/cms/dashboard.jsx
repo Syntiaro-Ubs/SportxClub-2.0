@@ -53,6 +53,8 @@ import {
   UploadCloud,
   Upload,
   Loader2,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -91,7 +93,7 @@ export const CONSOLE_MODULES = [
     description: "Add venues, update hourly rates, manage status, and rearrange display order.",
     icon: MapPin,
     tag: "Venues",
-    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+    color: "text-slate-900 group-hover:text-emerald-600 transition-colors bg-emerald-50 border-emerald-200",
   },
   {
     key: "reviews",
@@ -382,12 +384,14 @@ export function CMSDashboard() {
   const [recSearchQuery, setRecSearchQuery] = useState("");
   const [recSortMode, setRecSortMode] = useState("reviews"); // 'reviews' | 'custom'
   const [isSavingRecOrder, setIsSavingRecOrder] = useState(false);
+  const [recViewMode, setRecViewMode] = useState("list"); // 'list' | 'grid'
 
   // Section 2: All Venues States
   const [allVenuesTurfs, setAllVenuesTurfs] = useState([]);
   const [allSearchQuery, setAllSearchQuery] = useState("");
   const [allSortMode, setAllSortMode] = useState("reviews"); // 'reviews' | 'custom'
   const [isSavingAllOrder, setIsSavingAllOrder] = useState(false);
+  const [allViewMode, setAllViewMode] = useState("list"); // 'list' | 'grid'
 
   const [turfForm, setTurfForm] = useState({
     name: "",
@@ -1546,21 +1550,21 @@ export function CMSDashboard() {
   }, [currentCmsUser, userPermissions]);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-[#0f172a] flex font-sans antialiased">
+    <div className="min-h-screen bg-white text-[#0f172a] flex font-sans antialiased">
       {/* 1. Left Fixed Sidebar */}
       <aside
-        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-30 sticky top-0 h-screen ${isSidebarCollapsed ? "w-20" : "w-64"
+        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-30 sticky top-0 h-screen ${isSidebarCollapsed ? "w-20" : "w-56"
           }`}
       >
         {/* Brand Header */}
-        <div className="h-16 px-4 border-b border-[#e2e8f0] flex items-center justify-start overflow-hidden">
-          <Link to="/dashboard" className="flex items-center">
-            <Logo className={isSidebarCollapsed ? "h-8 max-w-[48px]" : "h-11 w-auto"} />
+        <div className="h-16 px-2 border-b border-[#e2e8f0] flex items-center justify-center overflow-hidden shrink-0">
+          <Link to="/dashboard" className="flex items-center justify-center w-full">
+            <Logo className={isSidebarCollapsed ? "h-10 max-w-[56px] justify-center scale-125 translate-y-1" : "h-14 w-auto max-w-[210px] justify-center scale-145 transform origin-center translate-y-1.5"} />
           </Link>
         </div>
 
-        {/* Sidebar Nav (Filtered by Permissions) */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {/* Sidebar Nav (Filtered by Permissions with divider lines between items) */}
+        <nav className="flex-1 overflow-y-auto divide-y divide-[#e2e8f0]/80">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeView === item.key;
@@ -1568,9 +1572,9 @@ export function CMSDashboard() {
               <button
                 key={item.key}
                 onClick={() => handleNavClick(item.key)}
-                className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-xs font-semibold transition-all cursor-pointer ${isActive
-                  ? "bg-[#e2e8f0]/60 text-[#0f172a] font-extrabold shadow-xs"
-                  : "text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9]"
+                className={`w-full flex items-center gap-3.5 px-4 py-3.5 rounded-none text-xs font-semibold transition-all cursor-pointer ${isActive
+                  ? "bg-slate-100 text-[#0f172a] font-extrabold shadow-none"
+                  : "text-[#64748b] hover:text-[#0f172a] hover:bg-slate-50"
                   }`}
                 title={isSidebarCollapsed ? item.label : undefined}
               >
@@ -1581,24 +1585,27 @@ export function CMSDashboard() {
           })}
         </nav>
 
-        {/* Footer Controls */}
-        <div className="p-3 border-t border-[#e2e8f0] space-y-1">
-          <button
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="w-full flex items-center justify-center p-2 text-[#64748b] hover:text-[#0f172a] hover:bg-[#f1f5f9] rounded-xl cursor-pointer transition-colors"
-            title="Toggle Sidebar"
-          >
-            {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
+        {/* Footer Controls - Sign Out and Collapse Arrow in one line */}
+        <div className="p-3 border-t border-[#e2e8f0] space-y-2">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleLogout}
+              className={`flex-1 flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl cursor-pointer transition-colors border border-transparent hover:border-red-200 ${isSidebarCollapsed ? "justify-center px-1.5" : ""
+                }`}
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4 shrink-0" />
+              {!isSidebarCollapsed && <span>Sign Out</span>}
+            </button>
 
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center gap-3 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl cursor-pointer transition-colors ${isSidebarCollapsed ? "justify-center" : ""
-              }`}
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!isSidebarCollapsed && <span>Sign Out</span>}
-          </button>
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="p-2 text-[#64748b] hover:text-[#0f172a] hover:bg-slate-100 rounded-xl cursor-pointer transition-colors shrink-0 flex items-center justify-center border border-slate-200/80"
+              title="Toggle Sidebar"
+            >
+              {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+          </div>
 
           {!isSidebarCollapsed && (
             <div className="pt-2 border-t border-[#e2e8f0] flex flex-col items-center justify-center gap-1 text-center">
@@ -1626,34 +1633,21 @@ export function CMSDashboard() {
         {/* Top Navbar Header */}
         <header className="h-16 bg-white border-b border-[#e2e8f0] px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs">
           <h1 className="text-xl font-extrabold tracking-tight text-[#0f172a]">
-            {activeView === "team"
-              ? "Team & Admin Management"
-              : activeView === "onboarding"
-                ? "Turf Onboarding Requests"
-                : activeView === "reviews"
-                  ? "Turf Reviews Management"
-                  : activeView === "community"
-                    ? "Community Feed Management"
-                    : activeView === "tournaments"
-                      ? "Leagues & Tournaments Page Management"
-                      : activeView === "turfs"
-                        ? "Turfs Management & Rearrange"
-                        : "Home Page Management"}
           </h1>
 
           <div className="flex items-center gap-5">
             <Button
               onClick={() => window.open("https://sportxclub.com/", "_blank")}
               variant="outline"
-              className="border-[#cbd5e1] hover:border-[#0f172a] text-[#334155] text-xs font-bold h-9 rounded-xl shadow-xs cursor-pointer"
+              className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 text-black text-xs font-extrabold h-9 rounded-lg shadow-xs cursor-pointer transition-all duration-200 flex items-center group"
             >
-              <Globe className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+              <Globe className="w-3.5 h-3.5 mr-1.5 text-black group-hover:text-emerald-600 transition-colors" />
               Live Website
-              <ExternalLink className="w-3 h-3 ml-1" />
+              <ExternalLink className="w-3 h-3 ml-1 text-black group-hover:text-emerald-600 transition-colors" />
             </Button>
 
             <div className="relative">
-              <button className="h-9 w-9 rounded-full hover:bg-[#f1f5f9] flex items-center justify-center text-[#64748b] cursor-pointer transition-colors">
+              <button className="h-9 w-9 rounded-full hover:bg-[#f1f5f9] hover:scale-110 active:scale-95 flex items-center justify-center text-[#64748b] cursor-pointer transition-all duration-200">
                 <Bell className="w-4 h-4" />
                 <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white" />
               </button>
@@ -1670,7 +1664,7 @@ export function CMSDashboard() {
                   {currentCmsUser?.role || "SYSTEM ADMIN"}
                 </div>
               </div>
-              <div className="h-9 w-9 rounded-full bg-[#0f172a] text-white flex items-center justify-center font-black text-xs shadow-xs">
+              <div className="h-9 w-9 rounded-full bg-slate-100 border border-black text-black hover:border-emerald-600 hover:text-emerald-700 hover:scale-110 active:scale-95 flex items-center justify-center font-black text-xs shadow-xs transition-all duration-200 cursor-pointer">
                 {(currentCmsUser?.fullName || currentCmsUser?.username || "A").charAt(0).toUpperCase()}
               </div>
             </div>
@@ -1678,11 +1672,11 @@ export function CMSDashboard() {
         </header>
 
         {/* 3. Main Content Container (Chronological Vertical Scrolling Homepage Sections) */}
-        <main className="flex-1 p-8 space-y-12 overflow-y-auto">
+        <main className="flex-1 px-6 py-5 overflow-y-auto">
           {activeView === "home-page" && (
-            <div className="space-y-12 max-w-7xl mx-auto">
-              <div className="border-b border-[#e2e8f0] pb-4">
-                <h2 className="text-2xl font-black tracking-tight text-[#0f172a]">
+            <div className="space-y-5 max-w-7xl mx-auto">
+              <div className="border-b border-[#e2e8f0] pb-3">
+                <h2 className="text-xl font-black tracking-tight text-[#0f172a]">
                   Live Home Page Preview & Section Cards Manager
                 </h2>
                 <p className="text-xs text-[#64748b]">
@@ -1691,14 +1685,14 @@ export function CMSDashboard() {
               </div>
 
               {/* SECTION 1: HERO CAROUSEL BANNERS */}
-              <section className="space-y-4 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
-                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4">
+                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
                       HOMEPAGE SECTION #1
                     </div>
-                    <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                      <ImageIcon className="w-5 h-5 text-emerald-600" />
+                    <h3 className="text-base font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
+                      <ImageIcon className="w-4.5 h-4.5 text-emerald-600" />
                       Hero Carousel Banners ({banners.length} slides)
                     </h3>
                   </div>
@@ -1708,16 +1702,16 @@ export function CMSDashboard() {
                       setSelectedBannerFiles([]);
                       setIsBannerModalOpen(true);
                     }}
-                    className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs cursor-pointer"
+                    className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                   >
-                    <Plus className="w-4 h-4 mr-1.5" />
+                    <Plus className="w-4 h-4 mr-1.5 text-black group-hover:text-emerald-600 transition-colors" />
                     Add Hero Banner Slide
                   </Button>
                 </div>
 
                 {banners.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]/60 p-6">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+                  <div className="text-center py-12 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl bg-[#f8fafc]/60 p-6">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-slate-900 group-hover:text-emerald-600 transition-colors flex items-center justify-center mx-auto mb-3">
                       <ImageIcon className="w-6 h-6" />
                     </div>
                     <h4 className="text-sm font-black text-[#0f172a]">No custom hero banners uploaded yet</h4>
@@ -1729,9 +1723,9 @@ export function CMSDashboard() {
                         setSelectedBannerFiles([]);
                         setIsBannerModalOpen(true);
                       }}
-                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs cursor-pointer"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                     >
-                      <UploadCloud className="w-4 h-4 mr-1.5" />
+                      <UploadCloud className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Upload Banner Images
                     </Button>
                   </div>
@@ -1740,7 +1734,7 @@ export function CMSDashboard() {
                     {banners.map((ban, index) => (
                       <div
                         key={ban.id}
-                        className="relative rounded-2xl overflow-hidden shadow-sm border border-[#e2e8f0] bg-slate-900 group h-52 sm:h-56 flex flex-col justify-end"
+                        className="relative rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:border-emerald-600 transition-all duration-300 bg-slate-900 group h-52 sm:h-56 flex flex-col justify-end"
                       >
                         <img
                           src={ban.image_url}
@@ -1762,7 +1756,7 @@ export function CMSDashboard() {
                             className="h-9 px-3.5 rounded-full bg-white/95 hover:bg-white text-[#0f172a] font-bold text-xs flex items-center gap-1.5 shadow-lg backdrop-blur-md transition-all hover:scale-105 cursor-pointer border border-white/80"
                             title="Edit Slide Text & Image"
                           >
-                            <Edit2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <Edit2 className="w-3.5 h-3.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                             <span>Edit</span>
                           </button>
 
@@ -1794,14 +1788,14 @@ export function CMSDashboard() {
               </section>
 
               {/* SECTION 2: POPULAR SPORTS CAROUSEL CARDS */}
-              <section className="space-y-4 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
-                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4 pt-6 border-t border-[#e2e8f0]">
+                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
                       HOMEPAGE SECTION #2
                     </div>
                     <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                      <Trophy className="w-5 h-5 text-emerald-600" />
+                      <Trophy className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Popular Sports Carousel Cards ({sports.length} cards)
                     </h3>
                   </div>
@@ -1812,16 +1806,16 @@ export function CMSDashboard() {
                       setSportForm({ name: "", icon: "⚽", image_url: "", badge: "Popular", description: "1,200+ venues available" });
                       setIsSportModalOpen(true);
                     }}
-                    className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                    className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                   >
-                    <Plus className="w-4 h-4 mr-1.5" />
+                    <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Add Card to Popular Sports
                   </Button>
                 </div>
 
                 <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {sports.map((sport) => (
-                    <Card key={sport.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow relative">
+                    <Card key={sport.id} className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 relative">
                       <div className="h-44 relative bg-slate-900">
                         {sport.image_url ? (
                           <img src={sport.image_url} alt={sport.name} className="w-full h-full object-cover" />
@@ -1860,7 +1854,7 @@ export function CMSDashboard() {
                               });
                               setIsSportModalOpen(true);
                             }}
-                            className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
+                            className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-emerald-600 hover:text-emerald-700 px-2.5 cursor-pointer transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                           </Button>
@@ -1868,7 +1862,7 @@ export function CMSDashboard() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDeleteSportCard(sport.id)}
-                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
                             title="Delete Card"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1881,14 +1875,14 @@ export function CMSDashboard() {
               </section>
 
               {/* SECTION 3: SPORT RELATED FACILITIES & EQUIPMENT (PRO STORE) */}
-              <section className="space-y-4 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
-                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4 pt-6 border-t border-[#e2e8f0]">
+                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
                       HOMEPAGE SECTION #3
                     </div>
                     <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                      <Dumbbell className="w-5 h-5 text-emerald-600" />
+                      <Dumbbell className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Sport Related Facilities & Equipment ({facilities.length} cards)
                     </h3>
                   </div>
@@ -1899,16 +1893,16 @@ export function CMSDashboard() {
                       setFacilityForm({ title: "", category: "EQUIPMENT", image_url: "", price: 999.00, rating: "4.8", badge: "PRO STORE" });
                       setIsFacilityModalOpen(true);
                     }}
-                    className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                    className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                   >
-                    <Plus className="w-4 h-4 mr-1.5" />
+                    <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Add Equipment Card
                   </Button>
                 </div>
 
                 <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {facilities.map((fac) => (
-                    <Card key={fac.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-shadow relative">
+                    <Card key={fac.id} className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 relative">
                       <div className="h-44 relative bg-slate-900">
                         <img src={fac.image_url} alt={fac.title} className="w-full h-full object-cover" />
                         <div className="absolute top-2.5 right-2.5 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[11px] font-bold text-white flex items-center gap-1">
@@ -1947,7 +1941,7 @@ export function CMSDashboard() {
                                 });
                                 setIsFacilityModalOpen(true);
                               }}
-                              className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
+                              className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-emerald-600 hover:text-emerald-700 px-2.5 cursor-pointer transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                             </Button>
@@ -1955,7 +1949,7 @@ export function CMSDashboard() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleDeleteFacilityCard(fac.id)}
-                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
+                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
                               title="Delete Card"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1969,16 +1963,16 @@ export function CMSDashboard() {
               </section>
 
               {/* SECTION 4: OFFERS & TOURNAMENTS RAIL (Offers & Right Side Tournaments Rail) */}
-              <section className="space-y-6 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
+              <section className="space-y-6 pt-6 border-t border-[#e2e8f0]">
                 {/* 4A: Offers Left Side */}
                 <div>
-                  <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-4 mb-4">
+                  <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3 mb-4">
                     <div>
                       <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
                         HOMEPAGE SECTION #4 (LEFT SIDE OFFERS)
                       </div>
                       <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                        <Zap className="w-5 h-5 text-emerald-600" />
+                        <Zap className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                         Offers that feel clear, useful, and safe ({offers.length} cards)
                       </h3>
                     </div>
@@ -1989,22 +1983,22 @@ export function CMSDashboard() {
                         setOfferForm({ tag: "Limited time", title: "", value: "", description: "" });
                         setIsOfferModalOpen(true);
                       }}
-                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                     >
-                      <Plus className="w-4 h-4 mr-1.5" />
+                      <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Add Offer Card
                     </Button>
                   </div>
 
                   <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
                     {offers.map((off) => (
-                      <Card key={off.id} className="bg-white border border-[#e2e8f0] rounded-2xl p-5 shadow-xs flex flex-col justify-between relative">
+                      <Card key={off.id} className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl p-5 shadow-xs flex flex-col justify-between relative transition-all duration-300">
                         <div>
                           <Badge className="bg-[#f1f5f9] text-[#475569] border-none text-[10px] font-bold uppercase tracking-wider">
                             {off.tag}
                           </Badge>
                           <h4 className="font-extrabold text-base text-[#0f172a] mt-3">{off.title}</h4>
-                          <p className="text-sm font-bold text-emerald-600 mt-1">{off.value}</p>
+                          <p className="text-sm font-bold text-slate-900 group-hover:text-emerald-600 transition-colors mt-1">{off.value}</p>
                           <p className="text-xs text-[#64748b] mt-2 leading-relaxed">{off.description}</p>
                         </div>
 
@@ -2022,7 +2016,7 @@ export function CMSDashboard() {
                               });
                               setIsOfferModalOpen(true);
                             }}
-                            className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
+                            className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-emerald-600 hover:text-emerald-700 px-2.5 cursor-pointer transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                           </Button>
@@ -2030,7 +2024,7 @@ export function CMSDashboard() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDeleteOffer(off.id)}
-                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
                             title="Delete Offer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2049,7 +2043,7 @@ export function CMSDashboard() {
                         HOMEPAGE SECTION #4 (RIGHT SIDE TOURNAMENTS RAIL)
                       </div>
                       <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                        <Trophy className="w-5 h-5 text-emerald-600" />
+                        <Trophy className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                         Tournaments & Events Rail ({eventsList.length} cards)
                       </h3>
                     </div>
@@ -2060,16 +2054,16 @@ export function CMSDashboard() {
                         setEventForm({ title: "", date: "", location: "", image_url: "" });
                         setIsEventModalOpen(true);
                       }}
-                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                     >
-                      <Plus className="w-4 h-4 mr-1.5" />
+                      <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Add Tournament Card
                     </Button>
                   </div>
 
                   <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                     {eventsList.map((evt) => (
-                      <Card key={evt.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-xs relative">
+                      <Card key={evt.id} className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl overflow-hidden shadow-xs relative transition-all duration-300">
                         <div className="h-36 relative bg-slate-900">
                           <img src={evt.image_url} alt={evt.title} className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none" />
@@ -2095,7 +2089,7 @@ export function CMSDashboard() {
                                 });
                                 setIsEventModalOpen(true);
                               }}
-                              className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
+                              className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-emerald-600 hover:text-emerald-700 px-2.5 cursor-pointer transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                             </Button>
@@ -2103,7 +2097,7 @@ export function CMSDashboard() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleDeleteEventCard(evt.id)}
-                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
+                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
                               title="Delete Tournament Event"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -2117,14 +2111,14 @@ export function CMSDashboard() {
               </section>
 
               {/* SECTION 5: IMMERSIVE TURF EXPERIENCES (GALLERY) */}
-              <section className="space-y-4 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
-                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4 pt-6 border-t border-[#e2e8f0]">
+                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
                       HOMEPAGE SECTION #5
                     </div>
                     <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                      <ImageIcon className="w-5 h-5 text-emerald-600" />
+                      <ImageIcon className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Immersive Turf Experiences ({gallery.length} items)
                     </h3>
                   </div>
@@ -2135,16 +2129,16 @@ export function CMSDashboard() {
                       setGalleryForm({ name: "", location: "", rating: "4.9", reviews: 100, image_url: "", className: "md:col-span-1 md:row-span-1" });
                       setIsGalleryModalOpen(true);
                     }}
-                    className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                    className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                   >
-                    <Plus className="w-4 h-4 mr-1.5" />
+                    <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Add Gallery Item
                   </Button>
                 </div>
 
                 <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
                   {gallery.map((item) => (
-                    <Card key={item.id} className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-xs relative">
+                    <Card key={item.id} className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl overflow-hidden shadow-xs relative transition-all duration-300">
                       <div className="h-40 relative bg-slate-900">
                         <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
                         <div className="absolute top-2.5 right-2.5 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[11px] font-bold text-white">
@@ -2172,7 +2166,7 @@ export function CMSDashboard() {
                               });
                               setIsGalleryModalOpen(true);
                             }}
-                            className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
+                            className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-emerald-600 hover:text-emerald-700 px-2.5 cursor-pointer transition-colors"
                           >
                             <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                           </Button>
@@ -2180,7 +2174,7 @@ export function CMSDashboard() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDeleteGalleryItem(item.id)}
-                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
                             title="Delete Item"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2193,14 +2187,14 @@ export function CMSDashboard() {
               </section>
 
               {/* SECTION 6: WHY SPORTXCLUB (Built for booking speed, tournament control, and trust) */}
-              <section className="space-y-4 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
-                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4 pt-6 border-t border-[#e2e8f0]">
+                <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
                       HOMEPAGE SECTION #6
                     </div>
                     <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                      <CheckCircle2 className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Built for booking speed, tournament control, and trust ({whyCards.length} cards)
                     </h3>
                   </div>
@@ -2211,18 +2205,18 @@ export function CMSDashboard() {
                       setWhyForm({ title: "", description: "", icon: "ShieldCheck" });
                       setIsWhyModalOpen(true);
                     }}
-                    className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                    className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                   >
-                    <Plus className="w-4 h-4 mr-1.5" />
+                    <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Add Feature Card
                   </Button>
                 </div>
 
                 <div className="grid gap-6 grid-cols-1 md:grid-cols-4">
                   {whyCards.map((card) => (
-                    <Card key={card.id} className="bg-white border border-[#e2e8f0] rounded-2xl p-5 shadow-xs flex flex-col justify-between relative">
+                    <Card key={card.id} className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl p-5 shadow-xs flex flex-col justify-between relative transition-all duration-300">
                       <div>
-                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-lg mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-slate-900 group-hover:text-emerald-600 transition-colors flex items-center justify-center font-bold text-lg mb-3">
                           {card.icon === "CreditCard" ? "💳" : card.icon === "Zap" ? "⚡" : card.icon === "Headset" ? "🎧" : "🛡️"}
                         </div>
                         <h4 className="font-extrabold text-base text-[#0f172a]">{card.title}</h4>
@@ -2242,7 +2236,7 @@ export function CMSDashboard() {
                             });
                             setIsWhyModalOpen(true);
                           }}
-                          className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
+                          className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-emerald-600 hover:text-emerald-700 px-2.5 cursor-pointer transition-colors"
                         >
                           <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                         </Button>
@@ -2250,7 +2244,7 @@ export function CMSDashboard() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDeleteWhyCard(card.id)}
-                          className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
+                          className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
                           title="Delete Feature Card"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -2265,37 +2259,9 @@ export function CMSDashboard() {
 
           {/* TURFS MANAGEMENT & REORDER VIEW */}
           {activeView === "turfs" && (
-            <div className="space-y-12 max-w-7xl mx-auto">
-              {/* Main Top Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                      TURF MANAGEMENT
-                    </span>
-                    <span className="bg-blue-100 text-blue-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                      2 SECTIONS
-                    </span>
-                  </div>
-                  <h2 className="text-2xl font-black tracking-tight text-[#0f172a] mt-2 flex items-center gap-2">
-                    <MapPin className="w-6 h-6 text-emerald-600" /> Registered Turfs & Venues Manager
-                  </h2>
-                  <p className="text-xs text-[#64748b] mt-1 max-w-2xl leading-relaxed">
-                    Manage and reorder venues for both <strong>Recommended Venues</strong> (Section #1) and <strong>All Venues</strong> (Section #2). By default, venues with the <strong>most reviews</strong> start in 1st position (#1) for both sections.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    onClick={handleOpenAddTurf}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 px-4 rounded-xl shadow-xs"
-                  >
-                    <Plus className="w-4 h-4 mr-1.5" /> Register New Turf
-                  </Button>
-                </div>
-              </div>
-
+            <div className="space-y-5 max-w-7xl mx-auto pt-0">
               {/* SECTION 1: RECOMMENDED VENUES */}
-              <section className="space-y-6 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
+              <section className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-4">
                   <div>
                     <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
@@ -2314,216 +2280,390 @@ export function CMSDashboard() {
                     <Button
                       onClick={handleSortRecByDefaultReviews}
                       variant="outline"
-                      className={`text-xs font-bold h-9 rounded-xl border-[#cbd5e1] ${recSortMode === "reviews" ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "text-[#334155]"
+                      className={`text-xs font-bold h-9 rounded-lg transition-all cursor-pointer ${recSortMode === "reviews"
+                          ? "bg-emerald-100/90 text-emerald-900 border border-emerald-600 shadow-xs"
+                          : "border border-slate-900 bg-white text-[#0f172a] hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         }`}
                       title="Sort Recommended list by highest reviews count (Default)"
                     >
-                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Default (Most Reviewed)
                     </Button>
 
                     <Button
                       onClick={handleSaveRecTurfOrder}
                       disabled={isSavingRecOrder}
-                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                     >
-                      <Save className="w-3.5 h-3.5 mr-1.5" />
+                      <Save className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       {isSavingRecOrder ? "Saving..." : "Save Recommended Order"}
                     </Button>
 
                     <Button
                       onClick={handleOpenAddTurf}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                     >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Turf
+                      <Plus className="w-3.5 h-3.5 mr-1 text-slate-900 group-hover:text-emerald-600 transition-colors" /> Add Turf
                     </Button>
                   </div>
                 </div>
 
-                {/* Recommended Search Filter */}
-                <div className="relative w-full sm:w-80">
-                  <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
-                  <Input
-                    value={recSearchQuery}
-                    onChange={(e) => setRecSearchQuery(e.target.value)}
-                    placeholder="Filter recommended venues..."
-                    className="pl-9 bg-[#f8fafc] border-[#cbd5e1] text-xs h-9 text-[#0f172a] rounded-xl"
-                  />
+                {/* Recommended Search Filter & View Mode Toggle */}
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div className="relative w-full sm:w-80">
+                    <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
+                    <Input
+                      value={recSearchQuery}
+                      onChange={(e) => setRecSearchQuery(e.target.value)}
+                      placeholder="Filter recommended venues..."
+                      className="pl-9 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 focus:border-emerald-600 text-xs h-9 text-[#0f172a] rounded-lg transition-all"
+                    />
+                  </div>
+
+                  {/* Grid / List Toggle */}
+                  <div className="inline-flex items-center p-0.5 bg-slate-100 border border-slate-200 rounded-lg shadow-2xs gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setRecViewMode("list")}
+                      className={`h-8 px-3 rounded-md flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${recViewMode === "list"
+                          ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                        }`}
+                      title="List View"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span>List</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRecViewMode("grid")}
+                      className={`h-8 px-3 rounded-md flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${recViewMode === "grid"
+                          ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                        }`}
+                      title="Grid View"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Grid</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Recommended Turfs Reorderable List */}
-                <div className="space-y-3">
-                  {recommendedTurfs
-                    .filter(
-                      (turf) =>
-                        !recSearchQuery ||
-                        turf.name?.toLowerCase().includes(recSearchQuery.toLowerCase()) ||
-                        turf.location?.toLowerCase().includes(recSearchQuery.toLowerCase()) ||
-                        turf.sport_type?.toLowerCase().includes(recSearchQuery.toLowerCase())
-                    )
-                    .map((turf, index, filteredArray) => {
-                      const isFirst = index === 0;
-                      const isLast = index === filteredArray.length - 1;
-                      const reviewCount = Number(turf.reviews ?? turf.reviews_count ?? 0);
+                {/* Recommended Turfs Reorderable List / Grid */}
+                {recViewMode === "list" ? (
+                  <div className="space-y-3">
+                    {recommendedTurfs
+                      .filter(
+                        (turf) =>
+                          !recSearchQuery ||
+                          turf.name?.toLowerCase().includes(recSearchQuery.toLowerCase()) ||
+                          turf.location?.toLowerCase().includes(recSearchQuery.toLowerCase()) ||
+                          turf.sport_type?.toLowerCase().includes(recSearchQuery.toLowerCase())
+                      )
+                      .map((turf, index, filteredArray) => {
+                        const isFirst = index === 0;
+                        const isLast = index === filteredArray.length - 1;
+                        const reviewCount = Number(turf.reviews ?? turf.reviews_count ?? 0);
 
-                      return (
-                        <motion.div
-                          key={turf.id || `rec-turf-${index}`}
-                          layout
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:border-[#0f172a]/30 ${isFirst ? "border-amber-300 bg-amber-50/30" : "border-[#e2e8f0]"
-                            }`}
-                        >
-                          {/* Position Indicator & Controls */}
-                          <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${isFirst
-                                ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
-                                : index === 1
-                                  ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white"
-                                  : index === 2
-                                    ? "bg-gradient-to-br from-amber-600 to-amber-800 text-white"
-                                    : "bg-white text-[#475569] border border-[#cbd5e1]"
-                                }`}
-                              title={`Position #${index + 1}`}
-                            >
-                              {isFirst ? <Star className="w-5 h-5 fill-white text-white" /> : `#${index + 1}`}
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => handleMoveRecTurf(index, -1)}
-                                  disabled={isFirst}
-                                  className="w-7 h-7 rounded-lg border border-[#cbd5e1] hover:bg-[#0f172a] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
-                                  title="Move Up"
-                                >
-                                  <ArrowUp className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleMoveRecTurf(index, 1)}
-                                  disabled={isLast}
-                                  className="w-7 h-7 rounded-lg border border-[#cbd5e1] hover:bg-[#0f172a] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
-                                  title="Move Down"
-                                >
-                                  <ArrowDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                              {!isFirst && (
-                                <button
-                                  onClick={() => handleSetRecTurfPosition(index, "1")}
-                                  className="text-[10px] font-bold text-amber-600 hover:underline cursor-pointer text-left"
-                                >
-                                  Make #1 First
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Position Selector */}
-                            <div className="hidden sm:block ml-2">
-                              <label className="text-[10px] font-bold text-[#64748b] block">Pos:</label>
-                              <select
-                                value={index + 1}
-                                onChange={(e) => handleSetRecTurfPosition(index, e.target.value)}
-                                className="bg-white border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-lg px-2 py-1 cursor-pointer"
+                        return (
+                          <motion.div
+                            key={turf.id || `rec-turf-${index}`}
+                            layout
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-300 hover:border-emerald-600 ${isFirst ? "border-amber-300 bg-amber-50/30 hover:border-amber-500" : "border-emerald-500/25"
+                              }`}
+                          >
+                            {/* Position Indicator & Controls */}
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                              <div
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${isFirst
+                                    ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white"
+                                    : index === 1
+                                      ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white"
+                                      : index === 2
+                                        ? "bg-gradient-to-br from-amber-600 to-amber-800 text-white"
+                                        : "bg-white text-[#475569] border border-emerald-500/25"
+                                  }`}
+                                title={`Position #${index + 1}`}
                               >
-                                {recommendedTurfs.map((_, pIdx) => (
-                                  <option key={pIdx} value={pIdx + 1}>
-                                    #{pIdx + 1}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
+                                {isFirst ? <Star className="w-5 h-5 fill-white text-white" /> : `#${index + 1}`}
+                              </div>
 
-                          {/* Turf Information */}
-                          <div className="flex items-center gap-4 flex-1 min-w-0 w-full md:w-auto">
-                            <img
-                              src={turf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"}
-                              alt={turf.name}
-                              className="w-20 h-16 rounded-xl object-cover border border-[#e2e8f0] shrink-0"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-black text-base text-[#0f172a] truncate">{turf.name}</h3>
-                                {isFirst && (
-                                  <Badge className="bg-amber-100 text-amber-800 border-amber-300 font-extrabold text-[10px]">
-                                    🏆 1st Position
-                                  </Badge>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleMoveRecTurf(index, -1)}
+                                    disabled={isFirst}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-100/70 hover:text-emerald-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Up"
+                                  >
+                                    <ArrowUp className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleMoveRecTurf(index, 1)}
+                                    disabled={isLast}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-100/70 hover:text-emerald-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Down"
+                                  >
+                                    <ArrowDown className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                                {!isFirst && (
+                                  <button
+                                    onClick={() => handleSetRecTurfPosition(index, "1")}
+                                    className="text-[10px] font-bold text-amber-600 hover:underline cursor-pointer text-left"
+                                  >
+                                    Make #1 First
+                                  </button>
                                 )}
-                                <Badge variant="outline" className="text-[10px] font-bold text-[#475569]">
-                                  {turf.sport_type || "Football"}
+                              </div>
+
+                              {/* Position Selector */}
+                              <div className="hidden sm:block ml-2">
+                                <label className="text-[10px] font-bold text-[#64748b] block">Pos:</label>
+                                <select
+                                  value={index + 1}
+                                  onChange={(e) => handleSetRecTurfPosition(index, e.target.value)}
+                                  className="bg-white border border-slate-200 hover:border-emerald-600 text-xs font-bold text-[#0f172a] rounded-lg px-2 py-1 cursor-pointer transition-all"
+                                >
+                                  {recommendedTurfs.map((_, pIdx) => (
+                                    <option key={pIdx} value={pIdx + 1}>
+                                      #{pIdx + 1}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Turf Information */}
+                            <div className="flex items-center gap-4 flex-1 min-w-0 w-full md:w-auto">
+                              <img
+                                src={turf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"}
+                                alt={turf.name}
+                                className="w-20 h-16 rounded-xl object-cover border border-emerald-500/25 shrink-0"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h3 className="font-black text-base text-[#0f172a] truncate">{turf.name}</h3>
+                                  {isFirst && (
+                                    <Badge className="bg-amber-100 text-amber-800 border-amber-300 font-extrabold text-[10px]">
+                                      🏆 1st Position
+                                    </Badge>
+                                  )}
+                                  <Badge variant="outline" className="text-[10px] font-bold text-[#475569] border-emerald-500/25">
+                                    {turf.sport_type || "Football"}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-[#64748b] mt-0.5 flex items-center gap-1 truncate">
+                                  <MapPin className="w-3 h-3 text-slate-900 group-hover:text-emerald-600 transition-colors shrink-0" />
+                                  {turf.location || "Location"}
+                                </p>
+                                <div className="text-xs font-extrabold text-[#0f172a] mt-1">
+                                  ₹{turf.price_per_hour}/hr
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Reviews & Rating Section */}
+                            <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-emerald-500/20">
+                              <div className="bg-white border border-emerald-500/25 px-3.5 py-2 rounded-xl text-center">
+                                <div className="flex items-center gap-1 justify-center text-amber-500 font-black text-sm">
+                                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                  {turf.rating || "4.8"}
+                                </div>
+                                <div className="text-[11px] font-extrabold text-emerald-600 mt-0.5 flex items-center gap-1 justify-center">
+                                  <MessageSquare className="w-3 h-3" />
+                                  {reviewCount} Reviews
+                                </div>
+                              </div>
+
+                              <Badge
+                                className={`font-extrabold text-xs px-2.5 py-1 ${turf.status === "Active"
+                                    ? "bg-emerald-100 text-emerald-800 border-none"
+                                    : "bg-amber-100 text-amber-800 border-none"
+                                  }`}
+                              >
+                                {turf.status || "Active"}
+                              </Badge>
+
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenEditTurf(turf)}
+                                  className="h-8 text-xs font-bold border-slate-200 hover:border-emerald-600 hover:text-emerald-700 px-2.5 rounded-lg cursor-pointer transition-colors"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteTurf(turf.id)}
+                                  className="h-8 w-8 p-0 text-red-600 border border-red-600 bg-red-50 hover:bg-red-100 hover:border-red-700 rounded-lg cursor-pointer transition-colors shadow-2xs flex items-center justify-center"
+                                  title="Delete Turf"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  /* Grid View for Recommended Turfs */
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {recommendedTurfs
+                      .filter(
+                        (turf) =>
+                          !recSearchQuery ||
+                          turf.name?.toLowerCase().includes(recSearchQuery.toLowerCase()) ||
+                          turf.location?.toLowerCase().includes(recSearchQuery.toLowerCase()) ||
+                          turf.sport_type?.toLowerCase().includes(recSearchQuery.toLowerCase())
+                      )
+                      .map((turf, index, filteredArray) => {
+                        const isFirst = index === 0;
+                        const isLast = index === filteredArray.length - 1;
+                        const reviewCount = Number(turf.reviews ?? turf.reviews_count ?? 0);
+
+                        return (
+                          <Card
+                            key={turf.id || `rec-grid-${index}`}
+                            className={`bg-white border rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between ${isFirst ? "border-amber-300 bg-amber-50/10 hover:border-amber-500" : "border-slate-200 hover:border-emerald-600"
+                              }`}
+                          >
+                            {/* Image & Top Badges */}
+                            <div className="relative h-44 bg-slate-900 overflow-hidden">
+                              <img
+                                src={turf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"}
+                                alt={turf.name}
+                                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+
+                              {/* Position Badge */}
+                              <div className="absolute top-3 left-3 z-10">
+                                <span
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1 shadow-md ${isFirst
+                                      ? "bg-gradient-to-r from-amber-400 to-amber-600 text-white"
+                                      : "bg-black/70 backdrop-blur-md text-white border border-white/20"
+                                    }`}
+                                >
+                                  {isFirst ? <Star className="w-3.5 h-3.5 fill-white" /> : `#${index + 1}`}
+                                  <span>{isFirst ? "1st Position" : `Pos #${index + 1}`}</span>
+                                </span>
+                              </div>
+
+                              {/* Status Badge */}
+                              <div className="absolute top-3 right-3 z-10">
+                                <Badge
+                                  className={`font-extrabold text-[10px] px-2 py-0.5 shadow-md ${turf.status === "Active" ? "bg-emerald-600 text-white border-none" : "bg-amber-500 text-white border-none"
+                                    }`}
+                                >
+                                  {turf.status || "Active"}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-[#64748b] mt-0.5 flex items-center gap-1 truncate">
-                                <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
-                                {turf.location || "Location"}
-                              </p>
-                              <div className="text-xs font-extrabold text-[#0f172a] mt-1">
-                                ₹{turf.price_per_hour}/hr
-                              </div>
-                            </div>
-                          </div>
 
-                          {/* Reviews & Rating Section */}
-                          <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-[#e2e8f0]">
-                            <div className="bg-white border border-[#e2e8f0] px-3.5 py-2 rounded-xl text-center">
-                              <div className="flex items-center gap-1 justify-center text-amber-500 font-black text-sm">
-                                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                {turf.rating || "4.8"}
-                              </div>
-                              <div className="text-[11px] font-extrabold text-emerald-600 mt-0.5 flex items-center gap-1 justify-center">
-                                <MessageSquare className="w-3 h-3" />
-                                {reviewCount} Reviews
+                              {/* Info Overlay */}
+                              <div className="absolute bottom-2.5 left-3 right-3 z-10 pointer-events-none">
+                                <h3 className="font-extrabold text-base text-white truncate drop-shadow-md">{turf.name}</h3>
+                                <p className="text-xs text-white/90 truncate flex items-center gap-1 mt-0.5">
+                                  <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                                  {turf.location || "Location"}
+                                </p>
                               </div>
                             </div>
 
-                            <Badge
-                              className={`font-extrabold text-xs px-2.5 py-1 ${turf.status === "Active"
-                                ? "bg-emerald-100 text-emerald-800 border-none"
-                                : "bg-amber-100 text-amber-800 border-none"
-                                }`}
-                            >
-                              {turf.status || "Active"}
-                            </Badge>
+                            {/* Card Content Details */}
+                            <div className="p-3.5 space-y-3 flex-1 flex flex-col justify-between bg-white">
+                              <div className="flex items-center justify-between text-xs pt-0.5">
+                                <Badge variant="outline" className="text-[10px] font-bold text-[#475569] border-slate-200">
+                                  {turf.sport_type || "Football"}
+                                </Badge>
+                                <div className="font-black text-sm text-[#0f172a]">
+                                  ₹{turf.price_per_hour}/hr
+                                </div>
+                              </div>
 
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleOpenEditTurf(turf)}
-                                className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
-                              >
-                                <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteTurf(turf.id)}
-                                className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
-                                title="Delete Turf"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                              <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                <div className="flex items-center gap-1 text-amber-500 font-black text-xs">
+                                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                  <span>{turf.rating || "4.8"}</span>
+                                </div>
+                                <div className="text-[11px] font-extrabold text-emerald-700 flex items-center gap-1">
+                                  <MessageSquare className="w-3 h-3" />
+                                  <span>{reviewCount} Reviews</span>
+                                </div>
+                              </div>
+
+                              {/* Position Reorder Row & Action Buttons */}
+                              <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleMoveRecTurf(index, -1)}
+                                    disabled={isFirst}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-50 text-slate-700 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Up"
+                                  >
+                                    <ArrowUp className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleMoveRecTurf(index, 1)}
+                                    disabled={isLast}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-50 text-slate-700 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Down"
+                                  >
+                                    <ArrowDown className="w-3 h-3" />
+                                  </button>
+                                  {!isFirst && (
+                                    <button
+                                      onClick={() => handleSetRecTurfPosition(index, "1")}
+                                      className="text-[10px] font-bold text-amber-600 hover:underline cursor-pointer ml-1"
+                                    >
+                                      #1 First
+                                    </button>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleOpenEditTurf(turf)}
+                                    className="h-7 text-[11px] font-bold border-slate-200 hover:border-emerald-600 hover:text-emerald-700 px-2 rounded-lg cursor-pointer"
+                                  >
+                                    <Edit2 className="w-3 h-3 mr-1" /> Edit
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteTurf(turf.id)}
+                                    className="h-7 w-7 p-0 text-red-600 border border-red-600 bg-red-50 hover:bg-red-100 hover:border-red-700 rounded-lg cursor-pointer shadow-2xs flex items-center justify-center"
+                                    title="Delete Turf"
+                                  >
+                                    <Trash2 className="w-3 h-3 text-red-600" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                </div>
+                          </Card>
+                        );
+                      })}
+                  </div>
+                )}
               </section>
 
               {/* SECTION 2: ALL VENUES */}
-              <section className="space-y-6 bg-white border border-[#e2e8f0] p-6 rounded-3xl shadow-xs">
+              <section className="space-y-6 pt-6 border-t border-[#e2e8f0]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-4">
                   <div>
-                    <div className="text-[10px] font-extrabold uppercase tracking-widest text-blue-600">
+                    <div className="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">
                       HOMEPAGE & TURFS SECTION #2
                     </div>
                     <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2 mt-0.5">
-                      <Building className="w-5 h-5 text-blue-600" />
+                      <Building className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       All Venues ({allVenuesTurfs.length} venues)
                     </h3>
                     <p className="text-xs text-[#64748b] mt-0.5">
@@ -2535,205 +2675,379 @@ export function CMSDashboard() {
                     <Button
                       onClick={handleSortAllByDefaultReviews}
                       variant="outline"
-                      className={`text-xs font-bold h-9 rounded-xl border-[#cbd5e1] ${allSortMode === "reviews" ? "bg-blue-50 text-blue-700 border-blue-300" : "text-[#334155]"
+                      className={`text-xs font-bold h-9 rounded-lg transition-all cursor-pointer ${allSortMode === "reviews"
+                          ? "bg-emerald-100/90 text-emerald-900 border border-emerald-600 shadow-xs"
+                          : "border border-slate-900 bg-white text-[#0f172a] hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         }`}
                       title="Sort All Venues list by highest reviews count (Default)"
                     >
-                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Default (Most Reviewed)
                     </Button>
 
                     <Button
                       onClick={handleSaveAllTurfOrder}
                       disabled={isSavingAllOrder}
-                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                     >
-                      <Save className="w-3.5 h-3.5 mr-1.5" />
+                      <Save className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       {isSavingAllOrder ? "Saving..." : "Save All Venues Order"}
                     </Button>
 
                     <Button
                       onClick={handleOpenAddTurf}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs h-9 rounded-xl shadow-xs"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg shadow-xs cursor-pointer transition-all flex items-center group"
                     >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Turf
+                      <Plus className="w-3.5 h-3.5 mr-1 text-slate-900 group-hover:text-emerald-600 transition-colors" /> Add Turf
                     </Button>
                   </div>
                 </div>
 
-                {/* All Venues Search Filter */}
-                <div className="relative w-full sm:w-80">
-                  <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
-                  <Input
-                    value={allSearchQuery}
-                    onChange={(e) => setAllSearchQuery(e.target.value)}
-                    placeholder="Filter all venues..."
-                    className="pl-9 bg-[#f8fafc] border-[#cbd5e1] text-xs h-9 text-[#0f172a] rounded-xl"
-                  />
+                {/* All Venues Search & View Mode Toggle */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="relative w-full sm:w-80">
+                    <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
+                    <Input
+                      value={allSearchQuery}
+                      onChange={(e) => setAllSearchQuery(e.target.value)}
+                      placeholder="Filter all venues..."
+                      className="pl-9 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 focus:border-emerald-600 text-xs h-9 text-[#0f172a] rounded-lg transition-all"
+                    />
+                  </div>
+
+                  {/* Grid / List Toggle */}
+                  <div className="inline-flex items-center p-0.5 bg-slate-100 border border-slate-200 rounded-lg shadow-2xs gap-0.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setAllViewMode("list")}
+                      className={`h-8 px-3 rounded-md flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${allViewMode === "list"
+                          ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                        }`}
+                      title="List View"
+                    >
+                      <List className="w-3.5 h-3.5" />
+                      <span>List</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAllViewMode("grid")}
+                      className={`h-8 px-3 rounded-md flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${allViewMode === "grid"
+                          ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
+                          : "text-slate-500 hover:text-slate-900 hover:bg-white/60"
+                        }`}
+                      title="Grid View"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>Grid</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* All Venues Reorderable List */}
-                <div className="space-y-3">
-                  {allVenuesTurfs
-                    .filter(
-                      (turf) =>
-                        !allSearchQuery ||
-                        turf.name?.toLowerCase().includes(allSearchQuery.toLowerCase()) ||
-                        turf.location?.toLowerCase().includes(allSearchQuery.toLowerCase()) ||
-                        turf.sport_type?.toLowerCase().includes(allSearchQuery.toLowerCase())
-                    )
-                    .map((turf, index, filteredArray) => {
-                      const isFirst = index === 0;
-                      const isLast = index === filteredArray.length - 1;
-                      const reviewCount = Number(turf.reviews ?? turf.reviews_count ?? 0);
+                {/* All Venues Reorderable List / Grid */}
+                {allViewMode === "list" ? (
+                  <div className="space-y-3">
+                    {allVenuesTurfs
+                      .filter(
+                        (turf) =>
+                          !allSearchQuery ||
+                          turf.name?.toLowerCase().includes(allSearchQuery.toLowerCase()) ||
+                          turf.location?.toLowerCase().includes(allSearchQuery.toLowerCase()) ||
+                          turf.sport_type?.toLowerCase().includes(allSearchQuery.toLowerCase())
+                      )
+                      .map((turf, index, filteredArray) => {
+                        const isFirst = index === 0;
+                        const isLast = index === filteredArray.length - 1;
+                        const reviewCount = Number(turf.reviews ?? turf.reviews_count ?? 0);
 
-                      return (
-                        <motion.div
-                          key={turf.id || `all-turf-${index}`}
-                          layout
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:border-[#0f172a]/30 ${isFirst ? "border-blue-300 bg-blue-50/30" : "border-[#e2e8f0]"
-                            }`}
-                        >
-                          {/* Position Indicator & Controls */}
-                          <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${isFirst
-                                ? "bg-gradient-to-br from-blue-500 to-blue-700 text-white"
-                                : index === 1
-                                  ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white"
-                                  : index === 2
-                                    ? "bg-gradient-to-br from-indigo-500 to-indigo-700 text-white"
-                                    : "bg-white text-[#475569] border border-[#cbd5e1]"
-                                }`}
-                              title={`Position #${index + 1}`}
-                            >
-                              {isFirst ? <Star className="w-5 h-5 fill-white text-white" /> : `#${index + 1}`}
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={() => handleMoveAllTurf(index, -1)}
-                                  disabled={isFirst}
-                                  className="w-7 h-7 rounded-lg border border-[#cbd5e1] hover:bg-[#0f172a] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
-                                  title="Move Up"
-                                >
-                                  <ArrowUp className="w-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleMoveAllTurf(index, 1)}
-                                  disabled={isLast}
-                                  className="w-7 h-7 rounded-lg border border-[#cbd5e1] hover:bg-[#0f172a] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
-                                  title="Move Down"
-                                >
-                                  <ArrowDown className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                              {!isFirst && (
-                                <button
-                                  onClick={() => handleSetAllTurfPosition(index, "1")}
-                                  className="text-[10px] font-bold text-blue-600 hover:underline cursor-pointer text-left"
-                                >
-                                  Make #1 First
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Position Selector */}
-                            <div className="hidden sm:block ml-2">
-                              <label className="text-[10px] font-bold text-[#64748b] block">Pos:</label>
-                              <select
-                                value={index + 1}
-                                onChange={(e) => handleSetAllTurfPosition(index, e.target.value)}
-                                className="bg-white border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-lg px-2 py-1 cursor-pointer"
+                        return (
+                          <motion.div
+                            key={turf.id || `all-turf-${index}`}
+                            layout
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className={`bg-[#f8fafc] border rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-300 hover:border-emerald-600 ${isFirst ? "border-emerald-400 bg-emerald-50/30 hover:border-emerald-600" : "border-emerald-500/25"
+                              }`}
+                          >
+                            {/* Position Indicator & Controls */}
+                            <div className="flex items-center gap-3 w-full md:w-auto">
+                              <div
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 shadow-xs ${isFirst
+                                    ? "bg-gradient-to-br from-emerald-500 to-emerald-700 text-white"
+                                    : index === 1
+                                      ? "bg-gradient-to-br from-slate-300 to-slate-500 text-white"
+                                      : index === 2
+                                        ? "bg-gradient-to-br from-teal-500 to-teal-700 text-white"
+                                        : "bg-white text-[#475569] border border-emerald-500/25"
+                                  }`}
+                                title={`Position #${index + 1}`}
                               >
-                                {allVenuesTurfs.map((_, pIdx) => (
-                                  <option key={pIdx} value={pIdx + 1}>
-                                    #{pIdx + 1}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
+                                {isFirst ? <Star className="w-5 h-5 fill-white text-white" /> : `#${index + 1}`}
+                              </div>
 
-                          {/* Turf Information */}
-                          <div className="flex items-center gap-4 flex-1 min-w-0 w-full md:w-auto">
-                            <img
-                              src={turf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"}
-                              alt={turf.name}
-                              className="w-20 h-16 rounded-xl object-cover border border-[#e2e8f0] shrink-0"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-black text-base text-[#0f172a] truncate">{turf.name}</h3>
-                                {isFirst && (
-                                  <Badge className="bg-blue-100 text-blue-800 border-blue-300 font-extrabold text-[10px]">
-                                    🏆 1st Position
-                                  </Badge>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleMoveAllTurf(index, -1)}
+                                    disabled={isFirst}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-100/70 hover:text-emerald-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Up"
+                                  >
+                                    <ArrowUp className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleMoveAllTurf(index, 1)}
+                                    disabled={isLast}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-100/70 hover:text-emerald-700 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Down"
+                                  >
+                                    <ArrowDown className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                                {!isFirst && (
+                                  <button
+                                    onClick={() => handleSetAllTurfPosition(index, "1")}
+                                    className="text-[10px] font-bold text-emerald-700 hover:underline cursor-pointer text-left"
+                                  >
+                                    Make #1 First
+                                  </button>
                                 )}
-                                <Badge variant="outline" className="text-[10px] font-bold text-[#475569]">
-                                  {turf.sport_type || "Football"}
+                              </div>
+
+                              {/* Position Selector */}
+                              <div className="hidden sm:block ml-2">
+                                <label className="text-[10px] font-bold text-[#64748b] block">Pos:</label>
+                                <select
+                                  value={index + 1}
+                                  onChange={(e) => handleSetAllTurfPosition(index, e.target.value)}
+                                  className="bg-white border border-slate-200 hover:border-emerald-600 text-xs font-bold text-[#0f172a] rounded-lg px-2 py-1 cursor-pointer transition-all"
+                                >
+                                  {allVenuesTurfs.map((_, pIdx) => (
+                                    <option key={pIdx} value={pIdx + 1}>
+                                      #{pIdx + 1}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Turf Information */}
+                            <div className="flex items-center gap-4 flex-1 min-w-0 w-full md:w-auto">
+                              <img
+                                src={turf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"}
+                                alt={turf.name}
+                                className="w-20 h-16 rounded-xl object-cover border border-emerald-500/25 shrink-0"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h3 className="font-black text-base text-[#0f172a] truncate">{turf.name}</h3>
+                                  {isFirst && (
+                                    <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 font-extrabold text-[10px]">
+                                      🏆 1st Position
+                                    </Badge>
+                                  )}
+                                  <Badge variant="outline" className="text-[10px] font-bold text-[#475569] border-emerald-500/25">
+                                    {turf.sport_type || "Football"}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-[#64748b] mt-0.5 flex items-center gap-1 truncate">
+                                  <MapPin className="w-3 h-3 text-slate-900 group-hover:text-emerald-600 transition-colors shrink-0" />
+                                  {turf.location || "Location"}
+                                </p>
+                                <div className="text-xs font-extrabold text-[#0f172a] mt-1">
+                                  ₹{turf.price_per_hour}/hr
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Reviews & Rating Section */}
+                            <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-emerald-500/20">
+                              <div className="bg-white border border-emerald-500/25 px-3.5 py-2 rounded-xl text-center">
+                                <div className="flex items-center gap-1 justify-center text-amber-500 font-black text-sm">
+                                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                  {turf.rating || "4.8"}
+                                </div>
+                                <div className="text-[11px] font-extrabold text-emerald-600 mt-0.5 flex items-center gap-1 justify-center">
+                                  <MessageSquare className="w-3 h-3" />
+                                  {reviewCount} Reviews
+                                </div>
+                              </div>
+
+                              <Badge
+                                className={`font-extrabold text-xs px-2.5 py-1 ${turf.status === "Active"
+                                    ? "bg-emerald-100 text-emerald-800 border-none"
+                                    : "bg-amber-100 text-amber-800 border-none"
+                                  }`}
+                              >
+                                {turf.status || "Active"}
+                              </Badge>
+
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleOpenEditTurf(turf)}
+                                  className="h-8 text-xs font-bold border-slate-200 hover:border-emerald-600 hover:text-emerald-700 px-2.5 rounded-lg cursor-pointer transition-colors"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteTurf(turf.id)}
+                                  className="h-8 w-8 p-0 text-red-600 border border-red-600 bg-red-50 hover:bg-red-100 hover:border-red-700 rounded-lg cursor-pointer transition-colors shadow-2xs flex items-center justify-center"
+                                  title="Delete Turf"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                </Button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  /* Grid View for All Venues */
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {allVenuesTurfs
+                      .filter(
+                        (turf) =>
+                          !allSearchQuery ||
+                          turf.name?.toLowerCase().includes(allSearchQuery.toLowerCase()) ||
+                          turf.location?.toLowerCase().includes(allSearchQuery.toLowerCase()) ||
+                          turf.sport_type?.toLowerCase().includes(allSearchQuery.toLowerCase())
+                      )
+                      .map((turf, index, filteredArray) => {
+                        const isFirst = index === 0;
+                        const isLast = index === filteredArray.length - 1;
+                        const reviewCount = Number(turf.reviews ?? turf.reviews_count ?? 0);
+
+                        return (
+                          <Card
+                            key={turf.id || `all-grid-${index}`}
+                            className={`bg-white border rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between ${isFirst ? "border-emerald-400 bg-emerald-50/10 hover:border-emerald-600" : "border-slate-200 hover:border-emerald-600"
+                              }`}
+                          >
+                            {/* Image & Top Badges */}
+                            <div className="relative h-44 bg-slate-900 overflow-hidden">
+                              <img
+                                src={turf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"}
+                                alt={turf.name}
+                                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent pointer-events-none" />
+
+                              {/* Position Badge */}
+                              <div className="absolute top-3 left-3 z-10">
+                                <span
+                                  className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1 shadow-md ${isFirst
+                                      ? "bg-gradient-to-r from-emerald-500 to-emerald-700 text-white"
+                                      : "bg-black/70 backdrop-blur-md text-white border border-white/20"
+                                    }`}
+                                >
+                                  {isFirst ? <Star className="w-3.5 h-3.5 fill-white" /> : `#${index + 1}`}
+                                  <span>{isFirst ? "1st Position" : `Pos #${index + 1}`}</span>
+                                </span>
+                              </div>
+
+                              {/* Status Badge */}
+                              <div className="absolute top-3 right-3 z-10">
+                                <Badge
+                                  className={`font-extrabold text-[10px] px-2 py-0.5 shadow-md ${turf.status === "Active" ? "bg-emerald-600 text-white border-none" : "bg-amber-500 text-white border-none"
+                                    }`}
+                                >
+                                  {turf.status || "Active"}
                                 </Badge>
                               </div>
-                              <p className="text-xs text-[#64748b] mt-0.5 flex items-center gap-1 truncate">
-                                <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
-                                {turf.location || "Location"}
-                              </p>
-                              <div className="text-xs font-extrabold text-[#0f172a] mt-1">
-                                ₹{turf.price_per_hour}/hr
-                              </div>
-                            </div>
-                          </div>
 
-                          {/* Reviews & Rating Section */}
-                          <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 pt-3 md:pt-0 border-[#e2e8f0]">
-                            <div className="bg-white border border-[#e2e8f0] px-3.5 py-2 rounded-xl text-center">
-                              <div className="flex items-center gap-1 justify-center text-amber-500 font-black text-sm">
-                                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                {turf.rating || "4.8"}
-                              </div>
-                              <div className="text-[11px] font-extrabold text-blue-600 mt-0.5 flex items-center gap-1 justify-center">
-                                <MessageSquare className="w-3 h-3" />
-                                {reviewCount} Reviews
+                              {/* Info Overlay */}
+                              <div className="absolute bottom-2.5 left-3 right-3 z-10 pointer-events-none">
+                                <h3 className="font-extrabold text-base text-white truncate drop-shadow-md">{turf.name}</h3>
+                                <p className="text-xs text-white/90 truncate flex items-center gap-1 mt-0.5">
+                                  <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                                  {turf.location || "Location"}
+                                </p>
                               </div>
                             </div>
 
-                            <Badge
-                              className={`font-extrabold text-xs px-2.5 py-1 ${turf.status === "Active"
-                                ? "bg-emerald-100 text-emerald-800 border-none"
-                                : "bg-amber-100 text-amber-800 border-none"
-                                }`}
-                            >
-                              {turf.status || "Active"}
-                            </Badge>
+                            {/* Card Content Details */}
+                            <div className="p-3.5 space-y-3 flex-1 flex flex-col justify-between bg-white">
+                              <div className="flex items-center justify-between text-xs pt-0.5">
+                                <Badge variant="outline" className="text-[10px] font-bold text-[#475569] border-slate-200">
+                                  {turf.sport_type || "Football"}
+                                </Badge>
+                                <div className="font-black text-sm text-[#0f172a]">
+                                  ₹{turf.price_per_hour}/hr
+                                </div>
+                              </div>
 
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleOpenEditTurf(turf)}
-                                className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
-                              >
-                                <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDeleteTurf(turf.id)}
-                                className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
-                                title="Delete Turf"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                              <div className="flex items-center justify-between bg-slate-50 p-2 rounded-xl border border-slate-100">
+                                <div className="flex items-center gap-1 text-amber-500 font-black text-xs">
+                                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                  <span>{turf.rating || "4.8"}</span>
+                                </div>
+                                <div className="text-[11px] font-extrabold text-emerald-700 flex items-center gap-1">
+                                  <MessageSquare className="w-3 h-3" />
+                                  <span>{reviewCount} Reviews</span>
+                                </div>
+                              </div>
+
+                              {/* Position Reorder Row & Action Buttons */}
+                              <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleMoveAllTurf(index, -1)}
+                                    disabled={isFirst}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-50 text-slate-700 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Up"
+                                  >
+                                    <ArrowUp className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleMoveAllTurf(index, 1)}
+                                    disabled={isLast}
+                                    className="w-7 h-7 rounded-lg border border-slate-200 hover:border-emerald-600 hover:bg-emerald-50 text-slate-700 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
+                                    title="Move Down"
+                                  >
+                                    <ArrowDown className="w-3.5 h-3.5" />
+                                  </button>
+                                  {!isFirst && (
+                                    <button
+                                      onClick={() => handleSetAllTurfPosition(index, "1")}
+                                      className="text-[10px] font-bold text-emerald-600 hover:underline cursor-pointer ml-1"
+                                    >
+                                      #1 First
+                                    </button>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleOpenEditTurf(turf)}
+                                    className="h-7 text-[11px] font-bold border-slate-200 hover:border-emerald-600 hover:text-emerald-700 px-2 rounded-lg cursor-pointer"
+                                  >
+                                    <Edit2 className="w-3 h-3 mr-1" /> Edit
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleDeleteTurf(turf.id)}
+                                    className="h-7 w-7 p-0 text-red-600 border border-red-600 bg-red-50 hover:bg-red-100 hover:border-red-700 rounded-lg cursor-pointer shadow-2xs flex items-center justify-center"
+                                    title="Delete Turf"
+                                  >
+                                    <Trash2 className="w-3 h-3 text-red-600" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                </div>
+                          </Card>
+                        );
+                      })}
+                  </div>
+                )}
               </section>
             </div>
           )}
@@ -2753,72 +3067,57 @@ export function CMSDashboard() {
 
           {/* COMMUNITY FEED MANAGEMENT VIEW */}
           {activeView === "community" && (
-            <div className="space-y-8 max-w-7xl mx-auto">
+            <div className="space-y-4 max-w-7xl mx-auto pt-0">
               {/* Header & Description */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="bg-purple-100 text-purple-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                      COMMUNITY MANAGEMENT
-                    </span>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
-                      LIVE POSTS FEED
-                    </span>
-                  </div>
-                  <h2 className="text-2xl font-black tracking-tight text-[#0f172a] mt-2 flex items-center gap-2">
-                    <MessageSquare className="w-6 h-6 text-purple-600" /> Community Posts & Social Feed
-                  </h2>
-                  <p className="text-xs text-[#64748b] mt-1 max-w-2xl leading-relaxed">
-                    View, edit, add, or delete community posts displayed on the live <strong>Community Feed</strong> (`/community`). Manage announcements, match win highlights, or user moments.
-                  </p>
-                </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e2e8f0] pb-2.5">
+                <h2 className="text-xl font-black tracking-tight text-[#0f172a] flex items-center gap-2 my-0">
+                  <MessageSquare className="w-5 h-5 text-purple-600" /> Community Posts & Social Feed
+                </h2>
                 <div className="flex items-center gap-2 shrink-0">
                   <Button
                     onClick={handleOpenAddPost}
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs h-10 px-4 rounded-xl shadow-xs"
+                    className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] font-extrabold text-xs h-9 px-4 rounded-lg shadow-xs cursor-pointer transition-all flex items-center"
                   >
-                    <Plus className="w-4 h-4 mr-1.5" />Create New Post
+                    <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />Create New Post
                   </Button>
                 </div>
               </div>
 
               {/* Quick Summary Cards */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-white border border-[#e2e8f0] p-4 rounded-2xl shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 p-4 rounded-2xl shadow-xs">
                   <div className="text-xs font-bold text-[#64748b] uppercase tracking-wider">Total Feed Posts</div>
                   <div className="text-2xl font-black text-[#0f172a] mt-1">{postsList.length}</div>
                 </Card>
-                <Card className="bg-white border border-[#e2e8f0] p-4 rounded-2xl shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 p-4 rounded-2xl shadow-xs">
                   <div className="text-xs font-bold text-[#64748b] uppercase tracking-wider">Total Likes</div>
                   <div className="text-2xl font-black text-rose-600 mt-1">
                     {postsList.reduce((acc, p) => acc + Number(p.likes || 0), 0)}
                   </div>
                 </Card>
-                <Card className="bg-white border border-[#e2e8f0] p-4 rounded-2xl shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 p-4 rounded-2xl shadow-xs">
                   <div className="text-xs font-bold text-[#64748b] uppercase tracking-wider">Total Comments</div>
                   <div className="text-2xl font-black text-blue-600 mt-1">
                     {postsList.reduce((acc, p) => acc + Number(p.comments || 0), 0)}
                   </div>
                 </Card>
-                <Card className="bg-white border border-[#e2e8f0] p-4 rounded-2xl shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 p-4 rounded-2xl shadow-xs">
                   <div className="text-xs font-bold text-[#64748b] uppercase tracking-wider">Active Posts</div>
-                  <div className="text-2xl font-black text-emerald-600 mt-1">
+                  <div className="text-2xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors mt-1">
                     {postsList.filter((p) => p.is_active !== 0).length}
                   </div>
                 </Card>
               </div>
 
-              {/* Action Toolbar */}
-              <div className="bg-white border border-[#e2e8f0] p-4 rounded-2xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="relative w-full md:w-80">
-                  <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
-                  <Input
-                    value={postSearchQuery}
-                    onChange={(e) => setPostSearchQuery(e.target.value)}
-                    placeholder="Search posts by author or content..."
-                    className="pl-9 bg-[#f8fafc] border-[#cbd5e1] text-xs h-9 text-[#0f172a] rounded-xl"
-                  />
-                </div>
+              {/* Action Toolbar without outer border container */}
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 text-[#94a3b8] absolute left-3 top-3" />
+                <Input
+                  value={postSearchQuery}
+                  onChange={(e) => setPostSearchQuery(e.target.value)}
+                  placeholder="Search posts by author or content..."
+                  className="pl-9 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 focus:border-emerald-600 text-xs h-9 text-[#0f172a] rounded-lg transition-all"
+                />
               </div>
 
               {/* Community Posts Cards List */}
@@ -2839,7 +3138,7 @@ export function CMSDashboard() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0 }}
-                        className="bg-white border border-[#e2e8f0] rounded-2xl p-5 shadow-xs transition-all hover:border-[#0f172a]/30 space-y-4"
+                        className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl p-5 shadow-xs space-y-4"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-center gap-3">
@@ -2865,7 +3164,7 @@ export function CMSDashboard() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleOpenEditPost(post)}
-                              className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-2.5"
+                              className="h-8 text-xs font-bold border-slate-200 hover:border-emerald-600 hover:text-emerald-700 px-2.5 rounded-lg cursor-pointer transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit Post
                             </Button>
@@ -2873,10 +3172,10 @@ export function CMSDashboard() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleDeletePost(post.id)}
-                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50"
+                              className="h-8 w-8 p-0 text-red-600 border border-red-600 bg-red-50 hover:bg-red-100 hover:border-red-700 rounded-lg cursor-pointer transition-colors shadow-2xs flex items-center justify-center"
                               title="Delete Post"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3.5 h-3.5 text-red-600" />
                             </Button>
                           </div>
                         </div>
@@ -2884,7 +3183,7 @@ export function CMSDashboard() {
                         <p className="text-xs text-[#334155] leading-relaxed font-medium">{post.content}</p>
 
                         {imageUrl && (
-                          <div className="rounded-xl overflow-hidden max-h-64 border border-[#e2e8f0]">
+                          <div className="rounded-lg overflow-hidden max-h-64 border border-emerald-500/25">
                             <img src={imageUrl} alt="Post Attachment" className="w-full h-full object-cover" />
                           </div>
                         )}
@@ -2901,7 +3200,7 @@ export function CMSDashboard() {
                               🔄 {post.shares || 0} Shares
                             </span>
                           </div>
-                          <Badge variant="outline" className="text-[10px] font-bold text-[#475569]">
+                          <Badge variant="outline" className="text-[10px] font-bold text-[#475569] border-emerald-500/25">
                             ID #{post.id}
                           </Badge>
                         </div>
@@ -2914,15 +3213,15 @@ export function CMSDashboard() {
 
           {/* TOURNAMENTS MANAGEMENT VIEW */}
           {activeView === "tournaments" && (
-            <div className="space-y-8 max-w-7xl mx-auto">
+            <div className="space-y-5 max-w-7xl mx-auto">
               {/* Page Top Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-3">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-1 border border-emerald-200">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold mb-1 border border-emerald-200">
                     <Trophy className="w-3.5 h-3.5" />
                     Public Tournaments Page Customizer
                   </div>
-                  <h2 className="text-2xl font-black tracking-tight text-[#0f172a]">
+                  <h2 className="text-xl font-black tracking-tight text-[#0f172a]">
                     Leagues & Tournaments Management
                   </h2>
                   <p className="text-xs text-[#64748b] mt-0.5">
@@ -2934,16 +3233,16 @@ export function CMSDashboard() {
                   <Button
                     onClick={() => window.open("/tournaments", "_blank")}
                     variant="outline"
-                    className="border-[#cbd5e1] text-[#334155] text-xs font-bold h-10 rounded-xl"
+                    className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-10 rounded-lg cursor-pointer transition-all flex items-center group"
                   >
-                    <Eye className="w-4 h-4 mr-1.5 text-emerald-600" />
+                    <Eye className="w-4 h-4 mr-1.5 text-black group-hover:text-emerald-600 transition-colors" />
                     View Live /tournaments
                   </Button>
                   <Button
                     onClick={handleOpenAddCmsTournament}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 px-4 rounded-xl shadow-md gap-1.5 cursor-pointer"
+                    className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-10 px-4 rounded-lg shadow-xs gap-1.5 cursor-pointer transition-all flex items-center group"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 text-black group-hover:text-emerald-600 transition-colors" />
                     Create Tournament
                   </Button>
                 </div>
@@ -2951,19 +3250,19 @@ export function CMSDashboard() {
 
               {/* Metric Overview Stat Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl p-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Total Tournaments</p>
                       <h3 className="text-2xl font-black text-[#0f172a] mt-0.5">{cmsTournaments.length}</h3>
                     </div>
-                    <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
                       <Trophy className="w-5 h-5" />
                     </div>
                   </div>
                 </Card>
 
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl p-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Active / Open</p>
@@ -2971,31 +3270,31 @@ export function CMSDashboard() {
                         {cmsTournaments.filter(t => (t.status || "").toLowerCase().includes("open") || (t.status || "").toLowerCase().includes("active")).length}
                       </h3>
                     </div>
-                    <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
                       <Zap className="w-5 h-5" />
                     </div>
                   </div>
                 </Card>
 
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl p-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Match Day Fixtures</p>
                       <h3 className="text-2xl font-black text-blue-600 mt-0.5">{cmsFixtures.length}</h3>
                     </div>
-                    <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                       <Sparkles className="w-5 h-5" />
                     </div>
                   </div>
                 </Card>
 
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl p-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[10px] font-extrabold text-[#64748b] uppercase tracking-wider">Applied Teams</p>
                       <h3 className="text-2xl font-black text-purple-600 mt-0.5">{cmsTeams.length}</h3>
                     </div>
-                    <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
                       <Users className="w-5 h-5" />
                     </div>
                   </div>
@@ -3003,8 +3302,8 @@ export function CMSDashboard() {
               </div>
 
               {/* SECTION 1: TOURNAMENTS DIRECTORY MANAGER */}
-              <section className="bg-white border border-[#e2e8f0] rounded-3xl p-6 shadow-xs space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4 pt-3 border-t border-[#e2e8f0]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-3">
                   <div>
                     <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
                       <Trophy className="w-5 h-5 text-amber-500" />
@@ -3022,14 +3321,14 @@ export function CMSDashboard() {
                         value={tournSearchQuery}
                         onChange={(e) => setTournSearchQuery(e.target.value)}
                         placeholder="Search by title, sport or location..."
-                        className="pl-9 h-9 w-64 text-xs bg-[#f8fafc] border-[#cbd5e1] rounded-xl"
+                        className="pl-9 h-9 w-64 text-xs bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 focus:border-emerald-600 rounded-lg transition-all"
                       />
                     </div>
                     <Button
                       onClick={handleOpenAddCmsTournament}
-                      className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs h-9 rounded-xl px-4 cursor-pointer"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg px-4 cursor-pointer transition-all flex items-center group"
                     >
-                      <Plus className="w-3.5 h-3.5 mr-1" /> Add Tournament
+                      <Plus className="w-3.5 h-3.5 mr-1 text-black group-hover:text-emerald-600 transition-colors" /> Add Tournament
                     </Button>
                   </div>
                 </div>
@@ -3039,7 +3338,7 @@ export function CMSDashboard() {
                   (t.sport || "").toLowerCase().includes(tournSearchQuery.toLowerCase()) ||
                   (t.location || "").toLowerCase().includes(tournSearchQuery.toLowerCase())
                 ).length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]">
+                  <div className="text-center py-12 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl bg-[#f8fafc]">
                     <Trophy className="w-10 h-10 mx-auto text-[#cbd5e1] mb-2" />
                     <p className="font-extrabold text-sm text-[#334155]">No tournaments found</p>
                     <p className="text-xs text-[#64748b] mt-0.5">Click "Add Tournament" above to create one!</p>
@@ -3055,14 +3354,14 @@ export function CMSDashboard() {
                       .map((t) => (
                         <div
                           key={t.id}
-                          className="border border-[#e2e8f0] rounded-2xl overflow-hidden bg-white hover:border-emerald-500/50 transition-all shadow-xs flex flex-col justify-between"
+                          className="border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl overflow-hidden bg-white shadow-xs flex flex-col justify-between"
                         >
                           <div className="p-5 space-y-4">
                             <div className="flex items-start gap-4">
                               <img
                                 src={t.image_url || t.image || "https://images.unsplash.com/photo-1594470117722-de4b9a02ebed?w=600"}
                                 alt={t.name || t.title}
-                                className="w-24 h-24 rounded-xl object-cover shrink-0 border border-[#e2e8f0]"
+                                className="w-24 h-24 rounded-lg object-cover shrink-0 border border-emerald-500/25"
                               />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -3072,7 +3371,7 @@ export function CMSDashboard() {
                                   <select
                                     value={t.status || "Registration Open"}
                                     onChange={(e) => handleQuickStatusChange(t, e.target.value)}
-                                    className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border border-[#cbd5e1] bg-[#f8fafc] text-[#0f172a] cursor-pointer"
+                                    className="text-[10px] font-extrabold px-2 py-0.5 rounded-lg border border-slate-200 hover:border-emerald-600 bg-[#f8fafc] text-[#0f172a] cursor-pointer transition-all"
                                   >
                                     <option value="Registration Open">Registration Open</option>
                                     <option value="Active">Active / Ongoing</option>
@@ -3084,7 +3383,7 @@ export function CMSDashboard() {
                                   {t.name || t.title}
                                 </h4>
                                 <p className="text-xs text-[#64748b] truncate mt-0.5 flex items-center gap-1">
-                                  <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  <MapPin className="w-3.5 h-3.5 text-slate-900 group-hover:text-emerald-600 transition-colors shrink-0" />
                                   {t.turf_name ? `${t.turf_name}, ${t.location}` : (t.location || "Mumbai")}
                                 </p>
                                 <div className="flex items-center gap-3 text-xs text-[#334155] font-semibold mt-2">
@@ -3096,7 +3395,7 @@ export function CMSDashboard() {
                             </div>
                           </div>
 
-                          <div className="bg-[#f8fafc] border-t border-[#e2e8f0] px-5 py-3 flex items-center justify-between text-xs">
+                          <div className="bg-[#f8fafc] border-t border-emerald-500/20 px-5 py-3 flex items-center justify-between text-xs">
                             <span className="text-[#64748b] font-medium">
                               Organizer: <strong className="text-[#0f172a]">{t.organizer_name || "Admin"}</strong>
                             </span>
@@ -3105,9 +3404,9 @@ export function CMSDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleOpenEditCmsTournament(t)}
-                                className="h-8 text-xs font-bold border-[#cbd5e1] hover:border-[#0f172a] px-3 rounded-lg cursor-pointer"
+                                className="h-8 text-xs font-bold border-emerald-500/30 hover:border-emerald-600 hover:text-emerald-700 px-3 rounded-lg cursor-pointer"
                               >
-                                <Edit2 className="w-3.5 h-3.5 mr-1 text-[#0f172a]" /> Edit
+                                <Edit2 className="w-3.5 h-3.5 mr-1 text-slate-900 group-hover:text-emerald-600 transition-colors" /> Edit
                               </Button>
                               <Button
                                 size="sm"
@@ -3127,11 +3426,11 @@ export function CMSDashboard() {
               </section>
 
               {/* SECTION 2: MATCH DAY FIXTURES MANAGER */}
-              <section className="bg-white border border-[#e2e8f0] rounded-3xl p-6 shadow-xs space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4 pt-6 border-t border-[#e2e8f0]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#f1f5f9] pb-3">
                   <div>
                     <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-emerald-600" />
+                      <Clock className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Match Day Fixtures Manager (Next Fixtures Sidebar)
                     </h3>
                     <p className="text-xs text-[#64748b]">
@@ -3141,14 +3440,14 @@ export function CMSDashboard() {
 
                   <Button
                     onClick={handleOpenAddFixture}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-9 rounded-xl px-4 gap-1.5 cursor-pointer"
+                    className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] font-extrabold text-xs h-9 rounded-lg px-4 gap-1.5 cursor-pointer transition-all flex items-center"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Add Match Fixture
+                    <Plus className="w-3.5 h-3.5 text-slate-900 group-hover:text-emerald-600 transition-colors" /> Add Match Fixture
                   </Button>
                 </div>
 
                 {cmsFixtures.length === 0 ? (
-                  <div className="text-center py-10 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]">
+                  <div className="text-center py-10 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl bg-[#f8fafc]">
                     <Clock className="w-9 h-9 mx-auto text-[#cbd5e1] mb-2" />
                     <p className="font-extrabold text-sm text-[#334155]">No match fixtures configured</p>
                     <p className="text-xs text-[#64748b]">Add team matchups to show up on the public Match Day sidebar.</p>
@@ -3158,7 +3457,7 @@ export function CMSDashboard() {
                     {cmsFixtures.map((fix) => (
                       <div
                         key={fix.id}
-                        className="border border-[#e2e8f0] rounded-2xl p-4 bg-white shadow-xs space-y-3 relative hover:border-emerald-500/50 transition-all"
+                        className="border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl p-4 bg-white shadow-xs space-y-3 relative"
                       >
                         <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-2">
                           <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold">
@@ -3167,7 +3466,7 @@ export function CMSDashboard() {
                           <div className="flex items-center gap-1">
                             <button
                               onClick={() => handleOpenEditFixture(fix)}
-                              className="p-1 text-[#64748b] hover:text-[#0f172a] rounded-lg transition-colors cursor-pointer"
+                              className="p-1 text-[#64748b] hover:text-emerald-700 hover:bg-emerald-100/70 rounded-lg transition-colors cursor-pointer"
                               title="Edit Fixture"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
@@ -3207,8 +3506,8 @@ export function CMSDashboard() {
               </section>
 
               {/* SECTION 3: REGISTERED TEAMS & APPLICATIONS */}
-              <section className="bg-white border border-[#e2e8f0] rounded-3xl p-6 shadow-xs space-y-6">
-                <div className="border-b border-[#f1f5f9] pb-4">
+              <section className="space-y-4 pt-6 border-t border-[#e2e8f0]">
+                <div className="border-b border-[#f1f5f9] pb-3">
                   <h3 className="text-lg font-black text-[#0f172a] flex items-center gap-2">
                     <Users className="w-5 h-5 text-purple-600" />
                     Enrolled Teams & Tournament Rosters
@@ -3219,15 +3518,15 @@ export function CMSDashboard() {
                 </div>
 
                 {cmsTeams.length === 0 ? (
-                  <div className="text-center py-10 border-2 border-dashed border-[#e2e8f0] rounded-2xl bg-[#f8fafc]">
+                  <div className="text-center py-10 border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl bg-[#f8fafc]">
                     <Users className="w-9 h-9 mx-auto text-[#cbd5e1] mb-2" />
                     <p className="font-extrabold text-sm text-[#334155]">No registered teams yet</p>
                     <p className="text-xs text-[#64748b]">Team applications submitted by players will appear here for admin review.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto border border-[#e2e8f0] rounded-2xl">
+                  <div className="overflow-x-auto border border-emerald-500/25 rounded-2xl">
                     <table className="w-full text-left text-xs text-[#334155]">
-                      <thead className="bg-[#f8fafc] text-[#0f172a] font-extrabold uppercase text-[10px] tracking-wider border-b border-[#e2e8f0]">
+                      <thead className="bg-[#f8fafc] text-[#0f172a] font-extrabold uppercase text-[10px] tracking-wider border-b border-emerald-500/20">
                         <tr>
                           <th className="p-3.5">Team Name</th>
                           <th className="p-3.5">Tournament</th>
@@ -3239,9 +3538,9 @@ export function CMSDashboard() {
                       </thead>
                       <tbody className="divide-y divide-[#f1f5f9]">
                         {cmsTeams.map((team) => (
-                          <tr key={team.id} className="hover:bg-[#f8fafc] transition-colors">
+                          <tr key={team.id} className="hover:bg-emerald-100/70/20 transition-colors">
                             <td className="p-3.5 font-extrabold text-[#0f172a]">{team.team_name}</td>
-                            <td className="p-3.5 font-bold text-emerald-600">{team.tournament_name || `Tournament #${team.tournament_id}`}</td>
+                            <td className="p-3.5 font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">{team.tournament_name || `Tournament #${team.tournament_id}`}</td>
                             <td className="p-3.5">
                               <div className="font-semibold text-[#0f172a]">{team.captain_name || "N/A"}</div>
                               <div className="text-[10px] text-[#64748b]">{team.captain_email || ""}</div>
@@ -3289,9 +3588,9 @@ export function CMSDashboard() {
 
           {/* TEAM MANAGEMENT VIEW */}
           {activeView === "team" && (
-            <div className="space-y-8 max-w-7xl mx-auto">
+            <div className="space-y-5 max-w-7xl mx-auto">
               {/* Header & Primary CTA */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-3">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -3299,7 +3598,7 @@ export function CMSDashboard() {
                       Access Control & Permissions
                     </span>
                   </div>
-                  <h2 className="text-2xl font-black tracking-tight text-[#0f172a] mt-1">
+                  <h2 className="text-xl font-black tracking-tight text-[#0f172a] mt-1">
                     Console User Accounts & Permissions
                   </h2>
                   <p className="text-xs text-[#64748b] mt-0.5">
@@ -3311,26 +3610,26 @@ export function CMSDashboard() {
                   <Button
                     onClick={loadTeamMembers}
                     variant="outline"
-                    className="h-10 border-[#cbd5e1] text-[#334155] font-bold text-xs rounded-xl hover:border-[#0f172a] cursor-pointer"
+                    className="h-10 border border-slate-200 hover:border-emerald-600 text-[#334155] font-bold text-xs rounded-lg cursor-pointer"
                     title="Reload Team List"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                    <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Refresh
                   </Button>
 
                   <Button
                     onClick={handleOpenAddTeamMember}
-                    className="h-10 bg-[#0f172a] hover:bg-[#1e293b] !text-white hover:!text-white font-extrabold text-xs px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02]"
+                    className="h-10 border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] font-extrabold text-xs px-5 rounded-lg shadow-xs cursor-pointer transition-all flex items-center"
                   >
-                    <UserPlus className="w-4 h-4 mr-2 text-emerald-400" />
-                    <span className="!text-white">Add Console User</span>
+                    <UserPlus className="w-4 h-4 mr-2 text-slate-900 group-hover:text-emerald-600 transition-colors" />
+                    <span>Add Console User</span>
                   </Button>
                 </div>
               </div>
 
               {/* KPI Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl shadow-xs p-5 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 shrink-0">
                     <Users className="w-6 h-6" />
                   </div>
@@ -3341,20 +3640,20 @@ export function CMSDashboard() {
                   </div>
                 </Card>
 
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-slate-900 group-hover:text-emerald-600 transition-colors shrink-0">
                     <UserCheck className="w-6 h-6" />
                   </div>
                   <div>
                     <div className="text-[11px] font-extrabold text-[#94a3b8] uppercase tracking-wider">Active Staff Accounts</div>
-                    <div className="text-2xl font-black text-emerald-600">
+                    <div className="text-2xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
                       {teamMembers.filter((m) => m.status === "Active").length}
                     </div>
                     <div className="text-[10px] font-bold text-[#64748b] mt-0.5">Authorized for login</div>
                   </div>
                 </Card>
 
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl shadow-xs p-5 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                     <ShieldCheck className="w-6 h-6" />
                   </div>
@@ -3367,7 +3666,7 @@ export function CMSDashboard() {
                   </div>
                 </Card>
 
-                <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+                <Card className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl shadow-xs p-5 flex items-center gap-4">
                   <div className="h-12 w-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
                     <Layers className="w-6 h-6" />
                   </div>
@@ -3380,7 +3679,7 @@ export function CMSDashboard() {
               </div>
 
               {/* Filters & Search Toolbar */}
-              <div className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+              <div className="bg-white border border-slate-200 hover:border-emerald-600 transition-all duration-300 rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
                 <div className="relative flex-1 max-w-md">
                   <Search className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3" />
                   <Input
@@ -3388,7 +3687,7 @@ export function CMSDashboard() {
                     value={teamSearchQuery}
                     onChange={(e) => setTeamSearchQuery(e.target.value)}
                     placeholder="Search by full name, username, email, phone..."
-                    className="pl-10 h-10 bg-[#f8fafc] border-[#cbd5e1] rounded-xl text-xs text-[#0f172a] font-medium"
+                    className="pl-10 h-10 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 focus:border-emerald-600 rounded-lg text-xs text-[#0f172a] font-medium transition-all"
                   />
                   {teamSearchQuery && (
                     <button
@@ -3407,7 +3706,7 @@ export function CMSDashboard() {
                     <select
                       value={teamRoleFilter}
                       onChange={(e) => setTeamRoleFilter(e.target.value)}
-                      className="bg-[#f8fafc] border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-xl px-3 py-2 cursor-pointer focus:outline-none focus:border-[#0f172a]"
+                      className="bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 text-xs font-bold text-[#0f172a] rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:border-emerald-600 transition-all"
                     >
                       <option value="all">All Roles ({teamMembers.length})</option>
                       <option value="Super Admin">Super Admin</option>
@@ -3425,7 +3724,7 @@ export function CMSDashboard() {
                     <select
                       value={teamStatusFilter}
                       onChange={(e) => setTeamStatusFilter(e.target.value)}
-                      className="bg-[#f8fafc] border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-xl px-3 py-2 cursor-pointer focus:outline-none focus:border-[#0f172a]"
+                      className="bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 text-xs font-bold text-[#0f172a] rounded-lg px-3 py-2 cursor-pointer focus:outline-none focus:border-emerald-600 transition-all"
                     >
                       <option value="all">All Status</option>
                       <option value="Active">Active Only</option>
@@ -3441,7 +3740,7 @@ export function CMSDashboard() {
                         setTeamRoleFilter("all");
                         setTeamStatusFilter("all");
                       }}
-                      className="text-xs text-red-600 hover:bg-red-50 font-bold h-9 px-2.5 rounded-xl cursor-pointer"
+                      className="text-xs text-red-600 hover:bg-red-50 font-bold h-9 px-2.5 rounded-lg cursor-pointer"
                     >
                       Reset Filters
                     </Button>
@@ -3473,8 +3772,8 @@ export function CMSDashboard() {
                     return (
                       <Card
                         key={member.id}
-                        className={`bg-white border transition-all duration-200 rounded-2xl shadow-xs overflow-hidden ${member.status === "Active"
-                          ? "border-[#e2e8f0] hover:border-[#cbd5e1]"
+                        className={`bg-white border transition-all duration-300 rounded-2xl shadow-xs overflow-hidden ${member.status === "Active"
+                          ? "border-emerald-500/25 hover:border-emerald-600"
                           : "border-red-200/60 bg-slate-50/50 opacity-80"
                           }`}
                       >
@@ -3482,7 +3781,7 @@ export function CMSDashboard() {
                           {/* Left: User Identity & Avatar */}
                           <div className="flex items-start gap-4 min-w-0 lg:w-1/3">
                             <div className="relative shrink-0">
-                              <div className="h-12 w-12 rounded-2xl bg-[#0f172a] text-white flex items-center justify-center font-black text-lg shadow-sm">
+                              <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center justify-center font-black text-lg shadow-xs">
                                 {(member.full_name || member.username || "U").charAt(0).toUpperCase()}
                               </div>
                               <span
@@ -3544,7 +3843,7 @@ export function CMSDashboard() {
                                   title={revealedPasswords[member.id] ? "Hide password" : "Show password"}
                                 >
                                   {revealedPasswords[member.id] ? (
-                                    <EyeOff className="w-3.5 h-3.5 text-emerald-600" />
+                                    <EyeOff className="w-3.5 h-3.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                                   ) : (
                                     <Eye className="w-3.5 h-3.5" />
                                   )}
@@ -3617,10 +3916,10 @@ export function CMSDashboard() {
                             <Button
                               onClick={() => handleOpenEditTeamMember(member)}
                               variant="outline"
-                              className="h-9 px-3 text-xs font-bold text-[#0f172a] border-[#cbd5e1] hover:border-[#0f172a] rounded-xl cursor-pointer"
+                              className="h-9 px-3 text-xs font-bold text-[#0f172a] border border-slate-200 hover:border-emerald-600 hover:text-emerald-700 rounded-xl cursor-pointer"
                               title="Edit user & permissions"
                             >
-                              <Edit2 className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                              <Edit2 className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                               Edit Permissions
                             </Button>
 
@@ -3654,8 +3953,8 @@ export function CMSDashboard() {
                   const matchStatus = teamStatusFilter === "all" || m.status === teamStatusFilter;
                   return matchQuery && matchRole && matchStatus;
                 }).length === 0 && (
-                    <Card className="bg-white border border-dashed border-[#cbd5e1] rounded-3xl p-12 text-center space-y-3">
-                      <div className="h-12 w-12 rounded-full bg-slate-100 text-[#64748b] flex items-center justify-center mx-auto">
+                    <Card className="bg-white border border-dashed border-emerald-500/30 rounded-3xl p-12 text-center space-y-3">
+                      <div className="h-12 w-12 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto border border-emerald-200">
                         <Users className="w-6 h-6" />
                       </div>
                       <h3 className="font-extrabold text-base text-[#0f172a]">No Console Accounts Found</h3>
@@ -3664,9 +3963,9 @@ export function CMSDashboard() {
                       </p>
                       <Button
                         onClick={handleOpenAddTeamMember}
-                        className="bg-[#0f172a] text-white text-xs font-extrabold h-9 px-4 rounded-xl cursor-pointer"
+                        className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] text-xs font-extrabold h-9 px-4 rounded-xl cursor-pointer transition-all flex items-center mx-auto"
                       >
-                        <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                        <UserPlus className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                         Add New Console User
                       </Button>
                     </Card>
@@ -3723,7 +4022,7 @@ export function CMSDashboard() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-4 cursor-pointer transition-all">
                 Save Sport Card
               </Button>
             </DialogFooter>
@@ -3733,7 +4032,7 @@ export function CMSDashboard() {
 
       {/* 2. Facility & Equipment Card Add / Edit Modal */}
       <Dialog open={isFacilityModalOpen} onOpenChange={setIsFacilityModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-extrabold">{editingFacility ? "Edit Equipment Card" : "Add Card to Sport Facilities & Equipment"}</DialogTitle>
           </DialogHeader>
@@ -3776,7 +4075,7 @@ export function CMSDashboard() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-4 cursor-pointer transition-all">
                 Save Facility Card
               </Button>
             </DialogFooter>
@@ -3797,10 +4096,10 @@ export function CMSDashboard() {
           }
         }}
       >
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl sm:max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
-              <UploadCloud className="w-5 h-5 text-emerald-600" />
+              <UploadCloud className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               Upload Hero Banner Image(s)
             </DialogTitle>
             <DialogDescription className="text-xs text-[#64748b]">
@@ -3915,7 +4214,7 @@ export function CMSDashboard() {
                       variant="ghost"
                       size="sm"
                       onClick={() => document.getElementById("hero-banner-file-input")?.click()}
-                      className="text-xs text-emerald-600 hover:text-emerald-700 h-7 px-2 font-semibold cursor-pointer"
+                      className="text-xs text-slate-900 group-hover:text-emerald-600 transition-colors hover:text-emerald-700 h-7 px-2 font-semibold cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5 mr-1" /> Add More
                     </Button>
@@ -3984,16 +4283,16 @@ export function CMSDashboard() {
               <Button
                 type="submit"
                 disabled={selectedBannerFiles.length === 0 || isUploadingBanners}
-                className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl px-5 cursor-pointer shadow-xs"
+                className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-5 cursor-pointer shadow-xs transition-all flex items-center"
               >
                 {isUploadingBanners ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Uploading Banners...
                   </>
                 ) : (
                   <>
-                    <Upload className="w-4 h-4 mr-1.5" />
+                    <Upload className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Upload & Save {selectedBannerFiles.length > 0 ? `(${selectedBannerFiles.length})` : ""}
                   </>
                 )}
@@ -4013,10 +4312,10 @@ export function CMSDashboard() {
           }
         }}
       >
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl sm:max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
-              <Edit2 className="w-5 h-5 text-emerald-600" />
+              <Edit2 className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               Edit Hero Banner Slide Text & Image
             </DialogTitle>
             <DialogDescription className="text-xs text-[#64748b]">
@@ -4044,9 +4343,9 @@ export function CMSDashboard() {
                   <Button
                     type="button"
                     onClick={() => document.getElementById("edit-banner-file-input")?.click()}
-                    className="bg-white text-[#0f172a] hover:bg-slate-100 text-xs font-bold h-9 rounded-xl shadow-lg cursor-pointer"
+                    className="border-2 border-emerald-600 bg-white hover:bg-emerald-100/70 text-emerald-700 hover:text-emerald-800 text-xs font-bold h-9 rounded-xl shadow-lg cursor-pointer transition-all"
                   >
-                    <Upload className="w-4 h-4 mr-1.5" />
+                    <Upload className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Replace Image from Computer
                   </Button>
                 </div>
@@ -4144,16 +4443,16 @@ export function CMSDashboard() {
               <Button
                 type="submit"
                 disabled={isSavingEditBanner}
-                className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-xs h-9 rounded-xl px-5 cursor-pointer shadow-xs"
+                className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-5 cursor-pointer shadow-xs transition-all flex items-center"
               >
                 {isSavingEditBanner ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Saving Changes...
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4 mr-1.5" />
+                    <Save className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Save Banner Changes
                   </>
                 )}
@@ -4165,7 +4464,7 @@ export function CMSDashboard() {
 
       {/* 4. FAQ Modal */}
       <Dialog open={isFaqModalOpen} onOpenChange={setIsFaqModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-extrabold">Add FAQ</DialogTitle>
           </DialogHeader>
@@ -4189,7 +4488,7 @@ export function CMSDashboard() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-4 cursor-pointer transition-all">
                 Add FAQ
               </Button>
             </DialogFooter>
@@ -4199,7 +4498,7 @@ export function CMSDashboard() {
 
       {/* 6. Offer Card Modal */}
       <Dialog open={isOfferModalOpen} onOpenChange={setIsOfferModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-extrabold">{editingOffer ? "Edit Offer Card" : "Add Offer Card"}</DialogTitle>
           </DialogHeader>
@@ -4241,7 +4540,7 @@ export function CMSDashboard() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-4 cursor-pointer transition-all">
                 {editingOffer ? "Update Offer Card" : "Save Offer Card"}
               </Button>
             </DialogFooter>
@@ -4251,10 +4550,10 @@ export function CMSDashboard() {
 
       {/* 7. Gallery Item Modal */}
       <Dialog open={isGalleryModalOpen} onOpenChange={setIsGalleryModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-lg">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-extrabold flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-emerald-600" />
+              <ImageIcon className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               {editingGallery ? "Edit Gallery Item" : "Add Immersive Turf Item"}
             </DialogTitle>
           </DialogHeader>
@@ -4355,7 +4654,7 @@ export function CMSDashboard() {
                     className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] flex-1"
                   />
                   <label className="cursor-pointer bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                    <Upload className="w-3.5 h-3.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     Browse
                     <input
                       type="file"
@@ -4375,7 +4674,7 @@ export function CMSDashboard() {
                         size="sm"
                         variant="destructive"
                         onClick={() => setGalleryForm((prev) => ({ ...prev, image_url: "" }))}
-                        className="h-8 text-xs font-bold rounded-lg"
+                        className="h-8 text-xs font-bold rounded-lg cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5 mr-1" /> Remove Photo
                       </Button>
@@ -4386,7 +4685,7 @@ export function CMSDashboard() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="submit" className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-extrabold text-xs h-10 rounded-xl px-5 cursor-pointer transition-all w-full sm:w-auto">
                 {editingGallery ? "Update Gallery Item" : "Save Gallery Item"}
               </Button>
             </DialogFooter>
@@ -4396,7 +4695,7 @@ export function CMSDashboard() {
 
       {/* 8. Why Card Modal */}
       <Dialog open={isWhyModalOpen} onOpenChange={setIsWhyModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-extrabold">{editingWhy ? "Edit Feature Card" : "Add Feature Card"}</DialogTitle>
           </DialogHeader>
@@ -4429,7 +4728,7 @@ export function CMSDashboard() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-4 cursor-pointer transition-all">
                 {editingWhy ? "Update Feature Card" : "Save Feature Card"}
               </Button>
             </DialogFooter>
@@ -4439,7 +4738,7 @@ export function CMSDashboard() {
 
       {/* 9. Tournament Event Modal */}
       <Dialog open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-extrabold">{editingEvent ? "Edit Tournament Event" : "Add Tournament Event Card"}</DialogTitle>
           </DialogHeader>
@@ -4481,7 +4780,7 @@ export function CMSDashboard() {
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-[#0f172a] text-white font-bold text-xs h-9 rounded-xl">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-4 cursor-pointer transition-all">
                 {editingEvent ? "Update Tournament Card" : "Save Tournament Card"}
               </Button>
             </DialogFooter>
@@ -4491,10 +4790,10 @@ export function CMSDashboard() {
 
       {/* 10. Turf Venue Register & Edit Modal */}
       <Dialog open={isTurfModalOpen} onOpenChange={setIsTurfModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-lg">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-emerald-600" />
+              <MapPin className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               {editingTurf ? "Edit Turf Venue Details" : "Register New Turf Venue"}
             </DialogTitle>
           </DialogHeader>
@@ -4590,7 +4889,7 @@ export function CMSDashboard() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="submit" className="bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-extrabold text-xs h-10 rounded-xl px-5 cursor-pointer transition-all w-full sm:w-auto">
                 {editingTurf ? "Update Turf Venue" : "Save Turf Venue"}
               </Button>
             </DialogFooter>
@@ -4600,10 +4899,10 @@ export function CMSDashboard() {
 
       {/* 11. Community Post Modal */}
       <Dialog open={isPostModalOpen} onOpenChange={setIsPostModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-md">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-purple-600" />
+              <MessageSquare className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               {editingPost ? "Edit Community Feed Post" : "Create New Community Post"}
             </DialogTitle>
           </DialogHeader>
@@ -4661,7 +4960,7 @@ export function CMSDashboard() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-extrabold text-xs h-10 rounded-xl px-5 cursor-pointer transition-all w-full sm:w-auto">
                 {editingPost ? "Update Community Post" : "Publish Post"}
               </Button>
             </DialogFooter>
@@ -4671,7 +4970,7 @@ export function CMSDashboard() {
 
       {/* 12. CMS Tournament Add / Edit Modal */}
       <Dialog open={isCmsTournamentModalOpen} onOpenChange={setIsCmsTournamentModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-lg">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
               <Trophy className="w-5 h-5 text-amber-500" />
@@ -4794,7 +5093,7 @@ export function CMSDashboard() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-extrabold text-xs h-10 rounded-xl px-5 cursor-pointer transition-all w-full sm:w-auto">
                 {editingCmsTournament ? "Update Tournament" : "Publish Tournament"}
               </Button>
             </DialogFooter>
@@ -4804,10 +5103,10 @@ export function CMSDashboard() {
 
       {/* 13. Match Day Fixture Add / Edit Modal */}
       <Dialog open={isFixtureModalOpen} onOpenChange={setIsFixtureModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-md">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="font-extrabold text-lg flex items-center gap-2">
-              <Clock className="w-5 h-5 text-emerald-600" />
+              <Clock className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               {editingFixture ? "Edit Match Day Fixture" : "Add Match Day Fixture"}
             </DialogTitle>
           </DialogHeader>
@@ -4883,7 +5182,7 @@ export function CMSDashboard() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-10 rounded-xl w-full sm:w-auto">
+              <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-extrabold text-xs h-10 rounded-xl px-5 cursor-pointer transition-all w-full sm:w-auto">
                 {editingFixture ? "Update Match Fixture" : "Save Match Fixture"}
               </Button>
             </DialogFooter>
@@ -4893,9 +5192,9 @@ export function CMSDashboard() {
 
       {/* 9. Console Team Member & Permissions Add / Edit Modal */}
       <Dialog open={isTeamModalOpen} onOpenChange={setIsTeamModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-3xl max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-3xl max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
           <DialogHeader className="border-b border-[#f1f5f9] pb-4">
-            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+            <div className="flex items-center gap-2 text-slate-900 group-hover:text-emerald-600 transition-colors mb-1">
               <ShieldCheck className="w-5 h-5" />
               <span className="text-[10px] font-extrabold uppercase tracking-widest">
                 SPORTX Console Access Control
@@ -4981,7 +5280,7 @@ export function CMSDashboard() {
                       {editingTeamMember ? "User Password" : "Login Password *"}
                     </Label>
                     {editingTeamMember && (
-                      <span className="text-[10px] font-bold text-emerald-600">
+                      <span className="text-[10px] font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
                         Current password loaded
                       </span>
                     )}
@@ -5003,7 +5302,7 @@ export function CMSDashboard() {
                       title={showModalPassword ? "Hide password" : "Show password"}
                     >
                       {showModalPassword ? (
-                        <EyeOff className="w-4 h-4 text-emerald-600" />
+                        <EyeOff className="w-4 h-4 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       ) : (
                         <Eye className="w-4 h-4" />
                       )}
@@ -5066,7 +5365,7 @@ export function CMSDashboard() {
                   <button
                     type="button"
                     onClick={handleSelectAllPermissions}
-                    className="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 cursor-pointer"
+                    className="text-[11px] font-extrabold text-slate-900 group-hover:text-emerald-600 transition-colors hover:text-emerald-800 cursor-pointer"
                   >
                     Select All
                   </button>
@@ -5091,22 +5390,22 @@ export function CMSDashboard() {
                       key={mod.key}
                       onClick={() => handleTogglePermission(mod.key)}
                       className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${isChecked
-                        ? "bg-slate-50 border-[#0f172a] shadow-xs"
-                        : "bg-white border-[#e2e8f0] hover:border-[#cbd5e1] opacity-75"
+                        ? "bg-emerald-50/50 border-emerald-600 shadow-xs"
+                        : "bg-white border-emerald-500/20 hover:border-emerald-500/60 opacity-75"
                         }`}
                     >
                       <div className="pt-0.5">
                         {isChecked ? (
-                          <div className="h-5 w-5 rounded-md bg-[#0f172a] text-white flex items-center justify-center">
+                          <div className="h-5 w-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
                             <Check className="w-3.5 h-3.5 stroke-[3]" />
                           </div>
                         ) : (
-                          <div className="h-5 w-5 rounded-md border-2 border-[#cbd5e1] bg-white" />
+                          <div className="h-5 w-5 rounded-md border-2 border-emerald-500/30 bg-white" />
                         )}
                       </div>
 
-                      <div className="h-9 w-9 rounded-xl bg-white border border-[#e2e8f0] flex items-center justify-center shrink-0 shadow-xs">
-                        <Icon className="w-4 h-4 text-[#0f172a]" />
+                      <div className="h-9 w-9 rounded-xl bg-white border border-emerald-500/25 flex items-center justify-center shrink-0 shadow-xs">
+                        <Icon className="w-4 h-4 text-emerald-700" />
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -5137,7 +5436,7 @@ export function CMSDashboard() {
               <Button
                 type="submit"
                 disabled={isSavingTeam}
-                className="h-10 bg-[#0f172a] hover:bg-[#1e293b] text-white font-extrabold text-xs px-6 rounded-xl cursor-pointer shadow-md"
+                className="h-10 border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-extrabold text-xs px-6 rounded-xl cursor-pointer shadow-xs transition-all"
               >
                 {isSavingTeam ? "Saving Account..." : editingTeamMember ? "Update Console Account" : "Create Console User"}
               </Button>

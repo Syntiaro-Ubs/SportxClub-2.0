@@ -247,49 +247,40 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-5 max-w-7xl mx-auto">
       {/* Header & Primary CTA */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#e2e8f0] pb-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-600">
-              COMMUNITY FEEDBACK & REVIEWS
-            </span>
-          </div>
-          <h2 className="text-2xl font-black tracking-tight text-[#0f172a] mt-1 flex items-center gap-2">
-            <Star className="w-6 h-6 text-amber-500 fill-amber-400" />
+          <h2 className="text-xl font-black tracking-tight text-[#0f172a] flex items-center gap-2">
+            <Star className="w-5 h-5 text-amber-500 fill-amber-400" />
             Turf Reviews & Ratings Manager
           </h2>
-          <p className="text-xs text-[#64748b] mt-0.5">
-            Monitor, add, edit, approve, and delete athlete reviews for all sports venues. Reviews dynamically update turf ratings across the platform.
-          </p>
         </div>
 
         <div className="flex items-center gap-3 shrink-0">
           <Button
             onClick={loadReviews}
             variant="outline"
-            className="h-10 border-[#cbd5e1] text-[#334155] font-bold text-xs rounded-xl hover:border-[#0f172a] cursor-pointer"
+            className="h-10 border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] font-bold text-xs rounded-lg cursor-pointer transition-all shadow-xs"
             title="Reload Reviews List"
           >
-            <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5", isLoading && "animate-spin")} />
+            <RefreshCw className={cn("w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors", isLoading && "animate-spin")} />
             Refresh
           </Button>
 
           <Button
             onClick={handleOpenAdd}
-            className="h-10 bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white font-extrabold text-xs px-5 rounded-xl shadow-md cursor-pointer transition-all hover:scale-[1.02]"
+            className="h-10 border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] font-extrabold text-xs px-5 rounded-lg shadow-xs cursor-pointer transition-all flex items-center"
           >
-            <Plus className="w-4 h-4 mr-1.5 !text-white" />
-            <span className="!text-white">Add New Review</span>
+            <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
+            <span>Add New Review</span>
           </Button>
         </div>
       </div>
 
       {/* KPI Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+        <Card className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl shadow-xs p-5 flex items-center gap-4 transition-all duration-300">
           <div className="h-12 w-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shrink-0">
             <Star className="w-6 h-6 fill-amber-400 text-amber-400" />
           </div>
@@ -300,18 +291,18 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
           </div>
         </Card>
 
-        <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+        <Card className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl shadow-xs p-5 flex items-center gap-4 transition-all duration-300">
+          <div className="h-12 w-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-slate-900 group-hover:text-emerald-600 transition-colors shrink-0">
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
             <div className="text-[11px] font-extrabold text-[#94a3b8] uppercase tracking-wider">Approved Reviews</div>
-            <div className="text-2xl font-black text-emerald-600">{metrics.approved}</div>
+            <div className="text-2xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{metrics.approved}</div>
             <div className="text-[10px] font-bold text-[#64748b] mt-0.5">Visible to all players</div>
           </div>
         </Card>
 
-        <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+        <Card className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl shadow-xs p-5 flex items-center gap-4 transition-all duration-300">
           <div className="h-12 w-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
             <Sparkles className="w-6 h-6" />
           </div>
@@ -322,7 +313,7 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
           </div>
         </Card>
 
-        <Card className="bg-white border border-[#e2e8f0] rounded-2xl shadow-xs p-5 flex items-center gap-4">
+        <Card className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl shadow-xs p-5 flex items-center gap-4 transition-all duration-300">
           <div className="h-12 w-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shrink-0">
             <Clock className="w-6 h-6" />
           </div>
@@ -335,15 +326,15 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
       </div>
 
       {/* Filter & Search Bar */}
-      <Card className="bg-white border border-[#e2e8f0] rounded-2xl p-4 shadow-xs">
+      <div className="w-full">
         <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#94a3b8] absolute left-3.5 top-3" />
+            <Search className="w-4 h-4 text-slate-900 group-hover:text-emerald-600 transition-colors absolute left-3.5 top-3" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by player name, venue name, or comment text..."
-              className="pl-10 h-10 bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a] rounded-xl font-medium"
+              className="pl-10 h-10 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 text-xs text-[#0f172a] rounded-xl font-medium transition-all"
             />
           </div>
 
@@ -352,7 +343,7 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
             <select
               value={turfFilter}
               onChange={(e) => setTurfFilter(e.target.value)}
-              className="h-10 px-3 bg-[#f8fafc] border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-xl outline-none cursor-pointer"
+              className="h-10 px-3 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 text-xs font-bold text-[#0f172a] rounded-xl outline-none cursor-pointer transition-all"
             >
               <option value="all">All Turfs ({reviews.length})</option>
               {turfs.map((t) => (
@@ -366,9 +357,9 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
             <select
               value={ratingFilter}
               onChange={(e) => setRatingFilter(e.target.value)}
-              className="h-10 px-3 bg-[#f8fafc] border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-xl outline-none cursor-pointer"
+              className="h-10 px-3 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 text-xs font-bold text-[#0f172a] rounded-xl outline-none cursor-pointer transition-all"
             >
-              <option value="all">All Ratings</option>
+              <option value="all">All Star Ratings</option>
               <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
               <option value="4">⭐⭐⭐⭐ 4 Stars</option>
               <option value="3">⭐⭐⭐ 3 Stars</option>
@@ -380,7 +371,7 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-3 bg-[#f8fafc] border border-[#cbd5e1] text-xs font-bold text-[#0f172a] rounded-xl outline-none cursor-pointer"
+              className="h-10 px-3 bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 text-xs font-bold text-[#0f172a] rounded-xl outline-none cursor-pointer transition-all"
             >
               <option value="all">All Statuses</option>
               <option value="Approved">Approved</option>
@@ -405,25 +396,22 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
             )}
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Reviews Table / Cards Container */}
-      <Card className="bg-white border border-[#e2e8f0] rounded-3xl overflow-hidden shadow-xs">
-        <div className="p-6 border-b border-[#f1f5f9] flex items-center justify-between">
+      <div className="space-y-3 pt-3 border-t border-[#e2e8f0]">
+        <div className="pb-3 border-b border-[#f1f5f9] flex items-center justify-between">
           <div>
             <h3 className="text-base font-extrabold text-[#0f172a] flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
+              <MessageSquare className="w-4 h-4 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               Turf Reviews Records ({filteredReviews.length} shown)
             </h3>
-            <p className="text-xs text-[#64748b] mt-0.5">
-              Live reviews currently stored in MySQL database table <code className="bg-slate-100 text-slate-800 px-1 py-0.5 rounded font-mono text-[11px] font-bold">reviews</code>
-            </p>
           </div>
         </div>
 
         {isLoading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-[#64748b]">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-slate-900 group-hover:text-emerald-600 transition-colors" />
             <p className="text-xs font-bold">Loading live reviews from database...</p>
           </div>
         ) : filteredReviews.length === 0 ? (
@@ -439,9 +427,9 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
             </p>
             <Button
               onClick={handleOpenAdd}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4 rounded-xl cursor-pointer"
+              className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] font-bold text-xs h-9 px-4 rounded-xl cursor-pointer transition-all shadow-xs"
             >
-              <Plus className="w-4 h-4 mr-1.5" />
+              <Plus className="w-4 h-4 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
               Add Review Manually
             </Button>
           </div>
@@ -475,18 +463,17 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
                             variant="outline"
                             className="text-[10px] font-bold bg-slate-100 text-slate-700 border-slate-200"
                           >
-                            <MapPin className="w-2.5 h-2.5 mr-1 text-emerald-600" />
+                            <MapPin className="w-2.5 h-2.5 mr-1 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                             {rev.turf_name || "General Venue"}
                           </Badge>
 
                           <Badge
-                            className={`text-[10px] font-black uppercase tracking-wider ${
-                              isApproved
-                                ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                                : isPending
+                            className={`text-[10px] font-black uppercase tracking-wider ${isApproved
+                              ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                              : isPending
                                 ? "bg-amber-100 text-amber-800 border-amber-200"
                                 : "bg-slate-100 text-slate-700 border-slate-200"
-                            }`}
+                              }`}
                           >
                             {rev.status || "Approved"}
                           </Badge>
@@ -497,11 +484,10 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
                             {[1, 2, 3, 4, 5].map((s) => (
                               <Star
                                 key={s}
-                                className={`w-3 h-3 ${
-                                  s <= ratingNum
-                                    ? "fill-amber-400 text-amber-400"
-                                    : "text-slate-300"
-                                }`}
+                                className={`w-3 h-3 ${s <= ratingNum
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-slate-300"
+                                  }`}
                               />
                             ))}
                             <span className="text-xs font-black text-amber-500 ml-1">
@@ -531,11 +517,10 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
                       size="sm"
                       variant="outline"
                       onClick={() => handleToggleStatus(rev)}
-                      className={`h-8 px-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                        isApproved
-                          ? "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-                          : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                      }`}
+                      className={`h-8 px-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${isApproved
+                        ? "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                        : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                        }`}
                       title={isApproved ? "Hide review from public view" : "Approve review for public display"}
                     >
                       {isApproved ? (
@@ -545,7 +530,7 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
                         </>
                       ) : (
                         <>
-                          <Eye className="w-3.5 h-3.5 mr-1 text-emerald-600" />
+                          <Eye className="w-3.5 h-3.5 mr-1 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                           Approve
                         </>
                       )}
@@ -568,10 +553,10 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
                       size="sm"
                       variant="outline"
                       onClick={() => handleDeleteReview(rev)}
-                      className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 rounded-xl cursor-pointer"
+                      className="h-8 w-8 p-0 text-red-600 border border-red-600 bg-red-50 hover:bg-red-100 hover:border-red-700 hover:scale-105 active:scale-95 transition-all duration-200 rounded-xl cursor-pointer shadow-2xs flex items-center justify-center"
                       title="Permanently Delete Review"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5 text-red-600" />
                     </Button>
                   </div>
                 </div>
@@ -579,7 +564,7 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
             })}
           </div>
         )}
-      </Card>
+      </div>
 
       {/* Add / Edit Review Modal Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -658,9 +643,8 @@ export function ReviewsManagementView({ turfs = [], onTurfsUpdated }) {
                         title={`${star} Star${star > 1 ? "s" : ""}`}
                       >
                         <Star
-                          className={`h-4 w-4 ${
-                            active ? "fill-amber-400 text-amber-400" : "text-slate-300"
-                          }`}
+                          className={`h-4 w-4 ${active ? "fill-amber-400 text-amber-400" : "text-slate-300"
+                            }`}
                         />
                       </button>
                     );

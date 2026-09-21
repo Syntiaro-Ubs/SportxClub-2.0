@@ -4,7 +4,8 @@ import {
   Building2, User, Phone, Mail, MapPin,
   CalendarDays, CheckCircle2, XCircle, FileText,
   CreditCard, Search, Eye, AlertTriangle, Shield, Hash,
-  Trash2, Loader2, Sparkles, RefreshCw, Image as ImageIcon, Star
+  Trash2, Loader2, Sparkles, RefreshCw, Image as ImageIcon, Star,
+  Clock, Layers
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -60,7 +61,7 @@ export function TurfOnboardingView() {
       setRequests(list);
       try {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(list));
-      } catch (e) {}
+      } catch (e) { }
     } catch (e) {
       console.error("Onboarding load error:", e);
     } finally {
@@ -109,7 +110,7 @@ export function TurfOnboardingView() {
       setRequests(updated);
       try {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(updated));
-      } catch (e) {}
+      } catch (e) { }
       toast.success("Turf onboarding request and venue deleted successfully.");
       if (selectedRequest?.id === req.id) {
         setIsModalOpen(false);
@@ -179,7 +180,7 @@ export function TurfOnboardingView() {
       setRequests(newRequests);
       try {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(newRequests));
-      } catch (e) {}
+      } catch (e) { }
 
       toast.success("Turf onboarding request approved and listed successfully!");
       setIsModalOpen(false);
@@ -201,7 +202,7 @@ export function TurfOnboardingView() {
       setRequests(newRequests);
       try {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(newRequests));
-      } catch (e) {}
+      } catch (e) { }
 
       toast.success("Request has been rejected and removed.");
       setIsModalOpen(false);
@@ -214,13 +215,13 @@ export function TurfOnboardingView() {
   const handleViewDocument = (e, doc) => {
     e.preventDefault();
     if (!doc?.data) return;
-    
+
     const w = window.open("");
     if (!w) {
       alert("Please allow pop-ups to view documents.");
       return;
     }
-    
+
     if (doc.data.startsWith('data:image')) {
       w.document.write(`
         <!DOCTYPE html>
@@ -259,10 +260,10 @@ export function TurfOnboardingView() {
     if (!doc || (Object.keys(doc).length === 0 && doc.constructor === Object)) {
       return <span className="text-xs font-medium text-rose-500 bg-rose-50 px-2 py-1 rounded-md">Missing</span>;
     }
-    
+
     return (
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-slate-900 group-hover:text-emerald-600 transition-colors bg-emerald-50 px-2 py-1 rounded-md">
           <CheckCircle2 className="w-3.5 h-3.5" />
           Uploaded ({doc.name || "File"})
         </div>
@@ -276,74 +277,157 @@ export function TurfOnboardingView() {
   };
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e2e8f0]">
-        <div>
+    <div className="space-y-4 max-w-7xl mx-auto pt-0">
+      {/* 1. Senior Developer Redesigned Title & Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3.5 border-b border-[#e2e8f0]">
+        <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black tracking-tight text-[#0f172a]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Onboarding Pipeline
+            </span>
+            <span className="text-[11px] font-bold text-slate-400">
+              • Total {totalCount} Requests
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-[#0f172a]">
               Turf Onboarding Requests
             </h2>
             <button
               type="button"
               onClick={() => loadRequests(true)}
-              className="h-8 w-8 inline-flex items-center justify-center rounded-full border border-slate-200/80 bg-white text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:text-emerald-400 dark:hover:bg-emerald-950/40 transition-all duration-200 cursor-pointer shadow-2xs group"
+              className="h-8 w-8 inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:border-black hover:bg-slate-50 transition-all duration-200 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 group"
               title="Refresh requests"
             >
-              <RefreshCw className={`h-4 w-4 text-slate-500 group-hover:text-emerald-600 transition-transform duration-300 group-hover:rotate-180 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
+              <RefreshCw className={`h-3.5 w-3.5 text-slate-600 group-hover:text-slate-900 transition-transform duration-300 group-hover:rotate-180 ${loading ? 'animate-spin text-emerald-600' : ''}`} />
             </button>
           </div>
-          <p className="text-sm text-[#64748b] mt-0.5">
-            Review, verify, and approve new turf listings submitted by owners.
+
+          <p className="text-xs text-[#64748b]">
+            Review, verify, and approve new sports turf venue registration requests submitted by owners.
           </p>
         </div>
 
-        <div className="relative max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#64748b]" />
+        {/* Quick Search */}
+        <div className="relative max-w-xs w-full shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Search turfs, owners, cities..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-10 rounded-xl bg-white border-[#cbd5e1] focus-visible:ring-emerald-500 text-xs"
+            className="pl-9 pr-8 h-10 rounded-xl bg-white border border-slate-200 hover:border-slate-400 focus-visible:ring-emerald-500 text-xs transition-all shadow-2xs font-medium"
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold px-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          )}
         </div>
       </div>
 
+      {/* 2. Senior Developer Redesigned Segmented Filter Toolbar */}
       <Tabs defaultValue="Pending" value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-        <TabsList className="mb-6 grid grid-cols-4 w-full sm:w-[480px] bg-slate-100/90 p-1 rounded-xl h-11 border border-slate-200/60">
-          <TabsTrigger value="Pending" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
-            <span>Pending</span>
-            {pendingCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200/60">
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="inline-flex items-center gap-2 bg-transparent">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Pending")}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                statusFilter === "Pending"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <Clock className={`w-3.5 h-3.5 ${statusFilter === "Pending" ? "text-amber-500" : "text-slate-400"}`} />
+              <span>Pending</span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                statusFilter === "Pending"
+                  ? "bg-amber-100 text-amber-900 border border-amber-300"
+                  : "bg-slate-100 text-slate-600"
+              }`}>
                 {pendingCount}
               </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="Approved" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
-            <span>Approved</span>
-            {approvedCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200/60">
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Approved")}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                statusFilter === "Approved"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <CheckCircle2 className={`w-3.5 h-3.5 ${statusFilter === "Approved" ? "text-emerald-600" : "text-slate-400"}`} />
+              <span>Approved</span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                statusFilter === "Approved"
+                  ? "bg-emerald-100 text-emerald-900 border border-emerald-300"
+                  : "bg-slate-100 text-slate-600"
+              }`}>
                 {approvedCount}
               </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="Rejected" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
-            <span>Rejected</span>
-            {rejectedCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200/60">
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Rejected")}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                statusFilter === "Rejected"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <XCircle className={`w-3.5 h-3.5 ${statusFilter === "Rejected" ? "text-rose-500" : "text-slate-400"}`} />
+              <span>Rejected</span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                statusFilter === "Rejected"
+                  ? "bg-rose-100 text-rose-900 border border-rose-300"
+                  : "bg-slate-100 text-slate-600"
+              }`}>
                 {rejectedCount}
               </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="All" className="rounded-lg font-bold text-xs data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs flex items-center justify-center gap-1.5 transition-all">
-            <span>All</span>
-            {totalCount > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-slate-200 text-slate-800">
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStatusFilter("All")}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                statusFilter === "All"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <Layers className={`w-3.5 h-3.5 ${statusFilter === "All" ? "text-slate-800" : "text-slate-400"}`} />
+              <span>All</span>
+              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                statusFilter === "All"
+                  ? "bg-slate-200 text-slate-900 border border-slate-300"
+                  : "bg-slate-100 text-slate-600"
+              }`}>
                 {totalCount}
               </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
+            </button>
+          </div>
+
+          <div className="text-xs font-medium text-slate-500 hidden md:flex items-center gap-1.5">
+            <span>Showing:</span>
+            <span className="font-extrabold text-[#0f172a]">
+              {statusFilter === "Pending"
+                ? `${pendingCount} Pending Verifications`
+                : statusFilter === "Approved"
+                  ? `${approvedCount} Active Approved Turfs`
+                  : statusFilter === "Rejected"
+                    ? `${rejectedCount} Rejected Requests`
+                    : `${totalCount} Total Submissions`}
+            </span>
+          </div>
+        </div>
 
         {/* Loading Skeleton */}
         {loading && requests.length === 0 ? (
@@ -374,17 +458,17 @@ export function TurfOnboardingView() {
           </div>
         ) : filteredRequests.length === 0 ? (
           /* Empty state for active filter */
-          <div className="bg-white border border-[#e2e8f0] rounded-3xl p-12 text-center shadow-xs flex flex-col items-center">
-            <div className="h-16 w-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-4">
-              <Shield className="h-8 w-8" />
+          <div className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl p-10 text-center shadow-xs flex flex-col items-center transition-all duration-300">
+            <div className="h-14 w-14 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-3">
+              <Shield className="h-7 w-7" />
             </div>
-            <h3 className="text-lg font-bold text-[#0f172a]">
+            <h3 className="text-base font-bold text-[#0f172a]">
               {statusFilter === "Pending" && "No Pending Onboarding Requests"}
               {statusFilter === "Approved" && "No Approved Turf Requests"}
               {statusFilter === "Rejected" && "No Rejected Turf Requests"}
               {statusFilter === "All" && "No Turf Onboarding Requests Found"}
             </h3>
-            <p className="text-sm text-[#64748b] mt-1 max-w-md">
+            <p className="text-xs text-[#64748b] mt-1 max-w-md">
               {statusFilter === "Pending" && approvedCount > 0
                 ? `There are currently 0 pending requests. You have ${approvedCount} approved turf listing${approvedCount > 1 ? 's' : ''} on record.`
                 : "New turf owner applications submitted through the registration portal will appear here."}
@@ -392,7 +476,7 @@ export function TurfOnboardingView() {
             {statusFilter === "Pending" && approvedCount > 0 && (
               <Button
                 onClick={() => setStatusFilter("Approved")}
-                className="mt-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-9 px-4"
+                className="mt-4 rounded-xl border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] font-bold text-xs h-9 px-4 cursor-pointer transition-all shadow-xs"
               >
                 View Approved Turfs ({approvedCount})
               </Button>
@@ -400,7 +484,7 @@ export function TurfOnboardingView() {
           </div>
         ) : (
           /* Cards Grid */
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
             {filteredRequests.map(req => {
               const turfDisplayName = req.business?.businessName || req.turf?.name || "Premier Sports Arena";
               const ownerDisplayName = req.business?.ownerName || req.personal?.fullName || "Turf Owner";
@@ -413,7 +497,7 @@ export function TurfOnboardingView() {
               const isRejected = req.status?.toLowerCase() === 'rejected';
 
               return (
-                <Card key={req.id} className="border-[#e2e8f0] shadow-xs hover:shadow-md transition-all rounded-2xl overflow-hidden bg-white group hover:border-slate-300">
+                <Card key={req.id} className="border border-slate-200 hover:border-emerald-600 shadow-xs hover:shadow-md transition-all duration-300 rounded-2xl overflow-hidden bg-white group">
                   <CardHeader className="bg-gradient-to-r from-emerald-50/60 to-transparent p-3.5 pb-2.5 border-b border-[#f1f5f9]">
                     <div className="flex justify-between items-start gap-4">
                       <div className="min-w-0 flex-1">
@@ -421,17 +505,16 @@ export function TurfOnboardingView() {
                           {turfDisplayName}
                         </CardTitle>
                         <CardDescription className="flex items-center gap-1.5 mt-1 text-xs font-medium text-[#475569] truncate">
-                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <MapPin className="w-3.5 h-3.5 text-slate-900 group-hover:text-emerald-600 transition-colors shrink-0" />
                           <span>{locationDisplay}{stateDisplay}</span>
                         </CardDescription>
                       </div>
-                      <Badge className={`border-0 rounded-full px-2.5 py-0.5 font-bold text-[10px] whitespace-nowrap shrink-0 shadow-2xs ${
-                        isApproved
+                      <Badge className={`border-0 rounded-full px-2.5 py-0.5 font-bold text-[10px] whitespace-nowrap shrink-0 shadow-2xs ${isApproved
                           ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                           : isRejected
-                          ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
-                          : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
-                      }`}>
+                            ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+                            : 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        }`}>
                         {isApproved ? 'Approved' : isRejected ? 'Rejected' : 'Pending'}
                       </Badge>
                     </div>
@@ -485,16 +568,16 @@ export function TurfOnboardingView() {
                             }}
                             variant="outline"
                             title="Delete Request & Turf"
-                            className="border-rose-200 text-rose-600 hover:text-white hover:bg-rose-600 hover:border-rose-600 rounded-lg h-8 w-8 p-0 cursor-pointer transition-colors shadow-2xs"
+                            className="border border-red-600 bg-red-50 text-red-600 hover:bg-red-100 hover:border-red-700 hover:scale-105 active:scale-95 rounded-lg h-8 w-8 p-0 cursor-pointer transition-all duration-200 shadow-2xs flex items-center justify-center"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5 text-red-600" />
                           </Button>
                           <Button
                             onClick={() => handleReview(req)}
-                            className="bg-[#0f172a] !text-white hover:!bg-emerald-600 hover:!text-white border-none rounded-lg h-8 px-3 text-[11px] font-bold cursor-pointer transition-colors shadow-xs group"
+                            className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-[#0f172a] rounded-lg h-8 px-3 text-[11px] font-bold cursor-pointer transition-all shadow-xs group flex items-center"
                           >
-                            <Eye className="w-3.5 h-3.5 mr-1.5 !text-white group-hover:!text-white shrink-0" />
-                            <span className="!text-white group-hover:!text-white">Review Profile</span>
+                            <Eye className="w-3.5 h-3.5 mr-1.5 text-slate-900 group-hover:text-emerald-600 transition-colors group-hover:text-emerald-700 shrink-0" />
+                            <span>Review Profile</span>
                           </Button>
                         </div>
                       </div>
@@ -516,18 +599,17 @@ export function TurfOnboardingView() {
                 <div>
                   <DialogTitle className="text-2xl font-black text-[#0f172a] flex items-center gap-2">
                     {selectedRequest.business?.businessName || selectedRequest.turf?.name || "Premier Sports Arena"}
-                    <Badge className={`border-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                      selectedRequest.status?.toLowerCase() === 'approved' || selectedRequest.status?.toLowerCase() === 'active'
+                    <Badge className={`border-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${selectedRequest.status?.toLowerCase() === 'approved' || selectedRequest.status?.toLowerCase() === 'active'
                         ? 'bg-emerald-100 text-emerald-700'
                         : selectedRequest.status?.toLowerCase() === 'rejected'
-                        ? 'bg-rose-100 text-rose-700'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}>
+                          ? 'bg-rose-100 text-rose-700'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
                       {selectedRequest.status?.toLowerCase() === 'approved' || selectedRequest.status?.toLowerCase() === 'active' ? 'Approved' : selectedRequest.status || 'Pending'}
                     </Badge>
                   </DialogTitle>
                   <p className="text-sm font-medium text-[#64748b] mt-1.5 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-emerald-600" />
+                    <MapPin className="w-4 h-4 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                     {selectedRequest.location?.address || selectedRequest.location?.city || "Mumbai"}, {selectedRequest.location?.state || "Maharashtra"}
                   </p>
                 </div>
