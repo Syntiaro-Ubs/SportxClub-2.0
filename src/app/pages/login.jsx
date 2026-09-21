@@ -420,7 +420,7 @@ export function LoginPage() {
                     name="email"
                     type="text"
                     placeholder={loginType === "owner" ? "Enter your email, Owner ID, or Staff ID" : "Enter your email or phone"}
-                    className="pl-11 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 h-10 rounded-lg border-slate-300 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -439,7 +439,7 @@ export function LoginPage() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-11 pr-10 h-10 rounded-lg border-border text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 pr-10 h-10 rounded-lg border-slate-300 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
@@ -476,7 +476,7 @@ export function LoginPage() {
                   id="remember"
                   checked={formData.rememberMe}
                   onCheckedChange={handleCheckboxChange}
-                  className="rounded border-border data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer"
+                  className="rounded border-slate-300 dark:border-slate-600 data-[state=checked]:bg-primary data-[state=checked]:border-primary cursor-pointer"
                 />
                 <label
                   htmlFor="remember"
@@ -491,7 +491,7 @@ export function LoginPage() {
                 variant="outline"
                 disabled={isSubmitting || !isFormValid()}
                 className={cn(
-                  "w-full h-10 rounded-lg border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer mt-3",
+                  "w-full h-10 rounded-lg border-slate-300 dark:border-slate-600 bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer mt-3",
                   (!isFormValid() || isSubmitting) && "opacity-60 cursor-not-allowed"
                 )}
               >
@@ -511,7 +511,7 @@ export function LoginPage() {
 
             <div className="relative my-3">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
+                <div className="w-full border-t border-slate-200 dark:border-slate-700" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase">
                 <span className="bg-card px-3 text-muted-foreground font-medium tracking-wider">
@@ -525,7 +525,7 @@ export function LoginPage() {
               variant="outline"
               disabled={isSubmitting}
               onClick={handleOpenGoogleModal}
-              className="w-full h-10 rounded-lg border-border bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+              className="w-full h-10 rounded-lg border-slate-300 dark:border-slate-600 bg-card hover:bg-muted text-foreground font-medium text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path
@@ -800,7 +800,7 @@ export function LoginPage() {
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
                   placeholder="Enter registered email or mobile number"
-                  className="h-10 text-xs rounded-xl"
+                  className="h-10 text-xs rounded-xl border-slate-300 dark:border-slate-600"
                   required
                 />
               </div>
@@ -833,7 +833,7 @@ export function LoginPage() {
                   onChange={(e) => setForgotOtp(e.target.value)}
                   placeholder="e.g. 123456"
                   maxLength={6}
-                  className="h-10 text-center font-mono text-base tracking-widest rounded-xl"
+                  className="h-10 text-center font-mono text-base tracking-widest rounded-xl border-slate-300 dark:border-slate-600"
                   required
                 />
               </div>
@@ -843,7 +843,7 @@ export function LoginPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setForgotStep(1)}
-                  className="w-1/3 h-10 text-xs rounded-xl cursor-pointer"
+                  className="w-1/3 h-10 text-xs rounded-xl cursor-pointer border-slate-300 dark:border-slate-600"
                 >
                   Back
                 </Button>
@@ -873,7 +873,7 @@ export function LoginPage() {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="h-10 text-xs rounded-xl"
+                      className="h-10 text-xs rounded-xl border-slate-300 dark:border-slate-600"
                       required
                     />
                   </div>
@@ -884,7 +884,7 @@ export function LoginPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="h-10 text-xs rounded-xl"
+                      className="h-10 text-xs rounded-xl border-slate-300 dark:border-slate-600"
                       required
                     />
                   </div>
