@@ -143,6 +143,7 @@ export function MobileAppBar() {
       label: currentUser?.role === "owner" ? "Admin Panel" : "Admin Login",
       to: currentUser?.role === "owner" ? "/admin-panel" : "/admin-login",
       icon: Building2,
+      target: "_blank",
     },
   ].filter((item) => {
     if (item.requiresAuth && !currentUser) {
@@ -284,6 +285,21 @@ export function MobileAppBar() {
                       </div>
                     </div>
                   );
+
+                  if (item.target === "_blank") {
+                    return (
+                      <a
+                        key={item.label}
+                        href={item.to}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="block text-left"
+                      >
+                        {itemContent}
+                      </a>
+                    );
+                  }
 
                   return (
                     <Link

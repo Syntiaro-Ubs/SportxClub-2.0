@@ -824,21 +824,22 @@ export function TurfOnboardingView() {
                       <Button
                         onClick={() => handleReject(selectedRequest)}
                         disabled={isProcessing}
-                        variant="destructive"
-                        className="rounded-xl font-bold h-11 px-6 bg-rose-600 hover:bg-rose-700 !text-white hover:!text-white cursor-pointer"
+                        variant="outline"
+                        className="rounded-xl font-bold h-11 px-6 border-2 border-rose-600 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 hover:text-rose-700 hover:border-rose-700 cursor-pointer bg-transparent transition-colors"
                       >
-                        <XCircle className="w-4 h-4 mr-2 !text-white" />
-                        <span className="!text-white">Reject Request</span>
+                        <XCircle className="w-4 h-4 mr-2 text-rose-600" />
+                        <span>Reject Request</span>
                       </Button>
                       <Button
                         onClick={() => handleAccept(selectedRequest)}
                         disabled={isProcessing}
-                        className="rounded-xl font-bold h-11 px-6 bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white cursor-pointer shadow-xs"
+                        variant="outline"
+                        className="rounded-xl font-bold h-11 px-6 border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-700 hover:border-emerald-700 cursor-pointer bg-transparent shadow-xs transition-colors"
                       >
                         {isProcessing ? "Processing..." : (
                           <>
-                            <CheckCircle2 className="w-4 h-4 mr-2 !text-white" />
-                            <span className="!text-white">Approve & List Turf</span>
+                            <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-600" />
+                            <span>Approve & List Turf</span>
                           </>
                         )}
                       </Button>

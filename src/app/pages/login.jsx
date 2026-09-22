@@ -420,7 +420,7 @@ export function LoginPage() {
                     name="email"
                     type="text"
                     placeholder={loginType === "owner" ? "Enter your email, Owner ID, or Staff ID" : "Enter your email or phone"}
-                    className="pl-11 h-10 rounded-lg border-slate-300 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -439,7 +439,7 @@ export function LoginPage() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-11 pr-10 h-10 rounded-lg border-slate-300 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 pr-10 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
@@ -502,7 +502,7 @@ export function LoginPage() {
                   </div>
                 ) : (
                   <>
-                    <span>{loginType === "owner" ? "Login to Turf Owner & Staff Portal" : "Login to SportX"}</span>
+                    <span>{loginType === "owner" ? "Login to Turf" : "Login"}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </>
                 )}
@@ -800,7 +800,7 @@ export function LoginPage() {
                   value={forgotIdentifier}
                   onChange={(e) => setForgotIdentifier(e.target.value)}
                   placeholder="Enter registered email or mobile number"
-                  className="h-10 text-xs rounded-xl border-slate-300 dark:border-slate-600"
+                  className="h-10 text-xs rounded-xl border-slate-400/80 dark:border-slate-600"
                   required
                 />
               </div>
@@ -833,7 +833,7 @@ export function LoginPage() {
                   onChange={(e) => setForgotOtp(e.target.value)}
                   placeholder="e.g. 123456"
                   maxLength={6}
-                  className="h-10 text-center font-mono text-base tracking-widest rounded-xl border-slate-300 dark:border-slate-600"
+                  className="h-10 text-center font-mono text-base tracking-widest rounded-xl border-slate-400/80 dark:border-slate-600"
                   required
                 />
               </div>

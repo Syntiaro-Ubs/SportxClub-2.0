@@ -454,6 +454,8 @@ export function Navbar() {
         {
           label: "Admin Login",
           to: "/admin-login",
+          target: "_blank",
+          rel: "noopener noreferrer",
         },
       ]
       : []),
@@ -671,86 +673,122 @@ export function Navbar() {
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className={cn(
-              "fixed top-0 right-0 bottom-0 w-[210px] max-w-[70vw] z-[70] shadow-2xl px-6 py-4 flex flex-col gap-2 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-l",
+              "fixed top-0 right-0 bottom-0 w-[210px] max-w-[70vw] z-[70] shadow-2xl px-6 py-4 flex flex-col justify-between overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden border-l",
               isDark
                 ? "bg-[#0b0c0e] border-white/[0.08]"
                 : "bg-white border-slate-200",
             )}
           >
-            <div className="flex items-center justify-between mb-1">
-              <span
-                className={cn(
-                  "text-lg font-semibold",
-                  isDark ? "text-white" : "text-slate-900",
-                )}
-              >
-                Menu
-              </span>
-              <button
-                onClick={() => setMenuOpen(false)}
-                className={cn(
-                  "p-2 rounded-full transition cursor-pointer text-foreground hover:text-emerald-500 hover:bg-emerald-500/10",
-                )}
-              >
-                <X className="h-5 w-5" />
-              </button>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span
+                  className={cn(
+                    "text-lg font-semibold",
+                    isDark ? "text-white" : "text-slate-900",
+                  )}
+                >
+                  Menu
+                </span>
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className={cn(
+                    "p-2 rounded-full transition cursor-pointer text-foreground hover:text-emerald-500 hover:bg-emerald-500/10",
+                  )}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Menu list items */}
+              <div className="flex flex-col">
+                {menuItems.map((item) => {
+                  const itemContent = (
+                    <div className="flex items-center justify-between w-full py-1.5 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] group">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={cn(
+                            "text-sm tracking-wide transition-colors duration-150",
+                            item.isGreen
+                              ? isDark
+                                ? "text-white"
+                                : "text-emerald-600"
+                              : isDark
+                                ? "text-white/90 group-hover:text-white"
+                                : "text-slate-800 group-hover:text-emerald-600",
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {item.badge !== undefined && (
+                          <span className="text-xs font-bold text-black dark:text-white">
+                            {item.badge}
+                          </span>
+                        )}
+                        {item.hasChevron && (
+                          <ChevronRight
+                            className={cn(
+                              "h-4 w-4 transition-colors duration-150",
+                              isDark
+                                ? "text-white/20 group-hover:text-white"
+                                : "text-slate-300 group-hover:text-emerald-600",
+                            )}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  );
+
+                  if (item.target === "_blank") {
+                    return (
+                      <a
+                        key={item.label}
+                        href={item.to}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuOpen(false)}
+                        className="block text-left"
+                      >
+                        {itemContent}
+                      </a>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.label}
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="block text-left"
+                    >
+                      {itemContent}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
-
-            {/* Menu list items */}
-            <div className="flex flex-col">
-              {menuItems.map((item) => {
-                const itemContent = (
-                  <div className="flex items-center justify-between w-full py-1.5 border-b border-slate-100 dark:border-white/[0.05] transition-colors duration-150 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] group">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "text-sm tracking-wide transition-colors duration-150",
-                          item.isGreen
-                            ? isDark
-                              ? "text-white"
-                              : "text-emerald-600"
-                            : isDark
-                              ? "text-white/90 group-hover:text-white"
-                              : "text-slate-800 group-hover:text-emerald-600",
-                        )}
-                      >
-                        {item.label}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {item.badge !== undefined && (
-                        <span className="text-xs font-bold text-black dark:text-white">
-                          {item.badge}
-                        </span>
-                      )}
-                      {item.hasChevron && (
-                        <ChevronRight
-                          className={cn(
-                            "h-4 w-4 transition-colors duration-150",
-                            isDark
-                              ? "text-white/20 group-hover:text-white"
-                              : "text-slate-300 group-hover:text-emerald-600",
-                          )}
-                        />
-                      )}
-                    </div>
-                  </div>
-                );
-
-                return (
-                  <Link
-                    key={item.label}
-                    to={item.to}
-                    onClick={() => setMenuOpen(false)}
-                    className="block text-left"
-                  >
-                    {itemContent}
-                  </Link>
-                );
-              })}
-
+            {/* Powered By & Version Footer at bottom of Menu */}
+            <div className="pt-3 pb-1 border-t border-slate-100 dark:border-white/[0.06] flex flex-col items-center justify-center gap-1.5 select-none text-center">
+              <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/60 font-semibold whitespace-nowrap">
+                Powered By{" "}
+                <a
+                  href="https://www.syntiaro.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    "font-extrabold transition-colors hover:underline",
+                    isDark ? "text-teal-400 hover:text-teal-300" : "text-teal-700 hover:text-teal-800"
+                  )}
+                >
+                  SYNTIARO
+                </a>
+              </p>
+              <span className="text-[10.5px] font-mono font-bold text-slate-400 dark:text-white/40 tracking-wider">
+                v2.0.4
+              </span>
             </div>
           </motion.div>
         )}
@@ -1141,7 +1179,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
               ref={asSlider ? scrollRef : null}
               className={cn(
                 asSlider
-                  ? "flex snap-x snap-mandatory overflow-x-auto gap-3 sm:gap-5 pb-6 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  ? "flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x gap-3 sm:gap-5 pt-2 pb-6 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-5"
               )}
             >
@@ -1237,7 +1275,7 @@ function SportCard({ name, count, image, index }) {
       <Link to="/venues" state={{ sport: name }} className="block">
         <div
           className={cn(
-            "relative aspect-[2/3] overflow-hidden rounded-lg border transition-all duration-300 ease-out",
+            "relative aspect-[2/3] overflow-hidden rounded-2xl border transition-all duration-300 ease-out",
             isDark
               ? "border-white/[0.08] bg-[#101216]"
               : "border-slate-300 bg-white shadow-sm hover:shadow-2xl hover:border-emerald-500/20",
@@ -1247,7 +1285,7 @@ function SportCard({ name, count, image, index }) {
             src={image}
             alt={name}
             className={cn(
-              "h-full w-full object-cover transition duration-500 ease-out group-hover:scale-[1.06]",
+              "h-full w-full object-cover rounded-2xl transition duration-500 ease-out group-hover:scale-[1.06]",
               !isDark && "brightness-[1.05] contrast-[1.08] saturate-[1.08]",
             )}
           />
@@ -1653,14 +1691,14 @@ export function SportsCategories() {
   };
 
   return (
-    <section className="pt-1 pb-0 relative overflow-hidden group/section">
+    <section className="pt-2 sm:pt-2.5 md:pt-3 pb-1 relative overflow-hidden group/section">
       <SportsBackgroundAnimation />
       <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8 relative">
         <SectionHeading
           eyebrow="Popular Sports"
         />
 
-        <div className="relative mt-1.5">
+        <div className="relative mt-0.5">
           <button
             onClick={scrollLeft}
             aria-label="Scroll left"
@@ -1671,7 +1709,7 @@ export function SportsCategories() {
 
           <div
             ref={scrollRef}
-            className="flex snap-x snap-mandatory overflow-x-auto gap-2 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x gap-2.5 sm:gap-3.5 pt-2 sm:pt-2.5 pb-3 sm:pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {sportsToRender.map((sport, index) => (
               <SportCard key={sport.name} index={index} {...sport} />
@@ -1765,7 +1803,7 @@ export function DiscoveryRails() {
             </CardContent>
           </Card>
 
-          <Card className="always-dark overflow-hidden rounded-[28px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
+          <Card className="overflow-hidden rounded-[28px] border-white/[0.08] bg-[#101216] shadow-[0_18px_56px_-30px_rgba(0,0,0,0.85)]">
             <div className="relative aspect-[16/8.4] overflow-hidden">
               <ImageWithFallback
                 src={asset("/tournaments/tournaments-events-bg.png")}
@@ -1796,7 +1834,7 @@ export function DiscoveryRails() {
                     }
                   }}
                 >
-                  <div className="flex gap-4 rounded-[22px] border border-white/[0.08] bg-white/[0.03] p-3 transition hover:border-emerald-600/20 hover:bg-white/[0.05]">
+                  <div className="flex gap-4 rounded-[22px] border border-slate-200/80 dark:border-white/[0.08] bg-slate-50/80 dark:bg-white/[0.03] p-3 transition hover:border-emerald-600/30 hover:bg-slate-100 dark:hover:bg-white/[0.05]">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[18px]">
                       <ImageWithFallback
                         src={event.image}
@@ -1807,14 +1845,14 @@ export function DiscoveryRails() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-sm  text-white">{event.title}</p>
-                          <p className="mt-1 text-xs text-white/52">
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">{event.title}</p>
+                          <p className="mt-1 text-xs text-slate-600 dark:text-white/52">
                             {typeof event.location === 'object' ? (event.location?.city || event.location?.address || 'Location unavailable') : event.location}
                           </p>
                         </div>
-                        <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-white/35" />
+                        <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-slate-400 dark:text-white/35" />
                       </div>
-                      <div className="mt-3 flex items-center gap-2 text-xs text-white/58">
+                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-600 dark:text-white/58">
                         <CalendarDays className="h-3.5 w-3.5" />
                         <span>{event.date}</span>
                       </div>

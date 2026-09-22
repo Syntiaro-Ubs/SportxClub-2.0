@@ -1852,14 +1852,6 @@ export function VenueDetails() {
                   : "border-slate-200 bg-white text-slate-900",
               )}
             >
-              {/* Ambient Glow */}
-              <div
-                className={cn(
-                  "absolute top-0 right-0 h-40 w-40 rounded-tr-xl rounded-full blur-3xl pointer-events-none overflow-hidden",
-                  isDark ? "bg-emerald-600/10" : "bg-emerald-500/10",
-                )}
-              />
-
               <CardContent className="pt-2 sm:pt-2.5 pb-4 px-4 sm:px-5 space-y-3 relative z-10">
                 {/* Header & Controls */}
                 <div
@@ -2224,8 +2216,8 @@ export function VenueDetails() {
                                   !cannotSelect ? "cursor-pointer" : "cursor-default",
                                   isSelected
                                     ? isDark
-                                      ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
-                                      : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
+                                      ? "bg-emerald-600/10 border-2 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]"
+                                      : "bg-emerald-50/70 border-2 border-emerald-700 text-slate-900 shadow-sm"
                                     : cannotSelect
                                       ? isDark
                                         ? "border-red-500/60 bg-red-500/10 opacity-70"
@@ -2386,8 +2378,8 @@ export function VenueDetails() {
                                     !cannotSelect ? "cursor-pointer" : "cursor-default",
                                     isSelected
                                       ? isDark
-                                        ? "bg-emerald-600/10 border border-emerald-600 text-white shadow-[0_0_15px_rgba(109,255,59,0.2)]"
-                                        : "bg-emerald-50/50 border border-emerald-600 text-slate-900 shadow-sm"
+                                        ? "bg-emerald-600/10 border-2 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]"
+                                        : "bg-emerald-50/70 border-2 border-emerald-700 text-slate-900 shadow-sm"
                                       : cannotSelect
                                         ? isDark
                                           ? "border-red-500/60 bg-red-500/10 opacity-70"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Search, MapPin, LocateFixed, ChevronDown, ChevronUp, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
@@ -167,34 +167,45 @@ const SUB_LOCATIONS = {
 };
 
 
-const OTHER_CITIES = [
-  "Aalo", "Abohar", "Abu Road", "Achampet", "Acharapakkam",
-  "Addanki", "Adilabad", "Adimali", "Adipur", "Adoni",
-  "Agar Malwa", "Agartala", "Agiripalli", "Agra", "Ahilyanagar (Ahmednagar)",
-  "Ahmedgarh", "Ahore", "Aizawl", "Ajmer", "Akaltara",
-  "Akbarpur", "Akividu", "Akluj", "Akola", "Akot",
-  "Alakode", "Alangudi", "Alangulam", "Alappuzha", "Alathur",
-  "Alibaug", "Aligarh", "Alipurduar", "Allagadda", "Almora",
-  "Amritsar", "Aurangabad", "Bhopal", "Bhubaneswar", "Coimbatore",
-  "Dehradun", "Faridabad", "Ghaziabad", "Goa", "Gurgaon",
-  "Guwahati", "Gwalior", "Indore", "Jabalpur", "Jaipur",
-  "Jalandhar", "Jammu", "Jamshedpur", "Jodhpur", "Kanpur",
-  "Kolhapur", "Kozhikode", "Lucknow", "Ludhiana", "Madurai",
-  "Mangalore", "Meerut", "Nagpur", "Nashik", "Navi Mumbai",
-  "Noida", "Patna", "Pondicherry", "Raipur", "Rajkot",
-  "Ranchi", "Shimla", "Surat", "Thane", "Thiruvananthapuram",
-  "Udaipur", "Vadodara", "Varanasi", "Vijayawada", "Visakhapatnam"
-];
-
 export function LocationModal({ trigger, activeCity, onCitySelect }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
 
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAllCities, setShowAllCities] = useState(false);
+  const [visibleRowCount, setVisibleRowCount] = useState(8);
+  const [dynamicCities, setDynamicCities] = useState([]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [selectedMainCity, setSelectedMainCity] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDynamicCities = async () => {
+      try {
+        const res = await fetch("/api/turf/turfs/cities");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.cities) && isMounted) {
+            setDynamicCities(data.cities);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch dynamic turf cities:", e);
+      }
+    };
+    fetchDynamicCities();
+    return () => {
+      isMounted = false;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      setVisibleRowCount(8);
+      setSearchTerm("");
+      setSelectedMainCity(null);
+    }
+  }, [open]);
 
   const handleFinalSelect = (locationName) => {
     onCitySelect(locationName);
@@ -231,9 +242,44 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
     c.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredOther = OTHER_CITIES.filter((c) =>
+  // Combine Popular Cities + dynamically onboarded cities from DB
+  const dynamicOtherCities = useMemo(() => {
+    const citySet = new Set();
+
+    // 1. Add all 10 Popular Cities
+    POPULAR_CITIES.forEach((p) => {
+      citySet.add(p.name);
+    });
+
+    // 2. Add dynamic onboarded cities from DB
+    const ignoreList = ["unknown location", "location not specified", "test", "null", "undefined", "n/a", "none", "string"];
+    dynamicCities.forEach((c) => {
+      if (c && typeof c === "string" && c.trim().length > 1) {
+        const lower = c.trim().toLowerCase();
+        if (!ignoreList.includes(lower)) {
+          const formatted = c
+            .trim()
+            .split(" ")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+            .join(" ");
+          citySet.add(formatted);
+        }
+      }
+    });
+
+    return Array.from(citySet).sort((a, b) => a.localeCompare(b));
+  }, [dynamicCities]);
+
+  const filteredOther = dynamicOtherCities.filter((c) =>
     c.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const CITIES_PER_ROW = 5;
+  const displayedOther = searchTerm
+    ? filteredOther
+    : filteredOther.slice(0, visibleRowCount * CITIES_PER_ROW);
+
+  const hasMore = !searchTerm && visibleRowCount * CITIES_PER_ROW < filteredOther.length;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -392,63 +438,49 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
 
           {/* 4. Other Cities Section */}
           {filteredOther.length > 0 && (
-            <div className={cn("text-center", (showAllCities || searchTerm) ? "space-y-4 pt-2" : "pt-0")}>
-              {(showAllCities || searchTerm) ? (
-                <>
-                  <h4
-                    className={cn(
-                      "text-xs font-extrabold uppercase tracking-widest text-center",
-                      isDark ? "text-white/60" : "text-slate-500"
-                    )}
-                  >
-                    Other Cities
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2.5 text-left">
-                    {filteredOther.map((cityName) => {
-                      const isSelected = activeCity === cityName;
-                      return (
-                        <button
-                          key={cityName}
-                          type="button"
-                          onClick={() => handleCityClick(cityName)}
-                          className={cn(
-                            "text-left text-xs py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer truncate font-medium",
-                            isSelected
-                              ? isDark
-                                ? "bg-emerald-600/20 text-emerald-600 font-bold"
-                                : "bg-emerald-100 text-emerald-800 font-bold"
-                              : isDark
-                                ? "text-white/70 hover:text-white hover:bg-white/5"
-                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                          )}
-                        >
-                          {cityName}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {!searchTerm && (
-                    <div className="text-center pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowAllCities(false)}
-                        className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 dark:text-emerald-600 hover:opacity-80 transition cursor-pointer"
-                      >
-                        <span>Hide all cities</span>
-                        <ChevronUp className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="text-center pt-0">
+            <div className="text-center space-y-4 pt-2">
+              <h4
+                className={cn(
+                  "text-xs font-extrabold uppercase tracking-widest text-center",
+                  isDark ? "text-white/60" : "text-slate-500"
+                )}
+              >
+                Other Cities
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2.5 text-left">
+                {displayedOther.map((cityName) => {
+                  const isSelected = activeCity === cityName;
+                  return (
+                    <button
+                      key={cityName}
+                      type="button"
+                      onClick={() => handleCityClick(cityName)}
+                      className={cn(
+                        "text-left text-xs py-1.5 px-2.5 rounded-lg transition-colors cursor-pointer truncate font-medium",
+                        isSelected
+                          ? isDark
+                            ? "bg-emerald-600/20 text-emerald-600 font-bold"
+                            : "bg-emerald-100 text-emerald-800 font-bold"
+                          : isDark
+                            ? "text-white/70 hover:text-white hover:bg-white/5"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      )}
+                    >
+                      {cityName}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {hasMore && (
+                <div className="text-center pt-2 pb-1">
                   <button
                     type="button"
-                    onClick={() => setShowAllCities(true)}
-                    className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[#059669] dark:text-emerald-600 hover:opacity-80 transition cursor-pointer"
+                    onClick={() => setVisibleRowCount((prev) => prev + 8)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#059669] dark:text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:underline transition cursor-pointer px-3 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                   >
-                    <span>View all cities</span>
-                    <ChevronDown className="h-4 w-4" />
+                    <span>More....</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                 </div>
               )}

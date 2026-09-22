@@ -453,7 +453,7 @@ export function StaffManagement() {
                   placeholder="••••••••"
                   value={formData.password || ""}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="rounded-lg text-sm bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 shadow-none focus-visible:ring-0 selection:bg-transparent selection:text-foreground"
+                  className="rounded-lg text-sm bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 shadow-none focus-visible:ring-0 selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                   required
                 />
               </div>

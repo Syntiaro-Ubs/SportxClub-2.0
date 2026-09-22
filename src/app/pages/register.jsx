@@ -361,10 +361,6 @@ export function RegisterPage() {
 
   return (
     <div className="bg-background min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
-      {/* Background ambient light */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-600/10 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none" />
-
       {/* MAIN CONTAINER (Right Aligned Full Height Drawer) */}
       <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full border-y border-l border-border/50 bg-card/95 backdrop-blur-3xl rounded-none p-6 sm:p-10 shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.4)] relative overflow-y-auto z-10 flex flex-col justify-center">
 
@@ -500,7 +496,7 @@ export function RegisterPage() {
                             name="firstName"
                             type="text"
                             placeholder="Enter First Name"
-                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs"
+                            className="pl-10 h-10.5 rounded-lg border-slate-400/80 dark:border-slate-600 bg-background/50 focus-visible:bg-background placeholder:text-xs"
                             value={formData.firstName}
                             onChange={handleInputChange}
                             required
@@ -518,7 +514,7 @@ export function RegisterPage() {
                             name="lastName"
                             type="text"
                             placeholder="Enter Last Name"
-                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs"
+                            className="pl-10 h-10.5 rounded-lg border-slate-400/80 dark:border-slate-600 bg-background/50 focus-visible:bg-background placeholder:text-xs"
                             value={formData.lastName}
                             onChange={handleInputChange}
                           />
@@ -539,7 +535,7 @@ export function RegisterPage() {
                             disabled={emailVerified}
                             placeholder="Enter Your Email"
                             className={cn(
-                              "pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background disabled:opacity-75 placeholder:text-xs",
+                              "pl-10 h-10.5 rounded-lg border-slate-400/80 dark:border-slate-600 bg-background/50 focus-visible:bg-background disabled:opacity-75 placeholder:text-xs",
                               emailExistsError && "border-rose-500 focus-visible:ring-rose-500"
                             )}
                             value={formData.email}
@@ -554,7 +550,7 @@ export function RegisterPage() {
                                 type="button"
                                 variant="outline"
                                 onClick={() => setShowOtpModal(true)}
-                                className="h-10.5 px-3 rounded-xl border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 text-xs font-bold shrink-0 transition-all cursor-pointer shadow-none"
+                                className="h-10.5 px-3 rounded-lg border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 text-xs font-bold shrink-0 transition-all cursor-pointer shadow-none"
                               >
                                 Enter Code
                               </Button>
@@ -570,7 +566,7 @@ export function RegisterPage() {
                               }
                               onClick={sendEmailOtp}
                               className={cn(
-                                "h-10.5 px-3.5 sm:px-4 rounded-xl border text-xs transition-all shrink-0 font-bold cursor-pointer bg-transparent shadow-none",
+                                "h-10.5 px-3.5 sm:px-4 rounded-lg border text-xs transition-all shrink-0 font-bold cursor-pointer bg-transparent shadow-none",
                                 emailOtpSent && resendCountdown === 0
                                   ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20"
                                   : "border-border text-foreground hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400"
@@ -587,7 +583,7 @@ export function RegisterPage() {
                           </div>
                         )}
                         {emailVerified && (
-                          <div className="h-10.5 px-3.5 rounded-xl bg-transparent border border-emerald-500 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 text-xs shrink-0 font-bold">
+                          <div className="h-10.5 px-3.5 rounded-lg bg-transparent border border-emerald-500 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 text-xs shrink-0 font-bold">
                             <Check className="h-4 w-4 stroke-[3]" /> Verified
                           </div>
                         )}
@@ -609,7 +605,7 @@ export function RegisterPage() {
                         onClick={handleNext}
                         disabled={!isStep1Valid()}
                         className={cn(
-                          "w-[200px] h-11 rounded-xl border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 shadow-none",
+                          "w-[200px] h-11 rounded-lg border border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 shadow-none",
                           !isStep1Valid() && "opacity-50 cursor-not-allowed"
                         )}
                       >
@@ -633,7 +629,7 @@ export function RegisterPage() {
                             name="password"
                             type={showPassword ? "text" : "password"}
                             placeholder="Create a strong password"
-                            className="pl-10 pr-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs"
+                            className="pl-10 pr-10 h-10.5 rounded-lg border-slate-400/80 dark:border-slate-600 bg-background/50 focus-visible:bg-background placeholder:text-xs"
                             value={formData.password}
                             onChange={handleInputChange}
                             required
@@ -680,7 +676,7 @@ export function RegisterPage() {
                             name="confirmPassword"
                             type={showPassword ? "text" : "password"}
                             placeholder="Re-enter password"
-                            className="pl-10 h-10.5 rounded-xl border-border bg-background/50 focus-visible:bg-background placeholder:text-xs"
+                            className="pl-10 h-10.5 rounded-lg border-slate-400/80 dark:border-slate-600 bg-background/50 focus-visible:bg-background placeholder:text-xs"
                             value={formData.confirmPassword}
                             onChange={handleInputChange}
                             required
@@ -764,7 +760,7 @@ export function RegisterPage() {
             {/* Header with Icon + Title + Email */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-emerald-400 flex items-center justify-center font-black text-xl shadow-sm shrink-0 border border-zinc-700/50">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-xl shadow-sm shrink-0 border border-slate-200 dark:border-zinc-700">
                   <Plus className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div>

@@ -8,6 +8,7 @@ import { getPool } from "../db.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 dotenv.config();
 
@@ -15,14 +16,26 @@ dotenv.config();
  * Creates and returns the configured Nodemailer transporter
  */
 function getTransporter() {
-  const smtpUser = (process.env.SMTP_USER || "waghmareshrinivas99@gmail.com").trim();
-  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+  const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
+  const user = (process.env.SMTP_USER || process.env.EMAIL_USER || "waghmareshrinivas99@gmail.com").trim();
+  const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || "").replace(/\s+/g, "");
+
+  if (host && host !== "smtp.gmail.com") {
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+      tls: { rejectUnauthorized: false },
+    });
+  }
 
   return nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: smtpUser,
-      pass: smtpPass,
+      user,
+      pass,
     },
   });
 }
@@ -324,156 +337,40 @@ function getPlayerBookingConfirmationHtml({
   startTime,
   endTime,
   duration,
+  slotCount,
+  displaySlotText,
 }) {
   const formattedAmount = Number(amountPaid || 0).toLocaleString("en-IN");
 
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Booking Confirmation - SportXClub</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
-    <tr>
-      <td align="center">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-          
-          <!-- Header Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #065f46 0%, #059669 100%); padding: 26px 30px; text-align: left; border-bottom: 3px solid #10b981;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px;">
-                SPORT<span style="color: #6ee7b7;">X</span>CLUB
-              </h1>
-              <p style="margin: 4px 0 0; font-size: 11px; font-weight: 700; color: #d1fae5; text-transform: uppercase; letter-spacing: 1.5px;">
-                Booking Confirmation
-              </p>
-            </td>
-          </tr>
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+  <p style="margin: 0 0 16px 0;">Welcome to <strong>SportXClub</strong>! 🎉<br>
+  We're happy to confirm your turf slot booking with us.</p>
 
-          <!-- Main Content -->
-          <tr>
-            <td style="padding: 30px 30px 20px;">
-              <p style="margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #0f172a;">
-                Dear ${userName || "Player"},
-              </p>
-              
-              <p style="margin: 0 0 16px; font-size: 14px; color: #334155;">
-                Greetings from the <strong>SportXClub Team</strong>!
-              </p>
+  <p style="margin: 0 0 16px 0;">Your turf slot booking has been successfully confirmed on the SportXClub platform.</p>
 
-              <p style="margin: 0 0 22px; font-size: 14px; color: #334155;">
-                We are pleased to confirm your turf booking. Your payment has been successfully received.
-              </p>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Booking Details:</strong><br>
+    <strong>Turf Name :-</strong> ${turfName}<br>
+    <strong>Location :-</strong> ${turfLocation || "Registered Arena"}<br>
+    <strong>Sport :-</strong> ${sportName}<br>
+    <strong>Player Name :-</strong> ${userName || "Player"}<br>
+    <strong>Booking ID :-</strong> ${bookingId}<br>
+    <strong>Date :-</strong> ${bookingDate}<br>
+    <strong>Time Slot :-</strong> ${displaySlotText || `${startTime} – ${endTime}`}<br>
+    <strong>Duration :-</strong> ${duration} (${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"})<br>
+    <strong>Total Paid :-</strong> ₹${formattedAmount}
+  </p>
 
-              <!-- Booking Confirmation Summary Box -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 22px; padding: 18px 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Booking Confirmation
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px; font-size: 13px; color: #64748b; width: 45%;">Booking ID:</td>
-                  <td style="padding-top: 12px; font-size: 13px; font-weight: 700; color: #059669;">${bookingId}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booking Date & Time:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${bookingCreatedAt}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Payment Status:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">Successful</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Amount Paid:</td>
-                  <td style="padding-top: 8px; font-size: 14px; font-weight: 800; color: #0f172a;">₹${formattedAmount}</td>
-                </tr>
-              </table>
+  <p style="margin: 0 0 16px 0;">If you need any assistance with your booking, feel free to contact our support team.</p>
 
-              <!-- Turf Details Box -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 22px; padding: 18px 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                      📍 Turf Details
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px; font-size: 13px; color: #64748b; width: 45%;">Turf Name:</td>
-                  <td style="padding-top: 12px; font-size: 13px; font-weight: 700; color: #0f172a;">${turfName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Sport:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${sportName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Location:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${turfLocation}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booking Date:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${bookingDate}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booked Slots:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot(s):</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${displaySlotText || `${startTime} – ${endTime}`}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Duration:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${duration}</td>
-                </tr>
-              </table>
+  <p style="margin: 0 0 16px 0;">Thank you for choosing SportXClub. We look forward to seeing you on the ground!</p>
 
-              <p style="margin: 0 0 14px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                Your slot has been successfully reserved for you. Please carry your <strong>SportXClub Booking Confirmation / Booking ID</strong> when visiting the turf.
-              </p>
-
-              <p style="margin: 0 0 14px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                We recommend arriving <strong>10–15 minutes</strong> before your scheduled slot to complete the check-in process smoothly.
-              </p>
-
-              <!-- PDF Attachment Notice -->
-              <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px;">
-                <p style="margin: 0; font-size: 12.5px; color: #065f46; font-weight: 600;">
-                  📎 <strong>Match Pass Attached:</strong> Your digital PDF Match Pass is attached with this email for quick offline access.
-                </p>
-              </div>
-
-              <p style="margin: 0 0 24px; font-size: 13.5px; color: #334155;">
-                If you need any assistance regarding your booking, please contact the SportXClub support team.
-              </p>
-
-              <p style="margin: 0; font-size: 14px; color: #334155;">
-                Best Regards,<br>
-                <strong style="color: #059669;">SportXClub Team</strong>
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 30px; text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
-                © 2026 SportXClub Technologies Pvt. Ltd. • All rights reserved.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+  <p style="margin: 0; line-height: 1.5;">
+    Best Regards,<br>
+    <strong>SportXClub Team</strong>
+  </p>
+</div>
   `.trim();
 }
 
@@ -485,10 +382,13 @@ function getOwnerNewBookingHtml({
   bookingId,
   turfName,
   sportName,
+  turfLocation,
   bookingDate,
   startTime,
   endTime,
   duration,
+  slotCount,
+  displaySlotText,
   userName,
   userEmail,
   userPhone,
@@ -498,164 +398,44 @@ function getOwnerNewBookingHtml({
   const formattedAmount = Number(amountPaid || 0).toLocaleString("en-IN");
 
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>New Booking Alert - SportXClub</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
-    <tr>
-      <td align="center">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-          
-          <!-- Header Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 26px 30px; text-align: left; border-bottom: 3px solid #10b981;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px;">
-                SPORT<span style="color: #34d399;">X</span>CLUB
-              </h1>
-              <p style="margin: 4px 0 0; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px;">
-                Turf Partner Network • New Booking Alert
-              </p>
-            </td>
-          </tr>
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+  <p style="margin: 0 0 16px 0;">Dear <strong>${ownerName || "Turf Owner"}</strong>,</p>
 
-          <!-- Main Content -->
-          <tr>
-            <td style="padding: 30px 30px 20px;">
-              <p style="margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #0f172a;">
-                Dear ${ownerName || "Turf Owner"},
-              </p>
-              
-              <p style="margin: 0 0 16px; font-size: 14px; color: #334155;">
-                Greetings from the <strong>SportXClub Team</strong>!
-              </p>
+  <p style="margin: 0 0 16px 0;">You have received a new booking for your turf <strong>${turfName}</strong> on the SportXClub platform.</p>
 
-              <p style="margin: 0 0 22px; font-size: 14px; color: #334155;">
-                You have received a new booking for your turf. The selected slot has been successfully reserved.
-              </p>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Booking Details:</strong><br>
+    <strong>Turf Name :-</strong> ${turfName}<br>
+    <strong>Location :-</strong> ${turfLocation || "Registered Arena"}<br>
+    <strong>Sport :-</strong> ${sportName}<br>
+    <strong>Booking ID :-</strong> ${bookingId}<br>
+    <strong>Date :-</strong> ${bookingDate}<br>
+    <strong>Time Slot :-</strong> ${displaySlotText || `${startTime} – ${endTime}`}<br>
+    <strong>Duration :-</strong> ${duration} (${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"})<br>
+    <strong>Amount :-</strong> ₹${formattedAmount}
+  </p>
 
-              <!-- Booking Details -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; padding: 18px 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Booking Details :-
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px; font-size: 13px; color: #64748b; width: 45%;">Booking ID:</td>
-                  <td style="padding-top: 12px; font-size: 13px; font-weight: 700; color: #059669;">${bookingId}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Turf Name:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #0f172a;">${turfName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Sport:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${sportName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booking Date:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${bookingDate}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booked Slots:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot(s):</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">${displaySlotText || `${startTime} – ${endTime}`}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Duration:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${duration}</td>
-                </tr>
-              </table>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Customer Details:</strong><br>
+    <strong>Player Name :-</strong> ${userName || "Customer"}<br>
+    <strong>Email :-</strong> ${userEmail || "N/A"}<br>
+    <strong>Phone :-</strong> ${userPhone || "N/A"}<br>
+    <strong>Payment Date & Time :-</strong> ${paymentDateTime}
+  </p>
 
-              <!-- Customer Details -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; padding: 18px 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                      👤 Customer Details
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px; font-size: 13px; color: #64748b; width: 45%;">Player Name:</td>
-                  <td style="padding-top: 12px; font-size: 13px; font-weight: 700; color: #0f172a;">${userName || "Athlete"}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Email:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${userEmail || "N/A"}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Mobile Number:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${userPhone || "N/A"}</td>
-                </tr>
-              </table>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Owner Dashboard:</strong> <a href="https://sportxclub.com/admin-login" target="_blank" style="color: #059669; text-decoration: underline;">https://sportxclub.com/admin-login</a>
+  </p>
 
-              <!-- Payment Details -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 22px; padding: 18px 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Payment Details :-
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px; font-size: 13px; color: #64748b; width: 45%;">Amount Paid:</td>
-                  <td style="padding-top: 12px; font-size: 14px; font-weight: 800; color: #059669;">₹${formattedAmount}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Payment Status:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #059669;">✅ Successful</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Payment Date & Time:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${paymentDateTime}</td>
-                </tr>
-              </table>
+  <p style="margin: 0 0 16px 0;">If you need any assistance with your turf or owner account, feel free to contact our support team.</p>
 
-              <p style="margin: 0 0 14px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                The above slot has been successfully reserved for the customer.
-              </p>
+  <p style="margin: 0 0 16px 0;">Thank you for choosing SportXClub.</p>
 
-              <p style="margin: 0 0 20px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                Please make sure the turf is available and ready at the scheduled time.
-              </p>
-
-              <p style="margin: 0 0 24px; font-size: 13.5px; color: #334155;">
-                Thank you for being a part of SportXClub.
-              </p>
-
-              <p style="margin: 0; font-size: 14px; color: #334155;">
-                Best Regards,<br>
-                <strong style="color: #059669;">SportXClub Team</strong>
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 30px; text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
-                Manage this booking via your SportXClub Turf Owner Dashboard.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+  <p style="margin: 0; line-height: 1.5;">
+    Best Regards,<br>
+    <strong>SportXClub Team</strong>
+  </p>
+</div>
   `.trim();
 }
 
@@ -667,6 +447,7 @@ function getPlayerCancellationHtml({
   bookingId,
   turfName,
   sportName,
+  turfLocation,
   bookingDate,
   startTime,
   endTime,
@@ -674,118 +455,35 @@ function getPlayerCancellationHtml({
   cancellationDateTime,
 }) {
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Booking Cancelled - SportXClub</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
-    <tr>
-      <td align="center">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-          
-          <!-- Header Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #991b1b 0%, #dc2626 100%); padding: 26px 30px; text-align: left; border-bottom: 3px solid #ef4444;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px;">
-                SPORT<span style="color: #fca5a5;">X</span>CLUB
-              </h1>
-              <p style="margin: 4px 0 0; font-size: 11px; font-weight: 700; color: #fee2e2; text-transform: uppercase; letter-spacing: 1.5px;">
-                Booking Cancellation Notice
-              </p>
-            </td>
-          </tr>
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+  <p style="margin: 0 0 16px 0;">Dear <strong>${userName || "Player"}</strong>,</p>
 
-          <!-- Main Content -->
-          <tr>
-            <td style="padding: 30px 30px 20px;">
-              <p style="margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #0f172a;">
-                Dear ${userName || "Player"},
-              </p>
-              
-              <p style="margin: 0 0 22px; font-size: 14px; color: #334155;">
-                Your turf booking has been successfully cancelled as requested.
-              </p>
+  <p style="margin: 0 0 16px 0;">Your turf booking has been successfully cancelled as requested.</p>
 
-              <!-- Booking Details -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 22px; padding: 18px 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Booking Details
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px; font-size: 13px; color: #64748b; width: 45%;">Booking ID:</td>
-                  <td style="padding-top: 12px; font-size: 13px; font-weight: 700; color: #0f172a;">${bookingId}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Turf Name:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #0f172a;">${turfName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Sport:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${sportName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booking Date:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${bookingDate}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #0f172a;">${startTime} – ${endTime}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Duration:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${duration}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booking Status:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #dc2626;">❌ Cancelled</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Cancelled On:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${cancellationDateTime}</td>
-                </tr>
-              </table>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Booking Details:</strong><br>
+    <strong>Turf Name :-</strong> ${turfName}<br>
+    <strong>Location :-</strong> ${turfLocation || "Registered Arena"}<br>
+    <strong>Sport :-</strong> ${sportName}<br>
+    <strong>Booking ID :-</strong> ${bookingId}<br>
+    <strong>Date :-</strong> ${bookingDate}<br>
+    <strong>Time Slot :-</strong> ${startTime} – ${endTime}<br>
+    <strong>Duration :-</strong> ${duration}<br>
+    <strong>Status :-</strong> Cancelled<br>
+    <strong>Cancelled On :-</strong> ${cancellationDateTime}
+  </p>
 
-              <p style="margin: 0 0 14px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                Your selected slot is no longer reserved under this booking.
-              </p>
+  <p style="margin: 0 0 16px 0;">The selected slot is no longer reserved under your account.</p>
 
-              <p style="margin: 0 0 14px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                If you have any questions regarding your cancellation, please contact our support team.
-              </p>
+  <p style="margin: 0 0 16px 0;">If you have any questions regarding your cancellation or refund, feel free to contact our support team.</p>
 
-              <p style="margin: 0 0 24px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                We hope to see you back on the field soon!
-              </p>
+  <p style="margin: 0 0 16px 0;">We hope to see you back on the field soon!</p>
 
-              <p style="margin: 0; font-size: 14px; color: #334155;">
-                Best Regards,<br>
-                <strong style="color: #059669;">SportXClub Team</strong>
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 30px; text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
-                © 2026 SportXClub Technologies Pvt. Ltd. • All rights reserved.
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+  <p style="margin: 0; line-height: 1.5;">
+    Best Regards,<br>
+    <strong>SportXClub Team</strong>
+  </p>
+</div>
   `.trim();
 }
 
@@ -797,6 +495,7 @@ function getOwnerCancellationHtml({
   bookingId,
   turfName,
   sportName,
+  turfLocation,
   bookingDate,
   startTime,
   endTime,
@@ -804,118 +503,37 @@ function getOwnerCancellationHtml({
   cancellationDateTime,
 }) {
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Booking Cancelled Alert - SportXClub</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; line-height: 1.6;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
-    <tr>
-      <td align="center">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #e2e8f0;">
-          
-          <!-- Header Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 26px 30px; text-align: left; border-bottom: 3px solid #ef4444;">
-              <h1 style="margin: 0; font-size: 24px; font-weight: 900; color: #ffffff; letter-spacing: 0.5px;">
-                SPORT<span style="color: #f87171;">X</span>CLUB
-              </h1>
-              <p style="margin: 4px 0 0; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px;">
-                Turf Partner Network • Cancellation Alert
-              </p>
-            </td>
-          </tr>
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+  <p style="margin: 0 0 16px 0;">Dear <strong>${ownerName || "Turf Owner"}</strong>,</p>
 
-          <!-- Main Content -->
-          <tr>
-            <td style="padding: 30px 30px 20px;">
-              <p style="margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #0f172a;">
-                Dear ${ownerName || "Turf Owner"},
-              </p>
-              
-              <p style="margin: 0 0 16px; font-size: 14px; color: #334155;">
-                Greetings from the <strong>SportXClub Team</strong>!
-              </p>
+  <p style="margin: 0 0 16px 0;">A booking for your turf <strong>${turfName}</strong> has been cancelled by the customer. The slot is now available again for other players.</p>
 
-              <p style="margin: 0 0 22px; font-size: 14px; color: #334155;">
-                A booking for your turf has been cancelled by the customer. The previously reserved slot is now available again.
-              </p>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Booking Details:</strong><br>
+    <strong>Turf Name :-</strong> ${turfName}<br>
+    <strong>Location :-</strong> ${turfLocation || "Registered Arena"}<br>
+    <strong>Sport :-</strong> ${sportName}<br>
+    <strong>Booking ID :-</strong> ${bookingId}<br>
+    <strong>Date :-</strong> ${bookingDate}<br>
+    <strong>Time Slot :-</strong> ${startTime} – ${endTime}<br>
+    <strong>Duration :-</strong> ${duration}<br>
+    <strong>Status :-</strong> Cancelled<br>
+    <strong>Cancelled On :-</strong> ${cancellationDateTime}
+  </p>
 
-              <!-- Booking Details -->
-              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 22px; padding: 18px 20px;">
-                <tr>
-                  <td colspan="2" style="padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
-                    <span style="font-size: 13px; font-weight: 800; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">
-                      Booking Details
-                    </span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 12px; font-size: 13px; color: #64748b; width: 45%;">Booking ID:</td>
-                  <td style="padding-top: 12px; font-size: 13px; font-weight: 700; color: #0f172a;">${bookingId}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Turf Name:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #0f172a;">${turfName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Sport:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${sportName}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booking Date:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${bookingDate}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Time Slot:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #0f172a;">${startTime} – ${endTime}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Duration:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${duration}</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Booking Status:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 700; color: #dc2626;">❌ Cancelled</td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 8px; font-size: 13px; color: #64748b;">Cancelled On:</td>
-                  <td style="padding-top: 8px; font-size: 13px; font-weight: 600; color: #1e293b;">${cancellationDateTime}</td>
-                </tr>
-              </table>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Owner Dashboard:</strong> <a href="https://sportxclub.com/admin-login" target="_blank" style="color: #059669; text-decoration: underline;">https://sportxclub.com/admin-login</a>
+  </p>
 
-              <p style="margin: 0 0 20px; font-size: 13.5px; color: #334155; line-height: 1.6;">
-                The selected slot is now available for other bookings.
-              </p>
+  <p style="margin: 0 0 16px 0;">If you need any assistance with your turf or owner account, feel free to contact our support team.</p>
 
-              <p style="margin: 0 0 24px; font-size: 13.5px; color: #334155;">
-                Thank you for being a part of SportXClub.
-              </p>
+  <p style="margin: 0 0 16px 0;">Thank you for partnering with SportXClub.</p>
 
-              <p style="margin: 0; font-size: 14px; color: #334155;">
-                Best Regards,<br>
-                <strong style="color: #059669;">SportXClub Team</strong>
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 18px 30px; text-align: center;">
-              <p style="margin: 0; font-size: 11px; color: #94a3b8;">
-                © 2026 SportXClub Technologies Pvt. Ltd. • Turf Partner Network
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+  <p style="margin: 0; line-height: 1.5;">
+    Best Regards,<br>
+    <strong>SportXClub Team</strong>
+  </p>
+</div>
   `.trim();
 }
 
@@ -1096,6 +714,7 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
         bookingId: bookingCode,
         turfName,
         sportName,
+        turfLocation,
         bookingDate,
         startTime,
         endTime,
@@ -1184,6 +803,8 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
     let ownerEmail = "";
     let ownerName = "";
 
+    let turfLocation = details.location || details.turfLocation || "";
+
     try {
       let turfRow = null;
       if (turfId) {
@@ -1197,6 +818,7 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
       if (turfRow) {
         ownerName = turfRow.owner_name || "";
         ownerEmail = (turfRow.owner_email || "").trim();
+        turfLocation = turfLocation || turfRow.location || "";
       }
       if (!ownerEmail && (ownerName || turfName)) {
         const [ownerRows] = await pool.query(
@@ -1206,6 +828,7 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
         if (ownerRows.length > 0) {
           ownerEmail = (ownerRows[0].email || "").trim();
           ownerName = ownerName || ownerRows[0].name;
+          turfLocation = turfLocation || ownerRows[0].city || "";
         }
       }
     } catch (dbFetchErr) {
@@ -1224,6 +847,7 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
         bookingId: bookingCode,
         turfName,
         sportName,
+        turfLocation,
         bookingDate,
         startTime,
         endTime,
@@ -1257,6 +881,7 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
         bookingId: bookingCode,
         turfName,
         sportName,
+        turfLocation,
         bookingDate,
         startTime,
         endTime,

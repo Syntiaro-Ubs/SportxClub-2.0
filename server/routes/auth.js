@@ -82,50 +82,86 @@ function parseSelectedSports(value) {
 }
 
 // Helper function to send Live HTML Email OTP via Nodemailer
-async function sendLiveEmailOtp(toEmail, otpCode, userName = "Athlete") {
+async function sendLiveEmailOtp(toEmail, otpCode, options = {}) {
   const cleanToEmail = (toEmail || "").trim().toLowerCase();
-  const smtpUser = (process.env.SMTP_USER || "waghmareshrinivas99@gmail.com").trim();
-  const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
+  const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || "waghmareshrinivas99@gmail.com").trim();
+  const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || "").replace(/\s+/g, "");
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
+  const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
 
-  const plainTextContent = `Hello ${userName},\n\nYour verification code for SportXClub account security is: ${otpCode}\n\nThis code will expire in 10 minutes. If you did not request this verification code, please ignore this email.\n\n© 2026 SportXClub. All rights reserved.`;
+  let transporter;
+  if (host && host !== "smtp.gmail.com") {
+    transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user: smtpUser, pass: smtpPass },
+      tls: { rejectUnauthorized: false },
+    });
+  } else {
+    transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+  }
 
-  const htmlContent = `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background-color: #0d1117; border-radius: 20px; color: #ffffff; border: 1px solid #21262d;">
-      <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #21262d;">
-        <h1 style="color: #10b981; font-size: 30px; font-weight: 900; margin: 0; letter-spacing: -0.5px;">SportXClub</h1>
-        <p style="color: #8b949e; font-size: 11px; margin-top: 4px; font-weight: 700; letter-spacing: 2px;">YOUR ULTIMATE SPORTS ARENA PORTAL</p>
-      </div>
+  const mode = typeof options === "string" ? options : (options.mode || "security");
+  const isOwnerOnboarding = mode === "owner-onboarding" || mode === "onboarding" || options.type === "owner";
+
+  let plainTextContent = "";
+  let htmlContent = "";
+
+  if (isOwnerOnboarding) {
+    plainTextContent = `Hello Turf Owner,\n\nYour verification code for SportXClub Turf Onboarding is:\n\n${otpCode}\n\nThis code will expire in 10 minutes. Please do not share this code with anyone.\n\nIf you did not request this verification code, you can safely ignore this email.\n\nBest Regards,\nSportXClub Team`;
+
+    htmlContent = `
+    <div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+      <p style="margin: 0 0 16px 0;">Hello Turf Owner,</p>
       
-      <div style="padding: 24px 0;">
-        <h2 style="font-size: 18px; color: #f0f6fc; margin-bottom: 12px;">Hello ${userName},</h2>
-        <p style="color: #c9d1d9; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-          Your verification code for SportXClub account security is:
-        </p>
-        
-        <div style="background-color: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 20px; text-align: center; margin: 24px 0;">
-          <span style="font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 8px; color: #10b981;">
-            ${otpCode}
-          </span>
-        </div>
-        
-        <p style="color: #8b949e; font-size: 12px; line-height: 1.5;">
-          This code will expire in <strong>10 minutes</strong>. If you did not request this verification code, please ignore this email.
-        </p>
-      </div>
+      <p style="margin: 0 0 16px 0;">Your verification code for SportXClub Turf Onboarding is:</p>
       
-      <div style="border-top: 1px solid #21262d; padding-top: 16px; text-align: center; color: #8b949e; font-size: 11px;">
-        <p>© 2026 SportXClub. All rights reserved.</p>
-      </div>
+      <p style="margin: 0 0 16px 0; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #059669;">
+        ${otpCode}
+      </p>
+      
+      <p style="margin: 0 0 16px 0;">This code will expire in 10 minutes. Please do not share this code with anyone.</p>
+      
+      <p style="margin: 0 0 16px 0;">If you did not request this verification code, you can safely ignore this email.</p>
+      
+      <p style="margin: 0; line-height: 1.5;">
+        Best Regards,<br>
+        <strong>SportXClub Team</strong>
+      </p>
     </div>
-  `;
+    `;
+  } else {
+    plainTextContent = `Hello Player,\n\nYour verification code for SportXClub account security is:\n\n${otpCode}\n\nThis code will expire in 10 minutes. Please do not share this code with anyone.\n\nIf you did not request this verification code, please ignore this email.\n\nBest Regards,\nSportXClub Team`;
+
+    htmlContent = `
+    <div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+      <p style="margin: 0 0 16px 0;">Hello Player,</p>
+      
+      <p style="margin: 0 0 16px 0;">Your verification code for SportXClub account security is:</p>
+      
+      <p style="margin: 0 0 16px 0; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: #059669;">
+        ${otpCode}
+      </p>
+      
+      <p style="margin: 0 0 16px 0;">This code will expire in 10 minutes. Please do not share this code with anyone.</p>
+      
+      <p style="margin: 0 0 16px 0;">If you did not request this verification code, please ignore this email.</p>
+      
+      <p style="margin: 0; line-height: 1.5;">
+        Best Regards,<br>
+        <strong>SportXClub Team</strong>
+      </p>
+    </div>
+    `;
+  }
 
   await transporter.sendMail({
     from: `"SportXClub Verification" <${smtpUser}>`,
@@ -797,7 +833,7 @@ router.post("/otp/request", async (req, res) => {
 
     // Dispatch Email OTP
     if (isEmail) {
-      await sendLiveEmailOtp(cleanInput, generatedOtp, foundUser?.full_name || "Athlete");
+      await sendLiveEmailOtp(cleanInput, generatedOtp, { mode, userName: foundUser?.full_name });
     }
 
     return res.json({

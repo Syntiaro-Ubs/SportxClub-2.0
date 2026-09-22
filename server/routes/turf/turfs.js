@@ -21,6 +21,67 @@ async function filterTurfColumns(pool, rawBody) {
   return filtered;
 }
 
+// GET /api/turf/turfs/cities - Get all unique onboarded turf cities (Public)
+router.get("/cities", async (req, res) => {
+  try {
+    const pool = getPool();
+    const citySet = new Set();
+
+    // 1. Fetch cities from turf_owners
+    const [ownerRows] = await pool.query(
+      "SELECT city, setup_data FROM turf_owners"
+    );
+    for (const row of ownerRows) {
+      if (row.city && String(row.city).trim()) {
+        citySet.add(String(row.city).trim());
+      }
+      if (row.setup_data) {
+        try {
+          const parsed = typeof row.setup_data === 'string' ? JSON.parse(row.setup_data) : row.setup_data;
+          const locCity = parsed?.location?.city || parsed?.business?.city || parsed?.personal?.city;
+          if (locCity && String(locCity).trim()) {
+            citySet.add(String(locCity).trim());
+          }
+        } catch (e) {
+          // ignore parse error
+        }
+      }
+    }
+
+    // 2. Fetch locations from turfs
+    const [turfRows] = await pool.query(
+      "SELECT location FROM turfs WHERE location IS NOT NULL AND location != ''"
+    );
+    for (const row of turfRows) {
+      if (row.location) {
+        // If location is like "Tumsar" or "Station Road, Tumsar"
+        const parts = String(row.location).split(",").map(s => s.trim()).filter(Boolean);
+        if (parts.length === 1) {
+          citySet.add(parts[0]);
+        } else if (parts.length > 1) {
+          // Add the city part (typically the last or second-to-last part)
+          const cityCandidate = parts[parts.length - 1];
+          citySet.add(cityCandidate);
+        }
+      }
+    }
+
+    // Clean, format in Title Case, filter out invalid names, and remove duplicates
+    const ignoreWords = ["unknown location", "location not specified", "test", "null", "undefined", "n/a", "none", "string"];
+    const formattedCities = Array.from(citySet)
+      .map(c => c.trim())
+      .filter(c => c.length > 1 && !/^\d+$/.test(c) && !ignoreWords.includes(c.toLowerCase()))
+      .map(c => c.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" "))
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .sort((a, b) => a.localeCompare(b));
+
+    return res.json({ success: true, cities: formattedCities });
+  } catch (err) {
+    console.error("Fetch Turf Cities Error:", err);
+    return res.status(500).json({ success: false, error: err.message, cities: [] });
+  }
+});
+
 // GET /api/turf/turfs - Get all turfs (Public) with dynamic reviews & rating
 router.get("/", async (req, res) => {
   try {

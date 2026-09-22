@@ -41,8 +41,8 @@ textarea {
   --accent-foreground: #0f172a;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: rgba(15, 23, 42, 0.07);
-  --input: rgba(15, 23, 42, 0.07);
+  --border: rgba(15, 23, 42, 0.16);
+  --input: rgba(15, 23, 42, 0.22);
   --input-background: #ffffff;
   --switch-background: #e2e8f0;
   --font-weight-medium: 500;
@@ -122,7 +122,7 @@ textarea {
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30 selection:text-foreground;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400;
   }
 
   h1,
@@ -313,4 +313,33 @@ body {
 .scrollbar-visible {
   scrollbar-width: thin !important;
   scrollbar-color: #10b981 rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Custom Text Selection: Transparent Background + Green Text */
+::selection {
+  background-color: transparent !important;
+  color: #059669 !important;
+}
+
+::-moz-selection {
+  background-color: transparent !important;
+  color: #059669 !important;
+}
+
+.dark ::selection,
+.dark ::-moz-selection {
+  background-color: transparent !important;
+  color: #10b981 !important;
+}
+
+input::selection,
+textarea::selection {
+  background-color: transparent !important;
+  color: #059669 !important;
+}
+
+.dark input::selection,
+.dark textarea::selection {
+  background-color: transparent !important;
+  color: #10b981 !important;
 }

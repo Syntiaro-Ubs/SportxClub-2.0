@@ -5,48 +5,140 @@ import { authenticateToken, requireRole, optionalAuth } from "../middleware/auth
 
 const router = express.Router();
 
-async function sendOnboardingStatusEmail(toEmail, ownerName, status) {
+async function sendOnboardingStatusEmail(toEmail, details = {}, status = "approved") {
   try {
-    const smtpUser = (process.env.SMTP_USER || "").trim();
-    const smtpPass = (process.env.SMTP_PASS || "").replace(/\s+/g, "");
+    const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || "waghmareshrinivas99@gmail.com").trim();
+    const smtpPass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || "").replace(/\s+/g, "");
 
     if (!smtpUser || !smtpPass) return;
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: smtpUser, pass: smtpPass },
-    });
+    let transporter;
+    if (process.env.EMAIL_HOST && process.env.EMAIL_PORT && !process.env.SMTP_USER) {
+      transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: Number(process.env.EMAIL_PORT) || 587,
+        secure: Number(process.env.EMAIL_PORT) === 465,
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+    } else {
+      transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: smtpUser, pass: smtpPass },
+      });
+    }
 
-    const isApproved = status.toLowerCase() === "approved";
-    const title = isApproved ? "Application Approved!" : "Application Status Update";
-    const message = isApproved
-      ? "Congratulations! Your Turf Owner application has been reviewed and <strong>Approved</strong>. You can now log into the SportXClub Turf Owner Dashboard to manage your turfs."
-      : "Thank you for applying to be a Turf Owner on SportXClub. Unfortunately, your recent application has been <strong>Rejected</strong> at this time. Please contact our support team for more details.";
+    const isApproved = String(status).toLowerCase() === "approved";
+    const ownerName = details.ownerName || "Turf Owner";
+    const turfName = details.turfName || "Sports Turf";
+    const turfLocation = details.turfLocation || "Location not specified";
+    const registrationDate = details.registrationDate || new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    const dashboardLink = details.dashboardLink || "https://sportxclub.com/admin-login";
 
-    const htmlContent = `
-      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 28px; background-color: #0d1117; border-radius: 20px; color: #ffffff; border: 1px solid #21262d;">
-        <div style="text-align: center; padding-bottom: 20px; border-bottom: 1px solid #21262d;">
-          <h1 style="color: ${isApproved ? '#10b981' : '#f43f5e'}; font-size: 30px; font-weight: 900; margin: 0; letter-spacing: -0.5px;">SportXClub</h1>
-          <p style="color: #8b949e; font-size: 11px; margin-top: 4px; font-weight: 700; letter-spacing: 2px;">TURF OWNER ONBOARDING</p>
-        </div>
+    let subject = "";
+    let htmlContent = "";
+    let textContent = "";
+
+    if (isApproved) {
+      subject = `[SportXClub] Welcome to SportXClub - ${turfName} is Now Live! 🎉`;
+
+      htmlContent = `
+      <div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+        <p style="margin: 0 0 16px 0;">Hi ${ownerName},</p>
         
-        <div style="padding: 24px 0;">
-          <h2 style="font-size: 18px; color: #f0f6fc; margin-bottom: 12px;">Hello ${ownerName},</h2>
-          <p style="color: #c9d1d9; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
-            ${message}
-          </p>
-        </div>
-        
-        <div style="border-top: 1px solid #21262d; padding-top: 16px; text-align: center; color: #8b949e; font-size: 11px;">
-          <p>© 2026 SportXClub. All rights reserved.</p>
-        </div>
+        <p style="margin: 0 0 16px 0;">
+          Welcome to <strong>SportXClub!</strong> 🎉<br>
+          We’re happy to have <strong>${turfName}</strong> onboard with us.
+        </p>
+
+        <p style="margin: 0 0 16px 0;">
+          Your turf has been successfully registered on the SportXClub platform. You can now manage your turf details, availability, bookings, and other important information through your owner dashboard.
+        </p>
+
+        <p style="margin: 0 0 16px 0;">
+          <strong>Turf Details:</strong><br>
+          <strong>Turf Name :-</strong> ${turfName}<br>
+          <strong>Location :-</strong> ${turfLocation}<br>
+          <strong>Owner Name :-</strong> ${ownerName}<br>
+          <strong>Registration Date :-</strong> ${registrationDate}
+        </p>
+
+        <p style="margin: 0 0 16px 0;">
+          <strong>Owner Dashboard:</strong> <a href="${dashboardLink}" style="color: #1a73e8; text-decoration: underline;">${dashboardLink}</a>
+        </p>
+
+        <p style="margin: 0 0 16px 0;">
+          If you need any assistance with your turf or owner account, feel free to contact our support team.
+        </p>
+
+        <p style="margin: 0 0 16px 0;">
+          Thank you for choosing SportXClub. We look forward to helping you grow your sports business.
+        </p>
+
+        <p style="margin: 0; line-height: 1.5;">
+          Best Regards,<br>
+          <strong>SportXClub Team</strong>
+        </p>
       </div>
-    `;
+      `;
+
+      textContent = `Hi ${ownerName},
+
+Welcome to SportXClub! 🎉
+We’re happy to have ${turfName} onboard with us.
+
+Your turf has been successfully registered on the SportXClub platform. You can now manage your turf details, availability, bookings, and other important information through your owner dashboard.
+
+Turf Details:
+Turf Name :- ${turfName}
+Location :- ${turfLocation}
+Owner Name :- ${ownerName}
+Registration Date :- ${registrationDate}
+
+Owner Dashboard: ${dashboardLink}
+
+If you need any assistance with your turf or owner account, feel free to contact our support team.
+
+Thank you for choosing SportXClub. We look forward to helping you grow your sports business.
+
+Best Regards,
+SportXClub Team`;
+    } else {
+      subject = `[SportXClub] Turf Application Status Update`;
+
+      htmlContent = `
+      <div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+        <p style="margin: 0 0 16px 0;">Hi ${ownerName},</p>
+        
+        <p style="margin: 0 0 16px 0;">
+          Thank you for applying to list <strong>${turfName}</strong> on SportXClub. Unfortunately, your recent onboarding application has been <strong>Rejected</strong> at this time.
+        </p>
+
+        <p style="margin: 0 0 16px 0;">
+          Please ensure all your business details and verification documents are accurate, or reach out to our support team for more details.
+        </p>
+
+        <p style="margin: 0; line-height: 1.5;">
+          Best Regards,<br>
+          <strong>SportXClub Team</strong>
+        </p>
+      </div>
+      `;
+
+      textContent = `Hi ${ownerName},
+
+Thank you for applying to list ${turfName} on SportXClub. Unfortunately, your recent onboarding application has been Rejected at this time.
+
+Please ensure all your business details and verification documents are accurate, or reach out to our support team for more details.
+
+Best Regards,
+SportXClub Team`;
+    }
 
     await transporter.sendMail({
-      from: `"SportXClub Admin" <${smtpUser}>`,
+      from: `"SportXClub" <${smtpUser}>`,
       to: toEmail,
-      subject: `[SportXClub] Turf Application ${isApproved ? 'Approved' : 'Rejected'}`,
+      subject,
+      text: textContent,
       html: htmlContent,
     });
     console.log(`[NODEMAILER] Onboarding status (${status}) email sent to ${toEmail}`);
@@ -306,7 +398,7 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
     const isApproved = String(status).toLowerCase() === "approved";
     const isRejected = String(status).toLowerCase() === "rejected";
 
-    const [ownerRows] = await pool.query("SELECT id, owner_id, email, name FROM turf_owners WHERE id = ?", [id]);
+    const [ownerRows] = await pool.query("SELECT id, owner_id, email, name, city, setup_data, created_at, joined_date FROM turf_owners WHERE id = ?", [id]);
     const owner = ownerRows[0];
 
     if (owner) {
@@ -324,8 +416,43 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
       }
 
       try {
-        if (ownerEmail) {
-          await sendOnboardingStatusEmail(ownerEmail, owner.name || "Turf Owner", status);
+        let setupData = {};
+        if (owner.setup_data) {
+          let parsed = owner.setup_data;
+          while (typeof parsed === 'string') {
+            try {
+              parsed = JSON.parse(parsed);
+            } catch (e) {
+              break;
+            }
+          }
+          if (parsed && typeof parsed === 'object') {
+            setupData = parsed;
+          }
+        }
+
+        const ownerName = setupData.personal?.fullName || setupData.business?.ownerName || owner.name || "Turf Owner";
+        const turfName = setupData.turf?.name || setupData.business?.businessName || "Sports Turf";
+        const turfLocation = [setupData.location?.address, setupData.location?.city, setupData.location?.state].filter(Boolean).join(", ") || setupData.location?.city || owner.city || "Location not specified";
+        
+        let registrationDate = "";
+        try {
+          const rawDate = owner.created_at || owner.joined_date || setupData.createdAt;
+          const d = rawDate ? new Date(rawDate) : new Date();
+          registrationDate = !isNaN(d.getTime()) ? d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        } catch (e) {
+          registrationDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+        }
+
+        const emailToSend = ownerEmail || setupData.personal?.email || setupData.business?.email;
+
+        if (emailToSend) {
+          await sendOnboardingStatusEmail(emailToSend, {
+            ownerName,
+            turfName,
+            turfLocation,
+            registrationDate,
+          }, status);
         }
       } catch (e) {
         console.error("Failed to send onboarding status email", e);

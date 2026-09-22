@@ -546,7 +546,7 @@ export function OwnerProfile() {
                 name="fullName"
                 value={editFormData.fullName}
                 onChange={handleEditChange}
-                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -559,7 +559,7 @@ export function OwnerProfile() {
                 value={editFormData.phone}
                 onChange={handleEditChange}
                 placeholder="Enter phone number"
-                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -572,7 +572,7 @@ export function OwnerProfile() {
                 value={editFormData.location}
                 onChange={handleEditChange}
                 placeholder="Mumbai, India"
-                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -584,7 +584,7 @@ export function OwnerProfile() {
                 name="bio"
                 value={editFormData.bio}
                 onChange={handleEditChange}
-                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                className="col-span-3 bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
               />
             </div>
           </div>
@@ -715,7 +715,7 @@ export function OwnerProfile() {
                     value={kycFormData.bankName}
                     onChange={handleKycChange}
                     placeholder="e.g. HDFC Bank"
-                    className="h-9 text-xs bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                    className="h-9 text-xs bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                     required
                   />
                 </div>
@@ -728,7 +728,7 @@ export function OwnerProfile() {
                     value={kycFormData.accountHolder}
                     onChange={handleKycChange}
                     placeholder="Full Registered Name"
-                    className="h-9 text-xs bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                    className="h-9 text-xs bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                     required
                   />
                 </div>
@@ -744,7 +744,7 @@ export function OwnerProfile() {
                     value={kycFormData.accountNumber}
                     onChange={handleKycChange}
                     placeholder="Enter Account No."
-                    className="h-9 text-xs font-mono bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                    className="h-9 text-xs font-mono bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                     required
                   />
                 </div>
@@ -757,7 +757,7 @@ export function OwnerProfile() {
                     value={kycFormData.confirmAccountNumber}
                     onChange={handleKycChange}
                     placeholder="Confirm Account No."
-                    className="h-9 text-xs font-mono bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                    className="h-9 text-xs font-mono bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                     required
                   />
                 </div>
@@ -771,7 +771,7 @@ export function OwnerProfile() {
                   value={kycFormData.ifscCode}
                   onChange={handleKycChange}
                   placeholder="e.g. HDFC0001234"
-                  className="h-9 text-xs font-mono uppercase bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                  className="h-9 text-xs font-mono uppercase bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                   required
                 />
               </div>
@@ -793,7 +793,7 @@ export function OwnerProfile() {
                     value={kycFormData.panNumber}
                     onChange={handleKycChange}
                     placeholder="e.g. ABCDE1234F"
-                    className="h-9 text-xs font-mono uppercase bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                    className="h-9 text-xs font-mono uppercase bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                     required
                   />
                 </div>
@@ -806,7 +806,7 @@ export function OwnerProfile() {
                     value={kycFormData.gstin}
                     onChange={handleKycChange}
                     placeholder="e.g. 27ABCDE1234F1Z5"
-                    className="h-9 text-xs font-mono uppercase bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-foreground"
+                    className="h-9 text-xs font-mono uppercase bg-transparent focus-visible:bg-transparent border border-emerald-500/40 focus-visible:border-emerald-500 focus-visible:ring-0 shadow-none selection:bg-transparent selection:text-emerald-600 dark:selection:text-emerald-400"
                   />
                 </div>
               </div>

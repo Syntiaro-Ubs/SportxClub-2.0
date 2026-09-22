@@ -169,6 +169,7 @@ export function OwnerSetupPage() {
   const otpRefs = React.useRef([]);
   const [showPassword, setShowPassword] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
   useEffect(() => {
     let timer;
@@ -369,6 +370,7 @@ export function OwnerSetupPage() {
       setOtpDigits(["", "", "", "", "", ""]);
       setShowOtpModal(false);
       setEmailExistsError("");
+      setPhoneError("");
       setCurrentStep(1);
       setCompletedSteps([]);
       toast.info("Registration form reset. You can now start fresh!");
@@ -413,7 +415,7 @@ export function OwnerSetupPage() {
     try {
       setIsSendingEmailOtp(true);
       setEmailOtpError("");
-      const res = await adminApi.requestOtp(emailVal, "register");
+      const res = await adminApi.requestOtp(emailVal, "owner-onboarding");
       if (res.success) {
         setEmailOtpSent(true);
         setResendCountdown(60);
@@ -542,6 +544,37 @@ export function OwnerSetupPage() {
       val = `${val.slice(0, 2)}/${val.slice(2)}`;
     }
     updateSection('personal', 'dob', val);
+  };
+
+  // Phone Number change & max 10-digit validation handler
+  const handlePhoneChange = (e) => {
+    const rawVal = e.target.value;
+    const digitsOnly = rawVal.replace(/\D/g, "");
+
+    if (digitsOnly.length > 10) {
+      setPhoneError("Phone number cannot exceed 10 digits.");
+      const trimmed = digitsOnly.slice(0, 10);
+      updateSection('personal', 'phone', trimmed);
+      return;
+    }
+
+    if (digitsOnly.length > 0 && digitsOnly.length < 10) {
+      setPhoneError("Please enter a valid 10-digit phone number.");
+    } else {
+      setPhoneError("");
+    }
+
+    updateSection('personal', 'phone', digitsOnly);
+  };
+
+  const handlePhoneKeyDown = (e) => {
+    if (
+      /^\d$/.test(e.key) &&
+      (formData.personal?.phone || "").length >= 10 &&
+      e.target.selectionStart === e.target.selectionEnd
+    ) {
+      setPhoneError("Phone number cannot exceed 10 digits.");
+    }
   };
 
   // Location & Map Helpers
@@ -674,12 +707,14 @@ export function OwnerSetupPage() {
     const p = formData?.personal || {};
     const fullName = (p.fullName || "").trim();
     const email = (p.email || "").trim();
+    const phone = (p.phone || "").trim();
     const password = p.password || "";
     const confirmPassword = p.confirmPassword || "";
 
     if (!fullName) return false;
     if (!email.includes("@") || emailExistsError) return false;
     if (!emailVerified) return false;
+    if (!phone || phone.length !== 10) return false;
     if (password) {
       if (password.length < 6) return false;
       if (password !== confirmPassword) return false;
@@ -692,6 +727,7 @@ export function OwnerSetupPage() {
       const p = formData?.personal || {};
       const fullName = (p.fullName || "").trim();
       const email = (p.email || "").trim();
+      const phone = (p.phone || "").trim();
       const password = p.password || "";
       const confirmPassword = p.confirmPassword || "";
 
@@ -717,6 +753,14 @@ export function OwnerSetupPage() {
       }
       if (password && password !== confirmPassword) {
         toast.error("Passwords do not match.");
+        return;
+      }
+      if (!phone) {
+        toast.error("Please enter your 10-digit Phone Number.");
+        return;
+      }
+      if (phone.length !== 10) {
+        toast.error("Phone number must be exactly 10 digits.");
         return;
       }
     }
@@ -790,8 +834,6 @@ export function OwnerSetupPage() {
   if (status === "submitted") {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden font-sans">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-600/10 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-600/5 blur-[120px] rounded-full pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -913,10 +955,6 @@ export function OwnerSetupPage() {
   // Common Layout for Stepper
   return (
     <div className="min-h-screen bg-background relative flex flex-col md:flex-row font-sans">
-      {/* Dynamic Background */}
-      <div className="fixed inset-0 opacity-[0.03] dark:opacity-[0.05] bg-[radial-gradient(#22c55e_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
-      <div className="fixed top-0 left-0 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px] pointer-events-none animate-pulse" style={{ animationDuration: "8s" }} />
-
       {/* Left Sidebar Stepper */}
       <div className="hidden md:flex flex-col w-64 lg:w-72 border-r border-border/50 bg-card/30 backdrop-blur-xl px-4 pb-4 pt-0 sm:px-6 sm:pb-6 sm:pt-0 sticky top-0 h-screen overflow-y-auto z-10">
         <div className="-mt-4 -mb-4">
@@ -926,19 +964,18 @@ export function OwnerSetupPage() {
         </div>
 
         <div className="relative space-y-0 z-10">
-          <div className="absolute top-4 bottom-4 left-[19px] w-[2px] bg-border/50 -z-10" />
-          {STEPS.map((step) => {
+          {STEPS.map((step, index) => {
             const isCompleted = completedSteps.includes(step.id);
             const isCurrent = currentStep === step.id;
             const isFlagged = status === "corrections" && adminFeedback?.rejectedSteps?.includes(step.id);
             const StepIcon = step.icon;
+            const isLast = index === STEPS.length - 1;
 
             return (
               <div
                 key={step.id}
                 className={cn(
-                  "flex items-center gap-4 py-3.5 cursor-pointer group transition-opacity",
-                  !isCompleted && !isCurrent && status !== "corrections" ? "opacity-60 hover:opacity-90" : "opacity-100",
+                  "flex items-center gap-4 py-3.5 cursor-pointer group relative",
                   isFlagged && "bg-rose-500/5 -mx-4 px-4 rounded-xl"
                 )}
                 onClick={() => {
@@ -947,12 +984,22 @@ export function OwnerSetupPage() {
                   }
                 }}
               >
+                {/* Connecting line only between current circle bottom and next circle top */}
+                {!isLast && (
+                  <div
+                    className={cn(
+                      "absolute left-[19px] top-[calc(50%+20px)] bottom-[-14px] w-[2px] transition-colors z-0 pointer-events-none",
+                      isCompleted ? "bg-emerald-500/60" : "bg-border/60"
+                    )}
+                  />
+                )}
+
                 <div className={cn(
-                  "h-10 w-10 rounded-full flex items-center justify-center shrink-0 border-2 transition-colors relative bg-transparent",
-                  isCompleted && !isFlagged ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "",
-                  isCurrent && !isFlagged ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent" : "",
-                  !isCompleted && !isCurrent && !isFlagged ? "border-border text-muted-foreground" : "",
-                  isFlagged ? "border-rose-500 text-rose-500" : ""
+                  "h-10 w-10 rounded-full flex items-center justify-center shrink-0 border-2 transition-all relative z-10 bg-white dark:bg-[#0b0c10]",
+                  isCompleted && !isFlagged ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10" : "",
+                  isCurrent && !isFlagged ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-white dark:bg-[#0b0c10] shadow-sm" : "",
+                  !isCompleted && !isCurrent && !isFlagged ? "border-slate-300 dark:border-white/20 text-slate-400 dark:text-slate-500 bg-white dark:bg-[#0b0c10]" : "",
+                  isFlagged ? "border-rose-500 text-rose-500 bg-rose-500/10" : ""
                 )}>
                   {isCompleted && !isCurrent && !isFlagged ? <Check className="h-5 w-5 stroke-[2.5]" /> :
                     isFlagged ? <AlertTriangle className="h-5 w-5" /> :
@@ -963,7 +1010,7 @@ export function OwnerSetupPage() {
                 <div className="flex-1">
                   <p className={cn(
                     "text-sm font-medium transition-colors",
-                    isCurrent ? "text-foreground font-semibold" : "text-muted-foreground",
+                    isCurrent ? "text-foreground font-semibold" : isCompleted ? "text-foreground" : "text-muted-foreground/70 group-hover:text-muted-foreground",
                     isFlagged ? "text-rose-500 font-semibold" : ""
                   )}>{step.title}</p>
                   {isFlagged && <p className="text-[10px] text-rose-500">Needs attention</p>}
@@ -1034,7 +1081,7 @@ export function OwnerSetupPage() {
                       placeholder="Enter your legal full name"
                       value={formData.personal?.fullName || ""}
                       onChange={(e) => updateSection('personal', 'fullName', e.target.value)}
-                      className="pl-10 h-10 rounded-xl text-sm"
+                      className="pl-10 h-10 rounded-lg text-sm"
                       required
                     />
                   </div>
@@ -1044,23 +1091,6 @@ export function OwnerSetupPage() {
                 <div className="space-y-1.5 max-w-md">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="email" className="text-xs font-semibold">Email Address *</Label>
-                    {emailVerified && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmailVerified(false);
-                          setEmailOtpSent(false);
-                          setEmailOtpCode("");
-                          setOtpDigits(["", "", "", "", "", ""]);
-                          setShowOtpModal(false);
-                          setEmailExistsError("");
-                          toast.info("Email unlocked. You can now edit your email address and verify with OTP.");
-                        }}
-                        className="text-[11px] text-primary hover:underline font-medium flex items-center gap-1 cursor-pointer"
-                      >
-                        <Edit3 className="w-3 h-3" /> Change / Edit Email
-                      </button>
-                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1 min-w-0">
@@ -1071,7 +1101,7 @@ export function OwnerSetupPage() {
                         disabled={emailVerified}
                         placeholder="Enter your email"
                         className={cn(
-                          "pl-10 h-10 rounded-xl text-sm",
+                          "pl-10 h-10 rounded-lg text-sm",
                           emailVerified ? "bg-muted/40 text-foreground/80 cursor-default" : "bg-background",
                           emailExistsError && "border-rose-500 focus-visible:ring-rose-500"
                         )}
@@ -1088,7 +1118,7 @@ export function OwnerSetupPage() {
                             type="button"
                             variant="outline"
                             onClick={() => setShowOtpModal(true)}
-                            className="h-10 px-3 rounded-xl border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 text-xs font-bold shrink-0 transition-all cursor-pointer shadow-none"
+                            className="h-10 px-3 rounded-lg border border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 bg-transparent hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 text-xs font-bold shrink-0 transition-all cursor-pointer shadow-none"
                           >
                             Enter Code
                           </Button>
@@ -1104,7 +1134,7 @@ export function OwnerSetupPage() {
                           }
                           onClick={sendEmailOtp}
                           className={cn(
-                            "h-10 px-3.5 rounded-xl border text-xs font-bold shrink-0 transition-all cursor-pointer bg-transparent shadow-none",
+                            "h-10 px-3.5 rounded-lg border text-xs font-bold shrink-0 transition-all cursor-pointer bg-transparent shadow-none",
                             emailOtpSent && resendCountdown === 0
                               ? "border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20"
                               : "border-border text-foreground hover:border-emerald-500 hover:text-emerald-600 dark:hover:text-emerald-400"
@@ -1123,7 +1153,7 @@ export function OwnerSetupPage() {
 
                     {emailVerified && (
                       <div className="flex items-center shrink-0">
-                        <div className="h-10 px-3.5 rounded-xl bg-transparent border border-emerald-500 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 text-xs font-bold">
+                        <div className="h-10 px-3.5 rounded-lg bg-transparent border border-emerald-500 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1.5 text-xs font-bold">
                           <Check className="h-4 w-4 stroke-[3]" /> Verified
                         </div>
                       </div>
@@ -1150,7 +1180,7 @@ export function OwnerSetupPage() {
                         placeholder="Create strong password"
                         value={formData.personal?.password || ""}
                         onChange={(e) => updateSection('personal', 'password', e.target.value)}
-                        className="pl-10 pr-10 h-10 rounded-xl text-sm"
+                        className="pl-10 pr-10 h-10 rounded-lg text-sm"
                       />
                       <button
                         type="button"
@@ -1172,7 +1202,7 @@ export function OwnerSetupPage() {
                         placeholder="Re-enter password"
                         value={formData.personal?.confirmPassword || ""}
                         onChange={(e) => updateSection('personal', 'confirmPassword', e.target.value)}
-                        className="pl-10 h-10 rounded-xl text-sm"
+                        className="pl-10 h-10 rounded-lg text-sm"
                       />
                     </div>
                     {formData.personal?.confirmPassword && formData.personal?.password !== formData.personal?.confirmPassword && (
@@ -1184,14 +1214,25 @@ export function OwnerSetupPage() {
                 {/* PHONE NUMBER & DATE OF BIRTH (DD/MM/YYYY) & GENDER */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Phone Number</Label>
+                    <Label className="text-xs font-semibold">Phone Number *</Label>
                     <Input
                       type="tel"
-                      placeholder="Phone Number"
+                      placeholder="Enter 10-digit phone number"
                       value={formData.personal?.phone || ""}
-                      onChange={(e) => updateSection('personal', 'phone', e.target.value)}
-                      className="h-10 rounded-xl text-sm"
+                      onChange={handlePhoneChange}
+                      onKeyDown={handlePhoneKeyDown}
+                      className={cn(
+                        "h-10 rounded-lg text-sm font-mono tracking-wide",
+                        phoneError && "border-rose-500 focus-visible:border-rose-500"
+                      )}
+                      required
                     />
+                    {phoneError && (
+                      <p className="text-[11px] text-rose-500 font-medium animate-in fade-in flex items-center gap-1 mt-1">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{phoneError}</span>
+                      </p>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1.5">
@@ -1203,15 +1244,15 @@ export function OwnerSetupPage() {
                           maxLength={10}
                           value={formData.personal?.dob || ""}
                           onChange={handleDobChange}
-                          className="h-10 rounded-xl text-sm pr-8 font-mono"
+                          className="h-10 rounded-lg text-sm pr-8 font-mono"
                         />
                         <Calendar className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Gender</Label>
+                      <Label>Gender</Label>
                       <Select value={formData.personal?.gender || ""} onValueChange={(val) => updateSection('personal', 'gender', val)}>
-                        <SelectTrigger className="h-10 rounded-xl text-sm"><SelectValue placeholder="Gender" /></SelectTrigger>
+                        <SelectTrigger className="h-10 rounded-lg"><SelectValue placeholder="Gender" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="male">Male</SelectItem>
                           <SelectItem value="female">Female</SelectItem>
@@ -1230,39 +1271,39 @@ export function OwnerSetupPage() {
                 />
 
                 <div className="space-y-3 pt-3 border-t border-border/50">
-                  <h3 className="font-semibold text-xs">Residential Address</h3>
+                  <h3 className="font-semibold text-sm">Residential Address</h3>
                   <div className="space-y-1.5">
-                    <Label className="text-xs">Complete Address</Label>
+                    <Label>Complete Address</Label>
                     <Textarea
                       value={formData.personal?.address || ""}
                       onChange={(e) => updateSection('personal', 'address', e.target.value)}
                       placeholder="House/Flat No., Building Name, Street"
-                      className="rounded-xl min-h-[60px] text-sm"
+                      className="rounded-lg min-h-[60px]"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1">
-                      <Label className="text-xs">City</Label>
+                      <Label>City</Label>
                       <Input
                         value={formData.personal?.city || ""}
                         onChange={(e) => updateSection('personal', 'city', e.target.value)}
-                        className="h-9 rounded-xl text-sm"
+                        className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">State</Label>
+                      <Label>State</Label>
                       <Input
                         value={formData.personal?.state || ""}
                         onChange={(e) => updateSection('personal', 'state', e.target.value)}
-                        className="h-9 rounded-xl text-sm"
+                        className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Pincode</Label>
+                      <Label>Pincode</Label>
                       <Input
                         value={formData.personal?.pincode || ""}
                         onChange={(e) => updateSection('personal', 'pincode', e.target.value)}
-                        className="h-9 rounded-xl text-sm"
+                        className="h-9 rounded-lg"
                       />
                     </div>
                   </div>
@@ -1279,13 +1320,13 @@ export function OwnerSetupPage() {
                     <Input
                       value={formData.business?.ownerName || formData.personal?.fullName || ""}
                       onChange={(e) => updateSection('business', 'ownerName', e.target.value)}
-                      className="h-11 rounded-xl"
+                      className="h-10 rounded-lg"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Business Type</Label>
                     <Select value={formData.business?.businessType || ""} onValueChange={(val) => updateSection('business', 'businessType', val)}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Proprietorship, LLP, etc." /></SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-lg"><SelectValue placeholder="Proprietorship, LLP, etc." /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="proprietorship">Sole Proprietorship</SelectItem>
                         <SelectItem value="partnership">Partnership</SelectItem>
@@ -1298,11 +1339,11 @@ export function OwnerSetupPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>GST Number (Optional)</Label>
-                    <Input value={formData.business?.gst || ""} onChange={(e) => updateSection('business', 'gst', e.target.value)} className="h-11 rounded-xl" />
+                    <Input value={formData.business?.gst || ""} onChange={(e) => updateSection('business', 'gst', e.target.value)} className="h-10 rounded-lg" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Years in Business</Label>
-                    <Input type="number" value={formData.business?.yearsInBusiness || ""} onChange={(e) => updateSection('business', 'yearsInBusiness', e.target.value)} className="h-11 rounded-xl" />
+                    <Input type="number" value={formData.business?.yearsInBusiness || ""} onChange={(e) => updateSection('business', 'yearsInBusiness', e.target.value)} className="h-10 rounded-lg" />
                   </div>
                 </div>
                 <FileUpload
@@ -1314,11 +1355,21 @@ export function OwnerSetupPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>Business Email (Optional)</Label>
-                    <Input type="email" value={formData.business?.email || ""} onChange={(e) => updateSection('business', 'email', e.target.value)} className="h-11 rounded-xl" placeholder="e.g. contact@business.com" />
+                    <Input type="email" value={formData.business?.email || ""} onChange={(e) => updateSection('business', 'email', e.target.value)} className="h-10 rounded-lg" placeholder="e.g. contact@business.com" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Business Contact Number</Label>
-                    <Input value={formData.business?.phone || ""} onChange={(e) => updateSection('business', 'phone', e.target.value)} className="h-11 rounded-xl" placeholder="Mobile Number" />
+                    <Label>Business Contact Number (Optional)</Label>
+                    <Input
+                      type="tel"
+                      maxLength={10}
+                      value={formData.business?.phone || ""}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        updateSection('business', 'phone', val);
+                      }}
+                      className="h-10 rounded-lg font-mono"
+                      placeholder="10-digit Mobile Number"
+                    />
                   </div>
                 </div>
               </div>
@@ -1349,31 +1400,36 @@ export function OwnerSetupPage() {
               <div className="space-y-6">
                 <div className="space-y-1.5">
                   <Label>Turf Name (Publicly Visible) *</Label>
-                  <Input value={formData.turf?.name || ""} onChange={(e) => updateSection('turf', 'name', e.target.value)} className="h-11 rounded-xl" placeholder="e.g. Skyline Sports Arena" />
+                  <Input value={formData.turf?.name || ""} onChange={(e) => updateSection('turf', 'name', e.target.value)} className="h-10 rounded-lg" placeholder="e.g. Skyline Sports Arena" />
                 </div>
                 <div className="space-y-2">
                   <Label>Sport Types</Label>
                   <div className="flex flex-wrap gap-2">
-                    {SPORTS.map(sport => (
-                      <Badge
-                        key={sport}
-                        variant="outline"
-                        className={cn(
-                          "cursor-pointer px-3 py-1.5 text-sm transition-colors rounded-full",
-                          formData.turf?.sports?.includes(sport) ? "bg-primary text-primary-foreground border-primary" : "hover:bg-muted"
-                        )}
-                        onClick={() => toggleArrayItem('turf', 'sports', sport)}
-                      >
-                        {sport}
-                      </Badge>
-                    ))}
+                    {SPORTS.map(sport => {
+                      const isSelected = formData.turf?.sports?.includes(sport);
+                      return (
+                        <Badge
+                          key={sport}
+                          variant="outline"
+                          className={cn(
+                            "cursor-pointer px-3.5 py-1.5 text-xs font-medium transition-all rounded-full select-none",
+                            isSelected
+                              ? "border-2 border-emerald-600 text-emerald-600 dark:border-emerald-500 dark:text-emerald-400 bg-transparent hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20"
+                              : "border border-slate-300 dark:border-slate-700 text-muted-foreground hover:border-slate-400 hover:text-foreground bg-transparent"
+                          )}
+                          onClick={() => toggleArrayItem('turf', 'sports', sport)}
+                        >
+                          {sport}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>Turf Type</Label>
                     <Select value={formData.turf?.turfType || ""} onValueChange={(val) => updateSection('turf', 'turfType', val)}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select type" /></SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-lg"><SelectValue placeholder="Select type" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="indoor">Indoor</SelectItem>
                         <SelectItem value="outdoor">Outdoor</SelectItem>
@@ -1383,16 +1439,16 @@ export function OwnerSetupPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>Number of Grounds/Courts</Label>
-                    <Input type="number" value={formData.turf?.groundCount || ""} onChange={(e) => updateSection('turf', 'groundCount', e.target.value)} className="h-11 rounded-xl" />
+                    <Input type="number" value={formData.turf?.groundCount || ""} onChange={(e) => updateSection('turf', 'groundCount', e.target.value)} className="h-10 rounded-lg" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-1.5"><Label>Ground Size (e.g. 5v5, 100x50 ft)</Label><Input value={formData.turf?.groundSize || ""} onChange={(e) => updateSection('turf', 'groundSize', e.target.value)} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1.5"><Label>Surface Type</Label><Input placeholder="e.g. Artificial Grass, Hardwood" value={formData.turf?.surfaceType || ""} onChange={(e) => updateSection('turf', 'surfaceType', e.target.value)} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Ground Size (e.g. 5v5, 100x50 ft)</Label><Input value={formData.turf?.groundSize || ""} onChange={(e) => updateSection('turf', 'groundSize', e.target.value)} className="h-10 rounded-lg" /></div>
+                  <div className="space-y-1.5"><Label>Surface Type</Label><Input placeholder="e.g. Artificial Grass, Hardwood" value={formData.turf?.surfaceType || ""} onChange={(e) => updateSection('turf', 'surfaceType', e.target.value)} className="h-10 rounded-lg" /></div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Description</Label>
-                  <Textarea value={formData.turf?.description || ""} onChange={(e) => updateSection('turf', 'description', e.target.value)} placeholder="Tell players what makes your turf special..." className="rounded-xl min-h-[120px]" />
+                  <Textarea value={formData.turf?.description || ""} onChange={(e) => updateSection('turf', 'description', e.target.value)} placeholder="Tell players what makes your turf special..." className="rounded-lg min-h-[120px]" />
                 </div>
               </div>
             )}
@@ -1474,66 +1530,66 @@ export function OwnerSetupPage() {
 
                 {/* Location Form Inputs */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="turfAddress" className="text-xs font-semibold">Full Address *</Label>
+                  <Label htmlFor="turfAddress">Full Address *</Label>
                   <Textarea
                     id="turfAddress"
                     placeholder="Plot / Survey No., Street name, Area, Colony..."
                     value={formData.location?.address || ""}
                     onChange={(e) => updateSection('location', 'address', e.target.value)}
-                    className="rounded-xl min-h-[70px] text-sm"
+                    className="rounded-lg min-h-[70px]"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="landmark" className="text-xs font-semibold">Landmark</Label>
+                    <Label htmlFor="landmark">Landmark</Label>
                     <Input
                       id="landmark"
                       placeholder="e.g. Near Metro Station / Behind Sports Complex"
                       value={formData.location?.landmark || ""}
                       onChange={(e) => updateSection('location', 'landmark', e.target.value)}
-                      className="h-10 rounded-xl text-sm"
+                      className="h-10 rounded-lg"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="pincode" className="text-xs font-semibold">Pincode *</Label>
+                    <Label htmlFor="pincode">Pincode *</Label>
                     <Input
                       id="pincode"
                       placeholder="e.g. 400001"
                       maxLength={6}
                       value={formData.location?.pincode || ""}
                       onChange={(e) => updateSection('location', 'pincode', e.target.value)}
-                      className="h-10 rounded-xl text-sm"
+                      className="h-10 rounded-lg"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="turfCity" className="text-xs font-semibold">City *</Label>
+                    <Label htmlFor="turfCity">City *</Label>
                     <Input
                       id="turfCity"
                       placeholder="e.g. Mumbai"
                       value={formData.location?.city || ""}
                       onChange={(e) => updateSection('location', 'city', e.target.value)}
-                      className="h-10 rounded-xl text-sm"
+                      className="h-10 rounded-lg"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="turfState" className="text-xs font-semibold">State *</Label>
+                    <Label htmlFor="turfState">State *</Label>
                     <Input
                       id="turfState"
                       placeholder="e.g. Maharashtra"
                       value={formData.location?.state || ""}
                       onChange={(e) => updateSection('location', 'state', e.target.value)}
-                      className="h-10 rounded-xl text-sm"
+                      className="h-10 rounded-lg"
                     />
                   </div>
                 </div>
 
                 {/* Google Maps Link / Custom Pin URL (Optional) */}
                 <div className="space-y-1.5 pt-1">
-                  <Label htmlFor="mapUrl" className="text-xs font-semibold flex items-center justify-between">
+                  <Label htmlFor="mapUrl" className="flex items-center justify-between">
                     <span>Google Maps Link (Optional)</span>
                     <span className="text-[11px] text-muted-foreground font-normal">Auto-detected or custom share link</span>
                   </Label>
@@ -1542,14 +1598,14 @@ export function OwnerSetupPage() {
                     placeholder="https://maps.google.com/..."
                     value={formData.location?.mapUrl || ""}
                     onChange={(e) => updateSection('location', 'mapUrl', e.target.value)}
-                    className="h-10 rounded-xl text-sm font-mono text-xs"
+                    className="h-10 rounded-lg font-mono text-xs"
                   />
                 </div>
 
                 {/* Facilities Checklist */}
                 <div className="space-y-3 pt-4 border-t border-border/50">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold">Facilities Available</Label>
+                    <Label>Facilities Available</Label>
                     <span className="text-xs text-muted-foreground">Select amenities provided at your turf</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -1609,12 +1665,12 @@ export function OwnerSetupPage() {
             {currentStep === 7 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div className="space-y-1.5"><Label>Opening Time</Label><Input type="time" value={formData.pricing?.openingTime || ""} onChange={(e) => updateSection('pricing', 'openingTime', e.target.value)} className="h-11 rounded-xl" /></div>
-                  <div className="space-y-1.5"><Label>Closing Time</Label><Input type="time" value={formData.pricing?.closingTime || ""} onChange={(e) => updateSection('pricing', 'closingTime', e.target.value)} className="h-11 rounded-xl" /></div>
+                  <div className="space-y-1.5"><Label>Opening Time</Label><Input type="time" value={formData.pricing?.openingTime || ""} onChange={(e) => updateSection('pricing', 'openingTime', e.target.value)} className="h-10 rounded-lg" /></div>
+                  <div className="space-y-1.5"><Label>Closing Time</Label><Input type="time" value={formData.pricing?.closingTime || ""} onChange={(e) => updateSection('pricing', 'closingTime', e.target.value)} className="h-10 rounded-lg" /></div>
                   <div className="space-y-1.5">
                     <Label>Slot Duration</Label>
                     <Select value={formData.pricing?.slotDuration || "60"} onValueChange={(val) => updateSection('pricing', 'slotDuration', val)}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="e.g. 60 mins" /></SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-lg"><SelectValue placeholder="e.g. 60 mins" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="30">30 mins</SelectItem>
                         <SelectItem value="60">60 mins</SelectItem>
@@ -1632,28 +1688,28 @@ export function OwnerSetupPage() {
                       <Label>Standard Weekday Price</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1200" value={formData.pricing?.weekdayPrice || ""} onChange={(e) => updateSection('pricing', 'weekdayPrice', e.target.value)} className="pl-9 h-11 rounded-xl" />
+                        <Input type="number" placeholder="1200" value={formData.pricing?.weekdayPrice || ""} onChange={(e) => updateSection('pricing', 'weekdayPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Weekend Price</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1500" value={formData.pricing?.weekendPrice || ""} onChange={(e) => updateSection('pricing', 'weekendPrice', e.target.value)} className="pl-9 h-11 rounded-xl" />
+                        <Input type="number" placeholder="1500" value={formData.pricing?.weekendPrice || ""} onChange={(e) => updateSection('pricing', 'weekendPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Holiday Price (Optional)</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1500" value={formData.pricing?.holidayPrice || ""} onChange={(e) => updateSection('pricing', 'holidayPrice', e.target.value)} className="pl-9 h-11 rounded-xl" />
+                        <Input type="number" placeholder="1500" value={formData.pricing?.holidayPrice || ""} onChange={(e) => updateSection('pricing', 'holidayPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Peak Hour Price (Optional)</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1800" value={formData.pricing?.peakPrice || ""} onChange={(e) => updateSection('pricing', 'peakPrice', e.target.value)} className="pl-9 h-11 rounded-xl" />
+                        <Input type="number" placeholder="1800" value={formData.pricing?.peakPrice || ""} onChange={(e) => updateSection('pricing', 'peakPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                   </div>
@@ -1662,12 +1718,12 @@ export function OwnerSetupPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-border/50">
                   <div className="space-y-1.5">
                     <Label>Advance Booking Limit (Days)</Label>
-                    <Input type="number" placeholder="e.g. 30" value={formData.pricing?.advanceBookingLimit || ""} onChange={(e) => updateSection('pricing', 'advanceBookingLimit', e.target.value)} className="h-11 rounded-xl" />
+                    <Input type="number" placeholder="e.g. 30" value={formData.pricing?.advanceBookingLimit || ""} onChange={(e) => updateSection('pricing', 'advanceBookingLimit', e.target.value)} className="h-10 rounded-lg" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Cancellation Policy</Label>
                     <Select value={formData.pricing?.cancellationPolicy || "moderate"} onValueChange={(val) => updateSection('pricing', 'cancellationPolicy', val)}>
-                      <SelectTrigger className="h-11 rounded-xl"><SelectValue placeholder="Select Policy" /></SelectTrigger>
+                      <SelectTrigger className="h-10 rounded-lg"><SelectValue placeholder="Select Policy" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="flexible">Flexible (Free until 24h before)</SelectItem>
                         <SelectItem value="moderate">Moderate (50% refund)</SelectItem>
@@ -1689,32 +1745,32 @@ export function OwnerSetupPage() {
 
                 <div className="space-y-1.5">
                   <Label>Account Holder Name</Label>
-                  <Input value={formData.bank?.accountName || ""} onChange={(e) => updateSection('bank', 'accountName', e.target.value)} className="h-11 rounded-xl" />
+                  <Input value={formData.bank?.accountName || ""} onChange={(e) => updateSection('bank', 'accountName', e.target.value)} className="h-10 rounded-lg" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>Bank Name</Label>
-                    <Input value={formData.bank?.bankName || ""} onChange={(e) => updateSection('bank', 'bankName', e.target.value)} className="h-11 rounded-xl" />
+                    <Input value={formData.bank?.bankName || ""} onChange={(e) => updateSection('bank', 'bankName', e.target.value)} className="h-10 rounded-lg" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>IFSC Code</Label>
-                    <Input value={formData.bank?.ifsc || ""} onChange={(e) => updateSection('bank', 'ifsc', e.target.value)} className="h-11 rounded-xl uppercase" />
+                    <Input value={formData.bank?.ifsc || ""} onChange={(e) => updateSection('bank', 'ifsc', e.target.value)} className="h-10 rounded-lg uppercase" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>Account Number</Label>
-                    <Input type="password" value={formData.bank?.accountNumber || ""} onChange={(e) => updateSection('bank', 'accountNumber', e.target.value)} className="h-11 rounded-xl" />
+                    <Input type="password" value={formData.bank?.accountNumber || ""} onChange={(e) => updateSection('bank', 'accountNumber', e.target.value)} className="h-10 rounded-lg" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Confirm Account Number</Label>
-                    <Input type="text" value={formData.bank?.confirmAccountNumber || ""} onChange={(e) => updateSection('bank', 'confirmAccountNumber', e.target.value)} className="h-11 rounded-xl" />
+                    <Input type="text" value={formData.bank?.confirmAccountNumber || ""} onChange={(e) => updateSection('bank', 'confirmAccountNumber', e.target.value)} className="h-10 rounded-lg" />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label>UPI ID (Optional)</Label>
-                  <Input value={formData.bank?.upi || ""} onChange={(e) => updateSection('bank', 'upi', e.target.value)} placeholder="e.g. business@ybl" className="h-11 rounded-xl" />
+                  <Input value={formData.bank?.upi || ""} onChange={(e) => updateSection('bank', 'upi', e.target.value)} placeholder="e.g. business@ybl" className="h-10 rounded-lg" />
                 </div>
 
                 <FileUpload label="Cancelled Cheque (Optional)" hint="Speeds up the verification process" file={formData.bank?.cancelledCheque} onUpload={(f) => updateSection('bank', 'cancelledCheque', f)} onRemove={() => updateSection('bank', 'cancelledCheque', null)} />
@@ -1806,7 +1862,7 @@ export function OwnerSetupPage() {
             {/* Header with Icon + Title + Email */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-zinc-900 dark:bg-zinc-800 text-emerald-400 flex items-center justify-center font-black text-xl shadow-sm shrink-0 border border-zinc-700/50">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-xl shadow-sm shrink-0 border border-slate-200 dark:border-zinc-700">
                   <Plus className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div>
@@ -1841,10 +1897,10 @@ export function OwnerSetupPage() {
                   onPaste={handleOtpPaste}
                   className={cn(
                     "w-11 h-13 sm:w-12 sm:h-14 rounded-xl text-center text-xl sm:text-2xl font-black font-mono transition-all outline-none",
-                    "bg-muted/40 text-foreground",
+                    "bg-background text-foreground",
                     digit
                       ? "border-2 border-emerald-500 bg-emerald-500/5 shadow-xs"
-                      : "border border-border/80 focus:border-2 focus:border-emerald-500 focus:bg-background"
+                      : "border-2 border-slate-400 dark:border-slate-600 hover:border-slate-500 dark:hover:border-slate-400 focus:border-2 focus:border-emerald-500 focus:bg-background"
                   )}
                 />
               ))}
