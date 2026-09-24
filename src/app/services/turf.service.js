@@ -13,7 +13,11 @@ export const turfService = {
       let activeUser = {};
       if (isOwnerRoute) {
         try {
-          activeUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+          activeUser = JSON.parse(
+            sessionStorage.getItem("turfOwnerUser") ||
+            localStorage.getItem("turfOwnerUser") ||
+            "{}"
+          );
         } catch (e) {}
       }
 
@@ -38,7 +42,32 @@ export const turfService = {
       });
       if (!response.ok) throw new Error("Network response was not ok");
       const json = await response.json();
-      return json.data || [];
+      let turfs = json.data || [];
+
+      // If activeUser is staff and has specific assigned turfs, filter on client side
+      if (activeUser.isStaff) {
+        let assignedTurfs = [];
+        if (Array.isArray(activeUser.turfs) && activeUser.turfs.length > 0) {
+          assignedTurfs = activeUser.turfs;
+        } else if (activeUser.turf) {
+          assignedTurfs = [activeUser.turf];
+        }
+
+        if (assignedTurfs.length > 0) {
+          const filtered = turfs.filter((t) =>
+            assignedTurfs.some(
+              (at) =>
+                String(at).toLowerCase().trim() === String(t.name || "").toLowerCase().trim() ||
+                String(at).toLowerCase().trim() === String(t.id)
+            )
+          );
+          if (filtered.length > 0) {
+            return filtered;
+          }
+        }
+      }
+
+      return turfs;
     } catch (error) {
       console.error("Error fetching turfs from MySQL:", error);
       throw error;
@@ -60,7 +89,11 @@ export const turfService = {
     try {
       let activeUser = {};
       try {
-        activeUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+        activeUser = JSON.parse(
+          sessionStorage.getItem("turfOwnerUser") ||
+          localStorage.getItem("turfOwnerUser") ||
+          "{}"
+        );
       } catch (e) {}
 
       const payload = {

@@ -19,30 +19,30 @@ export function getAuthHeaders(extraHeaders = {}) {
       if (isCmsRoute) {
         token =
           sessionStorage.getItem("sportx_cms_token") ||
-          sessionStorage.getItem("token") ||
           cUser.token ||
-          localStorage.getItem("token") ||
-          localStorage.getItem("cmsAdminToken");
+          sessionStorage.getItem("cmsAdminToken") ||
+          localStorage.getItem("cmsAdminToken") ||
+          (cUser && (cUser.role || cUser.username || cUser.email) ? `cms_admin_${encodeURIComponent(cUser.username || cUser.email || "admin")}` : "cms_admin_master_session");
       } else if (isOwnerRoute) {
         token =
           sessionStorage.getItem("sportx_owner_token") ||
-          sessionStorage.getItem("token") ||
+          sessionStorage.getItem("turfOwnerToken") ||
           oUser.token ||
-          localStorage.getItem("token") ||
-          localStorage.getItem("authToken") ||
-          (oUser.email || oUser.ownerId || oUser.fullName ? `owner_session_${encodeURIComponent(oUser.email || oUser.ownerId || "owner")}` : null);
+          localStorage.getItem("turfOwnerToken") ||
+          (oUser && (oUser.email || oUser.ownerId || oUser.fullName) ? `owner_session_${encodeURIComponent(oUser.email || oUser.ownerId || "owner")}` : (sessionStorage.getItem("token") || localStorage.getItem("token") || localStorage.getItem("authToken")));
       } else {
         token =
+          sessionStorage.getItem("playerToken") ||
           sessionStorage.getItem("token") ||
+          pUser.token ||
+          localStorage.getItem("playerToken") ||
           localStorage.getItem("token") ||
-          localStorage.getItem("authToken") ||
-          sessionStorage.getItem("sportx_cms_token") ||
-          oUser.token ||
-          pUser.token;
+          localStorage.getItem("authToken");
       }
 
       if (!token) {
         token =
+          sessionStorage.getItem("sportx_cms_token") ||
           sessionStorage.getItem("token") ||
           cUser.token ||
           oUser.token ||
@@ -96,7 +96,40 @@ export const adminApi = {
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error || `Failed to fetch ${entity}`);
-      return json.data;
+      let data = json.data;
+
+      // If activeUser is staff and has assigned turfs, filter turfs & bookings
+      if (activeUser.isStaff && Array.isArray(data)) {
+        let assignedTurfs = [];
+        if (Array.isArray(activeUser.turfs) && activeUser.turfs.length > 0) {
+          assignedTurfs = activeUser.turfs;
+        } else if (activeUser.turf) {
+          assignedTurfs = [activeUser.turf];
+        }
+
+        if (assignedTurfs.length > 0) {
+          if (entity === "turfs" || entity === "turf") {
+            const filtered = data.filter((t) =>
+              assignedTurfs.some(
+                (at) =>
+                  String(at).toLowerCase().trim() === String(t.name || "").toLowerCase().trim() ||
+                  String(at).toLowerCase().trim() === String(t.id)
+              )
+            );
+            if (filtered.length > 0) data = filtered;
+          } else if (entity === "bookings" || entity === "booking") {
+            const filtered = data.filter((b) =>
+              assignedTurfs.some(
+                (at) =>
+                  String(at).toLowerCase().trim() === String(b.turf_name || b.venue || "").toLowerCase().trim() ||
+                  String(at).toLowerCase().trim() === String(b.turf_id)
+              )
+            );
+            if (filtered.length > 0) data = filtered;
+          }
+        }
+      }
+      return data;
     } catch (err) {
       console.error(`adminApi.getAll(${entity}) error:`, err);
       throw err;

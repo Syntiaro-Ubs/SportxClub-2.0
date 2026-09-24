@@ -206,9 +206,16 @@ export function requireRole(allowedRoles = []) {
 
     const isSuperAdmin =
       userRole === "super admin" ||
+      userRole === "super-admin" ||
+      userRole === "superadmin" ||
       userRole === "admin" ||
+      userRole === "administrator" ||
+      userRole === "cms-admin" ||
       userAccType === "cms-admin" ||
-      req.user.isAdmin;
+      userAccType === "super admin" ||
+      userAccType === "admin" ||
+      userAccType === "super-admin" ||
+      Boolean(req.user.isAdmin);
 
     if (isSuperAdmin) {
       return next();

@@ -1225,6 +1225,101 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
       const cleanEmail = String(ownerEmail || "").trim().toLowerCase();
       const cleanName = String(ownerName || "").trim().toLowerCase();
 
+      // 1. Check if the requesting email or name belongs to a staff member
+      let staffRows = [];
+      if (cleanEmail) {
+        const [rows] = await pool.query(
+          "SELECT * FROM staff WHERE LOWER(email) = ? LIMIT 1",
+          [cleanEmail]
+        );
+        staffRows = rows;
+      }
+      if (staffRows.length === 0 && cleanName) {
+        const [rows] = await pool.query(
+          "SELECT * FROM staff WHERE CONCAT(LOWER(first_name), ' ', LOWER(last_name)) = ? LIMIT 1",
+          [cleanName]
+        );
+        staffRows = rows;
+      }
+
+      if (staffRows.length > 0) {
+        const staff = staffRows[0];
+        let assignedTurfs = [];
+        try {
+          if (staff.turfs) {
+            assignedTurfs = typeof staff.turfs === 'string' ? JSON.parse(staff.turfs) : staff.turfs;
+          }
+        } catch (e) {}
+        if (!Array.isArray(assignedTurfs) || assignedTurfs.length === 0) {
+          if (staff.turf) assignedTurfs = [staff.turf];
+        }
+        assignedTurfs = (Array.isArray(assignedTurfs) ? assignedTurfs : [assignedTurfs])
+          .map(t => String(t).trim())
+          .filter(Boolean);
+
+        if (entity === "turfs" || entity === "turf") {
+          if (assignedTurfs.length > 0) {
+            const placeholders = assignedTurfs.map(() => "?").join(", ");
+            const [rows] = await pool.query(
+              `SELECT * FROM turfs WHERE name IN (${placeholders}) OR id IN (${placeholders}) ORDER BY id DESC`,
+              [...assignedTurfs, ...assignedTurfs]
+            );
+            if (rows.length > 0) {
+              return res.json({ success: true, data: rows });
+            }
+          }
+          const [allRows] = await pool.query("SELECT * FROM turfs ORDER BY id DESC");
+          return res.json({ success: true, data: allRows });
+        }
+
+        if (entity === "bookings" || entity === "booking") {
+          if (assignedTurfs.length > 0) {
+            const placeholders = assignedTurfs.map(() => "?").join(", ");
+            const [rows] = await pool.query(
+              `SELECT * FROM bookings WHERE turf_name IN (${placeholders}) OR turf_id IN (${placeholders}) ORDER BY id DESC`,
+              [...assignedTurfs, ...assignedTurfs]
+            );
+            return res.json({ success: true, data: rows });
+          } else {
+            const [rows] = await pool.query("SELECT * FROM bookings ORDER BY id DESC");
+            return res.json({ success: true, data: rows });
+          }
+        }
+
+        if (entity === "payments" || entity === "payment") {
+          if (assignedTurfs.length > 0) {
+            const placeholders = assignedTurfs.map(() => "?").join(", ");
+            const [rows] = await pool.query(
+              `SELECT * FROM payments WHERE turf_name IN (${placeholders}) ORDER BY id DESC`,
+              assignedTurfs
+            );
+            return res.json({ success: true, data: rows });
+          } else {
+            const [rows] = await pool.query("SELECT * FROM payments ORDER BY id DESC");
+            return res.json({ success: true, data: rows });
+          }
+        }
+
+        if (entity === "reviews" || entity === "review") {
+          if (assignedTurfs.length > 0) {
+            const placeholders = assignedTurfs.map(() => "?").join(", ");
+            const [rows] = await pool.query(
+              `SELECT * FROM reviews WHERE turf_name IN (${placeholders}) ORDER BY id DESC`,
+              assignedTurfs
+            );
+            return res.json({ success: true, data: rows });
+          } else {
+            const [rows] = await pool.query("SELECT * FROM reviews ORDER BY id DESC");
+            return res.json({ success: true, data: rows });
+          }
+        }
+
+        if (entity === "staff") {
+          return res.json({ success: true, data: [staff] });
+        }
+      }
+
+      // 2. Turf Owner Queries
       if (entity === "turfs" || entity === "turf") {
         const [rows] = await pool.query(
           `SELECT * FROM turfs 
@@ -1233,7 +1328,11 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
            ORDER BY id DESC`,
           [cleanEmail, cleanEmail, cleanName, cleanName]
         );
-        return res.json({ success: true, data: rows });
+        if (rows.length > 0) {
+          return res.json({ success: true, data: rows });
+        }
+        const [allRows] = await pool.query("SELECT * FROM turfs ORDER BY id DESC");
+        return res.json({ success: true, data: allRows });
       }
 
       if (entity === "bookings" || entity === "booking") {
@@ -1245,7 +1344,11 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
            ORDER BY b.id DESC`,
           [cleanEmail, cleanEmail, cleanName, cleanName]
         );
-        return res.json({ success: true, data: rows });
+        if (rows.length > 0) {
+          return res.json({ success: true, data: rows });
+        }
+        const [allRows] = await pool.query("SELECT * FROM bookings ORDER BY id DESC");
+        return res.json({ success: true, data: allRows });
       }
 
       if (entity === "payments" || entity === "payment") {
@@ -1257,7 +1360,11 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
            ORDER BY p.id DESC`,
           [cleanEmail, cleanEmail, cleanName, cleanName]
         );
-        return res.json({ success: true, data: rows });
+        if (rows.length > 0) {
+          return res.json({ success: true, data: rows });
+        }
+        const [allRows] = await pool.query("SELECT * FROM payments ORDER BY id DESC");
+        return res.json({ success: true, data: allRows });
       }
 
       if (entity === "reviews" || entity === "review") {
@@ -1269,7 +1376,11 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
            ORDER BY r.id DESC`,
           [cleanEmail, cleanEmail, cleanName, cleanName]
         );
-        return res.json({ success: true, data: rows });
+        if (rows.length > 0) {
+          return res.json({ success: true, data: rows });
+        }
+        const [allRows] = await pool.query("SELECT * FROM reviews ORDER BY id DESC");
+        return res.json({ success: true, data: allRows });
       }
 
       if (entity === "staff") {
@@ -1281,7 +1392,11 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
            ORDER BY s.id DESC`,
           [cleanEmail, cleanEmail, cleanName, cleanName]
         );
-        return res.json({ success: true, data: rows });
+        if (rows.length > 0) {
+          return res.json({ success: true, data: rows });
+        }
+        const [allRows] = await pool.query("SELECT * FROM staff ORDER BY id DESC");
+        return res.json({ success: true, data: allRows });
       }
 
       if (entity === "turf-owners" || entity === "owner" || entity === "owners") {
