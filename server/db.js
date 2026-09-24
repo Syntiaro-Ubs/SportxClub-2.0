@@ -104,6 +104,30 @@ export async function initDatabase() {
       await pool.query("ALTER TABLE reviews ADD COLUMN owner_reply TEXT");
     } catch (e) {}
     try {
+      await pool.query("ALTER TABLE staff ADD COLUMN permissions TEXT");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE staff ADD COLUMN turfs TEXT");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE staff ADD COLUMN is_active TINYINT(1) DEFAULT 1");
+    } catch (e) {}
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS owner_disabled_dates (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          owner_id VARCHAR(50),
+          owner_email VARCHAR(255),
+          turf_id INT DEFAULT NULL,
+          turf_name VARCHAR(255) DEFAULT NULL,
+          date VARCHAR(50) NOT NULL,
+          reason VARCHAR(255) DEFAULT 'Maintenance / Closed',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_owner_date (owner_email, date)
+        )
+      `);
+    } catch (e) {}
+    try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS turf_onboarding_requests (
           id VARCHAR(100) PRIMARY KEY,

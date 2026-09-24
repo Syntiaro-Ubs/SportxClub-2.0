@@ -450,11 +450,23 @@ router.post("/login", async (req, res) => {
         // Upgrade staff password to bcrypt hash if plaintext
         await maybeUpgradePassword(pool, "staff", staff.id, password, staff.password);
 
+        const ROLE_PERMISSIONS_FALLBACK = {
+          Manager: ["dashboard", "revenue", "turfs", "bookings", "roles", "events", "calendar", "reviews", "promotions", "report", "settings"],
+          Receptionist: ["dashboard", "bookings", "calendar", "turfs"],
+          Maintenance: ["dashboard", "turfs", "calendar"],
+          Security: ["dashboard", "bookings"],
+          Coach: ["dashboard", "events", "calendar"],
+        };
+
         let perms = [];
         try {
           perms = typeof staff.permissions === "string" ? JSON.parse(staff.permissions) : (staff.permissions || []);
         } catch (e) {
           perms = staff.permissions || [];
+        }
+
+        if (!Array.isArray(perms) || perms.length === 0) {
+          perms = ROLE_PERMISSIONS_FALLBACK[staff.role] || ["dashboard", "bookings"];
         }
 
         let turfsArr = [];
