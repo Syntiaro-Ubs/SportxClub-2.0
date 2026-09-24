@@ -1,6 +1,19 @@
 import { adminApi } from "./admin-api";
 
 export const customerService = {
+  getOwnerCustomers: async (ownerEmail = "") => {
+    try {
+      const res = await fetch(`/api/owner/customers${ownerEmail ? `?ownerEmail=${encodeURIComponent(ownerEmail)}` : ""}`);
+      if (res.ok) {
+        const json = await res.json();
+        return json.data || (Array.isArray(json) ? json : []);
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching owner customers:", error);
+      return [];
+    }
+  },
   getAll: async (ownerId, params = {}) => {
     try {
       const result = await adminApi.getAll("users", params);

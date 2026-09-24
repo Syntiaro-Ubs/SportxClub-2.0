@@ -7,7 +7,10 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
 
   const token =
     typeof window !== "undefined"
-      ? localStorage.getItem("token") || sessionStorage.getItem("sportx_cms_token")
+      ? sessionStorage.getItem("token") ||
+        sessionStorage.getItem("sportx_owner_token") ||
+        sessionStorage.getItem("sportx_cms_token") ||
+        localStorage.getItem("token")
       : null;
   const normalizedAllowed = allowedRoles.map((r) => r.toLowerCase());
 
@@ -18,6 +21,8 @@ export function ProtectedRoute({ children, allowedRoles = [] }) {
       try {
         return (
           JSON.parse(sessionStorage.getItem("sportx_cms_user") || "null") ||
+          JSON.parse(sessionStorage.getItem("turfOwnerUser") || "null") ||
+          JSON.parse(sessionStorage.getItem("playerUser") || "null") ||
           JSON.parse(localStorage.getItem("cmsAdminUser") || "null") ||
           JSON.parse(localStorage.getItem("turfOwnerUser") || "null") ||
           JSON.parse(localStorage.getItem("playerUser") || "null")

@@ -80,7 +80,13 @@ export function MyTournamentsPage() {
   const { currentUser } = useAuth();
   const storedUser = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem("turfOwnerUser") || localStorage.getItem("playerUser") || "{}");
+      return JSON.parse(
+        sessionStorage.getItem("turfOwnerUser") ||
+        sessionStorage.getItem("playerUser") ||
+        localStorage.getItem("turfOwnerUser") ||
+        localStorage.getItem("playerUser") ||
+        "{}"
+      );
     } catch (e) {
       return {};
     }

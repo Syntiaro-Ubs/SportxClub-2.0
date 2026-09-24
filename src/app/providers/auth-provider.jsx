@@ -29,34 +29,22 @@ const sanitizeUser = (user) => {
   return cleaned;
 };
 
+const getStorageUser = (key) => {
+  if (typeof window === "undefined") return null;
+  try {
+    const sessionVal = sessionStorage.getItem(key);
+    if (sessionVal) return sanitizeUser(JSON.parse(sessionVal));
+    const localVal = localStorage.getItem(key);
+    return localVal ? sanitizeUser(JSON.parse(localVal)) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
 export function AuthProvider({ children }) {
-  const [playerUser, setPlayerUser] = useState(() => {
-    try {
-      const saved = typeof window !== "undefined" ? localStorage.getItem("playerUser") : null;
-      return saved ? sanitizeUser(JSON.parse(saved)) : null;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  const [turfOwnerUser, setTurfOwnerUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem("turfOwnerUser");
-      return saved ? sanitizeUser(JSON.parse(saved)) : null;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  const [cmsAdminUser, setCmsAdminUser] = useState(() => {
-    try {
-      const saved =
-        localStorage.getItem("cmsAdminUser") || sessionStorage.getItem("sportx_cms_user");
-      return saved ? sanitizeUser(JSON.parse(saved)) : null;
-    } catch (e) {
-      return null;
-    }
-  });
+  const [playerUser, setPlayerUser] = useState(() => getStorageUser("playerUser"));
+  const [turfOwnerUser, setTurfOwnerUser] = useState(() => getStorageUser("turfOwnerUser"));
+  const [cmsAdminUser, setCmsAdminUser] = useState(() => getStorageUser("cmsAdminUser") || getStorageUser("sportx_cms_user"));
 
   // Track location path for session selection
   const [currentPath, setCurrentPath] = useState(() => {
@@ -84,7 +72,9 @@ export function AuthProvider({ children }) {
         (() => {
           try {
             const s =
-              sessionStorage.getItem("sportx_cms_user") || localStorage.getItem("cmsAdminUser");
+              sessionStorage.getItem("sportx_cms_user") ||
+              sessionStorage.getItem("cmsAdminUser") ||
+              localStorage.getItem("cmsAdminUser");
             return s ? JSON.parse(s) : null;
           } catch {
             return null;
@@ -106,17 +96,23 @@ export function AuthProvider({ children }) {
         const userObj = { ...res.user, accountType: targetType, token: res.token || res.user.token };
 
         if (res.token) {
+          sessionStorage.setItem("token", res.token);
           localStorage.setItem("token", res.token);
         }
 
         if (targetType === "turf-owner" || accountType === "turf-owner") {
           setTurfOwnerUser(userObj);
+          sessionStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
+          if (res.token) sessionStorage.setItem("sportx_owner_token", res.token);
           localStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
         } else if (targetType === "cms-admin" || accountType === "cms-admin") {
           setCmsAdminUser(userObj);
+          sessionStorage.setItem("cmsAdminUser", JSON.stringify(userObj));
+          sessionStorage.setItem("sportx_cms_user", JSON.stringify(userObj));
           localStorage.setItem("cmsAdminUser", JSON.stringify(userObj));
         } else {
           setPlayerUser(userObj);
+          sessionStorage.setItem("playerUser", JSON.stringify(userObj));
           localStorage.setItem("playerUser", JSON.stringify(userObj));
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userName", userObj.fullName ? userObj.fullName.split(" ")[0] : "User");
@@ -141,6 +137,7 @@ export function AuthProvider({ children }) {
     if (user) {
       const playerObj = { ...user, accountType: "player" };
       setPlayerUser(playerObj);
+      sessionStorage.setItem("playerUser", JSON.stringify(playerObj));
       localStorage.setItem("playerUser", JSON.stringify(playerObj));
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userName", playerObj.fullName ? playerObj.fullName.split(" ")[0] : "User");
@@ -166,6 +163,7 @@ export function AuthProvider({ children }) {
 
       if (res.success && res.user) {
         if (res.token) {
+          sessionStorage.setItem("token", res.token);
           localStorage.setItem("token", res.token);
         }
         const targetType = res.user.accountType || (role === "owner" ? "turf-owner" : "player");
@@ -173,9 +171,12 @@ export function AuthProvider({ children }) {
 
         if (targetType === "turf-owner" || role === "owner") {
           setTurfOwnerUser(userObj);
+          sessionStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
+          if (res.token) sessionStorage.setItem("sportx_owner_token", res.token);
           localStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
         } else {
           setPlayerUser(userObj);
+          sessionStorage.setItem("playerUser", JSON.stringify(userObj));
           localStorage.setItem("playerUser", JSON.stringify(userObj));
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userName", userObj.fullName ? userObj.fullName.split(" ")[0] : "User");
@@ -194,6 +195,7 @@ export function AuthProvider({ children }) {
       const res = await adminApi.register(userData);
       if (res.success && res.user) {
         if (res.token) {
+          sessionStorage.setItem("token", res.token);
           localStorage.setItem("token", res.token);
         }
         const targetType = res.user.accountType || (userData.role === "owner" ? "turf-owner" : "player");
@@ -201,9 +203,12 @@ export function AuthProvider({ children }) {
 
         if (targetType === "turf-owner" || userData.role === "owner") {
           setTurfOwnerUser(newUserObj);
+          sessionStorage.setItem("turfOwnerUser", JSON.stringify(newUserObj));
+          if (res.token) sessionStorage.setItem("sportx_owner_token", res.token);
           localStorage.setItem("turfOwnerUser", JSON.stringify(newUserObj));
         } else {
           setPlayerUser(newUserObj);
+          sessionStorage.setItem("playerUser", JSON.stringify(newUserObj));
           localStorage.setItem("playerUser", JSON.stringify(newUserObj));
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userName", newUserObj.fullName ? newUserObj.fullName.split(" ")[0] : "User");
@@ -235,6 +240,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem("users", JSON.stringify(users));
 
     setPlayerUser(newUserObj);
+    sessionStorage.setItem("playerUser", JSON.stringify(newUserObj));
     localStorage.setItem("playerUser", JSON.stringify(newUserObj));
     localStorage.setItem("isLoggedIn", "true");
     localStorage.setItem("userName", newUserObj.fullName ? newUserObj.fullName.split(" ")[0] : "User");
@@ -243,16 +249,23 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("sportx_owner_token");
+    sessionStorage.removeItem("sportx_cms_token");
     localStorage.removeItem("token");
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     if (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner")) {
       setTurfOwnerUser(null);
+      sessionStorage.removeItem("turfOwnerUser");
       localStorage.removeItem("turfOwnerUser");
     } else if (path.startsWith("/dashboard")) {
       setCmsAdminUser(null);
+      sessionStorage.removeItem("cmsAdminUser");
+      sessionStorage.removeItem("sportx_cms_user");
       localStorage.removeItem("cmsAdminUser");
     } else {
       setPlayerUser(null);
+      sessionStorage.removeItem("playerUser");
       localStorage.removeItem("playerUser");
       localStorage.removeItem("isLoggedIn");
       localStorage.removeItem("userName");
@@ -261,6 +274,8 @@ export function AuthProvider({ children }) {
 
   const logoutOwner = () => {
     setTurfOwnerUser(null);
+    sessionStorage.removeItem("turfOwnerUser");
+    sessionStorage.removeItem("sportx_owner_token");
     localStorage.removeItem("turfOwnerUser");
   };
 
@@ -280,9 +295,11 @@ export function AuthProvider({ children }) {
         const finalUser = { ...mergedUser, ...res.user };
         if (finalUser.accountType === "turf-owner" || finalUser.role === "owner") {
           setTurfOwnerUser(finalUser);
+          sessionStorage.setItem("turfOwnerUser", JSON.stringify(finalUser));
           localStorage.setItem("turfOwnerUser", JSON.stringify(finalUser));
         } else {
           setPlayerUser(finalUser);
+          sessionStorage.setItem("playerUser", JSON.stringify(finalUser));
           localStorage.setItem("playerUser", JSON.stringify(finalUser));
         }
         return { success: true, user: finalUser };
@@ -293,9 +310,11 @@ export function AuthProvider({ children }) {
 
     if (mergedUser.accountType === "turf-owner" || mergedUser.role === "owner") {
       setTurfOwnerUser(mergedUser);
+      sessionStorage.setItem("turfOwnerUser", JSON.stringify(mergedUser));
       localStorage.setItem("turfOwnerUser", JSON.stringify(mergedUser));
     } else {
       setPlayerUser(mergedUser);
+      sessionStorage.setItem("playerUser", JSON.stringify(mergedUser));
       localStorage.setItem("playerUser", JSON.stringify(mergedUser));
     }
     return { success: true, user: mergedUser };
@@ -321,6 +340,7 @@ export function AuthProvider({ children }) {
 
     // Clean up local storage and session
     setPlayerUser(null);
+    sessionStorage.removeItem("playerUser");
     localStorage.removeItem("playerUser");
     localStorage.removeItem("isLoggedIn");
     localStorage.removeItem("userName");
@@ -345,17 +365,9 @@ export function AuthProvider({ children }) {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    const getSavedUser = (key) => {
-      try {
-        const saved = typeof window !== "undefined" ? localStorage.getItem(key) : null;
-        return saved ? JSON.parse(saved) : null;
-      } catch {
-        return null;
-      }
-    };
-    const playerUser = getSavedUser("playerUser");
-    const turfOwnerUser = getSavedUser("turfOwnerUser");
-    const cmsAdminUser = getSavedUser("cmsAdminUser");
+    const playerUser = getStorageUser("playerUser");
+    const turfOwnerUser = getStorageUser("turfOwnerUser");
+    const cmsAdminUser = getStorageUser("cmsAdminUser") || getStorageUser("sportx_cms_user");
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     const currentUser = (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner"))
       ? turfOwnerUser

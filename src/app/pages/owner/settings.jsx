@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -38,13 +38,15 @@ import {
   Plus,
 } from "lucide-react";
 import { settingsService } from "../../services/settings.service";
+import { useAuth } from "../../providers/auth-provider";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 
-const OWNER_ID = "owner-123";
-
 export function Settings() {
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { currentUser, updateUser } = useAuth();
+  const fileInputRef = useRef(null);
+
   const [data, setData] = useState({
     businessName: "Elite Sports Management",
     contactEmail: "owner@elitesports.com",
@@ -63,7 +65,8 @@ export function Settings() {
     accountNumber: "•••• •••• 8842",
     ifscCode: "HDFC0001234",
     upiId: "elitesports@hdfc",
-    payoutCycle: "daily"
+    payoutCycle: "daily",
+    logo: ""
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -83,9 +86,19 @@ export function Settings() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const result = await settingsService.getAll(OWNER_ID);
-        if (result && Object.keys(result).length > 0) {
-          setData(prev => ({ ...prev, ...result }));
+        const result = await settingsService.getSettings();
+        if (result && typeof result === "object") {
+          setData((prev) => ({
+            ...prev,
+            ...result,
+            businessName: result.businessName || currentUser?.fullName || prev.businessName,
+            contactEmail: result.contactEmail || currentUser?.email || prev.contactEmail,
+            contactPhone: result.contactPhone || currentUser?.phone || prev.contactPhone,
+            city: result.city || currentUser?.city || prev.city,
+          }));
+          if (result.theme && result.theme !== "system") {
+            setTheme(result.theme);
+          }
         }
       } catch (err) {
         console.warn("Using fallback local settings state", err);
@@ -95,20 +108,53 @@ export function Settings() {
     };
 
     fetchData();
-  }, []);
+  }, [currentUser, setTheme]);
 
   const handleSave = async () => {
     setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    setIsSaving(false);
-    toast.success("Settings updated successfully!", {
-      description: "Your business profile & preferences have been saved.",
-      duration: 4000,
-    });
+    try {
+      const updated = await settingsService.updateSettings(data);
+      if (updated) {
+        setData((prev) => ({ ...prev, ...updated }));
+      }
+      if (updateUser) {
+        await updateUser({
+          fullName: data.businessName,
+          city: data.city,
+          phone: data.contactPhone,
+        });
+      }
+      toast.success("Settings updated successfully!", {
+        description: "Your business profile & preferences have been saved to MySQL.",
+        duration: 4000,
+      });
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+      toast.error("Failed to save settings: " + (err.message || "Network error"));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Logo file size must be less than 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      handleChange("logo", reader.result);
+      toast.success("Logo uploaded! Click 'Save All Changes' to apply.");
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleChange = (key, value) => {
-    setData(prev => ({ ...prev, [key]: value }));
+    setData((prev) => ({ ...prev, [key]: value }));
   };
 
   if (isLoading) {
@@ -274,18 +320,36 @@ export function Settings() {
             {/* Right Column (1 Col): Branding & Verification Card */}
             <div className="space-y-6">
               <Card className="border-border/40 bg-card/30 backdrop-blur-xl shadow-lg rounded-2xl overflow-hidden text-center p-6 flex flex-col items-center justify-center space-y-4">
-                <div className="relative group cursor-pointer">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleLogoUpload}
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="hidden"
+                />
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="relative group cursor-pointer"
+                  title="Click to upload or change logo"
+                >
                   <div className="h-24 w-24 rounded-full border-2 border-dashed border-emerald-500/50 bg-emerald-500/10 flex items-center justify-center overflow-hidden transition-all group-hover:border-emerald-500">
-                    <Building2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+                    {data.logo ? (
+                      <img src={data.logo} alt={data.businessName} className="h-full w-full object-cover" />
+                    ) : (
+                      <Building2 className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+                    )}
                   </div>
-                  <button className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md hover:bg-emerald-700 transition-colors">
+                  <button
+                    type="button"
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-md hover:bg-emerald-700 transition-colors cursor-pointer"
+                  >
                     <Upload className="h-4 w-4" />
                   </button>
                 </div>
 
                 <div>
                   <h3 className="font-extrabold text-base text-foreground">{data.businessName || "Your Turf Brand"}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Upload high-res logo PNG or JPEG</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Click logo to upload PNG or JPEG</p>
                 </div>
 
                 <div className="w-full pt-3 border-t border-border/40 flex items-center justify-center gap-2">

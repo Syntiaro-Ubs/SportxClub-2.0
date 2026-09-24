@@ -28,45 +28,77 @@ export function CalendarView() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
+        const ownerEmail = currentUser?.email || "";
         const ownerId = currentUser?.id || "guest";
-        const result = await bookingService.getAll(ownerId);
+        const queryParam = ownerEmail ? `ownerEmail=${encodeURIComponent(ownerEmail)}` : `ownerId=${ownerId}`;
+        
+        const [bookingsResult, disabledRes] = await Promise.allSettled([
+          bookingService.getAll(ownerId),
+          fetch(`/api/owner/disabled-dates?${queryParam}`),
+        ]);
 
-        // Map mock dates around today so they actually display
-        const modifiedResult = result.map((b, i) => {
-          const newDate = new Date();
-          newDate.setDate(newDate.getDate() + (i % 3) - 1);
-          return {
-            ...b,
-            date: format(newDate, "yyyy-MM-dd"),
-          };
-        });
+        if (bookingsResult.status === "fulfilled" && Array.isArray(bookingsResult.value)) {
+          const normalized = bookingsResult.value.map((b) => {
+            let normalizedDate = "";
+            if (b.date) {
+              const dStr = String(b.date).trim();
+              if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) {
+                normalizedDate = dStr;
+              } else {
+                try {
+                  const parsed = new Date(dStr);
+                  if (!isNaN(parsed.getTime())) {
+                    normalizedDate = format(parsed, "yyyy-MM-dd");
+                  } else {
+                    normalizedDate = dStr;
+                  }
+                } catch {
+                  normalizedDate = dStr;
+                }
+              }
+            }
 
-        setData(modifiedResult);
+            const timeStr = b.time_slot || b.slot_time || b.time || "06:00 PM";
+            let duration = 1;
+            const rangeMatch = timeStr.match(/(\d{1,2}):\d{2}\s*(?:am|pm)?\s*-\s*(\d{1,2}):\d{2}\s*(?:am|pm)?/i);
+            if (rangeMatch) {
+              const s = parseInt(rangeMatch[1], 10);
+              const e = parseInt(rangeMatch[2], 10);
+              if (e > s) duration = e - s;
+            }
 
-        // Fetch disabled dates
-        const disabledRes = await fetch(`/api/owner/disabled-dates?ownerId=${ownerId}`);
-        if (disabledRes.ok) {
-          const disabledData = await disabledRes.json();
-          setDisabledDates(disabledData.map(d => d.date));
+            return {
+              id: b.id || b.booking_code || "BK-1",
+              turfName: b.turf_name || b.turfName || "Turf Arena",
+              customerName: b.user_name || b.userName || b.customerName || "Sports Player",
+              customerPhone: b.user_phone || b.userPhone || "",
+              customerEmail: b.user_email || b.userEmail || "",
+              sport: b.sport || "Football",
+              date: normalizedDate,
+              time: timeStr,
+              duration: b.duration || duration,
+              amount: Number(b.amount) || 1200,
+              status: b.status || "Confirmed",
+              paymentStatus: b.status === "Cancelled" ? "Cancelled" : "Paid",
+            };
+          });
+          setData(normalized);
         }
 
+        if (disabledRes.status === "fulfilled" && disabledRes.value.ok) {
+          const disabledData = await disabledRes.value.json();
+          if (Array.isArray(disabledData)) {
+            setDisabledDates(disabledData.map((d) => d.date));
+          }
+        }
       } catch (err) {
-        console.error("API not available, rendering empty calendar:", err);
+        console.error("Calendar fetch error:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    const handleWindowClick = () => {
-      // Dummy check to trigger layout if needed
-    };
-    window.addEventListener("click", handleWindowClick);
-
     fetchData();
-
-    return () => {
-      window.removeEventListener("click", handleWindowClick);
-    };
   }, [currentUser]);
 
   const today = new Date();
@@ -83,23 +115,28 @@ export function CalendarView() {
   const toggleDateStatus = async () => {
     if (!selectedDateStr) return;
     const ownerId = currentUser?.id || "guest";
+    const ownerEmail = currentUser?.email || "";
     const method = isDateDisabled ? "DELETE" : "POST";
 
     try {
-      const res = await fetch(`/api/owner/disabled-dates?ownerId=${ownerId}`, {
+      const url = `/api/owner/disabled-dates${isDateDisabled ? `?date=${selectedDateStr}&ownerEmail=${encodeURIComponent(ownerEmail)}` : ""}`;
+      const res = await fetch(url, {
         method,
-        body: JSON.stringify({ date: selectedDateStr, ownerId }),
+        headers: { "Content-Type": "application/json" },
+        body: isDateDisabled
+          ? JSON.stringify({ date: selectedDateStr, ownerId, ownerEmail })
+          : JSON.stringify({ date: selectedDateStr, ownerId, ownerEmail, reason: "Maintenance / Blocked" }),
       });
 
       if (res.ok) {
         if (isDateDisabled) {
-          setDisabledDates(prev => prev.filter(d => d !== selectedDateStr));
+          setDisabledDates((prev) => prev.filter((d) => d !== selectedDateStr));
         } else {
-          setDisabledDates(prev => [...prev, selectedDateStr]);
+          setDisabledDates((prev) => [...prev, selectedDateStr]);
         }
       }
     } catch (e) {
-      console.error("Failed to toggle date status");
+      console.error("Failed to toggle date status", e);
     }
   };
 

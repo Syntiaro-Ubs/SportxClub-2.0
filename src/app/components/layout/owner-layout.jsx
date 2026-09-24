@@ -82,6 +82,14 @@ function TwoLineMenuIcon({ className, ...props }) {
   );
 }
 
+const ROLE_FALLBACK_PERMISSIONS = {
+  Manager: ["dashboard", "revenue", "turfs", "bookings", "roles", "events", "calendar", "reviews", "promotions", "report", "settings"],
+  Receptionist: ["dashboard", "bookings", "calendar", "turfs"],
+  Maintenance: ["dashboard", "turfs", "calendar"],
+  Security: ["dashboard", "bookings"],
+  Coach: ["dashboard", "events", "calendar"],
+};
+
 export function OwnerLayout() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -108,7 +116,11 @@ export function OwnerLayout() {
 
   const [storedProfile] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("turfOwnerUser") || "null");
+      return JSON.parse(
+        sessionStorage.getItem("turfOwnerUser") ||
+        localStorage.getItem("turfOwnerUser") ||
+        "null"
+      );
     } catch (error) {
       return null;
     }
@@ -131,29 +143,57 @@ export function OwnerLayout() {
     }
   }, [activeProfile, navigate]);
 
-  const visibleNavigation = useMemo(() => {
-    if (!activeProfile) return ownerNavigation;
-    const isOwnerOrAdmin = activeProfile.role === "owner" || activeProfile.role === "Turf Owner" || activeProfile.role === "Admin";
-    if (isOwnerOrAdmin || !activeProfile.permissions || !Array.isArray(activeProfile.permissions)) {
-      return ownerNavigation;
-    }
-    return ownerNavigation.filter((item) => activeProfile.permissions.includes(item.permissionKey));
+  const isOwnerOrAdmin = useMemo(() => {
+    if (!activeProfile) return false;
+    if (activeProfile.isStaff) return false;
+    const roleLower = String(activeProfile.role || "").toLowerCase();
+    const displayRoleLower = String(activeProfile.displayRole || "").toLowerCase();
+    return (
+      (roleLower === "owner" || roleLower === "turf owner" || roleLower === "admin") &&
+      !displayRoleLower.includes("receptionist") &&
+      !displayRoleLower.includes("manager") &&
+      !displayRoleLower.includes("maintenance") &&
+      !displayRoleLower.includes("security") &&
+      !displayRoleLower.includes("coach")
+    );
   }, [activeProfile]);
 
+  const effectivePermissions = useMemo(() => {
+    if (isOwnerOrAdmin) {
+      return ownerNavigation.map((i) => i.permissionKey);
+    }
+    if (Array.isArray(activeProfile.permissions) && activeProfile.permissions.length > 0) {
+      return activeProfile.permissions;
+    }
+    const roleName = activeProfile.displayRole || activeProfile.role || "Receptionist";
+    return ROLE_FALLBACK_PERMISSIONS[roleName] || ["dashboard", "bookings"];
+  }, [activeProfile, isOwnerOrAdmin]);
+
+  const visibleNavigation = useMemo(() => {
+    if (!activeProfile || !activeProfile.email) return ownerNavigation;
+    if (isOwnerOrAdmin) return ownerNavigation;
+    return ownerNavigation.filter((item) => effectivePermissions.includes(item.permissionKey));
+  }, [activeProfile, isOwnerOrAdmin, effectivePermissions]);
+
   useEffect(() => {
-    if (activeProfile && activeProfile.permissions && Array.isArray(activeProfile.permissions) && activeProfile.permissions.length > 0) {
-      const isOwnerOrAdmin = activeProfile.role === "owner" || activeProfile.role === "Turf Owner" || activeProfile.role === "Admin";
-      if (!isOwnerOrAdmin) {
-        const currentItem = ownerNavigation.find((item) => item.href === location.pathname);
-        if (currentItem && !activeProfile.permissions.includes(currentItem.permissionKey)) {
-          const firstAllowed = ownerNavigation.find((item) => activeProfile.permissions.includes(item.permissionKey));
-          if (firstAllowed) {
-            navigate(firstAllowed.href, { replace: true });
-          }
+    if (activeProfile && activeProfile.email && !isOwnerOrAdmin) {
+      const currentNavMatch = ownerNavigation.find((item) => {
+        if (item.href === "/admin-panel") {
+          return location.pathname === "/admin-panel";
+        }
+        return location.pathname === item.href || location.pathname.startsWith(item.href + "/");
+      });
+
+      if (currentNavMatch && !effectivePermissions.includes(currentNavMatch.permissionKey)) {
+        const firstAllowed = ownerNavigation.find((item) => effectivePermissions.includes(item.permissionKey));
+        if (firstAllowed) {
+          navigate(firstAllowed.href, { replace: true });
+        } else {
+          navigate("/admin-panel", { replace: true });
         }
       }
     }
-  }, [location.pathname, activeProfile, navigate]);
+  }, [location.pathname, activeProfile, isOwnerOrAdmin, effectivePermissions, navigate]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card/50 backdrop-blur-2xl">

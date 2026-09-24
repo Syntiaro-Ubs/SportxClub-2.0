@@ -144,7 +144,15 @@ export function Tournaments() {
   };
 
   const isMyTournament = (t) => {
-    const activeUser = currentUser || JSON.parse(localStorage.getItem("playerUser") || localStorage.getItem("turfOwnerUser") || "{}");
+    const activeUser =
+      currentUser ||
+      JSON.parse(
+        sessionStorage.getItem("playerUser") ||
+        sessionStorage.getItem("turfOwnerUser") ||
+        localStorage.getItem("playerUser") ||
+        localStorage.getItem("turfOwnerUser") ||
+        "{}"
+      );
     const userEmail = (activeUser.email || "").toLowerCase();
     const userName = (activeUser.fullName || activeUser.name || "").toLowerCase();
     const orgEmail = (t.organizer_email || "").toLowerCase();
@@ -217,7 +225,15 @@ export function Tournaments() {
       return;
     }
     try {
-      const activeUser = currentUser || JSON.parse(localStorage.getItem("playerUser") || localStorage.getItem("turfOwnerUser") || "{}");
+      const activeUser =
+        currentUser ||
+        JSON.parse(
+          sessionStorage.getItem("playerUser") ||
+          sessionStorage.getItem("turfOwnerUser") ||
+          localStorage.getItem("playerUser") ||
+          localStorage.getItem("turfOwnerUser") ||
+          "{}"
+        );
       const payload = {
         name: newTournament.name,
         sport: newTournament.sport,

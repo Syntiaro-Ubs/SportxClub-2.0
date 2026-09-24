@@ -12,24 +12,28 @@ export function getAuthHeaders(extraHeaders = {}) {
     const isOwnerRoute = path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner");
 
     try {
-      const oUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
-      const cUser = JSON.parse(sessionStorage.getItem("sportx_cms_user") || localStorage.getItem("cmsAdminUser") || "{}");
-      const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
+      const oUser = JSON.parse(sessionStorage.getItem("turfOwnerUser") || localStorage.getItem("turfOwnerUser") || "{}");
+      const cUser = JSON.parse(sessionStorage.getItem("sportx_cms_user") || sessionStorage.getItem("cmsAdminUser") || localStorage.getItem("cmsAdminUser") || "{}");
+      const pUser = JSON.parse(sessionStorage.getItem("playerUser") || localStorage.getItem("playerUser") || "{}");
 
       if (isCmsRoute) {
         token =
           sessionStorage.getItem("sportx_cms_token") ||
+          sessionStorage.getItem("token") ||
           cUser.token ||
           localStorage.getItem("token") ||
           localStorage.getItem("cmsAdminToken");
       } else if (isOwnerRoute) {
         token =
+          sessionStorage.getItem("sportx_owner_token") ||
+          sessionStorage.getItem("token") ||
           oUser.token ||
-          (oUser.email || oUser.ownerId || oUser.fullName ? `owner_session_${encodeURIComponent(oUser.email || oUser.ownerId || "owner")}` : null) ||
           localStorage.getItem("token") ||
-          localStorage.getItem("authToken");
+          localStorage.getItem("authToken") ||
+          (oUser.email || oUser.ownerId || oUser.fullName ? `owner_session_${encodeURIComponent(oUser.email || oUser.ownerId || "owner")}` : null);
       } else {
         token =
+          sessionStorage.getItem("token") ||
           localStorage.getItem("token") ||
           localStorage.getItem("authToken") ||
           sessionStorage.getItem("sportx_cms_token") ||
@@ -39,6 +43,7 @@ export function getAuthHeaders(extraHeaders = {}) {
 
       if (!token) {
         token =
+          sessionStorage.getItem("token") ||
           cUser.token ||
           oUser.token ||
           pUser.token ||
@@ -46,7 +51,7 @@ export function getAuthHeaders(extraHeaders = {}) {
           localStorage.getItem("authToken");
       }
     } catch (e) {
-      token = localStorage.getItem("token") || localStorage.getItem("authToken");
+      token = sessionStorage.getItem("token") || localStorage.getItem("token") || localStorage.getItem("authToken");
     }
   }
 
@@ -66,7 +71,7 @@ export const adminApi = {
       let activeUser = {};
       if (isOwnerRoute) {
         try {
-          activeUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
+          activeUser = JSON.parse(sessionStorage.getItem("turfOwnerUser") || localStorage.getItem("turfOwnerUser") || "{}");
         } catch (e) {}
       }
 

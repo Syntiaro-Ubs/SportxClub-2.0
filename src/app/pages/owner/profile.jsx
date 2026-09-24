@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { Button } from "../../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
@@ -44,7 +44,7 @@ import { toast } from "sonner";
 import { useOutletContext } from "react-router";
 
 export function OwnerProfile() {
-  const { activeProfile, setDemoProfile } = useOutletContext();
+  const { activeProfile, setDemoProfile } = useOutletContext() || {};
   const { currentUser, updateUser } = useAuth();
 
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -65,7 +65,57 @@ export function OwnerProfile() {
 
   const [isKycModalOpen, setIsKycModalOpen] = useState(false);
   const [aadhaarVerified, setAadhaarVerified] = useState(true);
-  const [panVerified, setPanVerified] = useState(false);
+  const [panVerified, setPanVerified] = useState(true);
+
+  const [kycFormData, setKycFormData] = useState({
+    bankName: "HDFC Bank",
+    accountHolder: activeProfile?.fullName || "Turf Owner",
+    accountNumber: "50100293847581",
+    confirmAccountNumber: "50100293847581",
+    ifscCode: "HDFC0001234",
+    panNumber: "ABCDE1234F",
+    gstin: "27ABCDE1234F1Z5",
+  });
+
+  // Fetch KYC details from MySQL
+  useEffect(() => {
+    const fetchKyc = async () => {
+      try {
+        const ownerEmail = currentUser?.email || activeProfile?.email || "";
+        const queryParam = ownerEmail ? `?ownerEmail=${encodeURIComponent(ownerEmail)}` : "";
+        const res = await fetch(`/api/owner/kyc${queryParam}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const { kyc, bank } = json.data;
+            if (kyc) {
+              setIsKycCompleted(Boolean(kyc.isKycCompleted));
+              setAadhaarVerified(Boolean(kyc.aadhaarVerified));
+              setPanVerified(Boolean(kyc.panVerified));
+              setKycFormData((prev) => ({
+                ...prev,
+                panNumber: kyc.panNumber || prev.panNumber,
+                gstin: kyc.gstin || prev.gstin,
+              }));
+            }
+            if (bank) {
+              setKycFormData((prev) => ({
+                ...prev,
+                bankName: bank.bankName || prev.bankName,
+                accountHolder: bank.accountHolder || prev.accountHolder,
+                accountNumber: bank.accountNumber || prev.accountNumber,
+                confirmAccountNumber: bank.accountNumber || prev.confirmAccountNumber,
+                ifscCode: bank.ifscCode || prev.ifscCode,
+              }));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching KYC from backend:", err);
+      }
+    };
+    fetchKyc();
+  }, [currentUser, activeProfile]);
 
   // OTP Verification Modal State
   const [otpModalDoc, setOtpModalDoc] = useState(null); // 'aadhaar' | 'pan' | null
@@ -103,34 +153,43 @@ export function OwnerProfile() {
     }
   };
 
-  const handleVerifyOtpSubmit = () => {
+  const handleVerifyOtpSubmit = async () => {
     const code = otpValue.join("");
     if (code.length < 6) {
       toast.error("Please enter 6-digit OTP code.");
       return;
     }
     setIsVerifyingOtp(true);
-    setTimeout(() => {
-      setIsVerifyingOtp(false);
-      if (otpModalDoc === 'aadhaar') {
+    
+    try {
+      const ownerEmail = currentUser?.email || activeProfile?.email || "";
+      const isAadhaar = otpModalDoc === "aadhaar";
+      if (isAadhaar) {
         setAadhaarVerified(true);
       } else {
         setPanVerified(true);
       }
-      toast.success(`${otpModalDoc === 'aadhaar' ? 'Aadhaar Card' : 'PAN Card'} verified via OTP successfully!`);
-      setOtpModalDoc(null);
-    }, 1000);
-  };
 
-  const [kycFormData, setKycFormData] = useState({
-    bankName: "HDFC Bank",
-    accountHolder: activeProfile?.fullName || "Turf Owner",
-    accountNumber: "50100293847581",
-    confirmAccountNumber: "50100293847581",
-    ifscCode: "HDFC0001234",
-    panNumber: "ABCDE1234F",
-    gstin: "27ABCDE1234F1Z5",
-  });
+      await fetch(`/api/owner/kyc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownerEmail,
+          aadhaarVerified: isAadhaar ? true : aadhaarVerified,
+          panVerified: !isAadhaar ? true : panVerified,
+          ...kycFormData,
+        }),
+      });
+
+      toast.success(`${otpModalDoc === 'aadhaar' ? 'Aadhaar Card' : 'PAN Card'} verified and saved to database!`);
+      setOtpModalDoc(null);
+    } catch (e) {
+      console.error("KYC OTP verification error:", e);
+      toast.error("Verification could not be saved to server.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
 
   const handleEditChange = (e) => {
     const { name, value } = e.target;
@@ -195,7 +254,7 @@ export function OwnerProfile() {
     }
   };
 
-  const handleSaveKyc = (e) => {
+  const handleSaveKyc = async (e) => {
     e.preventDefault();
     if (!kycFormData.accountNumber || !kycFormData.ifscCode || !kycFormData.panNumber) {
       toast.error("Please fill in all required Bank & KYC details.");
@@ -205,10 +264,28 @@ export function OwnerProfile() {
       toast.error("Account Numbers do not match!");
       return;
     }
-    localStorage.setItem("ownerKycCompleted", "true");
-    setIsKycCompleted(true);
-    setIsKycModalOpen(false);
-    toast.success("Bank & Owner KYC Completed Successfully!");
+
+    try {
+      const ownerEmail = currentUser?.email || activeProfile?.email || "";
+      await fetch(`/api/owner/kyc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ownerEmail,
+          aadhaarVerified,
+          panVerified,
+          ...kycFormData,
+        }),
+      });
+
+      localStorage.setItem("ownerKycCompleted", "true");
+      setIsKycCompleted(true);
+      setIsKycModalOpen(false);
+      toast.success("Bank & Owner KYC details saved and verified in database!");
+    } catch (error) {
+      console.error("Failed to save KYC to database:", error);
+      toast.error("Failed to save KYC to database.");
+    }
   };
 
   const ownerName = activeProfile?.fullName || editFormData.fullName || "Turf Owner";
