@@ -68,10 +68,21 @@ export const profileService = {
     return data.data;
   },
 
-  purchase: async (user, productId) => {
+  purchase: async (user, itemOrId) => {
+    let payload = { userId: user?.id, email: user?.email };
+    if (typeof itemOrId === "object" && itemOrId !== null) {
+      payload = {
+        ...payload,
+        productId: itemOrId.id || itemOrId.productId,
+        productName: itemOrId.name || itemOrId.title || itemOrId.productName,
+        productPrice: itemOrId.price || itemOrId.productPrice,
+      };
+    } else {
+      payload.productId = itemOrId;
+    }
     const data = await request("/shop/purchase", {
       method: "POST",
-      body: JSON.stringify({ userId: user?.id, email: user?.email, productId }),
+      body: JSON.stringify(payload),
     });
     return data.data;
   },
@@ -116,7 +127,15 @@ export const profileService = {
         ...extraDetails,
       }),
     });
-    return data.data;
+    return data;
+  },
+
+  payWithWallet: async (bookingPayload) => {
+    const data = await request("/bookings/wallet-pay", {
+      method: "POST",
+      body: JSON.stringify(bookingPayload),
+    });
+    return data;
   },
 
   deleteAccount: async (user) => {

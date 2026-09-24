@@ -434,6 +434,60 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
         const ownerName = setupData.personal?.fullName || setupData.business?.ownerName || owner.name || "Turf Owner";
         const turfName = setupData.turf?.name || setupData.business?.businessName || "Sports Turf";
         const turfLocation = [setupData.location?.address, setupData.location?.city, setupData.location?.state].filter(Boolean).join(", ") || setupData.location?.city || owner.city || "Location not specified";
+        const ownerPhone = setupData.personal?.phone || setupData.business?.phone || owner.phone || "";
+
+        if (isApproved && turfName) {
+          const [existingTurfs] = await pool.query(
+            "SELECT id FROM turfs WHERE (owner_email IS NOT NULL AND LOWER(owner_email) = LOWER(?)) OR LOWER(TRIM(name)) = LOWER(TRIM(?)) LIMIT 1",
+            [ownerEmail, turfName]
+          );
+
+          const coverImage = setupData.images?.cover?.data || setupData.images?.cover?.url || (typeof setupData.images?.cover === 'string' ? setupData.images.cover : null) || (Array.isArray(setupData.images?.turf) ? (setupData.images.turf[0]?.data || setupData.images.turf[0]?.url || setupData.images.turf[0]) : null) || "/assets/venues/turf-1.webp";
+
+          let galleryList = [];
+          if (Array.isArray(setupData.images?.gallery) && setupData.images.gallery.length > 0) {
+            galleryList = setupData.images.gallery
+              .map(g => (typeof g === 'object' && g !== null ? (g.data || g.url || g.name) : g))
+              .filter(Boolean);
+          }
+          if (galleryList.length === 0 && coverImage) {
+            galleryList = [coverImage];
+          }
+
+          const sportType = Array.isArray(setupData.turf?.sports) ? setupData.turf.sports.join(", ") : (setupData.turf?.sports || "Football");
+          const pricePerHour = Number(setupData.pricing?.weekdayPrice || setupData.pricing?.standardPrice || 1200);
+          const description = setupData.turf?.description || "High quality sports turf with professional amenities.";
+          const amenities = Array.isArray(setupData.turf?.facilities) ? JSON.stringify(setupData.turf.facilities) : (typeof setupData.turf?.facilities === 'string' ? setupData.turf.facilities : "[]");
+          const rules = setupData.turf?.rules || "Please wear appropriate footwear. Respect all turf property.";
+
+          if (existingTurfs.length > 0) {
+            await pool.query(
+              `UPDATE turfs SET 
+                name = ?, 
+                location = ?, 
+                sport_type = ?, 
+                price_per_hour = ?, 
+                image_url = ?, 
+                gallery = ?, 
+                description = ?, 
+                amenities = ?, 
+                rules = ?, 
+                owner_name = ?, 
+                owner_email = ?, 
+                owner_phone = ?, 
+                status = 'Active' 
+              WHERE id = ?`,
+              [turfName, turfLocation, sportType, pricePerHour, coverImage, JSON.stringify(galleryList), description, amenities, rules, ownerName, ownerEmail, ownerPhone, existingTurfs[0].id]
+            );
+          } else {
+            await pool.query(
+              `INSERT INTO turfs 
+                (name, location, sport_type, price_per_hour, rating, reviews, status, owner_name, owner_email, owner_phone, image_url, gallery, description, amenities, rules)
+               VALUES (?, ?, ?, ?, 5.0, 1, 'Active', ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [turfName, turfLocation, sportType, pricePerHour, ownerName, ownerEmail, ownerPhone, coverImage, JSON.stringify(galleryList), description, amenities, rules]
+            );
+          }
+        }
         
         let registrationDate = "";
         try {
@@ -455,7 +509,7 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
           }, status);
         }
       } catch (e) {
-        console.error("Failed to send onboarding status email", e);
+        console.error("Failed to sync approved turf and send email:", e);
       }
     }
 

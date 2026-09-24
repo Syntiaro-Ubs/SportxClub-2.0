@@ -1,6 +1,4 @@
-/**
-  API Service for communicating with Node.js Express + MySQL Backend
-*/
+import { fastCache } from "./fast-cache";
 
 const API_BASE = "/api";
 
@@ -91,11 +89,16 @@ export const adminApi = {
 
       const query = cleanParams.toString();
       const url = query ? `${API_BASE}/admin/${entity}?${query}` : `${API_BASE}/admin/${entity}`;
-      const res = await fetch(url, {
-        headers: getAuthHeaders(),
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error || `Failed to fetch ${entity}`);
+
+      let json;
+      if (!isOwnerRoute && (entity === "turfs" || entity === "tournaments" || entity === "reviews")) {
+        json = await fastCache.fetchWithSWR(url, { headers: getAuthHeaders() });
+      } else {
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        json = await res.json();
+      }
+
+      if (!json || !json.success) throw new Error(json?.error || `Failed to fetch ${entity}`);
       let data = json.data;
 
       // If activeUser is staff and has assigned turfs, filter turfs & bookings
@@ -154,6 +157,7 @@ export const adminApi = {
   // Generic Entity Creator
   create: async (entity, data) => {
     try {
+      fastCache.invalidateAll();
       const res = await fetch(`${API_BASE}/admin/${entity}`, {
         method: "POST",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -171,6 +175,7 @@ export const adminApi = {
   // Generic Entity Updater
   update: async (entity, id, data) => {
     try {
+      fastCache.invalidateAll();
       const res = await fetch(`${API_BASE}/admin/${entity}/${id}`, {
         method: "PUT",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -188,6 +193,7 @@ export const adminApi = {
   // Generic Entity Deleter
   delete: async (entity, id) => {
     try {
+      fastCache.invalidateAll();
       const res = await fetch(`${API_BASE}/admin/${entity}/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),

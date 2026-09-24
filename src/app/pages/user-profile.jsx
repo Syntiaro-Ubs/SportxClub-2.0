@@ -46,6 +46,7 @@ import { Input } from "../components/ui/input";
 import { Progress } from "../components/ui/progress";
 import { useAuth } from "../providers/auth-provider";
 import { profileService } from "../services/profile.service";
+import { cashfreeService } from "../payment/cashfree-service";
 import { toast } from "sonner";
 
 const sportsOptions = ["football", "cricket", "badminton", "tennis", "basketball", "swimming", "gym", "volleyball"];
@@ -184,6 +185,7 @@ export function UserProfile() {
   const [shopCategory, setShopCategory] = useState("ALL");
   const [selectedReason, setSelectedReason] = useState(CANCELLATION_REASONS[0]);
   const [cancelNotes, setCancelNotes] = useState("");
+  const [refundDestination, setRefundDestination] = useState("source"); // "source" (Bank/UPI) or "wallet"
   const [isCancelling, setIsCancelling] = useState(false);
 
   // Dynamic Review Form State
@@ -220,6 +222,27 @@ export function UserProfile() {
     const timer = setTimeout(() => refreshProfile(), 0);
     return () => clearTimeout(timer);
   }, [refreshProfile]);
+
+  // Verify wallet top-up if redirected back from Cashfree
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const topupOrderId = params.get("order_id");
+      const topupStatus = params.get("topup_status");
+      if (topupStatus === "success" && topupOrderId) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        cashfreeService.verifyWalletTopup(topupOrderId, {
+          userEmail: currentUser?.email,
+          userName: currentUser?.fullName || currentUser?.name,
+        }).then((res) => {
+          if (res && res.success) {
+            toast.success(res.message || "Wallet top-up credited successfully!");
+            refreshProfile();
+          }
+        }).catch(() => refreshProfile());
+      }
+    } catch (e) {}
+  }, [currentUser, refreshProfile]);
 
   const user = profile?.user || currentUser;
   const achievements = useMemo(() => {
@@ -262,43 +285,76 @@ export function UserProfile() {
   const handleTopUp = async () => {
     const amount = Number(topUpAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Enter a valid amount.");
+      toast.error("Please enter a valid top-up amount.");
       return;
     }
     try {
-      setProfile(await profileService.topUp(currentUser, amount));
-      setTopUpAmount("");
-      setTopUpOpen(false);
-      toast.success("Wallet top-up recorded successfully.");
-    } catch (requestError) {
-      toast.error(requestError.message);
-    }
-  };
+      const topupPayload = {
+        amount,
+        userEmail: currentUser?.email || profile?.email || "user@sportxclub.com",
+        userName: currentUser?.name || currentUser?.fullName || profile?.fullName || "SportX Player",
+        userPhone: currentUser?.phone || profile?.phone || "9876543210",
+        orderType: "WALLET_TOPUP",
+      };
 
-  const handlePurchase = async (productId, successMessage = "Purchase successful!") => {
-    try {
-      setSelectedProductId(productId);
-      const isCustomAddon = typeof productId === "string" && productId.startsWith("addon-");
-      if (isCustomAddon) {
-        const item = DEFAULT_MATCH_ADDONS.find((a) => a.id === productId);
-        if (item) {
-          if ((profile?.walletBalance || 0) < item.price) {
-            toast.error(`Insufficient wallet balance. Please top up at least ₹${item.price}.`);
-            setAddonsOpen(false);
-            setTopUpOpen(true);
-            return;
-          }
-          toast.success(`${item.name} reserved for your match! Deducted ₹${item.price} from wallet.`);
-          setAddonsOpen(false);
+      setTopUpOpen(false);
+      setTopUpAmount("");
+      toast.loading("Opening Cashfree Live Gateway for Wallet Top-Up...", { id: "topup-loading" });
+
+      const paymentRes = await cashfreeService.initiatePayment(topupPayload);
+      toast.dismiss("topup-loading");
+
+      // Verify top-up on backend and credit wallet balance
+      if (paymentRes?.order_id) {
+        const verifyRes = await cashfreeService.verifyWalletTopup(paymentRes.order_id, topupPayload);
+        if (verifyRes && verifyRes.success) {
+          toast.success(verifyRes.message || `₹${amount} added to your SportX Wallet successfully!`);
+          await refreshProfile();
           return;
         }
       }
-      const updated = await profileService.purchase(currentUser, productId);
-      if (updated) setProfile(updated);
-      toast.success(successMessage);
+
+      await refreshProfile();
+    } catch (requestError) {
+      toast.dismiss("topup-loading");
+      console.warn("Wallet top-up gateway note:", requestError.message);
+      // Fallback to direct topup if gateway mode is offline
+      try {
+        setProfile(await profileService.topUp(currentUser, amount));
+        toast.success(`₹${amount} added to your SportX Wallet!`);
+      } catch (fallbackErr) {
+        toast.error(fallbackErr.message || "Failed to process top-up");
+      }
+    }
+  };
+
+  const handlePurchase = async (itemOrId, successMessage = "Purchase successful!") => {
+    try {
+      const isObj = typeof itemOrId === "object" && itemOrId !== null;
+      const itemId = isObj ? itemOrId.id : itemOrId;
+      const itemName = isObj ? (itemOrId.name || itemOrId.title) : "Item";
+      const itemPrice = isObj ? itemOrId.price : null;
+
+      setSelectedProductId(itemId);
+
+      if (itemPrice && (profile?.walletBalance || 0) < Number(itemPrice)) {
+        toast.error(`Insufficient wallet balance (₹${profile?.walletBalance || 0}). Please top up at least ₹${itemPrice}.`);
+        setAddonsOpen(false);
+        setTopUpOpen(true);
+        return;
+      }
+
+      const updated = await profileService.purchase(currentUser, isObj ? itemOrId : { id: itemId, name: itemName, price: itemPrice });
+      if (updated) {
+        setProfile(updated);
+      } else {
+        await refreshProfile();
+      }
+      toast.success(successMessage || `${itemName} reserved! Deducted ₹${itemPrice || ""} from SportX Wallet.`);
       setAddonsOpen(false);
     } catch (requestError) {
-      toast.error(requestError.message);
+      console.error("Purchase error:", requestError);
+      toast.error(requestError.message || "Failed to complete purchase");
     } finally {
       setSelectedProductId(null);
     }
@@ -310,19 +366,25 @@ export function UserProfile() {
       setIsCancelling(true);
       const booking = profile.activeBooking;
       const fullReason = cancelNotes.trim() ? `${selectedReason} - ${cancelNotes.trim()}` : selectedReason;
-      const updated = await profileService.cancelBooking(currentUser, booking.id, fullReason, {
+      const response = await profileService.cancelBooking(currentUser, booking.id, fullReason, {
         turfName: booking.turf_name,
         date: booking.date,
         timeSlot: booking.time_slot || booking.slot_time,
+        refundDestination,
       });
-      if (updated) {
-        setProfile(updated);
+      if (response?.data) {
+        setProfile(response.data);
+      } else if (response && !response.error) {
+        setProfile(response);
       } else {
         await refreshProfile();
       }
       setCancelOpen(false);
       setCancelNotes("");
-      toast.success(`Slot cancelled! ₹${booking.amount || 0} has been refunded to your SportX Wallet.`);
+      const successMsg = response?.message || (refundDestination === "source"
+        ? `Slot cancelled! ₹${booking.amount || 0} refund initiated directly to your original Bank / UPI account.`
+        : `Slot cancelled! ₹${booking.amount || 0} has been refunded to your SportX Wallet.`);
+      toast.success(successMsg, { duration: 6000 });
     } catch (requestError) {
       toast.error(requestError.message || "Failed to cancel booking");
     } finally {
@@ -777,17 +839,17 @@ export function UserProfile() {
 
       {/* 2. MATCH DAY ADD-ONS MODAL */}
       <Dialog open={addonsOpen} onOpenChange={setAddonsOpen}>
-        <DialogContent className="bg-background border-border text-foreground sm:max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="bg-background border-border text-foreground sm:max-w-lg max-h-[85vh] overflow-y-auto p-5 sm:p-6">
+          <DialogHeader className="pr-12 text-left">
+            <div className="flex items-center justify-between gap-3 mr-2">
+              <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-black">
                 <Coffee className="h-5 w-5 text-amber-500" /> Match Day Add-ons
               </DialogTitle>
-              <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-500/30">
+              <Badge variant="outline" className="text-xs font-bold text-emerald-600 border-emerald-500/30 bg-emerald-500/5 shrink-0 px-2 py-0.5">
                 Wallet: ₹{profile?.walletBalance || 0}
               </Badge>
             </div>
-            <DialogDescription>
+            <DialogDescription className="text-xs text-muted-foreground mt-1">
               Hydration, gear, and recovery items delivered ready at your match slot.
             </DialogDescription>
           </DialogHeader>
@@ -818,15 +880,15 @@ export function UserProfile() {
                 key={item.id}
                 className="flex items-center justify-between gap-3 rounded-2xl border border-border/70 p-3 bg-card hover:border-border transition-all"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <img
                     src={item.image || item.image_url || "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?auto=format&fit=crop&w=400&q=80"}
                     alt={item.name}
-                    className="h-14 w-14 rounded-xl object-cover border border-border/50"
+                    className="h-14 w-14 rounded-xl object-cover border border-border/50 shrink-0"
                   />
-                  <div className="space-y-0.5 text-left">
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-bold leading-tight">{item.name}</p>
+                  <div className="space-y-0.5 text-left min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xs font-bold leading-tight truncate">{item.name}</p>
                       {item.badge && (
                         <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-600">
                           {item.badge}
@@ -842,8 +904,8 @@ export function UserProfile() {
                 <Button
                   size="sm"
                   disabled={selectedProductId === item.id}
-                  onClick={() => handlePurchase(item.id, `${item.name} added to your match!`)}
-                  className="rounded-xl text-xs h-8 px-3 font-bold bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 cursor-pointer"
+                  onClick={() => handlePurchase(item, `${item.name} reserved for your match!`)}
+                  className="rounded-xl text-xs h-8 px-3.5 font-bold bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 cursor-pointer shadow-xs active:scale-95"
                 >
                   {selectedProductId === item.id ? "Adding..." : "+ Add"}
                 </Button>
@@ -958,80 +1020,149 @@ export function UserProfile() {
       </Dialog>
 
       {/* 4. CANCEL SLOT MODAL */}
-      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
-        <DialogContent className="bg-background border-border text-foreground sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-500 font-black">
-              <Ban className="h-5 w-5" /> Cancel Slot Booking
+      {/* 4. CANCEL BOOKING MODAL */}
+      <Dialog open={cancelOpen} onOpenChange={(open) => { if (!isCancelling) setCancelOpen(open); }}>
+        <DialogContent className="bg-background border-border text-foreground sm:max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden rounded-3xl shadow-2xl">
+          {/* Fixed Header */}
+          <DialogHeader className="p-5 sm:p-6 pb-3 border-b border-border/50 shrink-0 text-left">
+            <DialogTitle className="flex items-center gap-2.5 text-rose-600 dark:text-rose-500 font-black text-lg">
+              <div className="h-9 w-9 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-400 shrink-0">
+                <Ban className="h-5 w-5 stroke-[2.5]" />
+              </div>
+              <span>Cancel Slot Booking</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Please select a cancellation reason. 100% of your booking amount will be instantly refunded to your SportX Wallet.
+            <DialogDescription className="text-xs text-muted-foreground mt-1">
+              Select your reason and choose whether you prefer a direct Bank/UPI refund or instant wallet credit.
             </DialogDescription>
           </DialogHeader>
 
-          {/* Refund Guarantee Badge */}
-          {activeBooking && (
-            <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-left space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-foreground">{activeBooking.turf_name}</span>
-                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                  Refund: ₹{activeBooking.amount || 0}
-                </span>
+          {/* Scrollable Content Body */}
+          <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
+            {/* Refund Guarantee Badge */}
+            {activeBooking && (
+              <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-left space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground">{activeBooking.turf_name}</span>
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                    Refund: ₹{activeBooking.amount || 0}
+                  </span>
+                </div>
+                <div className="text-[11px] text-muted-foreground flex items-center gap-2">
+                  <span>{formatDate(activeBooking.date)}</span>
+                  <span>·</span>
+                  <span>{activeBooking.time_slot || activeBooking.slot_time}</span>
+                </div>
               </div>
-              <div className="text-[11px] text-muted-foreground flex items-center gap-2">
-                <span>{formatDate(activeBooking.date)}</span>
-                <span>·</span>
-                <span>{activeBooking.time_slot || activeBooking.slot_time}</span>
+            )}
+
+            {/* Cancellation Reason Picker */}
+            <div className="space-y-2 text-left">
+              <label className="text-xs font-bold text-foreground block">
+                Reason for cancellation <span className="text-rose-500">*</span>
+              </label>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                {CANCELLATION_REASONS.map((reason) => (
+                  <label
+                    key={reason}
+                    onClick={() => setSelectedReason(reason)}
+                    className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
+                      selectedReason === reason
+                        ? "border-rose-500/60 bg-rose-500/5 font-semibold text-foreground"
+                        : "border-border/60 hover:bg-muted/40 text-muted-foreground"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="cancelReason"
+                      checked={selectedReason === reason}
+                      onChange={() => setSelectedReason(reason)}
+                      className="text-rose-600 focus:ring-rose-500 h-3.5 w-3.5"
+                    />
+                    <span>{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="space-y-1 pt-1">
+                <label className="text-[11px] text-muted-foreground">Additional notes (optional):</label>
+                <Input
+                  type="text"
+                  placeholder="e.g. Need to reschedule for weekend..."
+                  value={cancelNotes}
+                  onChange={(e) => setCancelNotes(e.target.value)}
+                  className="text-xs h-9"
+                />
               </div>
             </div>
-          )}
 
-          {/* Cancellation Reason Picker */}
-          <div className="space-y-3 py-2 text-left">
-            <label className="text-xs font-bold text-foreground block">
-              Reason for cancellation <span className="text-rose-500">*</span>
-            </label>
-            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-              {CANCELLATION_REASONS.map((reason) => (
+            {/* Refund Destination Selection */}
+            <div className="space-y-2 text-left pt-1">
+              <label className="text-xs font-bold text-foreground block">
+                Where would you like your refund? <span className="text-rose-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 gap-2">
                 <label
-                  key={reason}
-                  onClick={() => setSelectedReason(reason)}
-                  className={`flex items-center gap-3 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
-                    selectedReason === reason
-                      ? "border-rose-500/60 bg-rose-500/5 font-semibold text-foreground"
+                  onClick={() => setRefundDestination("source")}
+                  className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                    refundDestination === "source"
+                      ? "border-emerald-500/80 bg-emerald-500/10 text-foreground font-medium shadow-xs"
                       : "border-border/60 hover:bg-muted/40 text-muted-foreground"
                   }`}
                 >
                   <input
                     type="radio"
-                    name="cancelReason"
-                    checked={selectedReason === reason}
-                    onChange={() => setSelectedReason(reason)}
-                    className="text-rose-600 focus:ring-rose-500 h-3.5 w-3.5"
+                    name="refundDest"
+                    checked={refundDestination === "source"}
+                    onChange={() => setRefundDestination("source")}
+                    className="mt-0.5 text-emerald-600 focus:ring-emerald-500 h-4 w-4"
                   />
-                  <span>{reason}</span>
+                  <div>
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      Original Payment Source (Bank / UPI / Card)
+                      <Badge className="bg-emerald-600 text-white text-[9px] px-1.5 py-0 h-4">Direct</Badge>
+                    </span>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Refunded directly to your Google Pay, PhonePe, or Bank Account within 24h to 5 working days.
+                    </p>
+                  </div>
                 </label>
-              ))}
-            </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Additional notes (optional):</label>
-              <Input
-                type="text"
-                placeholder="e.g. Need to reschedule for weekend..."
-                value={cancelNotes}
-                onChange={(e) => setCancelNotes(e.target.value)}
-                className="text-xs"
-              />
+                <label
+                  onClick={() => setRefundDestination("wallet")}
+                  className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                    refundDestination === "wallet"
+                      ? "border-emerald-500/80 bg-emerald-500/10 text-foreground font-medium shadow-xs"
+                      : "border-border/60 hover:bg-muted/40 text-muted-foreground"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="refundDest"
+                    checked={refundDestination === "wallet"}
+                    onChange={() => setRefundDestination("wallet")}
+                    className="mt-0.5 text-emerald-600 focus:ring-emerald-500 h-4 w-4"
+                  />
+                  <div>
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      SportX Wallet Credit
+                      <Badge className="bg-blue-600 text-white text-[9px] px-1.5 py-0 h-4">Instant</Badge>
+                    </span>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Instant 100% credit to your wallet balance. Rebook any turf right away.
+                    </p>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
+          {/* Pinned Footer */}
+          <DialogFooter className="p-4 sm:p-5 pt-3 border-t border-border/50 bg-muted/20 shrink-0 flex flex-row items-center justify-end gap-2">
             <Button
               variant="outline"
               disabled={isCancelling}
               onClick={() => setCancelOpen(false)}
-              className="text-xs rounded-xl"
+              className="text-xs rounded-xl h-10 px-4"
             >
               Keep Slot
             </Button>
@@ -1039,7 +1170,7 @@ export function UserProfile() {
               variant="destructive"
               disabled={isCancelling}
               onClick={handleCancelBooking}
-              className="bg-rose-600 hover:bg-rose-700 font-bold text-white text-xs rounded-xl cursor-pointer"
+              className="bg-rose-600 hover:bg-rose-700 font-bold text-white text-xs rounded-xl h-10 px-5 cursor-pointer shadow-md shadow-rose-600/20"
             >
               {isCancelling ? "Processing Refund..." : "Confirm Cancellation"}
             </Button>
@@ -1520,8 +1651,7 @@ export function UserProfile() {
                 className="w-full font-bold cursor-pointer rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
                 disabled={selectedProductId === item.id}
                 onClick={() => {
-                  setSelectedProductId(item.id);
-                  handlePurchase(item.id, `Purchased ${item.name}! Billed to SportX Wallet.`);
+                  handlePurchase(item, `Purchased ${item.name || item.title}! Billed to SportX Wallet.`);
                 }}
               >
                 {selectedProductId === item.id ? "Processing..." : "Purchase Item"}

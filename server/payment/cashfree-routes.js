@@ -108,6 +108,8 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
     const returnUrl = `${frontendUrl}/payment-status?order_id={order_id}`;
     const notifyUrl = `${backendUrl}/api/payment/cashfree/webhook`;
 
+    const isWalletTopup = req.body.orderType === "WALLET_TOPUP";
+
     const cashfreeOrderPayload = {
       order_id: orderId,
       order_amount: numericAmount,
@@ -119,11 +121,12 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
         customer_phone: cleanPhone,
       },
       order_meta: {
-        return_url: returnUrl,
+        return_url: isWalletTopup ? `${frontendUrl}/profile?topup_status=success&order_id={order_id}` : returnUrl,
         notify_url: notifyUrl,
       },
-      order_note: `SportXClub Booking: ${resolvedTurfName} (${cleanSport})`,
+      order_note: isWalletTopup ? `SportXClub Wallet Top-Up: ₹${formattedAmount}` : `SportXClub Booking: ${resolvedTurfName} (${cleanSport})`,
       order_tags: {
+        orderType: isWalletTopup ? "WALLET_TOPUP" : "BOOKING",
         turfName: resolvedTurfName.slice(0, 40),
         sport: cleanSport.slice(0, 40),
         date: cleanDate.slice(0, 20),
@@ -444,8 +447,8 @@ router.post("/verify", optionalAuth, async (req, res) => {
 
     const [bookRes] = await pool.query(
       `INSERT INTO bookings 
-       (booking_code, user_name, user_email, user_phone, turf_name, turf_id, sport, date, time_slot, slot_time, amount, status, payment_method, payment_type)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', 'Cashfree', 'Online')`,
+       (booking_code, user_name, user_email, user_phone, turf_name, turf_id, sport, date, time_slot, slot_time, amount, status, payment_method, payment_type, order_id, payment_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', 'Cashfree', 'Online', ?, ?)`,
       [
         bookingCode,
         userName,
@@ -458,6 +461,8 @@ router.post("/verify", optionalAuth, async (req, res) => {
         timeStr,
         timeStr,
         numericAmount,
+        order_id,
+        cfPaymentId,
       ]
     );
 
@@ -487,6 +492,94 @@ router.post("/verify", optionalAuth, async (req, res) => {
   } catch (error) {
     console.error("Cashfree Verify Route Error:", error);
     return res.status(500).json({ success: false, message: "Verification Error", error: error.message });
+  }
+});
+
+/**
+ * 3. VERIFY WALLET TOP-UP PAYMENT & CREDIT BALANCE
+ * POST /api/payment/cashfree/verify-wallet-topup
+ */
+router.post("/verify-wallet-topup", optionalAuth, async (req, res) => {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+  try {
+    const { order_id, topupPayload } = req.body;
+    if (!order_id) {
+      return res.status(400).json({ success: false, message: "order_id is required." });
+    }
+
+    const orderRes = await fetch(`${CASHFREE_CONFIG.BASE_URL}/orders/${encodeURIComponent(order_id)}`, {
+      method: "GET",
+      headers: getCashfreeHeaders(),
+    });
+
+    const orderData = await orderRes.json();
+    if (!orderRes.ok || orderData.order_status !== "PAID") {
+      return res.status(400).json({
+        success: false,
+        status: "Failed",
+        message: "Wallet Top-up payment is not verified on Cashfree.",
+        order_status: orderData?.order_status,
+      });
+    }
+
+    const numericAmount = parseFloat(orderData.order_amount || topupPayload?.amount || 0);
+    const userEmail = (topupPayload?.userEmail || orderData.customer_details?.customer_email || req.user?.email || "").trim();
+    const userName = topupPayload?.userName || orderData.customer_details?.customer_name || req.user?.fullName || "SportX Player";
+    const cfPaymentId = orderData.cf_order_id ? String(orderData.cf_order_id) : order_id;
+
+    // Resolve user from database
+    const [userRows] = await connection.query(
+      "SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR id = ? LIMIT 1",
+      [userEmail, req.user?.id || 0]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, message: "Player account not found for wallet top-up" });
+    }
+
+    const user = userRows[0];
+
+    await connection.beginTransaction();
+
+    // 1. Credit wallet
+    await connection.query("INSERT IGNORE INTO player_wallets (user_id, balance) VALUES (?, 0)", [user.id]);
+    await connection.query("UPDATE player_wallets SET balance = balance + ? WHERE user_id = ?", [numericAmount, user.id]);
+
+    // 2. Add wallet ledger transaction
+    await connection.query(
+      `INSERT INTO wallet_transactions (user_id, type, label, amount, status, is_credit)
+       VALUES (?, 'Top Up', ?, ?, 'Success', 1)`,
+      [user.id, `Cashfree UPI Top-Up (Ref: ${cfPaymentId})`, numericAmount]
+    );
+
+    // 3. Record in payments table
+    await connection.query(
+      `INSERT INTO payments 
+       (transaction_id, merchant_transaction_id, provider_reference_id, user_name, user_email, turf_name, amount, method, status, date, payment_details)
+       VALUES (?, ?, ?, ?, ?, 'SportX Wallet Top-Up', ?, 'Cashfree UPI/Card', 'Success', CURDATE(), ?)
+       ON DUPLICATE KEY UPDATE status = 'Success'`,
+      [cfPaymentId, order_id, cfPaymentId, userName, userEmail, numericAmount, JSON.stringify(orderData)]
+    );
+
+    await connection.commit();
+
+    const [[wallet]] = await connection.query("SELECT balance FROM player_wallets WHERE user_id = ?", [user.id]);
+
+    return res.json({
+      success: true,
+      status: "Success",
+      message: `₹${numericAmount} added to your SportX Wallet successfully!`,
+      newBalance: wallet ? wallet.balance : numericAmount,
+      transactionId: cfPaymentId,
+      orderId: order_id,
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error("Cashfree Wallet Topup Verify Error:", error);
+    return res.status(500).json({ success: false, message: "Topup Verification Error", error: error.message });
+  } finally {
+    connection.release();
   }
 });
 
@@ -538,33 +631,62 @@ router.post("/webhook", async (req, res) => {
 });
 
 /**
- * 5. PAYMENT HISTORY (Secured: User can only access their own history)
- * GET /api/payment/cashfree/history
+ * Helper to process direct refund back to original payment method via Cashfree PG API
  */
-router.get("/history", authenticateToken, async (req, res) => {
+export async function processCashfreeRefund(orderId, refundAmount, reason = "Booking cancellation") {
+  if (!orderId) {
+    throw new Error("Cashfree order_id is required to process refund");
+  }
+
+  const refundId = `ref_${orderId.replace(/[^a-zA-Z0-9_-]/g, "")}_${Date.now()}`.slice(0, 40);
+  const refundPayload = {
+    refund_amount: Number(parseFloat(refundAmount).toFixed(2)),
+    refund_id: refundId,
+    refund_note: String(reason).slice(0, 100),
+    refund_speed: "STANDARD",
+  };
+
+  const response = await fetch(`${CASHFREE_CONFIG.BASE_URL}/orders/${encodeURIComponent(orderId)}/refunds`, {
+    method: "POST",
+    headers: getCashfreeHeaders(),
+    body: JSON.stringify(refundPayload),
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    const errorMsg = data?.message || data?.error || `Cashfree refund failed with HTTP ${response.status}`;
+    console.error("[Cashfree Refund Error]:", errorMsg, data);
+    throw new Error(errorMsg);
+  }
+
+  return {
+    success: true,
+    refund_id: data.refund_id || refundId,
+    cf_refund_id: data.cf_refund_id,
+    order_id: data.order_id || orderId,
+    refund_amount: data.refund_amount || refundAmount,
+    refund_status: data.refund_status || "SUCCESS",
+    refund_arn: data.refund_arn || null,
+    status_description: data.status_description || "Refund initiated to original payment source",
+  };
+}
+
+/**
+ * 6. PROCESS DIRECT REFUND ENDPOINT (Admin / Internal)
+ * POST /api/payment/cashfree/refund
+ */
+router.post("/refund", authenticateToken, async (req, res) => {
   try {
-    const pool = getPool();
-    const authUser = req.user;
-    const isAdmin = authUser.role === "Admin" || authUser.role === "Super Admin" || authUser.accountType === "cms-admin";
-
-    let sql = "SELECT * FROM payments";
-    const params = [];
-
-    if (!isAdmin) {
-      sql += " WHERE LOWER(user_email) = LOWER(?)";
-      params.push(authUser.email);
-    } else if (req.query.email) {
-      sql += " WHERE LOWER(user_email) = LOWER(?)";
-      params.push(req.query.email.trim());
+    const { order_id, amount, reason } = req.body;
+    if (!order_id || !amount) {
+      return res.status(400).json({ success: false, error: "order_id and amount are required." });
     }
 
-    sql += " ORDER BY id DESC LIMIT 50";
-
-    const [rows] = await pool.query(sql, params);
-    return res.json({ success: true, payments: rows });
-  } catch (error) {
-    console.error("Cashfree History Error:", error);
-    return res.status(500).json({ success: false, error: error.message });
+    const result = await processCashfreeRefund(order_id, amount, reason);
+    return res.json({ success: true, data: result });
+  } catch (err) {
+    console.error("Cashfree Refund Endpoint Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

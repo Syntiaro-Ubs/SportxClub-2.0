@@ -23,6 +23,7 @@ router.use("/auth", authRoutes);
 // Protect write/delete operations on CMS content with admin auth
 router.use((req, res, next) => {
   if (req.method === "GET") {
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
     return next();
   }
   // Community feed interactions (like, comment, share) are user-level actions handled inside posts.js

@@ -69,6 +69,8 @@ import { adminApi } from "../../services/admin-api";
 import { turfService } from "../../services/turf.service";
 import { TurfOnboardingView } from "./turf-onboarding-view";
 import { ReviewsManagementView } from "./reviews-management-view";
+import { compressImage } from "../../utils/image-compressor";
+import { fastCache } from "../../services/fast-cache";
 
 export const CONSOLE_MODULES = [
   {
@@ -475,6 +477,7 @@ export function CMSDashboard() {
   // Load all dashboard data
   const loadDashboardData = async () => {
     try {
+      fastCache.invalidateAll();
       setIsLoading(true);
       const [sec, ban, spo, fac, faq, trfs, off, gal, why, evts, psts, tourns, fixs, tms, team] = await Promise.all([
         cmsService.getSections().catch(() => []),
@@ -797,27 +800,27 @@ export function CMSDashboard() {
   };
 
   // Banner Handlers
-  const handleBannerFilesSelected = (files) => {
+  const handleBannerFilesSelected = async (files) => {
     const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (validFiles.length === 0) {
       toast.error("Please select valid image files (JPG, PNG, WEBP, etc.)");
       return;
     }
 
-    let processedCount = 0;
+    const toastId = toast.loading(`Optimizing ${validFiles.length} banner image(s)...`);
     const newItems = [];
 
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const preview = e.target.result;
+    for (const file of validFiles) {
+      try {
+        const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1080, quality: 0.85 });
+        const preview = compressed ? compressed.data : "";
         const rawName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
         const defaultTitle = rawName.charAt(0).toUpperCase() + rawName.slice(1);
 
         newItems.push({
           id: Math.random().toString(36).substring(2, 9),
           file,
-          preview,
+          preview: preview || URL.createObjectURL(file),
           title: newBannerForm.title?.trim() || defaultTitle || "SportX Hero Banner",
           subtitle: newBannerForm.subtitle?.trim() || "",
           cta_text: "Book a Turf Now",
@@ -825,15 +828,16 @@ export function CMSDashboard() {
           secondary_cta_text: "Explore Passes",
           secondary_link: "/venues",
         });
+      } catch (err) {
+        console.warn("Failed compressing banner file:", err);
+      }
+    }
 
-        processedCount++;
-        if (processedCount === validFiles.length) {
-          setSelectedBannerFiles((prev) => [...prev, ...newItems]);
-          toast.success(`${validFiles.length} banner image(s) selected!`);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    toast.dismiss(toastId);
+    if (newItems.length > 0) {
+      setSelectedBannerFiles((prev) => [...prev, ...newItems]);
+      toast.success(`${newItems.length} banner image(s) optimized & ready!`);
+    }
   };
 
   const handleRemoveSelectedBanner = (indexToRemove) => {
@@ -891,19 +895,23 @@ export function CMSDashboard() {
     setIsEditBannerModalOpen(true);
   };
 
-  const handleEditBannerImageChange = (e) => {
+  const handleEditBannerImageChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Please select a valid image file (JPG, PNG, WEBP).");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setEditBannerForm((prev) => ({ ...prev, image_url: ev.target.result }));
-      toast.success("New banner image selected from computer!");
-    };
-    reader.readAsDataURL(file);
+    const toastId = toast.loading("Optimizing banner image...");
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1920, maxHeight: 1080, quality: 0.85 });
+      setEditBannerForm((prev) => ({ ...prev, image_url: compressed ? compressed.data : "" }));
+      toast.dismiss(toastId);
+      toast.success("Banner image optimized & ready!");
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.warn("Edit banner compression error:", err);
+    }
     e.target.value = "";
   };
 
@@ -1032,19 +1040,24 @@ export function CMSDashboard() {
     }
   };
 
-  const handleGalleryFileSelect = (e) => {
+  const handleGalleryFileSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       toast.error("Please select a valid image file");
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setGalleryForm((prev) => ({ ...prev, image_url: ev.target.result }));
-      toast.success("Image selected successfully!");
-    };
-    reader.readAsDataURL(file);
+    const toastId = toast.loading("Optimizing image...");
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1400, maxHeight: 1400, quality: 0.82 });
+      setGalleryForm((prev) => ({ ...prev, image_url: compressed ? compressed.data : "" }));
+      toast.dismiss(toastId);
+      toast.success("Image optimized & selected!");
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.warn("Gallery image compression error:", err);
+    }
+    e.target.value = "";
   };
 
   const handleDeleteGalleryItem = async (id) => {

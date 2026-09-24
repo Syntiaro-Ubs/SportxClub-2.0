@@ -843,6 +843,27 @@ async function createTables() {
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN email_sent TINYINT(1) DEFAULT 0;");
   } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN order_id VARCHAR(255);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN payment_id VARCHAR(255);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN refund_id VARCHAR(255);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN refund_status VARCHAR(100);");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN refund_mode VARCHAR(50) DEFAULT 'wallet';");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN refund_amount DECIMAL(10,2) DEFAULT 0.00;");
+  } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN refund_arn VARCHAR(255);");
+  } catch (e) { }
 
   // Clean up any historical duplicate payments (same email, turf, amount, date created within 60s)
   try {

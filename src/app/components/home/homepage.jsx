@@ -40,6 +40,7 @@ import { useIsMobile } from "../ui/use-mobile";
 import { Badge } from "../ui/badge";
 import { adminApi } from "../../services/admin-api";
 import { cmsService } from "../../services/cms-service";
+import { fastCache } from "../../services/fast-cache";
 import { LocationModal } from "./LocationModal";
 import { detectUserCity } from "../../utils/location";
 import { Button } from "../ui/button";
@@ -884,7 +885,15 @@ export function HeroSection() {
   const isDark = resolvedTheme !== "light";
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [dynamicBanners, setDynamicBanners] = useState([]);
+  const [dynamicBanners, setDynamicBanners] = useState(() => {
+    try {
+      const cached = fastCache.get("/api/cms/banners");
+      if (cached && Array.isArray(cached.data)) {
+        return cached.data.filter((b) => b.is_active === undefined || b.is_active === 1 || b.is_active === true);
+      }
+    } catch {}
+    return [];
+  });
 
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" });
 

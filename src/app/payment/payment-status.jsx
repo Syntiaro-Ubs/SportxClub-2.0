@@ -78,6 +78,55 @@ export function PaymentStatus() {
     async function verify() {
       setIsLoading(true);
       try {
+        if (orderId && (orderId.startsWith("WAL-") || searchParams.get("method") === "wallet" || searchParams.get("paymentMethod") === "SportX Wallet")) {
+          const bookingCode = searchParams.get("booking_code") || searchParams.get("bookingCode") || orderId;
+          const paymentId = searchParams.get("payment_id") || `WAL-${Date.now()}`;
+          setVerificationResult({
+            status: "Success",
+            success: true,
+            transactionId: paymentId,
+            order_id: orderId,
+            payment: { payment_method: "SportX Wallet", payment_status: "SUCCESS", payment_currency: "INR", payment_amount: price },
+            booking: {
+              booking_code: bookingCode,
+              turf_name: venueName,
+              amount: price,
+              date: dateStr,
+              time_slot: timeStr,
+              payment_method: "SportX Wallet",
+            },
+          });
+          try {
+            const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+            const newBooking = {
+              booking_code: bookingCode,
+              turf_name: venueName,
+              venue: venueName,
+              turf_id: bookingData?.venueId,
+              date: dateStr,
+              time_slot: timeStr,
+              slot_time: timeStr,
+              time: timeStr,
+              sport: sportStr,
+              amount: price,
+              user_name: bookingData?.userName || localStorage.getItem("userName") || "SportX Player",
+              user_email: bookingData?.userEmail || localStorage.getItem("userEmail") || "user@sportxclub.com",
+              payment_method: "SportX Wallet",
+              status: "Confirmed",
+              timestamp: Date.now(),
+            };
+            const exists = confirmedList.some((b) => b.booking_code === newBooking.booking_code);
+            if (!exists) {
+              confirmedList.unshift(newBooking);
+              localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
+            }
+            sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
+          } catch (e) {}
+          setIsLoading(false);
+          toast.success("⚡ SportX Wallet Payment Confirmed!");
+          return;
+        }
+
         if (orderId) {
           console.log("[PaymentStatus] Verifying Cashfree order:", orderId);
           const statusRes = await cashfreeService.getOrderStatus(orderId);

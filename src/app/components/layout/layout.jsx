@@ -21,6 +21,7 @@ import { ThemeToggleButton } from "../ui/theme-toggle-button";
 import { useAuth } from "../../providers/auth-provider";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { isValidProfileImage } from "../ui/utils";
+import { LocationModal } from "../home/LocationModal";
 
 const navigation = [
   // { name: "Player Details", href: "/player-dashboard", icon: Activity },
@@ -134,6 +135,27 @@ export function Layout() {
   const { currentUser } = useAuth();
   const displayName = currentUser?.fullName || "John Doe";
 
+  const [city, setCity] = useState(
+    () => localStorage.getItem("preferred-city") || "All Cities",
+  );
+
+  useEffect(() => {
+    const handleCityChange = (e) => {
+      setCity(e.detail || "All Cities");
+    };
+    window.addEventListener("preferredCityChanged", handleCityChange);
+    return () =>
+      window.removeEventListener("preferredCityChanged", handleCityChange);
+  }, []);
+
+  const handleCitySelect = (selected) => {
+    localStorage.setItem("preferred-city", selected);
+    setCity(selected);
+    window.dispatchEvent(
+      new CustomEvent("preferredCityChanged", { detail: selected }),
+    );
+  };
+
   const hideMobileNav = useMemo(() => {
     const path = location.pathname;
     const isVenueDetails = /^\/venues\/\w+/.test(path);
@@ -189,6 +211,22 @@ export function Layout() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <LocationModal
+            activeCity={city}
+            onCitySelect={handleCitySelect}
+            trigger={
+              <button
+                className="group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[13px] font-medium cursor-pointer !bg-transparent hover:!bg-transparent focus:outline-none focus:ring-0 text-foreground transition-colors"
+              >
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-foreground transition-all duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
+                <span className="truncate max-w-[140px] leading-normal pb-0.5 text-foreground transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 font-medium">
+                  {city === "All" || city === "All Cities" ? "All Cities" : city}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-foreground/70 transition-all duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-y-0.5" />
+              </button>
+            }
+          />
+
           <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
           {currentUser ? (
             <Link to={currentUser.role === 'owner' ? '/admin-panel' : '/profile'}>

@@ -1,7 +1,9 @@
 import { getAuthHeaders } from "./admin-api";
+import { fastCache } from "./fast-cache";
 
 /**
  * CMS Service for interacting with Express + MySQL CMS API (/api/cms/*)
+ * Enhanced with fastCache (Stale-While-Revalidate) for instant 0ms responses
  */
 const API_BASE = "/api/cms";
 
@@ -22,14 +24,14 @@ export const cmsService = {
 
   // Sections
   getSections: async () => {
-    const res = await fetch(`${API_BASE}/sections`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/sections`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createSection: async (sectionData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/sections`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -41,6 +43,7 @@ export const cmsService = {
   },
 
   updateSection: async (id, sectionData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/sections/${id}`, {
       method: "PUT",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -52,6 +55,7 @@ export const cmsService = {
   },
 
   toggleSection: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/sections/${id}/toggle`, {
       method: "PUT",
       headers: getAuthHeaders(),
@@ -62,6 +66,7 @@ export const cmsService = {
   },
 
   deleteSection: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/sections/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -73,14 +78,14 @@ export const cmsService = {
 
   // Banners
   getBanners: async () => {
-    const res = await fetch(`${API_BASE}/banners`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/banners`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createBanner: async (bannerData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/banners`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -92,6 +97,7 @@ export const cmsService = {
   },
 
   createBanners: async (bannersData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/banners`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -103,6 +109,7 @@ export const cmsService = {
   },
 
   updateBanner: async (id, bannerData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/banners/${id}`, {
       method: "PUT",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -114,6 +121,7 @@ export const cmsService = {
   },
 
   deleteBanner: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/banners/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -125,14 +133,14 @@ export const cmsService = {
 
   // Sports
   getSports: async () => {
-    const res = await fetch(`${API_BASE}/sports`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/sports`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createSport: async (sportData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/sports`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -144,6 +152,7 @@ export const cmsService = {
   },
 
   deleteSport: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/sports/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -155,14 +164,14 @@ export const cmsService = {
 
   // FAQs
   getFaqs: async () => {
-    const res = await fetch(`${API_BASE}/faqs`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/faqs`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createFaq: async (faqData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/faqs`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -174,6 +183,7 @@ export const cmsService = {
   },
 
   deleteFaq: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/faqs/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -185,14 +195,14 @@ export const cmsService = {
 
   // Facilities & Equipment
   getFacilities: async () => {
-    const res = await fetch(`${API_BASE}/facilities`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/facilities`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createFacility: async (facilityData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/facilities`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -204,6 +214,7 @@ export const cmsService = {
   },
 
   deleteFacility: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/facilities/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -215,14 +226,14 @@ export const cmsService = {
 
   // Offers
   getOffers: async () => {
-    const res = await fetch(`${API_BASE}/offers`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/offers`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createOffer: async (offerData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/offers`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -234,6 +245,7 @@ export const cmsService = {
   },
 
   updateOffer: async (id, offerData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/offers/${id}`, {
       method: "PUT",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -245,6 +257,7 @@ export const cmsService = {
   },
 
   deleteOffer: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/offers/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -256,14 +269,14 @@ export const cmsService = {
 
   // Gallery
   getGallery: async () => {
-    const res = await fetch(`${API_BASE}/gallery`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/gallery`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createGallery: async (galleryData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/gallery`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -275,6 +288,7 @@ export const cmsService = {
   },
 
   updateGallery: async (id, galleryData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/gallery/${id}`, {
       method: "PUT",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -286,6 +300,7 @@ export const cmsService = {
   },
 
   deleteGallery: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/gallery/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -297,14 +312,14 @@ export const cmsService = {
 
   // Why Cards
   getWhyCards: async () => {
-    const res = await fetch(`${API_BASE}/why-cards`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/why-cards`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createWhyCard: async (whyData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/why-cards`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -316,6 +331,7 @@ export const cmsService = {
   },
 
   updateWhyCard: async (id, whyData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/why-cards/${id}`, {
       method: "PUT",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -327,6 +343,7 @@ export const cmsService = {
   },
 
   deleteWhyCard: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/why-cards/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -338,14 +355,14 @@ export const cmsService = {
 
   // Testimonials
   getTestimonials: async () => {
-    const res = await fetch(`${API_BASE}/testimonials`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/testimonials`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createTestimonial: async (testimonialData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/testimonials`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -357,6 +374,7 @@ export const cmsService = {
   },
 
   deleteTestimonial: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/testimonials/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -368,14 +386,14 @@ export const cmsService = {
 
   // Events
   getEvents: async () => {
-    const res = await fetch(`${API_BASE}/events`, {
+    const json = await fastCache.fetchWithSWR(`${API_BASE}/events`, {
       headers: getAuthHeaders(),
     });
-    const data = await res.json();
-    return data.data || [];
+    return json?.data || [];
   },
 
   createEvent: async (eventData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/events`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -387,6 +405,7 @@ export const cmsService = {
   },
 
   updateEvent: async (id, eventData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/events/${id}`, {
       method: "PUT",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -398,6 +417,7 @@ export const cmsService = {
   },
 
   deleteEvent: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/events/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
@@ -421,6 +441,7 @@ export const cmsService = {
   },
 
   createPost: async (postData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/posts`, {
       method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -474,6 +495,7 @@ export const cmsService = {
   },
 
   updatePost: async (id, postData) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/posts/${id}`, {
       method: "PUT",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
@@ -485,6 +507,7 @@ export const cmsService = {
   },
 
   deletePost: async (id) => {
+    fastCache.invalidateAll();
     const res = await fetch(`${API_BASE}/posts/${id}`, {
       method: "DELETE",
       headers: getAuthHeaders(),

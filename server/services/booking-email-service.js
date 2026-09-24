@@ -453,7 +453,15 @@ function getPlayerCancellationHtml({
   endTime,
   duration,
   cancellationDateTime,
+  refundMode,
+  refundId,
+  amount,
 }) {
+  const isDirectBank = refundMode === "source";
+  const refundText = isDirectBank
+    ? `Refund of ₹${amount || 0} initiated directly to your original payment method (Bank/UPI via Cashfree). Expected settlement: 24 hours to 5 working days.`
+    : `Refund of ₹${amount || 0} credited instantly to your SportX Wallet.`;
+
   return `
 <div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
   <p style="margin: 0 0 16px 0;">Dear <strong>${userName || "Player"}</strong>,</p>
@@ -472,6 +480,12 @@ function getPlayerCancellationHtml({
     <strong>Status :-</strong> Cancelled<br>
     <strong>Cancelled On :-</strong> ${cancellationDateTime}
   </p>
+
+  <div style="margin: 0 0 16px 0; padding: 12px; background-color: #ecfdf5; border-left: 4px solid #10b981; border-radius: 4px;">
+    <strong>Refund Status:</strong><br>
+    ${refundText}<br>
+    ${refundId ? `<strong>Refund Ref ID:</strong> ${refundId}` : ""}
+  </div>
 
   <p style="margin: 0 0 16px 0;">The selected slot is no longer reserved under your account.</p>
 
@@ -853,6 +867,9 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
         endTime,
         duration,
         cancellationDateTime,
+        refundMode: details.refundMode || booking?.refund_mode || "wallet",
+        refundId: details.refundId || booking?.refund_arn || booking?.refund_id,
+        amount: details.amount || booking?.amount || 0,
       });
 
       cancelPromises.push(

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../components/ui/utils";
 import { Button } from "../components/ui/button";
 import { adminApi } from "../services/admin-api";
+import { fastCache } from "../services/fast-cache";
 
 function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
   return (
@@ -187,6 +188,32 @@ export function VenueBooking() {
   const [reviewText, setReviewText] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+  const [turfs, setTurfs] = useState(() => {
+    try {
+      const cached = fastCache.get("/api/admin/turfs");
+      return (cached && Array.isArray(cached.data)) ? cached.data : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isLoading, setIsLoading] = useState(() => turfs.length === 0);
+
+  const fetchTurfs = async () => {
+    try {
+      if (turfs.length === 0) setIsLoading(true);
+      const data = await adminApi.getAll("turfs");
+      setTurfs(data || []);
+    } catch (err) {
+      console.error("Error loading turfs from MySQL database:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTurfs();
+  }, []);
+
   const handleReviewSubmit = async () => {
     if (reviewRating === 0) {
       toast.error("Please select a rating.");
@@ -247,7 +274,7 @@ export function VenueBooking() {
 
   useEffect(() => {
     const handleCityChange = (e) => {
-      setSelectedLocation(e.detail);
+      setSelectedLocation(e.detail || "All Cities");
     };
     window.addEventListener("preferredCityChanged", handleCityChange);
     return () => window.removeEventListener("preferredCityChanged", handleCityChange);
@@ -259,23 +286,23 @@ export function VenueBooking() {
     }
   }, [location.state?.sport]);
 
-  const [turfs, setTurfs] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadTurfs() {
+function extractImageSrc(val) {
+  if (!val) return "";
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
       try {
-        setIsLoading(true);
-        const data = await adminApi.getAll("turfs");
-        setTurfs(data || []);
-      } catch (err) {
-        console.error("Error loading turfs from MySQL database:", err);
-      } finally {
-        setIsLoading(false);
-      }
+        const parsed = JSON.parse(trimmed);
+        return parsed.data || parsed.url || parsed.preview || parsed.name || "";
+      } catch (e) {}
     }
-    loadTurfs();
-  }, []);
+    return trimmed;
+  }
+  if (typeof val === "object" && val !== null) {
+    return val.data || val.url || val.preview || val.name || "";
+  }
+  return "";
+}
 
   const dynamicVenues = useMemo(() => {
     return turfs.map((t) => {
@@ -292,16 +319,20 @@ export function VenueBooking() {
           }
           if (Array.isArray(parsed)) {
             galleryList = parsed
-              .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+              .map((img) => extractImageSrc(img))
               .filter(Boolean);
           }
         } catch {}
       }
-      if (galleryList.length === 0 && (t.image_url || t.image)) {
-        galleryList = [t.image_url || t.image];
+      
+      const singleCover = extractImageSrc(t.image_url || t.image);
+      if (galleryList.length === 0 && singleCover) {
+        galleryList = [singleCover];
+      } else if (singleCover && !galleryList.includes(singleCover)) {
+        galleryList = [singleCover, ...galleryList];
       }
 
-      const mainImage = galleryList[0] || t.image_url || t.image || "/assets/venues/turf-1.webp";
+      const mainImage = galleryList[0] || singleCover || "/assets/venues/turf-1.webp";
 
       return {
         id: t.id,
@@ -309,7 +340,7 @@ export function VenueBooking() {
         location: typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "Local Arena"),
         price: Number(t.price_per_hour !== undefined ? t.price_per_hour : (t.price !== undefined ? t.price : 1500)),
         rating: Number(t.rating !== undefined && t.rating !== null ? t.rating : 0),
-        sports: (t.sport_type || t.sportType || "Football").toUpperCase(),
+        sports: (t.sport_type || t.sportType || t.sports || t.sport || "Football").toUpperCase(),
         image: mainImage,
         gallery: galleryList,
         images: galleryList,
@@ -331,7 +362,7 @@ export function VenueBooking() {
     
     // Add all sports from turfs in DB
     (turfs || []).forEach((t) => {
-      const raw = t.sport_type || t.sportType || t.sports || "";
+      const raw = t.sport_type || t.sportType || t.sports || t.sport || "";
       const parts = String(raw).split(/[,•;/]+/).map((s) => s.trim()).filter(Boolean);
       parts.forEach((p) => {
         if (p.toLowerCase() === "multi-sport" || p.toLowerCase() === "multisport") return;
@@ -353,17 +384,95 @@ export function VenueBooking() {
     return list;
   }, [turfs]);
 
-  const citiesList = ["All Cities", "Mumbai", "Delhi-NCR", "Bengaluru", "Hyderabad", "Chandigarh", "Ahmedabad", "Pune", "Chennai", "Kolkata", "Kochi"];
+  const dynamicCitiesList = useMemo(() => {
+    const list = ["All Cities"];
+    const seen = new Set(["all cities", "all", "all areas"]);
+    
+    // 1. Add onboarded cities from turfs in database
+    (turfs || []).forEach((t) => {
+      const raw = typeof t.location === "string" ? t.location : (t.location?.city || t.location?.address || "");
+      const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+      parts.forEach((p) => {
+        const lower = p.toLowerCase();
+        if (!seen.has(lower) && lower.length > 2 && !["unknown location", "location not specified", "null", "undefined", "n/a", "none"].includes(lower)) {
+          seen.add(lower);
+          list.push(p.charAt(0).toUpperCase() + p.slice(1));
+        }
+      });
+    });
 
-  const filteredVenues = dynamicVenues.filter((venue) => {
-    const matchSport = selectedSport === "All Sports" || venue.sports.toLowerCase().includes(selectedSport.toLowerCase());
-    const matchLocation = selectedLocation === "All Cities" || venue.location.toLowerCase().includes(selectedLocation.toLowerCase());
-    return matchSport && matchLocation;
-  });
+    // 2. Add standard major cities
+    const standard = ["Pune", "Mumbai", "Nagpur", "Pimpri-Chinchwad", "Bengaluru", "Delhi-NCR", "Hyderabad", "Ahmedabad", "Chennai", "Kolkata", "Kochi"];
+    standard.forEach((c) => {
+      if (!seen.has(c.toLowerCase())) {
+        seen.add(c.toLowerCase());
+        list.push(c);
+      }
+    });
+
+    return list;
+  }, [turfs]);
+
+  // Helper matching functions
+  const isCityMatch = (venueLoc, filterCity) => {
+    if (!filterCity || filterCity === "All Cities" || filterCity === "All" || filterCity === "All Areas") return true;
+    const vLoc = (venueLoc || "").toLowerCase();
+    const fLoc = filterCity.toLowerCase();
+    return vLoc.includes(fLoc) || fLoc.includes(vLoc);
+  };
+
+  const isSportMatch = (venueSports, venueDesc, filterSport) => {
+    if (!filterSport || filterSport === "All Sports") return true;
+    const vSports = (venueSports || "").toLowerCase();
+    const fSport = filterSport.toLowerCase();
+    const vDesc = (venueDesc || "").toLowerCase();
+    return vSports.includes(fSport) || fSport.includes(vSports) || vDesc.includes(fSport);
+  };
+
+  // 1. Venues matching sport filter
+  const sportMatchedVenues = useMemo(() => {
+    return dynamicVenues.filter((venue) => isSportMatch(venue.sports, venue.description, selectedSport));
+  }, [dynamicVenues, selectedSport]);
+
+  // 2. Venues matching both sport and city filter
+  const strictMatchedVenues = useMemo(() => {
+    return sportMatchedVenues.filter((venue) => isCityMatch(venue.location, selectedLocation));
+  }, [sportMatchedVenues, selectedLocation]);
+
+  // Check if we should fallback to all cities for this sport because current city has 0 venues
+  const isFallbackToAllCities = useMemo(() => {
+    if (selectedLocation === "All Cities" || selectedLocation === "All" || selectedLocation === "All Areas") {
+      return false;
+    }
+    return strictMatchedVenues.length === 0 && sportMatchedVenues.length > 0;
+  }, [strictMatchedVenues.length, sportMatchedVenues.length, selectedLocation]);
+
+  // Final venues to display
+  const venuesToDisplay = useMemo(() => {
+    if (strictMatchedVenues.length > 0) {
+      return strictMatchedVenues;
+    }
+    if (isFallbackToAllCities) {
+      return sportMatchedVenues;
+    }
+    return [];
+  }, [strictMatchedVenues, isFallbackToAllCities, sportMatchedVenues]);
+
+  // Apply Price / Rating sort
+  const sortedVenues = useMemo(() => {
+    return [...venuesToDisplay].sort((a, b) => {
+      if (sortField === "Price") {
+        return sortByPrice === "Low to High" ? a.price - b.price : b.price - a.price;
+      } else if (sortField === "Rating") {
+        return sortByRating === "High to Low" ? b.rating - a.rating : a.rating - b.rating;
+      }
+      return 0;
+    });
+  }, [venuesToDisplay, sortField, sortByPrice, sortByRating]);
 
   // Recommended Venues (Section #1): Sorted by display_order set in Dashboard (or by most reviews if default)
   const premiumVenues = useMemo(() => {
-    return [...filteredVenues].sort((a, b) => {
+    return [...sortedVenues].sort((a, b) => {
       const hasOrderA = Number(a.display_order) > 0;
       const hasOrderB = Number(b.display_order) > 0;
       if (hasOrderA && hasOrderB) {
@@ -379,11 +488,11 @@ export function VenueBooking() {
       if (ratB !== ratA) return ratB - ratA;
       return Number(b.id || 0) - Number(a.id || 0);
     });
-  }, [filteredVenues]);
+  }, [sortedVenues]);
 
   // All Venues (Section #2): Sorted by all_display_order set in Dashboard (or by most reviews if default)
   const otherVenues = useMemo(() => {
-    return [...filteredVenues].sort((a, b) => {
+    return [...sortedVenues].sort((a, b) => {
       const hasOrderA = Number(a.all_display_order) > 0;
       const hasOrderB = Number(b.all_display_order) > 0;
       if (hasOrderA && hasOrderB) {
@@ -399,7 +508,7 @@ export function VenueBooking() {
       if (ratB !== ratA) return ratB - ratA;
       return Number(b.id || 0) - Number(a.id || 0);
     });
-  }, [filteredVenues]);
+  }, [sortedVenues]);
 
   const scrollLeft1 = () => {
     if (scrollRef1.current) {
@@ -503,16 +612,21 @@ export function VenueBooking() {
   const getVenueSubImages = (venue) => {
     let list = [];
     if (venue.gallery && Array.isArray(venue.gallery) && venue.gallery.length > 0) {
-      list = venue.gallery.filter(Boolean);
+      list = venue.gallery.map(img => extractImageSrc(img)).filter(Boolean);
     } else if (venue.images && Array.isArray(venue.images) && venue.images.length > 0) {
-      list = venue.images.filter(Boolean);
+      list = venue.images.map(img => extractImageSrc(img)).filter(Boolean);
     } else if (venue.image) {
-      list = [venue.image];
+      const single = extractImageSrc(venue.image);
+      if (single) list = [single];
     }
 
-    if (list.length > 0) {
-      // If the venue has multiple uploaded images, start sub-images from index 1 (secondary images)
-      const secondary = list.length > 1 ? list.slice(1) : list;
+    // Filter unique valid images
+    const uniqueImages = Array.from(new Set(list));
+
+    // If venue has 2 or more distinct uploaded photos:
+    if (uniqueImages.length >= 2) {
+      // Secondary photos (excluding the main cover image at index 0)
+      const secondary = uniqueImages.slice(1);
       const result = [];
       for (let i = 0; i < 3; i++) {
         result.push(secondary[i % secondary.length]);
@@ -520,10 +634,11 @@ export function VenueBooking() {
       return result;
     }
 
+    // If only 1 image (or none) was uploaded, display 3 distinct themed angle views rather than repeating the single cover photo 3 times
     return [
-      "/assets/venues/turf-1.webp",
       "/assets/venues/turf-2.webp",
       "/assets/venues/turf-3.webp",
+      "/assets/venues/new_football_turf_2.png",
     ];
   };
 
@@ -806,6 +921,21 @@ export function VenueBooking() {
                               />
                             </div>
 
+                            {/* LOCATION / CITY Section */}
+                            <div className="w-full px-3.5 py-2.5 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
+                              <h4 className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">LOCATION</h4>
+                              <CustomSelect
+                                value={selectedLocation}
+                                onChange={(val) => {
+                                  setSelectedLocation(val);
+                                  localStorage.setItem("preferred-city", val);
+                                  window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: val }));
+                                }}
+                                options={dynamicCitiesList}
+                                variant="clean"
+                              />
+                            </div>
+
                             {/* PRICE Section */}
                             <div className="w-full px-3.5 py-2.5 hover:bg-slate-50/70 dark:hover:bg-slate-800/30 transition-colors">
                               <h4 className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-0.5">PRICE</h4>
@@ -863,11 +993,45 @@ export function VenueBooking() {
               </div>
               <Link
                 to="/venues"
-                className="flex items-center gap-1 text-[#059669] font-semibold text-sm hover:underline"
+                onClick={() => {
+                  setSelectedSport("All Sports");
+                  setSelectedLocation("All Cities");
+                  localStorage.setItem("preferred-city", "All Cities");
+                  window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
+                }}
+                className="flex items-center gap-1 text-[#059669] font-semibold text-sm hover:underline cursor-pointer"
               >
                 See All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
+
+            {/* Smart Fallback Notification Banner */}
+            {isFallbackToAllCities && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-wrap items-center justify-between gap-2 p-3 sm:px-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs sm:text-sm font-medium mb-3"
+              >
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>
+                    No {selectedSport !== "All Sports" ? selectedSport : ""} venues found in{" "}
+                    <span className="font-bold underline">{selectedLocation}</span>. Showing all {sportMatchedVenues.length} available {selectedSport !== "All Sports" ? selectedSport : ""} {sportMatchedVenues.length === 1 ? "venue" : "venues"} across other locations.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedLocation("All Cities");
+                    localStorage.setItem("preferred-city", "All Cities");
+                    window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
+                  }}
+                  className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer bg-white/80 dark:bg-slate-900/80 px-2.5 py-1 rounded-lg border border-emerald-500/30 shrink-0 shadow-2xs"
+                >
+                  Set to All Cities
+                </button>
+              </motion.div>
+            )}
 
             {/* Recommended Venues Slider */}
             <div className="relative group/section">
@@ -931,6 +1095,8 @@ export function VenueBooking() {
                     onClick={() => {
                       setSelectedSport("All Sports");
                       setSelectedLocation("All Cities");
+                      localStorage.setItem("preferred-city", "All Cities");
+                      window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
                     }}
                     variant="outline"
                     className="mt-6 border-slate-200 dark:border-slate-800 dark:text-white bg-transparent"

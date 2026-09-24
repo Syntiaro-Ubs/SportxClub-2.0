@@ -37,7 +37,18 @@ const STEPS = [
 const SPORTS = ["Football", "Cricket", "Badminton", "Tennis", "Basketball", "Swimming", "Volleyball", "Table Tennis"];
 const FACILITIES = ["Parking", "Washroom", "Drinking Water", "Flood Lights", "Changing Room", "Seating Area", "Cafeteria", "Equipment Rental", "First Aid", "CCTV", "WiFi"];
 
-const fileToBase64 = (file) => {
+import { compressImage } from "../../utils/image-compressor";
+
+const fileToBase64 = async (file) => {
+  if (file && file.type && file.type.startsWith("image/")) {
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
+      if (compressed) return compressed;
+    } catch (err) {
+      console.warn("Auto-compression fallback to standard reader:", err);
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);

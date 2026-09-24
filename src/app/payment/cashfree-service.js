@@ -257,6 +257,41 @@ export const cashfreeService = {
   },
 
   /**
+   * 4.5 Verify Wallet Top-Up Payment
+   */
+  verifyWalletTopup: async (orderId, topupPayload) => {
+    try {
+      let token = null;
+      if (typeof window !== "undefined") {
+        token = localStorage.getItem("token");
+        if (!token) {
+          try {
+            const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
+            token = pUser.token;
+          } catch {}
+        }
+      }
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+      const response = await fetch(`${API_BASE}/verify-wallet-topup`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          order_id: orderId,
+          topupPayload,
+        }),
+      });
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      console.error("cashfreeService.verifyWalletTopup error:", err);
+      return { success: false, message: err.message };
+    }
+  },
+
+  /**
    * 5. Fetch Payment History
    */
   getHistory: async (email) => {

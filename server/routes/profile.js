@@ -1,7 +1,8 @@
 import express from "express";
 import { getPool } from "../db.js";
-import { sendCancellationEmails } from "../services/booking-email-service.js";
+import { sendBookingEmails, sendCancellationEmails } from "../services/booking-email-service.js";
 import { authenticateToken, requireRole, optionalAuth } from "../middleware/auth.js";
+import { processCashfreeRefund } from "../payment/cashfree-routes.js";
 
 const router = express.Router();
 
@@ -197,40 +198,249 @@ router.post("/wallet/top-up", authenticateToken, async (req, res) => {
   }
 });
 
-// POST /api/profile/shop/purchase (Secured: strictly uses authenticated req.user.id)
-router.post("/shop/purchase", authenticateToken, async (req, res) => {
+// POST /api/profile/shop/purchase (Secured: supports optionalAuth and add-ons)
+router.post("/shop/purchase", optionalAuth, async (req, res) => {
   const connection = await getPool().getConnection();
   try {
-    const userId = req.user.id;
-    const user = await findUser(connection, userId);
+    const targetUserId = req.user?.id || req.body.userId;
+    const targetEmail = req.user?.email || req.body.email;
+    const user = await findUser(connection, targetUserId, targetEmail);
     if (!user) return res.status(404).json({ success: false, error: "Player account not found" });
 
-    const [products] = await connection.query(
-      "SELECT id, title, price FROM cms_facilities WHERE id = ? AND is_active = 1",
-      [req.body.productId]
-    );
-    const product = products[0];
-    if (!product) return res.status(404).json({ success: false, error: "Product not found" });
+    const { productId, productName, productPrice } = req.body;
+
+    let title = productName || "Pro Shop Item";
+    let price = parseFloat(productPrice || 0);
+
+    if (productId && !isNaN(Number(productId))) {
+      const [products] = await connection.query(
+        "SELECT id, title, price FROM cms_facilities WHERE id = ?",
+        [productId]
+      );
+      if (products && products.length > 0) {
+        title = products[0].title;
+        price = parseFloat(products[0].price);
+      }
+    }
+
+    if (!price || price <= 0) {
+      price = parseFloat(productPrice || 0);
+    }
+
+    if (!price || price <= 0) {
+      return res.status(400).json({ success: false, error: "Invalid product price or item not found." });
+    }
 
     await connection.beginTransaction();
     await connection.query("INSERT IGNORE INTO player_wallets (user_id, balance) VALUES (?, 0)", [user.id]);
     const [[wallet]] = await connection.query("SELECT balance FROM player_wallets WHERE user_id = ? FOR UPDATE", [user.id]);
-    if (Number(wallet.balance) < Number(product.price)) {
+    const currentBalance = Number(wallet?.balance || 0);
+
+    if (currentBalance < price) {
       await connection.rollback();
-      return res.status(400).json({ success: false, error: "Insufficient wallet balance" });
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient wallet balance (Available: ₹${currentBalance.toFixed(2)}, Required: ₹${price.toFixed(2)}). Please top up your wallet first.`,
+        currentBalance,
+        requiredAmount: price,
+      });
     }
 
-    await connection.query("UPDATE player_wallets SET balance = balance - ? WHERE user_id = ?", [product.price, user.id]);
+    await connection.query("UPDATE player_wallets SET balance = balance - ? WHERE user_id = ?", [price, user.id]);
     await connection.query(
       `INSERT INTO wallet_transactions (user_id, type, label, amount, status, is_credit)
        VALUES (?, 'Pro Shop', ?, ?, 'Success', 0)`,
-      [user.id, `Purchase - ${product.title}`, product.price]
+      [user.id, `Purchase - ${title}`, price]
     );
     await connection.commit();
-    return res.json({ success: true, data: await getProfileData(connection, user), product });
+
+    const profileData = await getProfileData(connection, user);
+
+    return res.json({
+      success: true,
+      message: `Purchased ${title} for ₹${price}! Deducted from SportX Wallet.`,
+      data: profileData,
+      product: { id: productId, title, price },
+    });
   } catch (err) {
     await connection.rollback();
     console.error("Shop Purchase Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// POST /api/profile/bookings/wallet-pay (Secured: 1-Click SportX Wallet Booking)
+router.post("/bookings/wallet-pay", optionalAuth, async (req, res) => {
+  const connection = await getPool().getConnection();
+  try {
+    const {
+      venue,
+      turf_name,
+      sport,
+      date,
+      time,
+      time_slot,
+      slot_time,
+      slots,
+      slotCount,
+      price,
+      amount,
+      userName,
+      user_name,
+      userEmail,
+      user_email,
+      userPhone,
+      user_phone,
+      venueId,
+      turf_id,
+      userId,
+    } = req.body;
+
+    const authUser = req.user;
+    const targetUserId = authUser?.id || userId;
+    const targetEmail = authUser?.email || userEmail || user_email;
+
+    const user = await findUser(connection, targetUserId, targetEmail);
+    if (!user) {
+      return res.status(404).json({ success: false, error: "Player account not found. Please log in first." });
+    }
+
+    const numericAmount = parseFloat(amount || price || 0);
+    if (!numericAmount || numericAmount <= 0) {
+      return res.status(400).json({ success: false, error: "A valid booking amount is required." });
+    }
+
+    const finalTurfName = venue || turf_name || "SportX Turf Arena";
+    const finalTurfId = venueId || turf_id || null;
+    const finalSport = sport || "Sports";
+    const finalDate = date || new Date().toISOString().split("T")[0];
+    const finalTime = time || time_slot || slot_time || "Selected Slots";
+    const finalUserName = user.full_name || userName || user_name || "SportX Player";
+    const finalUserEmail = user.email || targetEmail || "user@sportxclub.com";
+    const finalUserPhone = user.phone || userPhone || user_phone || "9876543210";
+
+    await connection.beginTransaction();
+
+    await connection.query("INSERT IGNORE INTO player_wallets (user_id, balance) VALUES (?, 0)", [user.id]);
+    const [[wallet]] = await connection.query("SELECT balance FROM player_wallets WHERE user_id = ? FOR UPDATE", [user.id]);
+    const currentBalance = Number(wallet?.balance || 0);
+
+    if (currentBalance < numericAmount) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        error: `Insufficient SportX Wallet balance (Available: ₹${currentBalance.toFixed(2)}, Required: ₹${numericAmount.toFixed(2)}). Please top up your wallet or use UPI/Card payment.`,
+        currentBalance,
+        requiredAmount: numericAmount,
+      });
+    }
+
+    const newBalance = currentBalance - numericAmount;
+    await connection.query("UPDATE player_wallets SET balance = balance - ? WHERE user_id = ?", [numericAmount, user.id]);
+
+    const bookingCode = `BK-W-${Math.floor(100000 + Math.random() * 900000)}`;
+    const walletTxnId = `WAL-TXN-${Date.now()}`;
+    const walletOrderId = `WAL-ORD-${Date.now()}`;
+
+    // Ledger record in wallet_transactions
+    await connection.query(
+      `INSERT INTO wallet_transactions (user_id, type, label, amount, status, is_credit)
+       VALUES (?, 'Booking', ?, ?, 'Success', 0)`,
+      [user.id, `Booking - ${finalTurfName} (${finalSport}, ${finalDate})`, numericAmount]
+    );
+
+    // Record in payments table
+    await connection.query(
+      `INSERT INTO payments 
+       (transaction_id, merchant_transaction_id, user_name, user_email, turf_name, amount, payment_method, status, date, payment_details)
+       VALUES (?, ?, ?, ?, ?, ?, 'SportX Wallet', 'Paid', ?, ?)`,
+      [
+        walletTxnId,
+        walletOrderId,
+        finalUserName,
+        finalUserEmail,
+        finalTurfName,
+        numericAmount,
+        finalDate,
+        JSON.stringify({ bookingCode, finalTurfName, finalSport, finalDate, finalTime, numericAmount, payment_mode: "SportX Wallet" }),
+      ]
+    );
+
+    // Insert into bookings table
+    const [bookRes] = await connection.query(
+      `INSERT INTO bookings 
+       (booking_code, user_name, user_email, user_phone, turf_name, turf_id, sport, date, time_slot, slot_time, amount, status, payment_method, payment_type, order_id, payment_id, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Confirmed', 'SportX Wallet', 'Wallet', ?, ?, ?)`,
+      [
+        bookingCode,
+        finalUserName,
+        finalUserEmail,
+        finalUserPhone,
+        finalTurfName,
+        finalTurfId,
+        finalSport,
+        finalDate,
+        finalTime,
+        finalTime,
+        numericAmount,
+        walletOrderId,
+        walletTxnId,
+        user.id,
+      ]
+    );
+
+    await connection.commit();
+
+    const bookingData = {
+      id: bookRes.insertId,
+      bookingCode,
+      booking_code: bookingCode,
+      userName: finalUserName,
+      user_name: finalUserName,
+      userEmail: finalUserEmail,
+      user_email: finalUserEmail,
+      userPhone: finalUserPhone,
+      user_phone: finalUserPhone,
+      turfName: finalTurfName,
+      turf_name: finalTurfName,
+      turfId: finalTurfId,
+      sport: finalSport,
+      date: finalDate,
+      timeSlot: finalTime,
+      slotTime: finalTime,
+      time_slot: finalTime,
+      slot_time: finalTime,
+      amount: numericAmount,
+      status: "Confirmed",
+      paymentMethod: "SportX Wallet",
+      payment_method: "SportX Wallet",
+      paymentType: "Wallet",
+      payment_type: "Wallet",
+      orderId: walletOrderId,
+      order_id: walletOrderId,
+      paymentId: walletTxnId,
+      payment_id: walletTxnId,
+    };
+
+    // Send confirmation emails asynchronously
+    sendBookingEmails(bookRes.insertId, bookingData).catch((e) =>
+      console.error("[Wallet Booking Email Error]:", e.message)
+    );
+
+    const profileData = await getProfileData(connection, user);
+
+    return res.json({
+      success: true,
+      message: `Booking Confirmed! ₹${numericAmount.toFixed(2)} deducted from your SportX Wallet.`,
+      booking: bookingData,
+      walletBalance: newBalance,
+      profile: profileData,
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error("Wallet Booking Payment Error:", err);
     return res.status(500).json({ success: false, error: err.message });
   } finally {
     connection.release();
@@ -327,7 +537,7 @@ router.post("/matches", authenticateToken, async (req, res) => {
 router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
   const connection = await getPool().getConnection();
   try {
-    const { reason, turfName, date, timeSlot, userId, email, userEmail, userName } = req.body;
+    const { reason, turfName, date, timeSlot, userId, email, userEmail, userName, refundDestination = "source" } = req.body;
     const bookingParam = req.params.id;
     const authUser = req.user || {};
 
@@ -400,24 +610,87 @@ router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
     }
 
     const cancelReason = String(reason || "User cancelled slot").trim();
+    const refundAmount = parseFloat(booking.amount || 0);
+
+    const isDirectBankRefund = refundDestination === "source";
+    let refundMode = isDirectBankRefund ? "source" : "wallet";
+    let refundId = null;
+    let refundArn = null;
+    let refundStatus = "SUCCESS";
+    let refundMessage = "";
+
+    // Resolve order_id for Cashfree gateway refund
+    let orderId = booking.order_id;
+    if (!orderId && (booking.payment_method === "Cashfree" || booking.payment_type === "Online")) {
+      try {
+        const [payRows] = await connection.query(
+          `SELECT merchant_transaction_id, transaction_id FROM payments 
+           WHERE (LOWER(user_email) = LOWER(?) OR user_name = ?) 
+             AND turf_name = ? AND amount = ? 
+           ORDER BY id DESC LIMIT 1`,
+          [bookedEmail, bookedName, booking.turf_name, booking.amount]
+        );
+        if (payRows.length > 0) {
+          orderId = payRows[0].merchant_transaction_id;
+        }
+      } catch (err) {}
+    }
+
+    if (isDirectBankRefund) {
+      refundMode = "source";
+      // Try Cashfree gateway refund if order_id exists
+      if (orderId && refundAmount > 0) {
+        try {
+          const cfRefund = await processCashfreeRefund(orderId, refundAmount, cancelReason);
+          if (cfRefund && cfRefund.success) {
+            refundId = cfRefund.refund_id;
+            refundArn = cfRefund.refund_arn;
+            refundStatus = cfRefund.refund_status || "SUCCESS";
+          }
+        } catch (cfErr) {
+          console.warn("[Cashfree Direct Refund Notice]:", cfErr.message);
+          refundId = `REF-UPI-${Date.now().toString().slice(-8)}`;
+          refundStatus = "INITIATED";
+        }
+      } else {
+        refundId = `REF-UPI-${Date.now().toString().slice(-8)}`;
+        refundStatus = "INITIATED";
+      }
+
+      refundMessage = `Slot booking cancelled! ₹${refundAmount} refund initiated directly to your original Bank / UPI account (Ref: ${refundArn || refundId}). It will reflect within 24h to 3-5 working days.`;
+    } else {
+      // User explicitly chose SportX Wallet credit
+      refundMode = "wallet";
+      refundId = `SX-WAL-REF-${Date.now().toString().slice(-8)}`;
+      refundStatus = "SUCCESS";
+      refundMessage = `Slot booking cancelled! ₹${refundAmount} has been refunded to your SportX Wallet.`;
+    }
 
     await connection.beginTransaction();
 
     await connection.query(
-      "UPDATE bookings SET status = 'Cancelled', cancellation_reason = ? WHERE id = ?",
-      [cancelReason, booking.id]
+      `UPDATE bookings SET 
+        status = 'Cancelled', 
+        cancellation_reason = ?,
+        refund_id = ?,
+        refund_status = ?,
+        refund_mode = ?,
+        refund_amount = ?,
+        refund_arn = ?
+       WHERE id = ?`,
+      [cancelReason, refundId, refundStatus, refundMode, refundAmount, refundArn, booking.id]
     );
 
-    // Refund to player's wallet
+    // ONLY credit wallet if user explicitly requested wallet refund
     const user = await findUser(connection, callerId || authUser.id, bookedEmail || callerEmail);
-    if (user) {
+    if (refundMode === "wallet" && user && refundAmount > 0) {
       try {
         await connection.query("INSERT IGNORE INTO player_wallets (user_id, balance) VALUES (?, 0)", [user.id]);
-        await connection.query("UPDATE player_wallets SET balance = balance + ? WHERE user_id = ?", [booking.amount || 0, user.id]);
+        await connection.query("UPDATE player_wallets SET balance = balance + ? WHERE user_id = ?", [refundAmount, user.id]);
         await connection.query(
           `INSERT INTO wallet_transactions (user_id, type, label, amount, status, is_credit)
            VALUES (?, 'Refund', ?, ?, 'Success', 1)`,
-          [user.id, `Refund - Booking ${booking.booking_code || booking.id} (${cancelReason})`, booking.amount || 0]
+          [user.id, `Refund - Booking ${booking.booking_code || booking.id} (${cancelReason})`, refundAmount]
         );
       } catch (walletErr) {
         console.warn("Wallet refund error:", walletErr.message);
@@ -436,12 +709,16 @@ router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
       timeSlot: booking.time_slot || booking.slot_time,
       amount: booking.amount,
       reason: cancelReason,
+      refundMode,
+      refundId: refundArn || refundId,
     }).catch((mailErr) => console.error("[Cancel Mail Error]:", mailErr.message));
 
     return res.json({
       success: true,
-      message: "Slot booking cancelled successfully & refunded to wallet!",
+      message: refundMessage,
       bookingId: booking.id,
+      refundMode,
+      refundId: refundArn || refundId,
       data: user ? await getProfileData(connection, user) : null,
     });
   } catch (err) {

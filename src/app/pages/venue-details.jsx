@@ -190,6 +190,23 @@ export function VenueDetails() {
   const passedVenue = location.state?.venue;
   const [fetchedTurf, setFetchedTurf] = useState(null);
   const [cmsSports, setCmsSports] = useState([]);
+  const [walletBalance, setWalletBalance] = useState(null);
+  const [isLoadingWallet, setIsLoadingWallet] = useState(false);
+  const [isWalletPaying, setIsWalletPaying] = useState(false);
+
+  useEffect(() => {
+    if (activePlayer?.email || activePlayer?.id) {
+      setIsLoadingWallet(true);
+      profileService.get(activePlayer)
+        .then((res) => {
+          if (res?.walletBalance !== undefined) {
+            setWalletBalance(Number(res.walletBalance) || 0);
+          }
+        })
+        .catch((err) => console.warn("Could not load wallet balance:", err.message))
+        .finally(() => setIsLoadingWallet(false));
+    }
+  }, [activePlayer]);
 
   useEffect(() => {
     async function loadCmsSports() {
@@ -239,8 +256,43 @@ export function VenueDetails() {
       })(),
       sport: (activeVenueData.sport || activeVenueData.sport_type || activeVenueData.sportType || "Football").split("•")[0]?.trim(),
       description: activeVenueData.description || `${activeVenueData.name} is built for fast discovery and confident booking.`,
-      image: activeVenueData.image_url || activeVenueData.image || "/assets/venues/turf-1.webp",
+      image: (() => {
+        const raw = activeVenueData.image_url || activeVenueData.image;
+        if (!raw) return "/assets/venues/turf-1.webp";
+        if (typeof raw === "string") {
+          const trimmed = raw.trim();
+          if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            try {
+              const p = JSON.parse(trimmed);
+              return p.data || p.url || p.preview || "/assets/venues/turf-1.webp";
+            } catch (e) {}
+          }
+          return trimmed;
+        }
+        if (typeof raw === "object" && raw !== null) {
+          return raw.data || raw.url || raw.preview || "/assets/venues/turf-1.webp";
+        }
+        return "/assets/venues/turf-1.webp";
+      })(),
       gallery: (() => {
+        const extractSrc = (val) => {
+          if (!val) return "";
+          if (typeof val === "string") {
+            const trimmed = val.trim();
+            if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+              try {
+                const parsed = JSON.parse(trimmed);
+                return parsed.data || parsed.url || parsed.preview || "";
+              } catch (e) {}
+            }
+            return trimmed;
+          }
+          if (typeof val === "object" && val !== null) {
+            return val.data || val.url || val.preview || "";
+          }
+          return "";
+        };
+
         let list = [];
         if (activeVenueData.gallery) {
           try {
@@ -254,7 +306,7 @@ export function VenueDetails() {
             }
             if (Array.isArray(parsed)) {
               list = parsed
-                .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+                .map((img) => extractSrc(img))
                 .filter(Boolean);
             }
           } catch (e) {
@@ -263,10 +315,10 @@ export function VenueDetails() {
         }
         if (list.length === 0 && activeVenueData.images && Array.isArray(activeVenueData.images)) {
           list = activeVenueData.images
-            .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+            .map((img) => extractSrc(img))
             .filter(Boolean);
         }
-        const main = activeVenueData.image_url || activeVenueData.image;
+        const main = extractSrc(activeVenueData.image_url || activeVenueData.image);
         if (main && !list.includes(main)) {
           list = [main, ...list];
         }
@@ -1264,14 +1316,24 @@ export function VenueDetails() {
               <div className="overflow-hidden relative w-full rounded-xl">
                 <div className="animate-marquee-horizontal">
                   {(() => {
-                    const photos = (venue.gallery && venue.gallery.length > 1)
-                      ? venue.gallery.slice(1)
-                      : (venue.gallery && venue.gallery.length > 0 ? venue.gallery : [venue.image || "/assets/venues/turf-1.webp"]);
+                    let photos = [];
+                    if (venue.gallery && Array.isArray(venue.gallery)) {
+                      photos = Array.from(new Set(venue.gallery.filter(Boolean)));
+                    }
+                    if (photos.length > 1) {
+                      photos = photos.slice(1);
+                    } else {
+                      photos = [
+                        "/assets/venues/turf-2.webp",
+                        "/assets/venues/turf-3.webp",
+                        "/assets/venues/new_football_turf_2.png",
+                      ];
+                    }
                     const marqueeList = photos.length >= 3
                       ? [...photos, ...photos]
                       : photos.length === 2
                       ? [photos[0], photos[1], photos[0], photos[1], photos[0], photos[1]]
-                      : [photos[0], photos[0], photos[0]];
+                      : [photos[0], "/assets/venues/turf-2.webp", "/assets/venues/turf-3.webp"];
                     return marqueeList.map((img, idx) => (
                       <div key={idx} className="relative aspect-video sm:aspect-[21/9] md:aspect-video rounded-xl overflow-hidden group border border-slate-200 dark:border-white/5 w-[150px] sm:w-[220px] md:w-[280px] shrink-0">
                         <ImageWithFallback
@@ -2482,6 +2544,46 @@ export function VenueDetails() {
                   )}
                 </div>
 
+                {/* SportX Wallet Status Box */}
+                {activePlayer && (
+                  <div
+                    className={cn(
+                      "rounded-xl border p-2.5 flex items-center justify-between text-xs transition-all",
+                      walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0
+                        ? isDark
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                          : "bg-emerald-50 border-emerald-300 text-emerald-800"
+                        : isDark
+                          ? "bg-white/[0.02] border-white/10 text-slate-300"
+                          : "bg-slate-50 border-slate-200 text-slate-700"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                        <Wallet className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground">SportX Wallet</span>
+                        <span className="font-extrabold text-xs text-foreground flex items-center gap-1">
+                          ₹{isLoadingWallet ? "..." : (walletBalance !== null ? walletBalance.toFixed(2) : "0.00")}
+                          {walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0 && (
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold ml-1 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                              ✓ Sufficient Balance
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    <Link
+                      to="/profile?tab=wallet"
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-2 py-1 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                    >
+                      + Top Up
+                    </Link>
+                  </div>
+                )}
+
                 {/* Booking Order Summary Box */}
                 <div
                   className={cn(
@@ -2538,79 +2640,179 @@ export function VenueDetails() {
                   )}
                 </div>
 
-                {/* CTA Button */}
-                <Button
-                  variant="outline"
-                  disabled={!hasSelectedSlots}
-                  onClick={() => {
-                    if (!hasSelectedSlots) {
-                      toast.error("Please select at least one available time slot first.");
-                      return;
-                    }
-                    if (!activePlayer && !currentUser) {
-                      toast.error("Please sign in first to continue booking.");
-                      navigate("/login");
-                      return;
-                    }
-                    const formattedSlotTimes = selectedSlots.map((h) => formatSlotRange(h, playHours)).join(", ");
-                    const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
-                      ? venue.image
-                      : asset("/venues/turf-1.webp");
+                {/* CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-center gap-2 justify-end pt-1">
+                  {/* 1-Click SportX Wallet Pay (Rendered when balance is sufficient) */}
+                  {hasSelectedSlots && walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0 && (
+                    <Button
+                      disabled={isWalletPaying}
+                      onClick={async () => {
+                        if (!hasSelectedSlots) {
+                          toast.error("Please select at least one available time slot first.");
+                          return;
+                        }
+                        if (!activePlayer && !currentUser) {
+                          toast.error("Please sign in first to pay with SportX Wallet.");
+                          navigate("/login");
+                          return;
+                        }
 
-                    const bookingPayload = {
-                      venue: venue.name,
-                      image: safeImage,
-                      location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
-                      sport: selectedSport,
-                      date: selectedDate,
-                      time: formattedSlotTimes,
-                      slots: selectedSlots.map((h) => ({
-                        startHour: h,
-                        time: formatSlotRange(h, playHours),
-                        price: getSlotPrice(h, playHours),
-                      })),
-                      slotCount: selectedSlots.length,
-                      price: totalSlotPrice,
-                      amount: totalSlotPrice,
-                      userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
-                      userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
-                      userPhone: activePlayer?.phone || activePlayer?.phoneNumber || currentUser?.phone || '9876543210',
-                      venueId: venue.id,
-                    };
+                        const formattedSlotTimes = selectedSlots.map((h) => formatSlotRange(h, playHours)).join(", ");
+                        const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
+                          ? venue.image
+                          : asset("/venues/turf-1.webp");
 
-                    try {
-                      sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
-                      sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
-                      sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
-                    } catch (e) {
-                      console.warn("Storage note:", e.message);
-                    }
+                        const bookingPayload = {
+                          venue: venue.name,
+                          turf_name: venue.name,
+                          image: safeImage,
+                          location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
+                          sport: selectedSport,
+                          date: selectedDate,
+                          time: formattedSlotTimes,
+                          time_slot: formattedSlotTimes,
+                          slot_time: formattedSlotTimes,
+                          slots: selectedSlots.map((h) => ({
+                            startHour: h,
+                            time: formatSlotRange(h, playHours),
+                            price: getSlotPrice(h, playHours),
+                          })),
+                          slotCount: selectedSlots.length,
+                          price: totalSlotPrice,
+                          amount: totalSlotPrice,
+                          userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
+                          userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
+                          userPhone: activePlayer?.phone || activePlayer?.phoneNumber || currentUser?.phone || '9876543210',
+                          venueId: venue.id,
+                          turf_id: venue.id,
+                          userId: activePlayer?.id,
+                        };
 
-                    toast.loading("Connecting to Cashfree Live Gateway...", { id: "cashfree-init" });
-                    cashfreeService.initiatePayment(bookingPayload).then((res) => {
-                      toast.dismiss("cashfree-init");
-                      if (!res.success) {
-                        toast.error(res.message || "Cashfree could not start the payment. Please try again.");
-                      }
-                    }).catch((err) => {
-                      toast.dismiss("cashfree-init");
-                      console.error("Cashfree initialization error:", err);
-                      toast.error("Failed initiating Cashfree payment.");
-                    });
-                  }}
-                  className={cn(
-                    "group h-11 w-fit px-6 ml-auto rounded-xl font-bold text-xs tracking-widest transition-all duration-300 flex items-center justify-center select-none border-2",
-                    hasSelectedSlots
-                      ? isDark
-                        ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97] cursor-pointer"
-                        : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97] cursor-pointer"
-                      : isDark
-                        ? "border-white/10 text-white/30 bg-white/[0.02] cursor-not-allowed opacity-50 pointer-events-none"
-                        : "border-slate-200 text-slate-400 bg-slate-100 cursor-not-allowed opacity-60 pointer-events-none",
+                        setIsWalletPaying(true);
+                        toast.loading("⚡ Processing 1-Click SportX Wallet Payment...", { id: "wallet-pay" });
+
+                        try {
+                          const res = await profileService.payWithWallet(bookingPayload);
+                          toast.dismiss("wallet-pay");
+
+                          if (res?.success) {
+                            setWalletBalance(res.walletBalance);
+                            toast.success(res.message || "🎉 Booking Confirmed via SportX Wallet!");
+
+                            try {
+                              sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+                              sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+                              sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+                              sessionStorage.setItem("sportxclub_cashfree_order_id", res.booking?.orderId || res.booking?.order_id);
+                            } catch (e) {}
+
+                            const b = res.booking || {};
+                            navigate(`/payment-status?order_id=${b.orderId || b.order_id}&payment_id=${b.paymentId || b.payment_id}&booking_code=${b.bookingCode || b.booking_code}&method=wallet&status=SUCCESS`);
+                          } else {
+                            toast.error(res?.error || "Failed to process wallet payment.");
+                          }
+                        } catch (err) {
+                          toast.dismiss("wallet-pay");
+                          console.error("Wallet payment failed:", err);
+                          toast.error(err.message || "Error completing wallet booking.");
+                        } finally {
+                          setIsWalletPaying(false);
+                        }
+                      }}
+                      className="group h-11 w-full sm:w-auto px-5 rounded-xl font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center gap-2 select-none bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white shadow-lg shadow-emerald-500/25 active:scale-[0.97] cursor-pointer border-0"
+                    >
+                      {isWalletPaying ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Deducting ₹{totalSlotPrice}...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 text-emerald-200 animate-pulse" />
+                          <span>⚡ 1-Click Pay with Wallet (₹{totalSlotPrice})</span>
+                        </>
+                      )}
+                    </Button>
                   )}
-                >
-                  <span className="translate-y-[0.5px]">Proceed to payment</span>
-                </Button>
+
+                  {/* Standard Gateway Button (UPI / Card / Netbanking) */}
+                  <Button
+                    variant="outline"
+                    disabled={!hasSelectedSlots || isWalletPaying}
+                    onClick={() => {
+                      if (!hasSelectedSlots) {
+                        toast.error("Please select at least one available time slot first.");
+                        return;
+                      }
+                      if (!activePlayer && !currentUser) {
+                        toast.error("Please sign in first to continue booking.");
+                        navigate("/login");
+                        return;
+                      }
+                      const formattedSlotTimes = selectedSlots.map((h) => formatSlotRange(h, playHours)).join(", ");
+                      const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
+                        ? venue.image
+                        : asset("/venues/turf-1.webp");
+
+                      const bookingPayload = {
+                        venue: venue.name,
+                        image: safeImage,
+                        location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
+                        sport: selectedSport,
+                        date: selectedDate,
+                        time: formattedSlotTimes,
+                        slots: selectedSlots.map((h) => ({
+                          startHour: h,
+                          time: formatSlotRange(h, playHours),
+                          price: getSlotPrice(h, playHours),
+                        })),
+                        slotCount: selectedSlots.length,
+                        price: totalSlotPrice,
+                        amount: totalSlotPrice,
+                        userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
+                        userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
+                        userPhone: activePlayer?.phone || activePlayer?.phoneNumber || currentUser?.phone || '9876543210',
+                        venueId: venue.id,
+                      };
+
+                      try {
+                        sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+                        sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+                        sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+                      } catch (e) {
+                        console.warn("Storage note:", e.message);
+                      }
+
+                      toast.loading("Connecting to Cashfree Live Gateway...", { id: "cashfree-init" });
+                      cashfreeService.initiatePayment(bookingPayload).then((res) => {
+                        toast.dismiss("cashfree-init");
+                        if (!res.success) {
+                          toast.error(res.message || "Cashfree could not start the payment. Please try again.");
+                        }
+                      }).catch((err) => {
+                        toast.dismiss("cashfree-init");
+                        console.error("Cashfree initialization error:", err);
+                        toast.error("Failed initiating Cashfree payment.");
+                      });
+                    }}
+                    className={cn(
+                      "group h-11 w-full sm:w-auto px-5 rounded-xl font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center select-none border-2",
+                      hasSelectedSlots
+                        ? isDark
+                          ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97] cursor-pointer"
+                          : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97] cursor-pointer"
+                        : isDark
+                          ? "border-white/10 text-white/30 bg-white/[0.02] cursor-not-allowed opacity-50 pointer-events-none"
+                          : "border-slate-200 text-slate-400 bg-slate-100 cursor-not-allowed opacity-60 pointer-events-none",
+                    )}
+                  >
+                    <span>
+                      {hasSelectedSlots && walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0
+                        ? "Pay via UPI / Cards (Cashfree)"
+                        : "Proceed to payment"}
+                    </span>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -2620,10 +2822,10 @@ export function VenueDetails() {
       {/* Cancellation Reason Modal Dialog */}
       <Dialog open={cancelModalOpen} onOpenChange={(open) => { if (!isCancelling) setCancelModalOpen(open); }}>
         <DialogContent className={cn(
-          "max-w-md w-full rounded-3xl p-6 border shadow-2xl overflow-hidden",
+          "max-w-md w-full rounded-3xl p-0 border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col",
           isDark ? "bg-[#0f172a] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
         )}>
-          <DialogHeader className="space-y-2 text-left">
+          <DialogHeader className="p-5 sm:p-6 pb-3 border-b border-border/50 shrink-0 text-left">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
                 <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
@@ -2640,7 +2842,7 @@ export function VenueDetails() {
           </DialogHeader>
 
           {slotToCancel && (
-            <div className="space-y-4 my-2">
+            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
               {/* Slot Details Summary Box */}
               <div className={cn(
                 "rounded-2xl p-3.5 border space-y-2",
@@ -2677,7 +2879,7 @@ export function VenueDetails() {
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   Please select a reason for cancellation <span className="text-red-500">*</span>
                 </label>
-                <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
+                <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
                   {CANCEL_REASONS.map((r) => {
                     const isSelected = cancelReason === r.label;
                     return (
@@ -2739,7 +2941,7 @@ export function VenueDetails() {
             </div>
           )}
 
-          <DialogFooter className="gap-2 sm:gap-2 pt-2 border-t border-border/50">
+          <DialogFooter className="p-4 sm:p-5 pt-3 border-t border-border/50 bg-muted/20 shrink-0 flex flex-row items-center justify-end gap-2">
             <Button
               type="button"
               variant="ghost"
