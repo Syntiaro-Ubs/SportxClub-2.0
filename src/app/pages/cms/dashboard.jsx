@@ -55,6 +55,7 @@ import {
   Loader2,
   LayoutGrid,
   List,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -63,6 +64,12 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../../components/ui/dropdown-menu";
 import { Logo } from "../../components/brand/Logo";
 import { cmsService } from "../../services/cms-service";
 import { adminApi } from "../../services/admin-api";
@@ -1578,7 +1585,7 @@ export function CMSDashboard() {
   }, [currentCmsUser, userPermissions]);
 
   return (
-    <div className="min-h-screen bg-white text-[#0f172a] flex font-sans antialiased">
+    <div className="min-h-screen bg-white text-[#0f172a] flex font-sans antialiased w-full max-w-full overflow-x-hidden">
       {/* Mobile overlay */}
       {!isSidebarCollapsed && (
         <div 
@@ -1589,13 +1596,13 @@ export function CMSDashboard() {
       
       {/* 1. Left Fixed Sidebar */}
       <aside
-        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-50 fixed md:sticky top-0 h-screen ${isSidebarCollapsed ? "-translate-x-full md:translate-x-0 md:w-20" : "translate-x-0 w-64 md:w-56"
+        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-50 fixed md:sticky top-0 h-screen ${isSidebarCollapsed ? "-translate-x-full md:translate-x-0 md:w-20" : "translate-x-0 w-52 md:w-56"
           }`}
       >
         {/* Brand Header */}
         <div className="h-16 px-2 border-b border-[#e2e8f0] flex items-center justify-center overflow-hidden shrink-0">
           <Link to="/dashboard" className="flex items-center justify-center w-full">
-            <Logo className={isSidebarCollapsed ? "h-10 max-w-[56px] justify-center scale-125 translate-y-1" : "h-14 w-auto max-w-[210px] justify-center scale-145 transform origin-center translate-y-1.5"} />
+            <Logo className={isSidebarCollapsed ? "h-10 max-w-[56px] justify-center scale-125 translate-y-1" : "h-14 w-auto max-w-[180px] md:max-w-[210px] justify-center scale-135 md:scale-145 transform origin-center translate-y-1.5"} />
           </Link>
         </div>
 
@@ -1665,9 +1672,9 @@ export function CMSDashboard() {
       </aside>
 
       {/* 2. Main Workspace */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden">
         {/* Top Navbar Header */}
-        <header className="h-16 bg-white border-b border-[#e2e8f0] px-4 md:px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs">
+        <header className="h-16 bg-white border-b border-[#e2e8f0] px-3 sm:px-4 md:px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs w-full max-w-full min-w-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarCollapsed(false)}
@@ -1716,7 +1723,7 @@ export function CMSDashboard() {
         </header>
 
         {/* 3. Main Content Container (Chronological Vertical Scrolling Homepage Sections) */}
-        <main className="flex-1 px-6 py-5 overflow-y-auto">
+        <main className="flex-1 px-3 sm:px-6 py-5 overflow-y-auto overflow-x-hidden w-full max-w-full min-w-0">
           {activeView === "home-page" && (
             <div className="space-y-5 max-w-7xl mx-auto">
               <div className="border-b border-[#e2e8f0] pb-3">
@@ -3268,9 +3275,6 @@ export function CMSDashboard() {
                   <h2 className="text-xl font-black tracking-tight text-[#0f172a]">
                     Leagues & Tournaments Management
                   </h2>
-                  <p className="text-xs text-[#64748b] mt-0.5">
-                    Create, edit, publish tournaments, manage match day fixtures, and approve team roster applications live on <code className="bg-[#f1f5f9] px-1 py-0.5 rounded">/tournaments</code>.
-                  </p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -3358,19 +3362,19 @@ export function CMSDashboard() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-64">
                       <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
                       <Input
                         value={tournSearchQuery}
                         onChange={(e) => setTournSearchQuery(e.target.value)}
                         placeholder="Search by title, sport or location..."
-                        className="pl-9 h-9 w-64 text-xs bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 focus:border-emerald-600 rounded-lg transition-all"
+                        className="pl-9 h-9 w-full text-xs bg-[#f8fafc] border border-slate-200 hover:border-emerald-600 focus:border-emerald-600 rounded-lg transition-all"
                       />
                     </div>
                     <Button
                       onClick={handleOpenAddCmsTournament}
-                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg px-4 cursor-pointer transition-all flex items-center group"
+                      className="border border-black bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200 text-black font-extrabold text-xs h-9 rounded-lg px-4 cursor-pointer transition-all flex items-center justify-center shrink-0 w-full sm:w-auto group"
                     >
                       <Plus className="w-3.5 h-3.5 mr-1 text-black group-hover:text-emerald-600 transition-colors" /> Add Tournament
                     </Button>
@@ -3477,9 +3481,6 @@ export function CMSDashboard() {
                       <Clock className="w-5 h-5 text-slate-900 group-hover:text-emerald-600 transition-colors" />
                       Match Day Fixtures Manager (Next Fixtures Sidebar)
                     </h3>
-                    <p className="text-xs text-[#64748b]">
-                      Manage scheduled matches displayed in the "Match Day" sidebar on <code className="bg-[#f1f5f9] px-1 py-0.5 rounded">/tournaments</code>.
-                    </p>
                   </div>
 
                   <Button
@@ -3602,23 +3603,57 @@ export function CMSDashboard() {
                                 {team.status || "Pending"}
                               </Badge>
                             </td>
-                            <td className="p-3.5 text-right space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUpdateTeamStatus(team.id, "Approved")}
-                                className="h-7 text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 px-2 rounded-lg cursor-pointer"
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleUpdateTeamStatus(team.id, "Rejected")}
-                                className="h-7 text-[10px] font-extrabold text-red-600 border-red-200 hover:bg-red-50 px-2 rounded-lg cursor-pointer"
-                              >
-                                Reject
-                              </Button>
+                            <td className="p-3.5 text-right">
+                              {/* Mobile 3-dot action dropdown */}
+                              <div className="md:hidden flex justify-end">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="h-7 w-7 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer shadow-2xs"
+                                      title="Actions"
+                                    >
+                                      <MoreVertical className="w-4 h-4" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-36 rounded-xl p-1 bg-white border border-slate-200 shadow-lg z-50">
+                                    <DropdownMenuItem
+                                      onClick={() => handleUpdateTeamStatus(team.id, "Approved")}
+                                      className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-lg cursor-pointer transition-colors"
+                                    >
+                                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                      <span>Approve</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleUpdateTeamStatus(team.id, "Rejected")}
+                                      className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
+                                    >
+                                      <X className="w-3.5 h-3.5 text-red-600" />
+                                      <span>Reject</span>
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+
+                              {/* Desktop buttons */}
+                              <div className="hidden md:flex items-center justify-end space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUpdateTeamStatus(team.id, "Approved")}
+                                  className="h-7 text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 px-2 rounded-lg cursor-pointer"
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUpdateTeamStatus(team.id, "Rejected")}
+                                  className="h-7 text-[10px] font-extrabold text-red-600 border-red-200 hover:bg-red-50 px-2 rounded-lg cursor-pointer"
+                                >
+                                  Reject
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -3645,9 +3680,6 @@ export function CMSDashboard() {
                   <h2 className="text-xl font-black tracking-tight text-[#0f172a] mt-1">
                     Console User Accounts & Permissions
                   </h2>
-                  <p className="text-xs text-[#64748b] mt-0.5">
-                    Create console user accounts with custom module permissions. Data is stored in the dedicated <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold">dashboard_users</code> table for console dashboard logins only.
-                  </p>
                 </div>
 
                 <div className="flex items-center gap-3">

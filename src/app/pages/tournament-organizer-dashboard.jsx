@@ -597,28 +597,28 @@ export function TournamentOrganizerDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           {
-            title: "ACTIVE TOURNAMENTS",
+            title: "Active Tournaments",
             value: activeTournamentsCount,
             sub: "Running Live",
             icon: Trophy,
             badge: "Active",
           },
           {
-            title: "TOTAL TEAMS REGISTERED",
+            title: "Total Teams Registered",
             value: totalTeamsCount,
             sub: "Roster Enrolled",
             icon: Users,
             badge: "Live Roster",
           },
           {
-            title: "PENDING APPROVALS",
+            title: "Pending Approvals",
             value: pendingApprovalsCount,
             sub: "Action Required",
             icon: Shield,
             badge: "Pending",
           },
           {
-            title: "MATCHES SCHEDULED",
+            title: "Matches Scheduled",
             value: matchesCount,
             sub: "Fixtures Created",
             icon: Play,
@@ -630,7 +630,7 @@ export function TournamentOrganizerDashboard() {
             <Card key={stat.title} className="p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-white/70 dark:bg-slate-900/60 shadow-2xs backdrop-blur-xl relative overflow-hidden flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold tracking-wider text-muted-foreground uppercase">
+                  <span className="text-xs sm:text-[13px] font-bold text-muted-foreground">
                     {stat.title}
                   </span>
                   <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -661,7 +661,6 @@ export function TournamentOrganizerDashboard() {
               <Trophy className="h-4.5 w-4.5 text-amber-500" />
               My Organized Tournaments ({tournamentsList.length})
             </h2>
-            <p className="text-xs text-muted-foreground hidden sm:block">Real tournaments synced directly from MySQL database</p>
           </div>
         </div>
 

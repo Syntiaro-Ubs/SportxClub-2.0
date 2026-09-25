@@ -339,7 +339,6 @@ export function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground">Venue Dashboard</h1>
-          <p className="text-xs text-muted-foreground">Real-time performance analytics synced with MySQL (`sportxclub` DB).</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchDashboardData} className="gap-2 text-xs font-bold rounded-md">
@@ -575,7 +574,6 @@ export function Dashboard() {
         <CardHeader className="flex flex-col gap-3 border-b border-border/40 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-base font-bold tracking-tight">Active Bookings</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Live customer bookings from MySQL database (`bookings` table).</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

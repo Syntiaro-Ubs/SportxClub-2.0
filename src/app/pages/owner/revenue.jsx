@@ -275,7 +275,6 @@ export function Revenue() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground">Revenue Analytics</h1>
-          <p className="text-xs text-muted-foreground">Financial breakdown synced with MySQL database (`sportxclub`).</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fetchRevenueData} className="gap-2 text-xs font-bold rounded-md">
@@ -298,7 +297,7 @@ export function Revenue() {
         <Card className="border border-emerald-500/20 bg-card/60 backdrop-blur-2xl p-4 rounded-2xl shadow-xl">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Total Revenue</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Total Revenue</p>
               <h3 className="text-xl sm:text-2xl font-black text-foreground mt-1 flex items-center">
                 <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5] mr-0.5" />
                 {grossRevenue.toLocaleString()}
@@ -317,7 +316,7 @@ export function Revenue() {
         <Card className="border border-emerald-500/20 bg-card/60 backdrop-blur-2xl p-4 rounded-2xl shadow-xl">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Received Payment</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Received Payment</p>
               <h3 className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 flex items-center">
                 <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5] mr-0.5" />
                 {receivedRevenue.toLocaleString()}
@@ -336,7 +335,7 @@ export function Revenue() {
         <Card className="border border-amber-500/20 bg-card/60 backdrop-blur-2xl p-4 rounded-2xl shadow-xl">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Upcoming Settlements</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Upcoming Settlements</p>
               <h3 className="text-xl sm:text-2xl font-black text-amber-500 mt-1 flex items-center">
                 <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5] mr-0.5" />
                 {pendingRevenue.toLocaleString()}
@@ -355,7 +354,7 @@ export function Revenue() {
         <Card className="border border-rose-500/20 bg-card/60 backdrop-blur-2xl p-4 rounded-2xl shadow-xl">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-widest">Cancellations</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground tracking-widest">Cancellations</p>
               <h3 className="text-xl sm:text-2xl font-black text-rose-500 mt-1 flex items-center">
                 <IndianRupee className="h-4 w-4 sm:h-5 sm:w-5 stroke-[2.5] mr-0.5" />
                 {cancelledRevenue.toLocaleString()}
@@ -457,7 +456,6 @@ export function Revenue() {
         <CardHeader className="flex flex-col gap-3 border-b border-border/40 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-base font-bold tracking-tight">Transaction History</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Recent payments and settlement receipts from MySQL.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

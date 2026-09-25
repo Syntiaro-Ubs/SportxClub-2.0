@@ -277,9 +277,9 @@ export function TurfOnboardingView() {
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pt-0">
+    <div className="space-y-4 max-w-7xl mx-auto pt-0 w-full min-w-0">
       {/* 1. Senior Developer Redesigned Title & Action Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3.5 border-b border-[#e2e8f0]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3.5 border-b border-[#e2e8f0] w-full min-w-0">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
@@ -311,13 +311,13 @@ export function TurfOnboardingView() {
         </div>
 
         {/* Quick Search */}
-        <div className="relative max-w-xs w-full shrink-0">
+        <div className="relative w-full sm:max-w-xs shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Search turfs, owners, cities..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 pr-8 h-10 rounded-xl bg-white border border-slate-200 hover:border-slate-400 focus-visible:ring-emerald-500 text-xs transition-all shadow-2xs font-medium"
+            className="pl-9 pr-8 h-10 rounded-xl bg-white border border-slate-200 hover:border-slate-400 focus-visible:ring-emerald-500 text-xs transition-all shadow-2xs font-medium w-full"
           />
           {searchTerm && (
             <button
@@ -331,13 +331,13 @@ export function TurfOnboardingView() {
       </div>
 
       {/* 2. Senior Developer Redesigned Segmented Filter Toolbar */}
-      <Tabs defaultValue="Pending" value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-          <div className="inline-flex items-center gap-2 bg-transparent">
+      <Tabs defaultValue="Pending" value={statusFilter} onValueChange={setStatusFilter} className="w-full min-w-0">
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap w-full min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-transparent overflow-x-auto max-w-full pb-1 no-scrollbar flex-wrap">
             <button
               type="button"
               onClick={() => setStatusFilter("Pending")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "Pending"
                   ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
                   : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
@@ -357,7 +357,7 @@ export function TurfOnboardingView() {
             <button
               type="button"
               onClick={() => setStatusFilter("Approved")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "Approved"
                   ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
                   : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
@@ -377,7 +377,7 @@ export function TurfOnboardingView() {
             <button
               type="button"
               onClick={() => setStatusFilter("Rejected")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "Rejected"
                   ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
                   : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
@@ -397,7 +397,7 @@ export function TurfOnboardingView() {
             <button
               type="button"
               onClick={() => setStatusFilter("All")}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "All"
                   ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
                   : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
@@ -431,7 +431,7 @@ export function TurfOnboardingView() {
 
         {/* Loading Skeleton */}
         {loading && requests.length === 0 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full min-w-0">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="border border-slate-200 bg-white rounded-2xl p-4 space-y-4 animate-pulse shadow-xs">
                 <div className="flex justify-between items-start">
@@ -458,7 +458,7 @@ export function TurfOnboardingView() {
           </div>
         ) : filteredRequests.length === 0 ? (
           /* Empty state for active filter */
-          <div className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl p-10 text-center shadow-xs flex flex-col items-center transition-all duration-300">
+          <div className="bg-white border border-slate-200 hover:border-emerald-600 rounded-2xl p-6 sm:p-10 text-center shadow-xs flex flex-col items-center transition-all duration-300 w-full min-w-0">
             <div className="h-14 w-14 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-3">
               <Shield className="h-7 w-7" />
             </div>
@@ -484,7 +484,7 @@ export function TurfOnboardingView() {
           </div>
         ) : (
           /* Cards Grid */
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 w-full min-w-0">
             {filteredRequests.map(req => {
               const turfDisplayName = req.business?.businessName || req.turf?.name || "Premier Sports Arena";
               const ownerDisplayName = req.business?.ownerName || req.personal?.fullName || "Turf Owner";

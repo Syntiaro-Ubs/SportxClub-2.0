@@ -410,7 +410,7 @@ export function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[12px] font-medium text-foreground">
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
                   {loginType === "owner" ? "Email, Turf Owner ID or Staff ID" : "Email Address, Phone or Username"}
                 </Label>
                 <div className="relative">
@@ -420,7 +420,7 @@ export function LoginPage() {
                     name="email"
                     type="text"
                     placeholder={loginType === "owner" ? "Enter your email, Owner ID, or Staff ID" : "Enter your email or phone"}
-                    className="pl-11 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-xs sm:text-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -430,7 +430,7 @@ export function LoginPage() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-[12px] font-medium text-foreground">Password</Label>
+                  <Label htmlFor="password" className="text-sm font-semibold text-foreground">Password</Label>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
@@ -439,7 +439,7 @@ export function LoginPage() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-11 pr-10 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-[12px] focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 pr-10 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-xs sm:text-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
                     value={formData.password}
                     onChange={handleInputChange}
                     required

@@ -142,9 +142,26 @@ function formatDateTime(dateInput) {
 }
 
 /**
- * Generates high quality PDF Match Pass Buffer using jsPDF
+ * Fetches QR Code as Base64 for PDF embedding
  */
-function generatePassPdfBuffer({
+async function getQrCodeBase64(bookingId) {
+  try {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bookingId || "SportXClub-Pass")}`;
+    const res = await fetch(qrUrl);
+    if (res.ok) {
+      const arrayBuffer = await res.arrayBuffer();
+      return `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+    }
+  } catch (err) {
+    console.warn("[BOOKING EMAIL] QR fetch warning:", err.message);
+  }
+  return null;
+}
+
+/**
+ * Generates exact Website Match Pass (Image 1) in PDF format
+ */
+async function generatePassPdfBuffer({
   bookingId,
   userName,
   userEmail,
@@ -165,158 +182,125 @@ function generatePassPdfBuffer({
     format: "a4",
   });
 
-  // Background Header
-  doc.setFillColor(15, 23, 42); // #0f172a
-  doc.rect(0, 0, 210, 48, "F");
+  // Soft page background
+  doc.setFillColor(248, 250, 252); // #f8fafc
+  doc.rect(0, 0, 210, 297, "F");
 
-  // Emerald Top Accent Bar
-  doc.setFillColor(5, 150, 105); // #059669
-  doc.rect(0, 0, 210, 4, "F");
+  // Center Ticket Card Container
+  const cardX = 25;
+  const cardY = 30;
+  const cardW = 160;
+  const cardH = 215;
 
-  // Brand Name
-  doc.setTextColor(255, 255, 255);
+  // Outer Card Box (White with rounded corners & clean border)
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(226, 232, 240); // #e2e8f0
+  doc.roundedRect(cardX, cardY, cardW, cardH, 8, 8, "FD");
+
+  // 1. Header Section
+  doc.setTextColor(148, 163, 184); // #94a3b8
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
-  doc.text("SPORTXCLUB", 20, 22);
+  doc.setFontSize(9.5);
+  doc.text("SPORTX ENTRY PASS", cardX + 10, cardY + 14);
 
-  doc.setTextColor(52, 211, 153); // Emerald-400
-  doc.setFontSize(10);
+  // Status Badge (Paid / Active) - Right Top Capsule
+  doc.setFillColor(236, 253, 245); // Emerald-50
+  doc.setDrawColor(167, 243, 208); // Emerald-200
+  doc.roundedRect(cardX + cardW - 38, cardY + 7, 28, 8, 4, 4, "FD");
+
+  doc.setTextColor(5, 150, 105); // Emerald-600
+  doc.setFontSize(7.5);
   doc.setFont("helvetica", "bold");
-  doc.text("OFFICIAL MATCH & VENUE PASS", 20, 30);
+  doc.text("PAID / ACTIVE", cardX + cardW - 24, cardY + 12.5, { align: "center" });
 
-  // Pass Reference Badge (Right Top)
-  doc.setFillColor(30, 41, 59);
-  doc.roundedRect(125, 14, 65, 24, 3, 3, "F");
+  // Divider Line below Header
+  doc.setDrawColor(241, 245, 249);
+  doc.setLineWidth(0.3);
+  doc.line(cardX + 10, cardY + 20, cardX + cardW - 10, cardY + 20);
+
+  // 2. Details 2-Column Grid
+  const col1X = cardX + 10;
+  const col2X = cardX + 85;
+
+  // Row 1: Venue & Sport
   doc.setTextColor(148, 163, 184);
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.text("BOOKING ID", 132, 22);
-  doc.setTextColor(52, 211, 153);
-  doc.setFontSize(12);
+  doc.setFontSize(7.5);
   doc.setFont("helvetica", "bold");
-  doc.text(String(bookingId || "SPX-BK"), 132, 31);
+  doc.text("VENUE", col1X, cardY + 30);
+  doc.text("SPORT", col2X, cardY + 30);
 
-  // Status Banner
-  doc.setFillColor(240, 253, 244); // light green
-  doc.setDrawColor(187, 247, 208);
-  doc.roundedRect(20, 56, 170, 14, 3, 3, "FD");
-  doc.setTextColor(22, 101, 52);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("✓ BOOKING CONFIRMED & PAYMENT SUCCESSFUL", 25, 65);
-
-  // Section 1: Venue & Match Details Card
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(20, 76, 170, 68, 4, 4, "FD");
-
-  doc.setTextColor(15, 23, 42);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("TURF & SLOT RESERVATION", 26, 86);
-
-  doc.setDrawColor(226, 232, 240);
-  doc.line(26, 90, 184, 90);
-
-  // Details Grid
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.text("Turf Name:", 26, 98);
-  doc.setTextColor(15, 23, 42);
-  doc.setFont("helvetica", "bold");
-  doc.text(String(turfName || "SportX Arena"), 60, 98);
-
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.text("Sport Category:", 26, 106);
-  doc.setTextColor(15, 23, 42);
-  doc.setFont("helvetica", "bold");
-  doc.text(String(sport || "General Sports"), 60, 106);
-
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.text("Booking Date:", 26, 114);
-  doc.setTextColor(15, 23, 42);
-  doc.setFont("helvetica", "bold");
-  doc.text(String(bookingDate || ""), 60, 114);
-
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.text("Time Slot:", 26, 122);
-  doc.setTextColor(5, 150, 105); // Green
-  doc.setFont("helvetica", "bold");
-  doc.text(`${startTime} – ${endTime} (${duration})`, 60, 122);
-
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.text("Location / Address:", 26, 130);
-  doc.setTextColor(15, 23, 42);
-  doc.setFont("helvetica", "bold");
-  const locLines = doc.splitTextToSize(String(turfLocation || "Registered Arena Address"), 120);
-  doc.text(locLines, 60, 130);
-
-  // Section 2: Player & Payment Info Card
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.roundedRect(20, 150, 170, 56, 4, 4, "FD");
-
-  doc.setTextColor(15, 23, 42);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("CUSTOMER & PAYMENT SUMMARY", 26, 160);
-  doc.line(26, 164, 184, 164);
-
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.text("Player Name:", 26, 172);
-  doc.setTextColor(15, 23, 42);
-  doc.setFont("helvetica", "bold");
-  doc.text(String(userName || "Athlete"), 60, 172);
-
-  doc.setTextColor(100, 116, 139);
-  doc.setFont("helvetica", "normal");
-  doc.text("Contact Email:", 26, 180);
-  doc.setTextColor(15, 23, 42);
-  doc.setFont("helvetica", "normal");
-  doc.text(String(userEmail || "Registered Player"), 60, 180);
-
-  doc.setTextColor(100, 116, 139);
-  doc.text("Mobile Number:", 26, 188);
-  doc.setTextColor(15, 23, 42);
-  doc.text(String(userPhone || "Provided on booking"), 60, 188);
-
-  doc.setTextColor(100, 116, 139);
-  doc.text("Total Paid:", 26, 196);
-  doc.setTextColor(5, 150, 105);
-  doc.setFont("helvetica", "bold");
+  doc.setTextColor(15, 23, 42); // Slate-900
   doc.setFontSize(11);
-  doc.text(`INR ${Number(amountPaid || 0).toLocaleString("en-IN")}`, 60, 196);
+  doc.setFont("helvetica", "bold");
+  doc.text(String(turfName || "SportX Arena"), col1X, cardY + 37);
+  doc.text(String(sport || "Football"), col2X, cardY + 37);
 
-  // Guidelines & Check-in instructions Box
-  doc.setFillColor(238, 242, 255); // Indigo light
-  doc.setDrawColor(199, 210, 254);
-  doc.roundedRect(20, 212, 170, 36, 3, 3, "FD");
+  // Row 2: Date & Time Slot
+  doc.setTextColor(148, 163, 184);
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.text("DATE", col1X, cardY + 49);
+  doc.text("TIME SLOT", col2X, cardY + 49);
 
-  doc.setTextColor(67, 56, 202);
+  doc.setTextColor(15, 23, 42);
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("IMPORTANT CHECK-IN GUIDELINES", 26, 220);
+  doc.text(String(bookingDate || ""), col1X, cardY + 56);
+  doc.text(`${startTime} – ${endTime}`, col2X, cardY + 56);
 
-  doc.setTextColor(71, 85, 105);
-  doc.setFontSize(8.5);
-  doc.setFont("helvetica", "normal");
-  doc.text("• Please carry this digital/printed Match Pass or Booking ID when arriving at the turf.", 26, 227);
-  doc.text("• Arrive 10-15 minutes prior to your scheduled slot for hassle-free check-in.", 26, 233);
-  doc.text("• Respect turf rules and wear sport-appropriate footwear (non-marking soles if required).", 26, 239);
-
-  // Footer Branding
+  // Row 3: Cashfree Order / Booking ID
   doc.setTextColor(148, 163, 184);
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica", "bold");
+  doc.text("CASHFREE ORDER ID", col1X, cardY + 68);
+
+  doc.setTextColor(30, 41, 59);
+  doc.setFontSize(9);
+  doc.setFont("courier", "bold");
+  doc.text(String(bookingId || "SPX-BK"), col1X, cardY + 75);
+
+  // Dashed Separator Line
+  doc.setLineDashPattern([2, 2], 0);
+  doc.setDrawColor(226, 232, 240);
+  doc.line(cardX + 10, cardY + 86, cardX + cardW - 10, cardY + 86);
+  doc.setLineDashPattern([], 0); // reset dash
+
+  // 3. QR Code Box (Rounded Center Card)
+  const qrBoxX = cardX + 35;
+  const qrBoxY = cardY + 95;
+  const qrBoxW = 90;
+  const qrBoxH = 88;
+
+  doc.setFillColor(248, 250, 252); // Slate-50
+  doc.setDrawColor(241, 245, 249);
+  doc.roundedRect(qrBoxX, qrBoxY, qrBoxW, qrBoxH, 6, 6, "FD");
+
+  // Fetch and Embed Live QR Code Image
+  const qrDataUrl = await getQrCodeBase64(bookingId);
+  if (qrDataUrl) {
+    try {
+      doc.addImage(qrDataUrl, "PNG", qrBoxX + 15, qrBoxY + 8, 60, 60);
+    } catch (qrErr) {
+      console.warn("[PDF QR Add Error]:", qrErr.message);
+    }
+  }
+
+  // QR Code Subtitle
+  doc.setTextColor(100, 116, 139); // Slate-500
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.text("SCAN AT RECEPTION", cardX + (cardW / 2), qrBoxY + 78, { align: "center" });
+
+  // 4. Subtle Card Footer Information
+  doc.setTextColor(148, 163, 184);
   doc.setFont("helvetica", "normal");
-  doc.text(`Generated on ${bookingCreatedAt || formatDateTime(new Date())} | SportXClub Verified Pass`, 20, 260);
-  doc.text("For assistance, contact SportXClub Support • https://sportxclub.com", 20, 265);
+  doc.setFontSize(7);
+  doc.text(
+    `SportXClub Verified Match Pass • Player: ${userName || "Athlete"} • Paid: INR ${Number(amountPaid || 0).toLocaleString("en-IN")}`,
+    cardX + (cardW / 2),
+    cardY + cardH - 10,
+    { align: "center" }
+  );
 
   const arrayBuffer = doc.output("arraybuffer");
   return Buffer.from(arrayBuffer);
@@ -551,17 +535,27 @@ function getOwnerCancellationHtml({
   `.trim();
 }
 
+// In-Memory Concurrency & Deduplication Locks (Prevents duplicate email delivery on rapid parallel API requests)
+const inFlightBookingEmails = new Set();
+const sentBookingEmailsCache = new Set();
+
+const inFlightCancelEmails = new Set();
+const sentCancelEmailsCache = new Set();
+
 /**
  * Main function: Resolves booking, turf & owner data, and sends confirmation emails to both user & turf owner.
  */
 export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
+  const pool = getPool();
+  let bookingId = null;
+  let bookingCode = null;
+  const keysToLock = [];
+
   try {
     if (!bookingIdentifier && !overrideData?.bookingCode && !overrideData?.booking_code) {
       console.warn("[BOOKING EMAIL] No booking identifier provided.");
       return { success: false, message: "No booking identifier provided" };
     }
-
-    const pool = getPool();
 
     // 1. Fetch booking from MySQL
     let booking = null;
@@ -578,8 +572,44 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
       ...overrideData,
     };
 
-    const bookingId = finalBooking.id || null;
-    const bookingCode = finalBooking.booking_code || finalBooking.bookingCode || `SPXBK${Date.now()}`;
+    bookingId = finalBooking.id || null;
+    bookingCode = finalBooking.booking_code || finalBooking.bookingCode || (bookingIdentifier ? String(bookingIdentifier) : `SPXBK${Date.now()}`);
+    const orderId = finalBooking.order_id || null;
+
+    // Collect all identifying keys for this unique booking
+    if (bookingCode) keysToLock.push(String(bookingCode));
+    if (bookingId) keysToLock.push(`id_${bookingId}`);
+    if (orderId) keysToLock.push(`order_${orderId}`);
+    if (bookingIdentifier && typeof bookingIdentifier === "string" && !keysToLock.includes(bookingIdentifier)) {
+      keysToLock.push(bookingIdentifier);
+    }
+
+    // Deduplication Check 1: In-Memory Lock / Sent Cache
+    for (const key of keysToLock) {
+      if (inFlightBookingEmails.has(key) || sentBookingEmailsCache.has(key)) {
+        console.log(`[BOOKING EMAIL] 🛡️ Duplicate booking email SUPPRESSED for [${key}] (already sending or sent).`);
+        return { success: true, message: "Duplicate email suppressed" };
+      }
+    }
+
+    // Deduplication Check 2: Database `email_sent` flag
+    if (booking && booking.email_sent === 1) {
+      keysToLock.forEach((k) => sentBookingEmailsCache.add(k));
+      console.log(`[BOOKING EMAIL] 🛡️ Emails already recorded as sent in DB for Booking [${bookingCode}]. Skipping.`);
+      return { success: true, message: "Emails already sent previously." };
+    }
+
+    // Acquire In-Memory Lock IMMEDIATELY
+    keysToLock.forEach((k) => inFlightBookingEmails.add(k));
+
+    // Mark DB flag to 1 IMMEDIATELY so parallel database reads see email_sent = 1
+    if (bookingId) {
+      pool.query("UPDATE bookings SET email_sent = 1 WHERE id = ?", [bookingId]).catch(() => {});
+    }
+    if (bookingCode) {
+      pool.query("UPDATE bookings SET email_sent = 1 WHERE booking_code = ?", [bookingCode]).catch(() => {});
+    }
+
     const userName = finalBooking.user_name || finalBooking.userName || "SportX Athlete";
     const userEmail = (finalBooking.user_email || finalBooking.userEmail || "").trim();
     const userPhone = finalBooking.user_phone || finalBooking.userPhone || "";
@@ -594,12 +624,6 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
 
     // Slot parse
     const { startTime, endTime, duration, slotCount, displaySlotText } = parseSlotDetails(rawTimeSlot);
-
-    // 2. Prevent duplicate emails if already sent
-    if (booking && booking.email_sent === 1) {
-      console.log(`[BOOKING EMAIL] Emails already sent for Booking [${bookingCode}]. Skipping duplicate send.`);
-      return { success: true, message: "Emails already sent previously." };
-    }
 
     // 3. Resolve Turf & Turf Owner Details
     let turfLocation = "Sports Complex, Main Road";
@@ -671,7 +695,7 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
       // Generate PDF Match Pass
       let passPdfBuffer = null;
       try {
-        passPdfBuffer = generatePassPdfBuffer({
+        passPdfBuffer = await generatePassPdfBuffer({
           bookingId: bookingCode,
           userName,
           userEmail,
@@ -763,16 +787,16 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
 
     const results = await Promise.all(emailPromises);
 
-    // 6. Mark booking as email_sent = 1 in database
-    if (bookingId) {
-      try {
-        await pool.query("UPDATE bookings SET email_sent = 1 WHERE id = ?", [bookingId]);
-      } catch (updateErr) {}
-    } else if (bookingCode) {
-      try {
-        await pool.query("UPDATE bookings SET email_sent = 1 WHERE booking_code = ?", [bookingCode]);
-      } catch (updateErr) {}
-    }
+    // Release in-flight lock and add to sent cache
+    keysToLock.forEach((k) => {
+      inFlightBookingEmails.delete(k);
+      sentBookingEmailsCache.add(k);
+    });
+
+    // Clean cache after 1 hour
+    setTimeout(() => {
+      keysToLock.forEach((k) => sentBookingEmailsCache.delete(k));
+    }, 3600000);
 
     return {
       success: true,
@@ -781,18 +805,21 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
     };
   } catch (error) {
     console.error("[BOOKING EMAIL] Unexpected error in sendBookingEmails:", error);
+    // Release locks on unexpected crash
+    keysToLock.forEach((k) => inFlightBookingEmails.delete(k));
     return { success: false, error: error.message };
   }
 }
 
 /**
- * Sends booking cancellation email to both Player and Turf Owner
+ * Sends booking cancellation email to both Player and Turf Owner (with concurrency deduplication guard)
  */
 export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
-  try {
-    const pool = getPool();
-    let booking = null;
+  const pool = getPool();
+  const keysToLock = [];
 
+  try {
+    let booking = null;
     if (bookingIdOrCode) {
       const [rows] = await pool.query(
         "SELECT * FROM bookings WHERE id = ? OR booking_code = ? LIMIT 1",
@@ -802,6 +829,25 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
     }
 
     const bookingCode = details.bookingCode || booking?.booking_code || `SPX-${String(bookingIdOrCode).slice(-6)}`;
+    const bookingId = booking?.id || null;
+
+    if (bookingCode) keysToLock.push(String(bookingCode));
+    if (bookingId) keysToLock.push(`id_${bookingId}`);
+    if (bookingIdOrCode && !keysToLock.includes(String(bookingIdOrCode))) {
+      keysToLock.push(String(bookingIdOrCode));
+    }
+
+    // Deduplication Check
+    for (const key of keysToLock) {
+      if (inFlightCancelEmails.has(key) || sentCancelEmailsCache.has(key)) {
+        console.log(`[CANCELLATION EMAIL] 🛡️ Duplicate cancellation email SUPPRESSED for [${key}].`);
+        return { success: true, message: "Duplicate cancellation email suppressed." };
+      }
+    }
+
+    // Acquire lock
+    keysToLock.forEach((k) => inFlightCancelEmails.add(k));
+
     const userName = details.userName || booking?.user_name || "SportX Athlete";
     const userEmail = (details.userEmail || booking?.user_email || "").trim();
     const turfName = details.turfName || booking?.turf_name || "SportX Arena";
@@ -816,7 +862,6 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
     // Resolve owner details
     let ownerEmail = "";
     let ownerName = "";
-
     let turfLocation = details.location || details.turfLocation || "";
 
     try {
@@ -926,9 +971,20 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
     }
 
     const results = await Promise.all(cancelPromises);
+
+    keysToLock.forEach((k) => {
+      inFlightCancelEmails.delete(k);
+      sentCancelEmailsCache.add(k);
+    });
+
+    setTimeout(() => {
+      keysToLock.forEach((k) => sentCancelEmailsCache.delete(k));
+    }, 3600000);
+
     return { success: true, results };
   } catch (err) {
     console.error("[CANCELLATION EMAIL] Error:", err.message);
+    keysToLock.forEach((k) => inFlightCancelEmails.delete(k));
     return { success: false, error: err.message };
   }
 }
