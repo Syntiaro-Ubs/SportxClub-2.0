@@ -6,17 +6,23 @@ import { processCashfreeRefund } from "../payment/cashfree-routes.js";
 
 const router = express.Router();
 
-const userLookup = (userId, email) => {
-  if (userId) return { clause: "u.id = ?", value: userId };
-  if (email) return { clause: "LOWER(u.email) = LOWER(?)", value: email.trim() };
-  return null;
-};
-
 async function findUser(pool, userId, email) {
-  const lookup = userLookup(userId, email);
-  if (!lookup) return null;
-  const [rows] = await pool.query(`SELECT * FROM users u WHERE ${lookup.clause} LIMIT 1`, [lookup.value]);
-  return rows[0] || null;
+  if (userId) {
+    const [rows] = await pool.query("SELECT * FROM users u WHERE u.id = ? LIMIT 1", [userId]);
+    if (rows[0]) return rows[0];
+  }
+  if (email && email.trim()) {
+    const cleanEmail = email.trim().toLowerCase();
+    const [rows] = await pool.query(
+      `SELECT u.* FROM users u 
+       LEFT JOIN player_accounts pa ON pa.profile_user_id = u.id 
+       WHERE LOWER(u.email) = ? OR LOWER(pa.email) = ? 
+       LIMIT 1`,
+      [cleanEmail, cleanEmail]
+    );
+    if (rows[0]) return rows[0];
+  }
+  return null;
 }
 
 function parseSports(value) {
@@ -139,15 +145,28 @@ async function loadUserFromRequest(req, res) {
   const body = req.body || {};
   // Prioritize authenticated user ID from JWT token if available
   const authUserId = req.user?.id;
+  const authUserEmail = req.user?.email;
   const requestedUserId = req.query.userId || body.userId;
   const requestedEmail = req.query.email || body.email;
 
-  const targetId = authUserId || requestedUserId;
-  const targetEmail = !targetId ? (req.user?.email || requestedEmail) : null;
+  const targetId = authUserId || requestedUserId || null;
+  const targetEmail = authUserEmail || requestedEmail || null;
 
-  const user = await findUser(pool, targetId, targetEmail);
+  if (!targetId && !targetEmail) {
+    res.status(401).json({ success: false, error: "Please log in to view your player account." });
+    return null;
+  }
+
+  let user = null;
+  if (targetId) {
+    user = await findUser(pool, targetId, null);
+  }
+  if (!user && targetEmail) {
+    user = await findUser(pool, null, targetEmail);
+  }
+
   if (!user) {
-    res.status(404).json({ success: false, error: "Player account not found" });
+    res.status(404).json({ success: false, error: "Player account not found in database." });
     return null;
   }
   return { pool, user };

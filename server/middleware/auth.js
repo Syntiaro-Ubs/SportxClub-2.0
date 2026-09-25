@@ -111,21 +111,8 @@ export function optionalAuth(req, res, next) {
   const authHeader = req.headers["authorization"] || req.headers["Authorization"];
   const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
-  const ownerEmail = req.query.ownerEmail || req.query.email;
-  const ownerName = req.query.ownerName || req.query.name;
-
   if (!token) {
-    if (ownerEmail || ownerName) {
-      req.user = {
-        id: 1,
-        email: ownerEmail || "",
-        fullName: ownerName || "",
-        role: "owner",
-        accountType: "turf-owner",
-      };
-    } else {
-      req.user = null;
-    }
+    req.user = null;
     return next();
   }
 
@@ -146,10 +133,12 @@ export function optionalAuth(req, res, next) {
   }
 
   if (token.startsWith("owner_") || token.startsWith("turf_owner_")) {
+    const ownerEmail = req.query.ownerEmail || "";
+    const ownerName = req.query.ownerName || "";
     req.user = {
       id: 1,
-      email: ownerEmail || "",
-      fullName: ownerName || "",
+      email: ownerEmail,
+      fullName: ownerName,
       role: "owner",
       accountType: "turf-owner",
     };
@@ -163,21 +152,6 @@ export function optionalAuth(req, res, next) {
     const unverified = jwt.decode(token);
     if (unverified && (unverified.role || unverified.accountType || unverified.email || unverified.isAdmin)) {
       req.user = unverified;
-    } else if (token.includes("admin") || token.includes("cms")) {
-      req.user = {
-        id: 1,
-        role: "Super Admin",
-        accountType: "cms-admin",
-        isAdmin: true,
-      };
-    } else if (token.includes("owner") || token.includes("turf") || ownerEmail || ownerName) {
-      req.user = {
-        id: 1,
-        email: ownerEmail || "",
-        fullName: ownerName || "",
-        role: "owner",
-        accountType: "turf-owner",
-      };
     } else {
       req.user = null;
     }

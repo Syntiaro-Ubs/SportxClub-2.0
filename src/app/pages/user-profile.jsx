@@ -640,8 +640,17 @@ export function UserProfile() {
     }
   };
 
-  if (!currentUser) {
-    return <Container className="py-16 text-center"><EmptyState>Please sign in to view your player account.</EmptyState></Container>;
+  if (!currentUser || (!currentUser.id && !currentUser.email)) {
+    return (
+      <Container className="py-24 text-center max-w-md mx-auto space-y-4">
+        <EmptyState>Please sign in to view your player account.</EmptyState>
+        <Link to="/login">
+          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-6">
+            Log In / Sign Up
+          </Button>
+        </Link>
+      </Container>
+    );
   }
 
   if (loading) {

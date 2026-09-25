@@ -91,7 +91,7 @@ export const adminApi = {
       const url = query ? `${API_BASE}/admin/${entity}?${query}` : `${API_BASE}/admin/${entity}`;
 
       let json;
-      if (!isOwnerRoute && (entity === "turfs" || entity === "tournaments" || entity === "reviews")) {
+      if (!isOwnerRoute && (entity === "turfs" || entity === "tournaments" || entity === "reviews" || entity === "onboarding" || entity === "turf-onboarding")) {
         json = await fastCache.fetchWithSWR(url, { headers: getAuthHeaders() });
       } else {
         const res = await fetch(url, { headers: getAuthHeaders() });

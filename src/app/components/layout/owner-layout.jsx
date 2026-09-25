@@ -129,8 +129,8 @@ export function OwnerLayout() {
   const activeProfile = currentUser || storedProfile || {};
   const setDemoProfile = () => { };
 
-  const ownerName = activeProfile.fullName || "Ujwal Bramhnote";
-  const ownerEmail = activeProfile.email || "owner@sportxclub.com";
+  const ownerName = activeProfile.fullName || activeProfile.name || "Turf Owner";
+  const ownerEmail = activeProfile.email || "";
 
   const handleLogout = () => {
     logout();

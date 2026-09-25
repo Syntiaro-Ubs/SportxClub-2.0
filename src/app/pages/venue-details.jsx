@@ -369,19 +369,44 @@ export function VenueDetails() {
 
   const venueSportsList = useMemo(() => {
     if (!activeVenueData) return [];
-    const raw = activeVenueData.sports || activeVenueData.sport_type || activeVenueData.sportType || activeVenueData.sport || "";
+    const candidates = [
+      activeVenueData.sports,
+      activeVenueData.sport_type,
+      activeVenueData.sportType,
+      activeVenueData.sport,
+    ];
+
     let list = [];
-    if (Array.isArray(raw)) {
-      list = raw;
-    } else if (typeof raw === "string" && raw.trim()) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) list = parsed;
-      } catch {
-        list = raw.split(/[,•;/]+/).map((s) => s.trim()).filter(Boolean);
+    for (const raw of candidates) {
+      if (!raw) continue;
+      if (Array.isArray(raw)) {
+        list.push(...raw);
+      } else if (typeof raw === "string" && raw.trim()) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            list.push(...parsed);
+            continue;
+          }
+        } catch {}
+        list.push(...raw.split(/[,•;/&|\n]+/).map((s) => s.trim()).filter(Boolean));
       }
     }
-    return list.map((s) => (typeof s === "object" && s !== null ? (s.name || s.label || "") : String(s)).trim()).filter(Boolean);
+
+    const cleaned = list
+      .map((s) => (typeof s === "object" && s !== null ? (s.name || s.label || s.title || "") : String(s)).trim())
+      .filter(Boolean);
+
+    const seen = new Set();
+    const unique = [];
+    for (const item of cleaned) {
+      const key = item.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(item);
+      }
+    }
+    return unique;
   }, [activeVenueData]);
 
   const availableSports = useMemo(() => {
@@ -401,56 +426,48 @@ export function VenueDetails() {
       });
     };
 
-    // 1. Venue specific sports first
-    venueSportsList.forEach((s) => {
-      if (s.toLowerCase() === "multi-sport" || s.toLowerCase() === "multisport") {
-        ["Football", "Cricket", "Badminton", "Basketball", "Tennis", "Volleyball", "Table Tennis"].forEach((m) => addSport(m));
+    // 1. Venue specific onboarded sports ONLY
+    if (venueSportsList.length > 0) {
+      venueSportsList.forEach((s) => {
+        if (s.toLowerCase() === "multi-sport" || s.toLowerCase() === "multisport") {
+          ["Football", "Cricket", "Badminton", "Basketball", "Tennis"].forEach((m) => addSport(m));
+        } else {
+          addSport(s);
+        }
+      });
+    }
+
+    // 2. Fallback to venue.sport if venueSportsList was empty
+    if (result.length === 0 && venue.sport) {
+      if (venue.sport.toLowerCase() === "multi-sport" || venue.sport.toLowerCase() === "multisport") {
+        ["Football", "Cricket", "Badminton"].forEach((m) => addSport(m));
       } else {
-        addSport(s);
+        addSport(venue.sport);
       }
-    });
+    }
 
-    // 2. CMS sports from database
-    cmsSports.forEach((s) => addSport(s.name, s.icon));
-
-    // 3. Platform default sports to ensure full dynamic coverage
-    const defaultSports = [
-      "Football",
-      "Cricket",
-      "Box Cricket",
-      "Badminton",
-      "Tennis",
-      "Basketball",
-      "Swimming",
-      "Volleyball",
-      "Table Tennis",
-      "Pickleball",
-      "Padel",
-      "Squash",
-      "Box MMA",
-      "Kabaddi",
-      "Hockey",
-    ];
-    defaultSports.forEach((s) => addSport(s));
+    // 3. Absolute fallback if no sport info is present
+    if (result.length === 0) {
+      addSport("Football");
+    }
 
     return result;
-  }, [venueSportsList, cmsSports]);
+  }, [venueSportsList, venue.sport]);
 
   const [selectedSport, setSelectedSport] = useState(
     venue.sport || "Football",
   );
 
   useEffect(() => {
-    if (venueSportsList.length > 0) {
-      const firstSport = venueSportsList[0];
-      const initial = (firstSport.toLowerCase() === "multi-sport" || firstSport.toLowerCase() === "multisport")
-        ? "Football"
-        : firstSport;
-      setSelectedSport(initial);
-    } else if (venue.sport && venue.sport !== "Multi-sport") {
-      setSelectedSport(venue.sport);
+    if (availableSports.length > 0) {
+      const isCurrentValid = availableSports.some(
+        (s) => s.name.toLowerCase() === (selectedSport || "").toLowerCase()
+      );
+      if (!isCurrentValid) {
+        setSelectedSport(availableSports[0].name);
+      }
     }
-  }, [venueSportsList, venue.sport]);
+  }, [availableSports, selectedSport]);
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0],
   );

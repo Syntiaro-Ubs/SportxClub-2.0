@@ -133,7 +133,7 @@ export function Layout() {
     [location.pathname],
   );
   const { currentUser } = useAuth();
-  const displayName = currentUser?.fullName || "John Doe";
+  const displayName = currentUser?.fullName || currentUser?.name || (currentUser?.email ? currentUser.email.split('@')[0] : "");
 
   const [city, setCity] = useState(
     () => localStorage.getItem("preferred-city") || "All Cities",
@@ -167,6 +167,8 @@ export function Layout() {
     );
   }, [location.pathname]);
 
+  const isAuthenticated = Boolean(currentUser && (currentUser.id || currentUser.email || currentUser.fullName));
+
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
       {/* Desktop Top Navbar */}
@@ -181,7 +183,7 @@ export function Layout() {
           {navigation
             .filter((item) => {
               if (
-                !currentUser &&
+                !isAuthenticated &&
                 ["Player Details", "Community"].includes(item.name)
               ) {
                 return false;
@@ -228,7 +230,7 @@ export function Layout() {
           />
 
           <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
-          {currentUser ? (
+          {isAuthenticated ? (
             <Link to={currentUser.role === 'owner' ? '/admin-panel' : '/profile'}>
               <Button
                 variant="ghost"

@@ -235,17 +235,33 @@ router.get("/admin/dashboard/stats", authenticateToken, requireRole(["admin", "s
 router.get(["/admin/onboarding", "/onboarding"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "editor"]), async (req, res) => {
   try {
     const pool = getPool();
+    
+    // 1. Fetch owners in a fast direct query
     const [pendingOwners] = await pool.query(
-      `SELECT o.*, 
-              (SELECT t.name FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_turf_name, 
-              (SELECT t.location FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_turf_location, 
-              (SELECT t.sport_type FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_sport_type, 
-              (SELECT t.price_per_hour FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_price, 
-              (SELECT t.image_url FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_image,
-              (SELECT t.status FROM turfs t WHERE (LOWER(t.owner_email) = LOWER(o.email) AND o.email != '') OR (LOWER(t.owner_name) = LOWER(o.name) AND o.name != '') ORDER BY t.id DESC LIMIT 1) as matched_turf_status
-       FROM turf_owners o
-       ORDER BY o.id DESC`
+      `SELECT id, owner_id, name, email, phone, city, status, earnings, total_turfs, joined_date, created_at, setup_data
+       FROM turf_owners
+       ORDER BY id DESC`
     );
+
+    // 2. Fetch turfs in a single batch query for instant O(1) in-memory lookup
+    const [allTurfs] = await pool.query(
+      `SELECT id, name, location, sport_type, price_per_hour, image_url, status, owner_email, owner_name 
+       FROM turfs 
+       ORDER BY id DESC`
+    );
+
+    const turfByEmail = new Map();
+    const turfByName = new Map();
+    for (const t of allTurfs) {
+      const emailKey = (t.owner_email || "").toLowerCase().trim();
+      if (emailKey && !turfByEmail.has(emailKey)) {
+        turfByEmail.set(emailKey, t);
+      }
+      const nameKey = (t.owner_name || "").toLowerCase().trim();
+      if (nameKey && !turfByName.has(nameKey)) {
+        turfByName.set(nameKey, t);
+      }
+    }
 
     const mappedData = pendingOwners.map(owner => {
       let setupData = {};
@@ -267,6 +283,10 @@ router.get(["/admin/onboarding", "/onboarding"], authenticateToken, requireRole(
         console.error("Failed parsing setup_data for owner", owner.id, e);
       }
 
+      const emailKey = (owner.email || "").toLowerCase().trim();
+      const nameKey = (owner.name || "").toLowerCase().trim();
+      const matchedTurf = (emailKey ? turfByEmail.get(emailKey) : null) || (nameKey ? turfByName.get(nameKey) : null) || {};
+
       // Determine robust turf name
       const turfName =
         (setupData.turf?.name && String(setupData.turf.name).trim()) ||
@@ -274,20 +294,20 @@ router.get(["/admin/onboarding", "/onboarding"], authenticateToken, requireRole(
         (setupData.turfName && String(setupData.turfName).trim()) ||
         (setupData.venueName && String(setupData.venueName).trim()) ||
         (setupData.name && String(setupData.name).trim()) ||
-        owner.matched_turf_name ||
+        matchedTurf.name ||
         (owner.name ? `${owner.name}'s Sports Arena` : "Premier Turf Arena");
 
       const turfCity =
         (setupData.location?.city && String(setupData.location.city).trim()) ||
         (setupData.location?.address && String(setupData.location.address).trim()) ||
-        owner.matched_turf_location ||
+        matchedTurf.location ||
         owner.city ||
         "Mumbai";
 
       const turfAddress =
         (setupData.location?.address && String(setupData.location.address).trim()) ||
         (setupData.location?.street && String(setupData.location.street).trim()) ||
-        owner.matched_turf_location ||
+        matchedTurf.location ||
         owner.city ||
         "Near Main Sports Complex";
 
@@ -359,20 +379,20 @@ router.get(["/admin/onboarding", "/onboarding"], authenticateToken, requireRole(
         },
         turf: {
           name: turfName,
-          sports: setupData.turf?.sports || (owner.matched_sport_type ? [owner.matched_sport_type] : ["Football", "Cricket"]),
+          sports: setupData.turf?.sports || (matchedTurf.sport_type ? [matchedTurf.sport_type] : ["Football", "Cricket"]),
           description: setupData.turf?.description || "High quality sports turf with FIFA certified artificial grass, floodlights, and professional amenities.",
           surfaceType: setupData.turf?.surfaceType || "Artificial Grass",
           facilities: setupData.turf?.facilities || ["Lighting", "Changing Rooms", "Parking", "Water"],
           ...setupData.turf
         },
         pricing: {
-          weekdayPrice: setupData.pricing?.weekdayPrice || owner.matched_price || 1200,
-          weekendPrice: setupData.pricing?.weekendPrice || Math.round((owner.matched_price || 1200) * 1.2),
+          weekdayPrice: setupData.pricing?.weekdayPrice || matchedTurf.price_per_hour || 1200,
+          weekendPrice: setupData.pricing?.weekendPrice || Math.round((matchedTurf.price_per_hour || 1200) * 1.2),
           advanceBookingDays: setupData.pricing?.advanceBookingDays || 7,
           ...setupData.pricing
         },
         images: setupData.images || {
-          turf: [owner.matched_image || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"],
+          turf: [matchedTurf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"],
           gallery: []
         },
         identity: setupData.identity || {},
