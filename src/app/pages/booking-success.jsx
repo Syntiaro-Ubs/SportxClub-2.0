@@ -9,7 +9,6 @@ import {
   MapPin,
   Download,
   ArrowRight,
-  QrCode,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
@@ -63,169 +62,241 @@ export function BookingSuccess() {
     }
   }, [isSplit, members, hostId, paidMemberIds.length]);
 
-  // Generate 16x16 QR grid
-  const qrSize = 16;
-  const qrGrid = [];
-  for (let r = 0; r < qrSize; r++) {
-    for (let c = 0; c < qrSize; c++) {
-      // Top-left finder
-      if (r < 5 && c < 5) {
-        const isBorder = r === 0 || r === 4 || c === 0 || c === 4;
-        const isCenter = r === 2 && c === 2;
-        qrGrid.push(isBorder || isCenter);
-      }
-      // Top-right finder
-      else if (r < 5 && c >= qrSize - 5) {
-        const cc = c - (qrSize - 5);
-        const isBorder = r === 0 || r === 4 || cc === 0 || cc === 4;
-        const isCenter = r === 2 && cc === 2;
-        qrGrid.push(isBorder || isCenter);
-      }
-      // Bottom-left finder
-      else if (r >= qrSize - 5 && c < 5) {
-        const rr = r - (qrSize - 5);
-        const isBorder = rr === 0 || rr === 4 || c === 0 || c === 4;
-        const isCenter = rr === 2 && c === 2;
-        qrGrid.push(isBorder || isCenter);
-      }
-      // Alignment pattern (near bottom right)
-      else if (r >= 10 && r <= 12 && c >= 10 && c <= 12) {
-        const rr = r - 10;
-        const cc = c - 10;
-        const isBorder = rr === 0 || rr === 2 || cc === 0 || cc === 2;
-        const isCenter = rr === 1 && cc === 1;
-        qrGrid.push(isBorder || isCenter);
-      }
-      // Timing and random patterns
-      else {
-        const isTiming = (r === 6 && c % 2 === 0) || (c === 6 && r % 2 === 0);
-        const val = (r * 13 + c * 37) % 5 === 0 || (r * 7 + c * 19) % 3 === 0 || (r + c) % 3 === 0;
-        const tooCloseToFinder = (r < 6 && c === 5) || (c < 6 && r === 5) || (r >= qrSize - 6 && c === 5) || (c >= qrSize - 6 && r === 5) || (r === 5 && c >= qrSize - 6) || (c === 5 && r >= qrSize - 6);
-        qrGrid.push(isTiming || (val && !tooCloseToFinder));
-      }
-    }
-  }
-
-  const handleDownloadReceipt = () => {
+  const handleDownloadReceipt = async () => {
     // Show a loading toast
-    const loadingToastId = toast.loading("Generating receipt PDF...");
+    const loadingToastId = toast.loading("Generating SportX Official Entry Pass PDF...");
 
     try {
       const doc = new jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: "a4"
+        format: "a4",
       });
 
-      // Styling parameters
-      doc.setFont("Helvetica", "normal");
+      // Soft background
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, 0, 210, 297, "F");
 
-      // Header Banner
-      doc.setFillColor(16, 18, 22); // Dark slate bg
-      doc.rect(0, 0, 210, 40, "F");
+      // Center Ticket Card Container
+      const cardX = 30;
+      const cardY = 25;
+      const cardW = 150;
+      const cardH = 225;
 
-      doc.setTextColor(5, 150, 105); // Green text #059669
-      doc.setFontSize(22);
-      doc.setFont("Helvetica", "bold");
-      doc.text("SPORTXCLUB RECEIPT", 20, 25);
+      // Outer Card Box (Clean White)
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(203, 213, 225);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(cardX, cardY, cardW, cardH, 8, 8, "FD");
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(10);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Booking Reference: #SX-260714-EP", 125, 25);
+      // Outer Green Accent Frame
+      doc.setDrawColor(5, 150, 105);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(cardX + 2, cardY + 2, cardW - 4, cardH - 4, 7, 7, "D");
 
-      // Section: Booking Status
-      doc.setTextColor(16, 18, 22);
+      // 1. Header Section: Checkmark Icon Circle
+      doc.setFillColor(236, 253, 245);
+      doc.setDrawColor(167, 243, 208);
+      doc.circle(cardX + (cardW / 2), cardY + 16, 7, "FD");
+      doc.setTextColor(5, 150, 105);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text("✓", cardX + (cardW / 2), cardY + 18.5, { align: "center" });
+
+      // Payment Successful Title
+      doc.setFontSize(13);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(5, 150, 105);
+      doc.text("Payment Successful!", cardX + (cardW / 2), cardY + 29, { align: "center" });
+
+      // SPORTX PASS
       doc.setFontSize(12);
-      doc.setFont("Helvetica", "bold");
-      doc.text("BOOKING INFORMATION", 20, 55);
-      doc.setDrawColor(220, 224, 230);
-      doc.line(20, 58, 190, 58);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text("SPORTX PASS", cardX + (cardW / 2), cardY + 35.5, { align: "center" });
 
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Pass Holder: You (Host)`, 20, 66);
-      doc.text(`Status: Paid / Confirmed`, 20, 72);
-      doc.text(`Venue: ${venueName}`, 20, 78);
-      doc.text(`Address: ${venueAddress}`, 20, 84);
+      // Official Entry Ticket
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text("Official Entry Ticket", cardX + (cardW / 2), cardY + 40, { align: "center" });
 
-      doc.text(`Date: ${dateStr}`, 120, 66);
-      doc.text(`Time Slot: ${timeStr}`, 120, 72);
+      // 2. Venue & Sport Header Row
+      const venueRowY = cardY + 50;
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text(String(venueName || "SportX Arena"), cardX + 12, venueRowY);
 
-      // Section: Transaction Details
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("PAYMENT & TRANSACTION DETAILS", 20, 100);
-      doc.line(20, 103, 190, 103);
+      // Sport Badge Pill (Right)
+      doc.setFillColor(241, 245, 249);
+      doc.setDrawColor(203, 213, 225);
+      doc.roundedRect(cardX + cardW - 38, venueRowY - 5, 26, 7, 3.5, 3.5, "FD");
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text("CRICKET", cardX + cardW - 25, venueRowY - 0.5, { align: "center" });
 
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text("Transaction ID: TXN-260714984210", 20, 111);
-      doc.text("Bank Ref No (RRN): 607140294821", 20, 117);
-      doc.text("Payment Method: UPI (Google Pay)", 20, 123);
-      doc.text("Payer Account ID: user@okaxis", 20, 129);
+      // 3. 2×2 Detail Cards Grid
+      const gridStartY = cardY + 58;
+      const boxW = 60;
+      const boxH = 17;
+      const col1 = cardX + 12;
+      const col2 = cardX + cardW - 12 - boxW;
 
-      // Pricing box
-      doc.setFillColor(245, 247, 250);
-      doc.rect(20, 135, 170, 32, "F");
+      // Card 1: Date (Row 1, Col 1)
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(col1, gridStartY, boxW, boxH, 3, 3, "FD");
+      // Icon Box
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(col1 + 2.5, gridStartY + 2.5, 12, 12, 2, 2, "F");
+      doc.setTextColor(5, 150, 105);
+      doc.setFontSize(8);
+      doc.text("📅", col1 + 8.5, gridStartY + 10.5, { align: "center" });
+      // Text
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("Date:", col1 + 17, gridStartY + 6.5);
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "bold");
+      doc.text(String(dateStr || ""), col1 + 17, gridStartY + 12);
 
-      doc.setTextColor(100, 110, 120);
-      doc.text(`Base Fare:`, 25, 142);
-      doc.text(`GST (18%):`, 25, 148);
-      doc.text(`Convenience Fee:`, 25, 154);
-      doc.setFont("Helvetica", "bold");
-      doc.setTextColor(16, 18, 22);
-      doc.text(`Total Amount Paid:`, 25, 161);
+      // Card 2: Time Slot (Row 1, Col 2)
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(col2, gridStartY, boxW, boxH, 3, 3, "FD");
+      // Icon Box
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(col2 + 2.5, gridStartY + 2.5, 12, 12, 2, 2, "F");
+      doc.setTextColor(5, 150, 105);
+      doc.setFontSize(8);
+      doc.text("⏰", col2 + 8.5, gridStartY + 10.5, { align: "center" });
+      // Text
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("Time Slot:", col2 + 17, gridStartY + 6.5);
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text(String(timeStr || ""), col2 + 17, gridStartY + 12);
 
-      doc.setTextColor(16, 18, 22);
-      doc.setFont("Helvetica", "normal");
-      doc.text(`INR ${((isSplit ? costPerPlayer : totalPrice) * 0.8475).toFixed(2)}`, 150, 142);
-      doc.text(`INR ${((isSplit ? costPerPlayer : totalPrice) * 0.1525).toFixed(2)}`, 150, 148);
-      doc.text(`INR 0.00`, 150, 154);
-      doc.setFont("Helvetica", "bold");
-      doc.text(`INR ${(isSplit ? costPerPlayer : totalPrice).toFixed(2)}`, 150, 161);
+      // Card 3: Pass Holder (Row 2, Col 1)
+      const row2Y = gridStartY + 21;
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(col1, row2Y, boxW, boxH, 3, 3, "FD");
+      // Icon Box
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(col1 + 2.5, row2Y + 2.5, 12, 12, 2, 2, "F");
+      doc.setTextColor(5, 150, 105);
+      doc.setFontSize(8);
+      doc.text("👤", col1 + 8.5, row2Y + 10.5, { align: "center" });
+      // Text
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("Pass Holder:", col1 + 17, row2Y + 6.5);
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(8.5);
+      doc.setFont("helvetica", "bold");
+      doc.text("You (Host)", col1 + 17, row2Y + 12);
 
-      // Section: Split Details if active
-      if (isSplit) {
-        doc.setFont("Helvetica", "bold");
-        doc.setFontSize(12);
-        doc.setTextColor(16, 18, 22);
-        doc.text("SQUAD PAYMENT SPLIT DETAILS", 20, 182);
-        doc.line(20, 185, 190, 185);
+      // Card 4: Amount Paid (Row 2, Col 2)
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(col2, row2Y, boxW, boxH, 3, 3, "FD");
+      // Icon Box
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(col2 + 2.5, row2Y + 2.5, 12, 12, 2, 2, "F");
+      doc.setTextColor(5, 150, 105);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("₹", col2 + 8.5, row2Y + 11, { align: "center" });
+      // Text
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("Amount Paid:", col2 + 17, row2Y + 6.5);
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text(`INR ${Number((isSplit ? costPerPlayer : totalPrice) || 0).toLocaleString("en-IN")}`, col2 + 17, row2Y + 12);
 
-        doc.setFont("Helvetica", "normal");
-        doc.setFontSize(10);
-        doc.text(`Payment Split: ${members.length}-Way Equal Split`, 20, 193);
-        doc.text(`Cost Share: INR ${costPerPlayer.toFixed(2)} per player`, 20, 199);
+      // 4. Perforated Notch Tear Line
+      const tearY = cardY + 106;
+      doc.setLineDashPattern([2, 2], 0);
+      doc.setDrawColor(203, 213, 225);
+      doc.line(cardX + 8, tearY, cardX + cardW - 8, tearY);
+      doc.setLineDashPattern([], 0);
 
-        // Members list table
-        let y = 210;
-        members.forEach((m, idx) => {
-          const hasPaid = paidMemberIds.includes(m.id);
-          doc.text(`${idx + 1}. ${m.name}${m.role === 'host' ? ' (Host)' : ''}`, 25, y);
-          doc.text(`INR ${costPerPlayer.toFixed(2)}`, 110, y);
-          if (hasPaid) {
-            doc.setTextColor(34, 197, 94); // Green
-            doc.text("PAID", 160, y);
-          } else {
-            doc.setTextColor(245, 158, 11); // Amber
-            doc.text("PENDING", 160, y);
-          }
-          doc.setTextColor(16, 18, 22);
-          y += 8;
-        });
+      // Semicircle punches
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(5, 150, 105);
+      doc.circle(cardX, tearY, 4.5, "FD");
+      doc.circle(cardX + cardW, tearY, 4.5, "FD");
+
+      // 5. Bottom Stub (Split Order ID on left + QR Code on right)
+      const stubY = tearY + 12;
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "normal");
+      doc.text("Booking Pass ID:", col1, stubY);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(9);
+      doc.setFont("courier", "bold");
+      doc.text("#SX-260714-EP", col1, stubY + 7);
+
+      // QR Code Container on Right with 4 Corner Brackets
+      const qrW = 44;
+      const qrH = 44;
+      const qrX = cardX + cardW - 12 - qrW;
+      const qrY = stubY - 4;
+
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(qrX, qrY, qrW, qrH, 3, 3, "FD");
+
+      // Corner brackets in emerald
+      doc.setDrawColor(5, 150, 105);
+      doc.setLineWidth(0.6);
+      doc.line(qrX + 1, qrY + 1, qrX + 5, qrY + 1);
+      doc.line(qrX + 1, qrY + 1, qrX + 1, qrY + 5);
+      doc.line(qrX + qrW - 1, qrY + 1, qrX + qrW - 5, qrY + 1);
+      doc.line(qrX + qrW - 1, qrY + 1, qrX + qrW - 1, qrY + 5);
+      doc.line(qrX + 1, qrY + qrH - 1, qrX + 5, qrY + qrH - 1);
+      doc.line(qrX + 1, qrY + qrH - 1, qrX + 1, qrY + qrH - 5);
+      doc.line(qrX + qrW - 1, qrY + qrH - 1, qrX + qrW - 5, qrY + qrH - 1);
+      doc.line(qrX + qrW - 1, qrY + qrH - 1, qrX + qrW - 1, qrY + qrH - 5);
+
+      try {
+        const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=SportXClub-Pass";
+        const res = await fetch(qrUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const base64data = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          doc.addImage(base64data, "PNG", qrX + 3, qrY + 3, qrW - 6, qrH - 6);
+        }
+      } catch (qrErr) {
+        console.warn("QR fetch warning:", qrErr);
       }
 
-      // Footer
-      doc.setDrawColor(220, 224, 230);
-      doc.line(20, 260, 190, 260);
-      doc.setFontSize(8);
-      doc.setTextColor(120, 130, 140);
-      doc.text("This is an electronically generated receipt. No physical signature is required.", 20, 267);
-      doc.text("Thank you for playing with SportXClub!", 20, 273);
-      doc.save("SportXClub-Receipt.pdf");
+      // Barcode & Scan Text at bottom
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.text("||||||||||||||||||||||||||||||||||||||||||||||||||||||||", cardX + (cardW / 2), cardY + cardH - 12, { align: "center" });
+      doc.setFontSize(6.5);
+      doc.text("SCAN AT RECEPTION / GATE FOR ENTRY", cardX + (cardW / 2), cardY + cardH - 7, { align: "center" });
+
+      doc.save("SportXClub-Match-Pass.pdf");
       toast.dismiss(loadingToastId);
-      toast.success("Receipt downloaded successfully!");
+      toast.success("SportX Entry Pass downloaded successfully!");
     } catch (error) {
       console.error("Error generating PDF:", error);
       toast.dismiss(loadingToastId);

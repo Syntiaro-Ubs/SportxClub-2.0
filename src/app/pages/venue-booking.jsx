@@ -416,9 +416,44 @@ function extractImageSrc(val) {
   // Helper matching functions
   const isCityMatch = (venueLoc, filterCity) => {
     if (!filterCity || filterCity === "All Cities" || filterCity === "All" || filterCity === "All Areas") return true;
-    const vLoc = (venueLoc || "").toLowerCase();
-    const fLoc = filterCity.toLowerCase();
-    return vLoc.includes(fLoc) || fLoc.includes(vLoc);
+
+    const normalize = (str) =>
+      String(str || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const vNorm = normalize(venueLoc);
+    const fNorm = normalize(filterCity);
+
+    if (!vNorm) return false;
+    if (vNorm === fNorm || vNorm.includes(fNorm) || fNorm.includes(vNorm)) return true;
+
+    // Tokenized multi-part matching (e.g. "Koregaon Park, Pune" -> ["koregaon park", "pune"])
+    const filterTokens = String(filterCity)
+      .split(/[,•;/|&-]+/)
+      .map((part) => normalize(part))
+      .filter((part) => part.length >= 2);
+
+    for (const token of filterTokens) {
+      if (token && vNorm.includes(token)) {
+        return true;
+      }
+    }
+
+    const venueTokens = String(venueLoc)
+      .split(/[,•;/|&-]+/)
+      .map((part) => normalize(part))
+      .filter((part) => part.length >= 2);
+
+    for (const vToken of venueTokens) {
+      if (vToken && fNorm.includes(vToken)) {
+        return true;
+      }
+    }
+
+    return false;
   };
 
   const isSportMatch = (venueSports, venueDesc, filterSport) => {
