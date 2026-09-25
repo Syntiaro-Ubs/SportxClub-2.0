@@ -205,7 +205,19 @@ export function CMSDashboard() {
   const currentView = params.view || (userPermissions[0] || "home-page");
   const validViews = ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
   const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : (userPermissions[0] || "home-page"));
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setIsSidebarCollapsed(true);
+      } else {
+        setIsSidebarCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (params.view && validViews.includes(params.view)) {
@@ -232,6 +244,9 @@ export function CMSDashboard() {
     }
     setActiveView(viewKey);
     navigate(`/dashboard/${viewKey}`);
+    if (window.innerWidth < 768) {
+      setIsSidebarCollapsed(true);
+    }
   };
 
   // Data States
@@ -1564,9 +1579,17 @@ export function CMSDashboard() {
 
   return (
     <div className="min-h-screen bg-white text-[#0f172a] flex font-sans antialiased">
+      {/* Mobile overlay */}
+      {!isSidebarCollapsed && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+          onClick={() => setIsSidebarCollapsed(true)}
+        />
+      )}
+      
       {/* 1. Left Fixed Sidebar */}
       <aside
-        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-30 sticky top-0 h-screen ${isSidebarCollapsed ? "w-20" : "w-56"
+        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-50 fixed md:sticky top-0 h-screen ${isSidebarCollapsed ? "-translate-x-full md:translate-x-0 md:w-20" : "translate-x-0 w-64 md:w-56"
           }`}
       >
         {/* Brand Header */}
@@ -1644,11 +1667,19 @@ export function CMSDashboard() {
       {/* 2. Main Workspace */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar Header */}
-        <header className="h-16 bg-white border-b border-[#e2e8f0] px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs">
-          <h1 className="text-xl font-extrabold tracking-tight text-[#0f172a]">
-          </h1>
+        <header className="h-16 bg-white border-b border-[#e2e8f0] px-4 md:px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="md:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md"
+            >
+              <List className="w-5 h-5" />
+            </button>
+            <h1 className="text-xl font-extrabold tracking-tight text-[#0f172a] hidden md:block">
+            </h1>
+          </div>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2 md:gap-5">
             <Button
               onClick={() => window.open("https://sportxclub.com/", "_blank")}
               variant="outline"

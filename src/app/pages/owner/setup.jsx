@@ -181,6 +181,12 @@ export function OwnerSetupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [phoneError, setPhoneError] = useState("");
+  const [customSports, setCustomSports] = useState([]);
+  const [newSport, setNewSport] = useState("");
+  const [isAddingSport, setIsAddingSport] = useState(false);
+  const [customFacilities, setCustomFacilities] = useState([]);
+  const [newFacility, setNewFacility] = useState("");
+  const [isAddingFacility, setIsAddingFacility] = useState(false);
 
   useEffect(() => {
     let timer;
@@ -1084,7 +1090,7 @@ export function OwnerSetupPage() {
               <div className="space-y-4">
                 {/* Full Name with compact width */}
                 <div className="space-y-1.5 max-w-md">
-                  <Label htmlFor="fullName" className="text-xs font-semibold">Full Name (As per ID) *</Label>
+                  <Label htmlFor="fullName" className="text-sm font-semibold">Full Name (As per ID) *</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
                     <Input
@@ -1101,7 +1107,7 @@ export function OwnerSetupPage() {
                 {/* EMAIL ADDRESS & OTP TRIGGER BUTTON */}
                 <div className="space-y-1.5 max-w-md">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="email" className="text-xs font-semibold">Email Address *</Label>
+                    <Label htmlFor="email" className="text-sm font-semibold">Email Address *</Label>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1 min-w-0">
@@ -1182,7 +1188,7 @@ export function OwnerSetupPage() {
                 {/* PASSWORD & CONFIRM PASSWORD */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-1.5">
-                    <Label htmlFor="password" className="text-xs font-semibold">Account Password *</Label>
+                    <Label htmlFor="password" className="text-sm font-semibold">Account Password *</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
                       <Input
@@ -1204,7 +1210,7 @@ export function OwnerSetupPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-xs font-semibold">Confirm Password *</Label>
+                    <Label htmlFor="confirmPassword" className="text-sm font-semibold">Confirm Password *</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
                       <Input
@@ -1225,10 +1231,10 @@ export function OwnerSetupPage() {
                 {/* PHONE NUMBER & DATE OF BIRTH (DD/MM/YYYY) & GENDER */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Phone Number *</Label>
+                    <Label className="text-sm font-semibold">Phone Number *</Label>
                     <Input
                       type="tel"
-                      placeholder="Enter 10-digit phone number"
+                      placeholder="Enter phone number"
                       value={formData.personal?.phone || ""}
                       onChange={handlePhoneChange}
                       onKeyDown={handlePhoneKeyDown}
@@ -1247,7 +1253,7 @@ export function OwnerSetupPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Date of Birth</Label>
+                      <Label className="text-sm font-semibold">Date of Birth</Label>
                       <div className="relative">
                         <Input
                           type="text"
@@ -1255,7 +1261,7 @@ export function OwnerSetupPage() {
                           maxLength={10}
                           value={formData.personal?.dob || ""}
                           onChange={handleDobChange}
-                          className="h-10 rounded-lg text-sm pr-8 font-mono"
+                          className="h-10 rounded-lg text-[11px] pr-8 font-mono"
                         />
                         <Calendar className="absolute right-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
                       </div>
@@ -1366,7 +1372,7 @@ export function OwnerSetupPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <Label>Business Email (Optional)</Label>
-                    <Input type="email" value={formData.business?.email || ""} onChange={(e) => updateSection('business', 'email', e.target.value)} className="h-10 rounded-lg" placeholder="e.g. contact@business.com" />
+                    <Input type="email" value={formData.business?.email || ""} onChange={(e) => updateSection('business', 'email', e.target.value)} className="h-10 rounded-lg" placeholder="contact@business.com" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Business Contact Number (Optional)</Label>
@@ -1379,7 +1385,7 @@ export function OwnerSetupPage() {
                         updateSection('business', 'phone', val);
                       }}
                       className="h-10 rounded-lg font-mono"
-                      placeholder="10-digit Mobile Number"
+                      placeholder="Enter contact number"
                     />
                   </div>
                 </div>
@@ -1411,12 +1417,12 @@ export function OwnerSetupPage() {
               <div className="space-y-6">
                 <div className="space-y-1.5">
                   <Label>Turf Name (Publicly Visible) *</Label>
-                  <Input value={formData.turf?.name || ""} onChange={(e) => updateSection('turf', 'name', e.target.value)} className="h-10 rounded-lg" placeholder="e.g. Skyline Sports Arena" />
+                  <Input value={formData.turf?.name || ""} onChange={(e) => updateSection('turf', 'name', e.target.value)} className="h-10 rounded-lg" placeholder="Enter turf name" />
                 </div>
                 <div className="space-y-2">
                   <Label>Sport Types</Label>
                   <div className="flex flex-wrap gap-2">
-                    {SPORTS.map(sport => {
+                    {[...SPORTS, ...customSports].map(sport => {
                       const isSelected = formData.turf?.sports?.includes(sport);
                       return (
                         <Badge
@@ -1434,6 +1440,54 @@ export function OwnerSetupPage() {
                         </Badge>
                       );
                     })}
+                    {isAddingSport ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          autoFocus
+                          value={newSport}
+                          onChange={(e) => setNewSport(e.target.value)}
+                          placeholder="Type sport name..."
+                          className="h-8 text-[11px] w-32 rounded-full px-3"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newSport.trim()) {
+                              e.preventDefault();
+                              const sportName = newSport.trim();
+                              if (![...SPORTS, ...customSports].includes(sportName)) {
+                                setCustomSports(prev => [...prev, sportName]);
+                              }
+                              if (!formData.turf?.sports?.includes(sportName)) {
+                                toggleArrayItem('turf', 'sports', sportName);
+                              }
+                              setNewSport("");
+                              setIsAddingSport(false);
+                            } else if (e.key === 'Escape') {
+                              setIsAddingSport(false);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newSport.trim()) {
+                              const sportName = newSport.trim();
+                              if (![...SPORTS, ...customSports].includes(sportName)) {
+                                setCustomSports(prev => [...prev, sportName]);
+                              }
+                              if (!formData.turf?.sports?.includes(sportName)) {
+                                toggleArrayItem('turf', 'sports', sportName);
+                              }
+                            }
+                            setNewSport("");
+                            setIsAddingSport(false);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer px-3.5 py-1.5 text-xs font-medium transition-all rounded-full select-none border border-dashed border-slate-400 text-muted-foreground hover:border-primary hover:text-primary bg-transparent flex items-center gap-1"
+                        onClick={() => setIsAddingSport(true)}
+                      >
+                        <Plus className="h-3 w-3" /> Add Sport
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -1455,7 +1509,7 @@ export function OwnerSetupPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5"><Label>Ground Size (e.g. 5v5, 100x50 ft)</Label><Input value={formData.turf?.groundSize || ""} onChange={(e) => updateSection('turf', 'groundSize', e.target.value)} className="h-10 rounded-lg" /></div>
-                  <div className="space-y-1.5"><Label>Surface Type</Label><Input placeholder="e.g. Artificial Grass, Hardwood" value={formData.turf?.surfaceType || ""} onChange={(e) => updateSection('turf', 'surfaceType', e.target.value)} className="h-10 rounded-lg" /></div>
+                  <div className="space-y-1.5"><Label>Surface Type</Label><Input placeholder="Surface type" value={formData.turf?.surfaceType || ""} onChange={(e) => updateSection('turf', 'surfaceType', e.target.value)} className="h-10 rounded-lg" /></div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>Description</Label>
@@ -1556,7 +1610,7 @@ export function OwnerSetupPage() {
                     <Label htmlFor="landmark">Landmark</Label>
                     <Input
                       id="landmark"
-                      placeholder="e.g. Near Metro Station / Behind Sports Complex"
+                      placeholder="Enter landmark"
                       value={formData.location?.landmark || ""}
                       onChange={(e) => updateSection('location', 'landmark', e.target.value)}
                       className="h-10 rounded-lg"
@@ -1566,7 +1620,7 @@ export function OwnerSetupPage() {
                     <Label htmlFor="pincode">Pincode *</Label>
                     <Input
                       id="pincode"
-                      placeholder="e.g. 400001"
+                      placeholder="Enter pincode"
                       maxLength={6}
                       value={formData.location?.pincode || ""}
                       onChange={(e) => updateSection('location', 'pincode', e.target.value)}
@@ -1580,7 +1634,7 @@ export function OwnerSetupPage() {
                     <Label htmlFor="turfCity">City *</Label>
                     <Input
                       id="turfCity"
-                      placeholder="e.g. Mumbai"
+                      placeholder="Enter city"
                       value={formData.location?.city || ""}
                       onChange={(e) => updateSection('location', 'city', e.target.value)}
                       className="h-10 rounded-lg"
@@ -1590,7 +1644,7 @@ export function OwnerSetupPage() {
                     <Label htmlFor="turfState">State *</Label>
                     <Input
                       id="turfState"
-                      placeholder="e.g. Maharashtra"
+                      placeholder="Enter state"
                       value={formData.location?.state || ""}
                       onChange={(e) => updateSection('location', 'state', e.target.value)}
                       className="h-10 rounded-lg"
@@ -1620,7 +1674,7 @@ export function OwnerSetupPage() {
                     <span className="text-xs text-muted-foreground">Select amenities provided at your turf</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {FACILITIES.map(fac => {
+                    {[...FACILITIES, ...customFacilities].map(fac => {
                       const isSelected = formData.location?.facilities?.includes(fac);
                       return (
                         <div
@@ -1645,6 +1699,54 @@ export function OwnerSetupPage() {
                         </div>
                       );
                     })}
+                    {isAddingFacility ? (
+                      <div className="border border-dashed border-slate-400 rounded-xl p-3 flex items-center gap-2">
+                        <Input
+                          autoFocus
+                          value={newFacility}
+                          onChange={(e) => setNewFacility(e.target.value)}
+                          placeholder="Type facility..."
+                          className="h-7 text-xs w-full px-2"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newFacility.trim()) {
+                              e.preventDefault();
+                              const facName = newFacility.trim();
+                              if (![...FACILITIES, ...customFacilities].includes(facName)) {
+                                setCustomFacilities(prev => [...prev, facName]);
+                              }
+                              if (!formData.location?.facilities?.includes(facName)) {
+                                toggleArrayItem('location', 'facilities', facName);
+                              }
+                              setNewFacility("");
+                              setIsAddingFacility(false);
+                            } else if (e.key === 'Escape') {
+                              setIsAddingFacility(false);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newFacility.trim()) {
+                              const facName = newFacility.trim();
+                              if (![...FACILITIES, ...customFacilities].includes(facName)) {
+                                setCustomFacilities(prev => [...prev, facName]);
+                              }
+                              if (!formData.location?.facilities?.includes(facName)) {
+                                toggleArrayItem('location', 'facilities', facName);
+                              }
+                            }
+                            setNewFacility("");
+                            setIsAddingFacility(false);
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div
+                        className="border border-dashed border-slate-400 rounded-xl p-3 flex items-center justify-center gap-2 cursor-pointer text-muted-foreground hover:border-primary hover:text-primary transition-all select-none"
+                        onClick={() => setIsAddingFacility(true)}
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span className="text-xs sm:text-sm font-medium">Add Facility</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1699,28 +1801,28 @@ export function OwnerSetupPage() {
                       <Label>Standard Weekday Price</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1200" value={formData.pricing?.weekdayPrice || ""} onChange={(e) => updateSection('pricing', 'weekdayPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
+                        <Input type="number" value={formData.pricing?.weekdayPrice || ""} onChange={(e) => updateSection('pricing', 'weekdayPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Weekend Price</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1500" value={formData.pricing?.weekendPrice || ""} onChange={(e) => updateSection('pricing', 'weekendPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
+                        <Input type="number" value={formData.pricing?.weekendPrice || ""} onChange={(e) => updateSection('pricing', 'weekendPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Holiday Price (Optional)</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1500" value={formData.pricing?.holidayPrice || ""} onChange={(e) => updateSection('pricing', 'holidayPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
+                        <Input type="number" value={formData.pricing?.holidayPrice || ""} onChange={(e) => updateSection('pricing', 'holidayPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label>Peak Hour Price (Optional)</Label>
                       <div className="relative">
                         <IndianRupee className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                        <Input type="number" placeholder="1800" value={formData.pricing?.peakPrice || ""} onChange={(e) => updateSection('pricing', 'peakPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
+                        <Input type="number" value={formData.pricing?.peakPrice || ""} onChange={(e) => updateSection('pricing', 'peakPrice', e.target.value)} className="pl-9 h-10 rounded-lg" />
                       </div>
                     </div>
                   </div>
