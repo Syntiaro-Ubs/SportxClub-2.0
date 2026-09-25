@@ -278,47 +278,143 @@ export function PaymentStatus() {
     verificationResult?.success === true ||
     queryStatus.toLowerCase() === "success";
 
-  const handleDownloadReceipt = () => {
-    const loadingToastId = toast.loading("Generating receipt PDF...");
+  const handleDownloadReceipt = async () => {
+    const loadingToastId = toast.loading("Generating SportX Entry Pass PDF...");
     try {
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      doc.setFont("Helvetica", "bold");
-      doc.setFillColor(16, 18, 22);
-      doc.rect(0, 0, 210, 40, "F");
+
+      // Page background
+      doc.setFillColor(248, 250, 252);
+      doc.rect(0, 0, 210, 297, "F");
+
+      // Center Ticket Card Container
+      const cardX = 25;
+      const cardY = 30;
+      const cardW = 160;
+      const cardH = 215;
+
+      // Outer Card Box
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(cardX, cardY, cardW, cardH, 8, 8, "FD");
+
+      // 1. Header Section
+      doc.setTextColor(148, 163, 184);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.text("SPORTX ENTRY PASS", cardX + 10, cardY + 14);
+
+      // Status Badge (Paid / Active)
+      doc.setFillColor(236, 253, 245);
+      doc.setDrawColor(167, 243, 208);
+      doc.roundedRect(cardX + cardW - 38, cardY + 7, 28, 8, 4, 4, "FD");
 
       doc.setTextColor(5, 150, 105);
-      doc.setFontSize(20);
-      doc.text("SPORTXCLUB RECEIPT", 20, 25);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text("PAID / ACTIVE", cardX + cardW - 24, cardY + 12.5, { align: "center" });
 
-      doc.setTextColor(255, 255, 255);
+      // Divider Line
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.3);
+      doc.line(cardX + 10, cardY + 20, cardX + cardW - 10, cardY + 20);
+
+      // 2. Details 2-Column Grid
+      const col1X = cardX + 10;
+      const col2X = cardX + 85;
+
+      // Row 1: Venue & Sport
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text("VENUE", col1X, cardY + 30);
+      doc.text("SPORT", col2X, cardY + 30);
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text(String(venueName || "SportX Arena"), col1X, cardY + 37);
+      doc.text(String(sportStr || "Football"), col2X, cardY + 37);
+
+      // Row 2: Date & Time Slot
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text("DATE", col1X, cardY + 49);
+      doc.text("TIME SLOT", col2X, cardY + 49);
+
+      doc.setTextColor(15, 23, 42);
       doc.setFontSize(10);
-      doc.setFont("Helvetica", "normal");
-      doc.text(`Cashfree Ref: ${verificationResult?.transactionId || orderId}`, 115, 25);
+      doc.setFont("helvetica", "bold");
+      doc.text(String(dateStr || ""), col1X, cardY + 56);
+      doc.text(String(timeStr || ""), col2X, cardY + 56);
 
-      doc.setTextColor(16, 18, 22);
-      doc.setFontSize(12);
-      doc.setFont("Helvetica", "bold");
-      doc.text("BOOKING & PAYMENT SUMMARY", 20, 55);
-      doc.line(20, 58, 190, 58);
+      // Row 3: Cashfree Order / Booking ID
+      doc.setTextColor(148, 163, 184);
+      doc.setFontSize(7.5);
+      doc.setFont("helvetica", "bold");
+      doc.text("CASHFREE ORDER ID", col1X, cardY + 68);
 
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(10);
-      doc.text(`Payment Gateway: Cashfree Live Payments`, 20, 66);
-      doc.text(`Order ID: ${orderId}`, 20, 74);
-      doc.text(`Venue: ${venueName}`, 20, 82);
-      doc.text(`Address: ${venueAddress}`, 20, 90);
-      doc.text(`Sport: ${sportStr}`, 20, 98);
-      doc.text(`Date: ${dateStr}`, 120, 66);
-      doc.text(`Time Slot: ${timeStr}`, 120, 74);
-      doc.text(`Amount Paid: INR ${price}`, 120, 82);
-      doc.text(`Status: Confirmed / Paid`, 120, 90);
+      doc.setTextColor(30, 41, 59);
+      doc.setFontSize(9);
+      doc.setFont("courier", "bold");
+      doc.text(String(orderId || verificationResult?.order_id || "SPX-BK"), col1X, cardY + 75);
 
-      doc.save(`Cashfree-SportXClub-Receipt-${orderId || "booking"}.pdf`);
+      // Dashed Separator Line
+      doc.setLineDashPattern([2, 2], 0);
+      doc.setDrawColor(226, 232, 240);
+      doc.line(cardX + 10, cardY + 86, cardX + cardW - 10, cardY + 86);
+      doc.setLineDashPattern([], 0);
+
+      // 3. QR Code Box
+      const qrBoxX = cardX + 35;
+      const qrBoxY = cardY + 95;
+      const qrBoxW = 90;
+      const qrBoxH = 88;
+
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(241, 245, 249);
+      doc.roundedRect(qrBoxX, qrBoxY, qrBoxW, qrBoxH, 6, 6, "FD");
+
+      try {
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(orderId || "SportXClub-Pass")}`;
+        const res = await fetch(qrUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const base64data = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+          doc.addImage(base64data, "PNG", qrBoxX + 15, qrBoxY + 8, 60, 60);
+        }
+      } catch (qrErr) {
+        console.warn("Client QR Add Error:", qrErr);
+      }
+
+      // Subtitle below QR
+      doc.setTextColor(100, 116, 139);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7.5);
+      doc.text("SCAN AT RECEPTION", cardX + (cardW / 2), qrBoxY + 78, { align: "center" });
+
+      // 4. Subtle Card Footer Information
+      doc.setTextColor(148, 163, 184);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7);
+      doc.text(
+        `SportXClub Verified Match Pass • Paid: INR ${Number(price || 0).toLocaleString("en-IN")}`,
+        cardX + (cardW / 2),
+        cardY + cardH - 10,
+        { align: "center" }
+      );
+
+      doc.save(`SportXClub_Pass_${orderId || "booking"}.pdf`);
       toast.dismiss(loadingToastId);
-      toast.success("Receipt downloaded successfully!");
+      toast.success("SportX Entry Pass downloaded successfully!");
     } catch (e) {
       toast.dismiss(loadingToastId);
-      toast.error("Failed to generate PDF receipt.");
+      toast.error("Failed to generate PDF pass.");
     }
   };
 
@@ -424,26 +520,14 @@ export function PaymentStatus() {
               </div>
 
               {isSuccess && (
-                <>
-                  <div className="pt-2 border-t border-dashed border-border/40 flex flex-col items-center">
-                    <div className="bg-slate-50 dark:bg-black/40 p-3 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-white/[0.05] shadow-inner w-full max-w-[200px]">
-                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-Cashfree-Pass" alt="QR Code" className="h-24 w-24 object-contain mix-blend-multiply dark:mix-blend-normal" />
-                      <span className="text-[8px] font-mono text-slate-500 mt-2 font-semibold tracking-widest uppercase">
-                        Scan at Reception
-                      </span>
-                    </div>
+                <div className="pt-2 border-t border-dashed border-border/40 flex flex-col items-center">
+                  <div className="bg-slate-50 dark:bg-black/40 p-3 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-white/[0.05] shadow-inner w-full max-w-[200px]">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-Cashfree-Pass" alt="QR Code" className="h-24 w-24 object-contain mix-blend-multiply dark:mix-blend-normal" />
+                    <span className="text-[8px] font-mono text-slate-500 mt-2 font-semibold tracking-widest uppercase">
+                      Scan at Reception
+                    </span>
                   </div>
-                  <div className="pt-2 flex justify-center">
-                    <Button
-                      onClick={handleDownloadReceipt}
-                      variant="outline"
-                      className="w-full bg-transparent border-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-bold rounded-xl gap-2 h-10 cursor-pointer text-xs"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download Receipt
-                    </Button>
-                  </div>
-                </>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -452,11 +536,13 @@ export function PaymentStatus() {
           <div className="space-y-3 pt-2">
             {isSuccess ? (
               <div className="flex gap-3">
-                <Link to="/profile" className="flex-1">
-                  <Button className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl h-11">
-                    Go to Profile
-                  </Button>
-                </Link>
+                <Button
+                  onClick={handleDownloadReceipt}
+                  className="flex-1 cursor-pointer text-xs sm:text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl h-11 gap-2 shadow-lg shadow-emerald-600/20"
+                >
+                  <Download className="h-4 w-4" />
+                  Download Receipt
+                </Button>
                 <Link to="/venues" className="flex-1">
                   <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50/20 rounded-xl h-11">
                     Book Another Turf

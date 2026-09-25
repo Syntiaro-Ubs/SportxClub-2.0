@@ -47,7 +47,14 @@ import {
   ArrowLeft,
   Medal,
   UserPlus,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { useAuth } from "../providers/auth-provider";
 import { adminApi } from "../services/admin-api";
@@ -934,22 +941,56 @@ export function MyTournamentsPage() {
                   </p>
                 </div>
                 {item.status === "Pending" && (
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      onClick={() => handleApproveTeam(item.id, item.team_name || item.teamName)}
-                      className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-1 px-3"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRejectTeam(item.id, item.team_name || item.teamName)}
-                      className="h-8 text-rose-600 border-rose-300 dark:border-rose-800 hover:bg-rose-500/10 font-bold text-xs rounded-xl px-2.5"
-                    >
-                      <X className="h-3.5 w-3.5" /> Reject
-                    </Button>
+                  <div className="shrink-0">
+                    {/* Mobile 3-dot action dropdown */}
+                    <div className="md:hidden">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-2xs"
+                            title="Actions"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-36 rounded-xl p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-lg z-50">
+                          <DropdownMenuItem
+                            onClick={() => handleApproveTeam(item.id, item.team_name || item.teamName)}
+                            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-lg cursor-pointer transition-colors"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Approve</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleRejectTeam(item.id, item.team_name || item.teamName)}
+                            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg cursor-pointer transition-colors"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>Reject</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Desktop direct action buttons */}
+                    <div className="hidden md:flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleApproveTeam(item.id, item.team_name || item.teamName)}
+                        className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl gap-1 px-3 cursor-pointer"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRejectTeam(item.id, item.team_name || item.teamName)}
+                        className="h-8 text-rose-600 border-rose-300 dark:border-rose-800 hover:bg-rose-500/10 font-bold text-xs rounded-xl px-2.5 cursor-pointer"
+                      >
+                        <X className="h-3.5 w-3.5" /> Reject
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -84,7 +84,6 @@ export function TurfList() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Venues</h1>
-          <p className="text-muted-foreground">Showing backend MySQL venue records (`sportxclub` database).</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={loadTurfs} className="gap-2">
