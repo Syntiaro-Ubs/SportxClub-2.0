@@ -739,8 +739,8 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
     let booking = null;
     if (bookingIdentifier) {
       const [rows] = await pool.query(
-        "SELECT * FROM bookings WHERE id = ? OR booking_code = ? LIMIT 1",
-        [bookingIdentifier, bookingIdentifier]
+        "SELECT * FROM bookings WHERE id = ? OR booking_code = ? OR order_id = ? OR payment_id = ? LIMIT 1",
+        [bookingIdentifier, bookingIdentifier, bookingIdentifier, bookingIdentifier]
       );
       booking = rows[0] || null;
     }
@@ -801,7 +801,7 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
     const paymentDateTime = bookingCreatedAt;
 
     // Slot parse
-    const { startTime, endTime, duration, slotCount, displaySlotText } = parseSlotDetails(rawTimeSlot);
+    const { startTime, endTime, duration, slotCount, slotList, displaySlotText } = parseSlotDetails(rawTimeSlot);
 
     // 3. Resolve Turf & Turf Owner Details
     let turfLocation = "Sports Complex, Main Road";
