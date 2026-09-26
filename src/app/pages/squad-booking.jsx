@@ -285,6 +285,7 @@ export function SquadBookingPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 {timeSlots.map((slot, i) => {
+                  const isReserved = slot.bookedBy && (String(slot.bookedBy).toLowerCase().includes("reserved") || String(slot.booking?.user_name || "").toLowerCase().includes("reserved") || String(slot.booking?.status || "").toLowerCase().includes("reserved"));
                   const isBooked = isOverlapping(slot.startHour) || isOutOfBounds(slot.startHour);
                   const price = slot.price * playHours;
                   const rangeStr = formatSlotRange(slot.startHour, playHours);
@@ -299,16 +300,18 @@ export function SquadBookingPage() {
                         setIsPaymentModalOpen(true);
                       }}
                       className={`p-4 rounded-xl border flex flex-col items-center justify-center transition-all text-center relative ${isBooked
-                        ? "bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-slate-400/40 cursor-not-allowed"
+                        ? isReserved
+                          ? "bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 cursor-not-allowed"
+                          : "bg-red-500/5 dark:bg-red-500/10 border-red-500/20 text-slate-400/40 cursor-not-allowed"
                         : "border-emerald-600/30 hover:border-emerald-600 hover:bg-emerald-600/5 text-slate-800 dark:text-white bg-white dark:bg-white/[0.02] cursor-pointer"
                         }`}
                     >
-                      <span className={`text-sm font-bold ${isBooked ? 'text-slate-500/40 opacity-50' : ''}`}>
+                      <span className={`text-sm font-bold ${isBooked ? (isReserved ? 'text-amber-500/70 font-black' : 'text-slate-500/40 opacity-50') : ''}`}>
                         {rangeStr}
                       </span>
                       {isBooked ? (
-                        <span className="text-[10px] font-extrabold text-red-500 mt-1 uppercase tracking-wider">
-                          Unavailable
+                        <span className={`text-[10px] font-extrabold mt-1 uppercase tracking-wider ${isReserved ? 'text-amber-500 dark:text-amber-400' : 'text-red-500'}`}>
+                          {isReserved ? 'Reserved' : 'Unavailable'}
                         </span>
                       ) : (
                         <span className="text-[10px] font-extrabold text-emerald-500 dark:text-emerald-600 mt-1 tracking-wider">

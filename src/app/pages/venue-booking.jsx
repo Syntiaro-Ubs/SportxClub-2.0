@@ -1,7 +1,8 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
-import { Star, MapPin, ChevronRight, Filter, ChevronLeft, ChevronDown, Check, RotateCcw, Heart, CalendarDays, Users, Lightbulb, Bath, Car, MoreHorizontal, Dribbble, Loader2, ArrowLeft, X, PenLine } from "lucide-react";
+import { Star, MapPin, ChevronRight, Filter, ChevronLeft, ChevronDown, Check, RotateCcw, Heart, CalendarDays, Users, Lightbulb, Bath, Car, MoreHorizontal, Dribbble, Loader2, ArrowLeft, X, PenLine, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { cn } from "../components/ui/utils";
 import { Button } from "../components/ui/button";
 import { adminApi } from "../services/admin-api";
@@ -187,6 +188,26 @@ export function VenueBooking() {
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSubmittedSuccess, setReviewSubmittedSuccess] = useState(false);
+  const [submittedReviewData, setSubmittedReviewData] = useState(null);
+
+  const handleOpenReviewModal = (venue) => {
+    setReviewModalData({ id: venue.id, name: venue.name });
+    setReviewSubmittedSuccess(false);
+    setSubmittedReviewData(null);
+    setReviewRating(0);
+    setHoverRating(0);
+    setReviewText("");
+  };
+
+  const handleCloseReviewModal = () => {
+    setReviewModalData(null);
+    setReviewSubmittedSuccess(false);
+    setSubmittedReviewData(null);
+    setReviewRating(0);
+    setHoverRating(0);
+    setReviewText("");
+  };
 
   const [turfs, setTurfs] = useState(() => {
     try {
@@ -222,36 +243,36 @@ export function VenueBooking() {
     try {
       setIsSubmittingReview(true);
       const userObj = JSON.parse(localStorage.getItem("playerUser") || "{}");
-      const authorName = userObj.name || userObj.fullName || localStorage.getItem("userName") || "Anonymous Athlete";
-      
+      const authorName = userObj.name || userObj.fullName || localStorage.getItem("userName") || "SportX Athlete";
+      const reviewDate = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      const commentText = reviewText.trim() || "Great sports experience!";
+
+      const payload = {
+        user_name: authorName,
+        turf_name: reviewModalData?.name || "Sports Arena",
+        rating: reviewRating,
+        comment: commentText,
+        date: reviewDate,
+      };
+
       const res = await fetch("/api/turf/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_name: authorName,
-          turf_name: reviewModalData?.name || "Sports Arena",
-          rating: reviewRating,
-          comment: reviewText.trim() || "Great sports experience!",
-          date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        toast.success("Review submitted successfully!");
-        fetchTurfs();
-      } else {
-        toast.success("Review submitted!");
-      }
+      const responseData = await res.json().catch(() => null);
+      const createdReview = responseData?.data || payload;
 
-      setReviewModalData(null);
-      setReviewRating(0);
-      setReviewText("");
+      setSubmittedReviewData(createdReview);
+      setReviewSubmittedSuccess(true);
+      toast.success("Thank you! Your review has been submitted.");
+
+      // Refresh turf list in background so ratings and counts update immediately
+      fetchTurfs();
     } catch (e) {
       console.error(e);
-      toast.success("Review submitted!");
-      setReviewModalData(null);
-      setReviewRating(0);
-      setReviewText("");
+      toast.error("Failed submitting review. Please try again.");
     } finally {
       setIsSubmittingReview(false);
     }
@@ -605,7 +626,7 @@ function extractImageSrc(val) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setReviewModalData({ id: venue.id, name: venue.name });
+                      handleOpenReviewModal(venue);
                     }}
                     className="flex items-center gap-1 text-[9px] text-white hover:text-white/80 font-medium cursor-pointer leading-none transition-transform duration-200 hover:scale-110"
                   >
@@ -742,7 +763,7 @@ function extractImageSrc(val) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setReviewModalData({ id: venue.id, name: venue.name });
+                      handleOpenReviewModal(venue);
                     }}
                     className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium cursor-pointer leading-none transition-transform duration-200 hover:scale-110"
                   >
@@ -826,7 +847,7 @@ function extractImageSrc(val) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setReviewModalData({ id: venue.id, name: venue.name });
+                      handleOpenReviewModal(venue);
                     }}
                     className="flex items-center gap-1 text-[10px] text-white hover:text-white/80 font-medium cursor-pointer leading-none mt-0.5 transition-transform duration-200 hover:scale-110"
                   >
@@ -1120,82 +1141,194 @@ function extractImageSrc(val) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={() => setReviewModalData(null)}
+            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={handleCloseReviewModal}
           >
             <motion.div
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
+              className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-slate-100 dark:border-slate-800"
             >
-              <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Review {reviewModalData.name}
-                </h3>
-                <button
-                  onClick={() => setReviewModalData(null)}
-                  className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <X className="w-5 h-5 text-slate-500" />
-                </button>
-              </div>
-              <div className="p-5 flex flex-col gap-4">
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Rate your experience</span>
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        onClick={() => setReviewRating(star)}
-                        className="p-1 hover:scale-110 transition-transform focus:outline-none"
-                      >
-                        <Star
-                          className={cn(
-                            "w-8 h-8",
-                            (hoverRating || reviewRating) >= star
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-slate-300 dark:text-slate-700"
-                          )}
-                        />
-                      </button>
-                    ))}
+              {reviewSubmittedSuccess && submittedReviewData ? (
+                /* REVIEW SUBMITTED SUCCESS VIEW */
+                <div className="flex flex-col">
+                  {/* Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                        Review Submitted
+                      </h3>
+                    </div>
+                    <button
+                      onClick={handleCloseReviewModal}
+                      className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Body */}
+                  <div className="p-5 sm:p-6 flex flex-col items-center text-center gap-4">
+                    {/* Animated Check Icon */}
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", damping: 15, stiffness: 200 }}
+                      className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/80 border-2 border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10"
+                    >
+                      <CheckCircle2 className="w-9 h-9 text-emerald-600 dark:text-emerald-400" />
+                    </motion.div>
+
+                    <div className="space-y-1">
+                      <h4 className="text-lg font-bold text-slate-900 dark:text-white">
+                        Thank You for Your Feedback!
+                      </h4>
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm">
+                        Your review for <span className="font-semibold text-slate-800 dark:text-slate-200">{reviewModalData?.name}</span> has been published successfully.
+                      </p>
+                    </div>
+
+                    {/* Submitted Review Card Preview */}
+                    <div className="w-full bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 p-4 text-left space-y-2.5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 font-black text-sm flex items-center justify-center uppercase">
+                            {(submittedReviewData.user_name || "A")[0]}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                                {submittedReviewData.user_name || "SportX Athlete"}
+                              </span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 uppercase">
+                                YOU
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                              {submittedReviewData.date || "Today"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 bg-white dark:bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xs">
+                          <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                            {Number(submittedReviewData.rating || 5).toFixed(1)}
+                          </span>
+                          <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                        </div>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 italic bg-white dark:bg-slate-900/80 p-3 rounded-lg border border-slate-100 dark:border-slate-800 leading-relaxed">
+                        "{submittedReviewData.comment || "Great sports experience!"}"
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-900/40">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        const venueId = reviewModalData?.id;
+                        handleCloseReviewModal();
+                        if (venueId) {
+                          navigate(`/venues/${venueId}`);
+                        }
+                      }}
+                      className="text-xs font-semibold border-slate-200 dark:border-slate-700 hover:border-emerald-500 hover:text-emerald-600 cursor-pointer"
+                    >
+                      View Venue Details
+                    </Button>
+                    <Button
+                      onClick={handleCloseReviewModal}
+                      className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white active:!text-white border-none cursor-pointer shadow-sm"
+                    >
+                      Done
+                    </Button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Your Review
-                  </label>
-                  <textarea
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Tell us about your experience..."
-                    className="w-full h-28 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 resize-none"
-                  />
+              ) : (
+                /* REVIEW FORM VIEW */
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                      Review {reviewModalData.name}
+                    </h3>
+                    <button
+                      onClick={handleCloseReviewModal}
+                      className="p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                      <X className="w-5 h-5 text-slate-500" />
+                    </button>
+                  </div>
+                  <div className="p-5 flex flex-col gap-4">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-sm font-medium text-slate-600 dark:text-slate-400">Rate your experience</span>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            onClick={() => setReviewRating(star)}
+                            className="p-1 hover:scale-110 transition-transform focus:outline-none cursor-pointer"
+                          >
+                            <Star
+                              className={cn(
+                                "w-8 h-8",
+                                (hoverRating || reviewRating) >= star
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-slate-300 dark:text-slate-700"
+                              )}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      {(hoverRating || reviewRating) > 0 && (
+                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          {["", "Poor", "Fair", "Good", "Very Good", "Excellent"][hoverRating || reviewRating]} ({hoverRating || reviewRating}.0)
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Your Review
+                      </label>
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="Write your review here... (e.g. Clean turf, punctual slot timing, excellent floodlights)"
+                        className="w-full h-28 p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 resize-none text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2 bg-slate-50/50 dark:bg-slate-900/40">
+                    <Button
+                      variant="outline"
+                      onClick={handleCloseReviewModal}
+                      className="bg-transparent text-xs font-semibold cursor-pointer"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleReviewSubmit}
+                      disabled={isSubmittingReview || reviewRating === 0}
+                      className="bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white active:!text-white font-bold text-xs cursor-pointer shadow-sm border-none disabled:opacity-50"
+                    >
+                      {isSubmittingReview ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : null}
+                      Submit Review
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setReviewModalData(null)}
-                  className="bg-transparent"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleReviewSubmit}
-                  disabled={isSubmittingReview || reviewRating === 0}
-                  className="bg-transparent text-emerald-600 dark:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 font-bold"
-                >
-                  {isSubmittingReview ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : null}
-                  Submit Review
-                </Button>
-              </div>
+              )}
             </motion.div>
           </motion.div>
         )}

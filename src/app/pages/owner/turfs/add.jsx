@@ -58,12 +58,15 @@ const OWNER_ID = "owner-123";
 const AMENITIES = [
   { id: "Parking", label: "Parking", icon: "🚗" },
   { id: "Washroom", label: "Washroom", icon: "🚻" },
-  { id: "Changing Room", label: "Changing Room", icon: "🚪" },
   { id: "Drinking Water", label: "Drinking Water", icon: "💧" },
-  { id: "Floodlights", label: "Floodlights", icon: "💡" },
-  { id: "Equipment Rent", label: "Equipment Rent", icon: "⚽" },
+  { id: "Flood Lights", label: "Flood Lights", icon: "💡" },
+  { id: "Changing Room", label: "Changing Room", icon: "🚪" },
+  { id: "Seating Area", label: "Seating Area", icon: "🪑" },
+  { id: "Cafeteria", label: "Cafeteria", icon: "☕" },
+  { id: "Equipment Rental", label: "Equipment Rental", icon: "⚽" },
   { id: "First Aid", label: "First Aid", icon: "🏥" },
-  { id: "Cafe", label: "Cafe", icon: "☕" },
+  { id: "CCTV", label: "CCTV", icon: "📹" },
+  { id: "WiFi", label: "WiFi", icon: "📶" },
 ];
 
 const SPORTS = [

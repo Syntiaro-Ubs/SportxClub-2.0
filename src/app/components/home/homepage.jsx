@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
 import useEmblaCarousel from "embla-carousel-react";
 import { toast } from "sonner";
@@ -1268,15 +1268,6 @@ function SportCard({ id, name, count, image, badge, icon, index }) {
             )}
           />
 
-          {badge && (
-            <div className="absolute top-3 left-3 z-20">
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-black/60 text-white backdrop-blur-md border border-white/20 shadow-xs">
-                {icon && <span>{icon}</span>}
-                <span>{badge}</span>
-              </span>
-            </div>
-          )}
-
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
           <div className="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-6">
@@ -1535,7 +1526,44 @@ export function SportsCategories() {
   const scrollRef = useRef(null);
   const [dynamicSports, setDynamicSports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeCity, setActiveCity] = useState(
+    () => localStorage.getItem("preferred-city") || "All Cities"
+  );
+  const [popularityMap, setPopularityMap] = useState({});
 
+  // 1. Listen for City Changes in Navbar/Modal
+  useEffect(() => {
+    const handleCityChange = (e) => {
+      const newCity = e?.detail || localStorage.getItem("preferred-city") || "All Cities";
+      setActiveCity(newCity);
+    };
+    window.addEventListener("preferredCityChanged", handleCityChange);
+    return () => window.removeEventListener("preferredCityChanged", handleCityChange);
+  }, []);
+
+  // 2. Fetch Sports Booking Popularity for the Selected City
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPopularity() {
+      try {
+        const res = await fetch(`/api/turf/turfs/sports-popularity?city=${encodeURIComponent(activeCity)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.sportCounts && isMounted) {
+            setPopularityMap(data.sportCounts);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch sports popularity for city:", err);
+      }
+    }
+    fetchPopularity();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeCity]);
+
+  // 3. Fetch CMS Sports Cards
   useEffect(() => {
     let isMounted = true;
 
@@ -1577,6 +1605,34 @@ export function SportsCategories() {
     };
   }, []);
 
+  // 4. Sort Sports Cards based on Booking Counts in the Active City
+  const sortedSports = useMemo(() => {
+    if (!dynamicSports || dynamicSports.length === 0) return [];
+
+    const getPopularityCount = (sportName) => {
+      if (!sportName) return 0;
+      const sNorm = String(sportName).toLowerCase().trim();
+      if (popularityMap[sNorm] !== undefined) return popularityMap[sNorm];
+      for (const [key, count] of Object.entries(popularityMap)) {
+        if (sNorm.includes(key) || key.includes(sNorm)) {
+          return count;
+        }
+      }
+      return 0;
+    };
+
+    return [...dynamicSports].sort((a, b) => {
+      const countA = getPopularityCount(a.name);
+      const countB = getPopularityCount(b.name);
+
+      // Higher booked sport in this city comes first!
+      if (countB !== countA) {
+        return countB - countA;
+      }
+      return 0;
+    });
+  }, [dynamicSports, popularityMap]);
+
   const scrollLeft = () => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: -350, behavior: "smooth" });
@@ -1589,7 +1645,7 @@ export function SportsCategories() {
     }
   };
 
-  if (!isLoading && dynamicSports.length === 0) {
+  if (!isLoading && sortedSports.length === 0) {
     return null;
   }
 
@@ -1602,7 +1658,7 @@ export function SportsCategories() {
         />
 
         <div className="relative mt-0.5">
-          {dynamicSports.length > 6 && (
+          {sortedSports.length > 6 && (
             <button
               onClick={scrollLeft}
               aria-label="Scroll left"
@@ -1616,12 +1672,12 @@ export function SportsCategories() {
             ref={scrollRef}
             className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x gap-2.5 sm:gap-3.5 pt-2 sm:pt-2.5 pb-3 sm:pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {dynamicSports.map((sport, index) => (
+            {sortedSports.map((sport, index) => (
               <SportCard key={sport.id || sport.name} index={index} {...sport} />
             ))}
           </div>
 
-          {dynamicSports.length > 6 && (
+          {sortedSports.length > 6 && (
             <button
               onClick={scrollRight}
               aria-label="Scroll right"

@@ -228,6 +228,280 @@ router.get("/admin/dashboard/stats", authenticateToken, requireRole(["admin", "s
 });
 
 // ----------------------------------------------------
+// ALL TURFS REPORTS & ONBOARDING ANALYTICS (Admin/CMS)
+// ----------------------------------------------------
+router.get(["/admin/reports/turfs-summary", "/admin/turf-reports", "/reports/turfs-summary"], optionalAuth, async (req, res) => {
+  try {
+    const pool = getPool();
+
+    // 1. Fetch all Turfs
+    const [turfs] = await pool.query(
+      `SELECT id, name, location, sport_type, price_per_hour, rating, status, owner_name, owner_email, owner_phone, image_url, created_at, operational_days 
+       FROM turfs 
+       ORDER BY id DESC`
+    );
+
+    // 2. Fetch all Bookings
+    const [bookings] = await pool.query(
+      `SELECT id, booking_code, user_name, user_email, user_phone, turf_name, turf_id, date, time_slot, amount, status, payment_method, sport, cancellation_reason, created_at 
+       FROM bookings 
+       ORDER BY id DESC`
+    );
+
+    // 3. Fetch all Turf Owners / Onboarding
+    const [owners] = await pool.query(
+      `SELECT id, owner_id, name, email, phone, city, status, total_turfs, earnings, joined_date, created_at, setup_data 
+       FROM turf_owners 
+       ORDER BY id DESC`
+    );
+
+    // Date calculations (Local & UTC safe)
+    const todayYMD = new Date().toISOString().slice(0, 10);
+    const todayLocal = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
+
+    const isCreatedToday = (dt) => {
+      if (!dt) return false;
+      try {
+        const d = new Date(dt);
+        const iso = d.toISOString().slice(0, 10);
+        const loc = d.toLocaleDateString("en-CA");
+        return iso === todayYMD || loc === todayLocal || iso === todayLocal;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const todayOnboardedTurfs = turfs.filter(t => isCreatedToday(t.created_at));
+    const todayOnboardedOwners = owners.filter(o => isCreatedToday(o.created_at || o.joined_date));
+
+    // Global aggregations
+    let totalBookings = bookings.length;
+    let confirmedBookings = 0;
+    let cancelledBookings = 0;
+    let reservedSlots = 0;
+    let pendingBookings = 0;
+    let totalRevenue = 0;
+    let cancelledRevenue = 0;
+    let todayBookingsCount = 0;
+    let todayRevenue = 0;
+
+    const cancellationReasonCounts = {};
+    const sportsCounts = {};
+
+    bookings.forEach((b) => {
+      const amt = parseFloat(b.amount) || 0;
+      const st = String(b.status || "").trim().toLowerCase();
+      const isBookingToday = isCreatedToday(b.created_at) || (b.date && (b.date === todayYMD || b.date === todayLocal));
+
+      if (isBookingToday) {
+        todayBookingsCount += 1;
+        if (st === "confirmed" || st === "completed") {
+          todayRevenue += amt;
+        }
+      }
+
+      if (st === "confirmed" || st === "completed") {
+        confirmedBookings += 1;
+        totalRevenue += amt;
+      } else if (st === "cancelled" || st === "canceled") {
+        cancelledBookings += 1;
+        cancelledRevenue += amt;
+        const reason = b.cancellation_reason || "Customer Cancellation / Unspecified";
+        cancellationReasonCounts[reason] = (cancellationReasonCounts[reason] || 0) + 1;
+      } else if (st === "reserved" || st === "maintenance" || st === "blocked") {
+        reservedSlots += 1;
+      } else {
+        pendingBookings += 1;
+      }
+
+      const sp = b.sport || "General";
+      if (sp) {
+        sportsCounts[sp] = (sportsCounts[sp] || 0) + 1;
+      }
+    });
+
+    const cancellationRate = totalBookings > 0 
+      ? Number(((cancelledBookings / totalBookings) * 100).toFixed(1)) 
+      : 0;
+
+    // Turf-by-turf analytics matrix
+    const turfReportsMap = new Map();
+
+    turfs.forEach((t) => {
+      turfReportsMap.set(t.id, {
+        turfId: t.id,
+        turfName: t.name || `Turf #${t.id}`,
+        location: t.location || "Not specified",
+        sportType: t.sport_type || "Multi-sport",
+        pricePerHour: parseFloat(t.price_per_hour) || 0,
+        rating: parseFloat(t.rating) || 4.5,
+        status: t.status || "Active",
+        ownerName: t.owner_name || "N/A",
+        ownerEmail: t.owner_email || "",
+        ownerPhone: t.owner_phone || "",
+        createdAt: t.created_at,
+        isOnboardedToday: isCreatedToday(t.created_at),
+        imageUrl: t.image_url || "",
+        totalBookings: 0,
+        confirmedBookings: 0,
+        cancelledBookings: 0,
+        reservedSlots: 0,
+        pendingBookings: 0,
+        totalRevenue: 0,
+        cancelledRevenue: 0,
+        cancellationRate: 0,
+        averageBookingValue: 0,
+        bookingsList: [],
+      });
+    });
+
+    // Match bookings to turfs
+    bookings.forEach((b) => {
+      let matchedTurf = null;
+      if (b.turf_id && turfReportsMap.has(Number(b.turf_id))) {
+        matchedTurf = turfReportsMap.get(Number(b.turf_id));
+      } else if (b.turf_name) {
+        const cleanBookingTurfName = b.turf_name.trim().toLowerCase();
+        for (const tr of turfReportsMap.values()) {
+          if (tr.turfName.trim().toLowerCase() === cleanBookingTurfName) {
+            matchedTurf = tr;
+            break;
+          }
+        }
+      }
+
+      // If booking is for an unlisted or legacy turf, create dynamic entry
+      if (!matchedTurf) {
+        const legacyKey = `legacy_${b.turf_name || "Unknown"}`;
+        if (!turfReportsMap.has(legacyKey)) {
+          turfReportsMap.set(legacyKey, {
+            turfId: b.turf_id || null,
+            turfName: b.turf_name || "Legacy / Unlisted Turf",
+            location: "Historical Venue",
+            sportType: b.sport || "Multi-Sport",
+            pricePerHour: 0,
+            rating: 4.5,
+            status: "Archived",
+            ownerName: "Historical Record",
+            ownerEmail: "",
+            ownerPhone: "",
+            createdAt: b.created_at,
+            isOnboardedToday: false,
+            imageUrl: "",
+            totalBookings: 0,
+            confirmedBookings: 0,
+            cancelledBookings: 0,
+            reservedSlots: 0,
+            pendingBookings: 0,
+            totalRevenue: 0,
+            cancelledRevenue: 0,
+            cancellationRate: 0,
+            averageBookingValue: 0,
+            bookingsList: [],
+          });
+        }
+        matchedTurf = turfReportsMap.get(legacyKey);
+      }
+
+      matchedTurf.totalBookings += 1;
+      const amt = parseFloat(b.amount) || 0;
+      const st = String(b.status || "").trim().toLowerCase();
+
+      if (st === "confirmed" || st === "completed") {
+        matchedTurf.confirmedBookings += 1;
+        matchedTurf.totalRevenue += amt;
+      } else if (st === "cancelled" || st === "canceled") {
+        matchedTurf.cancelledBookings += 1;
+        matchedTurf.cancelledRevenue += amt;
+      } else if (st === "reserved" || st === "maintenance" || st === "blocked") {
+        matchedTurf.reservedSlots += 1;
+      } else {
+        matchedTurf.pendingBookings += 1;
+      }
+
+      matchedTurf.bookingsList.push(b);
+    });
+
+    const turfsReports = Array.from(turfReportsMap.values()).map((tr) => {
+      tr.cancellationRate = tr.totalBookings > 0
+        ? Number(((tr.cancelledBookings / tr.totalBookings) * 100).toFixed(1))
+        : 0;
+      tr.averageBookingValue = tr.confirmedBookings > 0
+        ? Math.round(tr.totalRevenue / tr.confirmedBookings)
+        : 0;
+      // Keep only 15 latest bookings per turf in summary payload for speed
+      tr.recentBookings = tr.bookingsList.slice(0, 15);
+      delete tr.bookingsList;
+      return tr;
+    });
+
+    // Sort: turfs onboarded today first, then by total bookings desc
+    turfsReports.sort((a, b) => {
+      if (a.isOnboardedToday && !b.isOnboardedToday) return -1;
+      if (!a.isOnboardedToday && b.isOnboardedToday) return 1;
+      return b.totalBookings - a.totalBookings;
+    });
+
+    return res.json({
+      success: true,
+      kpiSummary: {
+        todayTurfsOnboarded: todayOnboardedTurfs.length,
+        todayOwnersOnboarded: todayOnboardedOwners.length,
+        totalTurfs: turfs.length,
+        activeTurfs: turfs.filter(t => (t.status || "").toLowerCase() === "active").length,
+        totalBookings,
+        confirmedBookings,
+        cancelledBookings,
+        reservedSlots,
+        pendingBookings,
+        cancellationRate,
+        totalRevenue,
+        cancelledRevenue,
+        todayBookingsCount,
+        todayRevenue,
+      },
+      todayOnboardedTurfs: todayOnboardedTurfs.map(t => ({
+        id: t.id,
+        name: t.name,
+        location: t.location,
+        sportType: t.sport_type,
+        pricePerHour: t.price_per_hour,
+        ownerName: t.owner_name,
+        ownerEmail: t.owner_email,
+        ownerPhone: t.owner_phone,
+        status: t.status,
+        createdAt: t.created_at,
+        imageUrl: t.image_url,
+      })),
+      todayOnboardedOwners: todayOnboardedOwners.map(o => ({
+        id: o.id,
+        ownerId: o.owner_id,
+        name: o.name,
+        email: o.email,
+        phone: o.phone,
+        city: o.city,
+        status: o.status,
+        createdAt: o.created_at,
+      })),
+      turfsReports,
+      cancellationReasons: Object.entries(cancellationReasonCounts).map(([reason, count]) => ({
+        reason,
+        count,
+        percentage: cancelledBookings > 0 ? Math.round((count / cancelledBookings) * 100) : 0,
+      })),
+      sportsDistribution: Object.entries(sportsCounts).map(([sport, count]) => ({
+        sport,
+        count,
+      })),
+      allBookingsLedger: bookings.slice(0, 100),
+    });
+  } catch (err) {
+    console.error("Turf Reports Summary Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ----------------------------------------------------
 // TURF OWNER ONBOARDING (Admin Only)
 // ----------------------------------------------------
 // TURF ONBOARDING REQUESTS (FAST & ENRICHED)

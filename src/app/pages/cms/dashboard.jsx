@@ -56,6 +56,7 @@ import {
   LayoutGrid,
   List,
   MoreVertical,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -76,6 +77,7 @@ import { adminApi } from "../../services/admin-api";
 import { turfService } from "../../services/turf.service";
 import { TurfOnboardingView } from "./turf-onboarding-view";
 import { ReviewsManagementView } from "./reviews-management-view";
+import { TurfReportsView } from "./turf-reports-view";
 import { compressImage } from "../../utils/image-compressor";
 import { fastCache } from "../../services/fast-cache";
 
@@ -87,6 +89,14 @@ export const CONSOLE_MODULES = [
     icon: Home,
     tag: "CMS Content",
     color: "text-blue-600 bg-blue-50 border-blue-200",
+  },
+  {
+    key: "reports",
+    label: "Turfs Reports",
+    description: "Live venue performance reports, slot bookings, cancellations, revenue, & today's onboarding.",
+    icon: BarChart3,
+    tag: "Reports & Analytics",
+    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
   },
   {
     key: "onboarding",
@@ -142,13 +152,13 @@ export const ROLE_PRESETS = {
   "Super Admin": {
     label: "Super Admin",
     description: "Full unrestricted access to all console modules and user management.",
-    permissions: ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"],
+    permissions: ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"],
     badgeClass: "bg-purple-100 text-purple-700 border-purple-200",
   },
   "Manager": {
     label: "Console Manager",
-    description: "Access to manage home page, onboarding, turfs, reviews, tournaments, and community feed.",
-    permissions: ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community"],
+    description: "Access to manage home page, reports, onboarding, turfs, reviews, tournaments, and community feed.",
+    permissions: ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community"],
     badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
   },
   "Editor": {
@@ -159,8 +169,8 @@ export const ROLE_PRESETS = {
   },
   "Turf Manager": {
     label: "Turf Manager",
-    description: "Access to manage venue listings, pricing, reviews, and home page featured turfs.",
-    permissions: ["turfs", "reviews", "home-page"],
+    description: "Access to manage venue listings, reports, pricing, reviews, and home page featured turfs.",
+    permissions: ["turfs", "reports", "reviews", "home-page"],
     badgeClass: "bg-teal-100 text-teal-700 border-teal-200",
   },
   "Tournament Coordinator": {
@@ -199,18 +209,18 @@ export function CMSDashboard() {
   });
 
   const userPermissions = useMemo(() => {
-    if (!currentCmsUser) return ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
+    if (!currentCmsUser) return ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
     if (currentCmsUser.role === "Super Admin" || currentCmsUser.role === "Admin") {
-      return ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
+      return ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
     }
     return Array.isArray(currentCmsUser.permissions) && currentCmsUser.permissions.length > 0
       ? currentCmsUser.permissions
-      : ["home-page"];
+      : ["home-page", "reports"];
   }, [currentCmsUser]);
 
   // Active view tab
   const currentView = params.view || (userPermissions[0] || "home-page");
-  const validViews = ["home-page", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
+  const validViews = ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
   const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : (userPermissions[0] || "home-page"));
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 768);
 
@@ -1664,6 +1674,7 @@ export function CMSDashboard() {
   const menuItems = useMemo(() => {
     const allItems = [
       { key: "home-page", label: "Home Page", icon: Home },
+      { key: "reports", label: "Turfs Reports", icon: BarChart3 },
       { key: "onboarding", label: "Onboarding Requests", icon: CheckSquare },
       { key: "turfs", label: "Turfs", icon: MapPin },
       { key: "reviews", label: "Reviews", icon: Star },
@@ -1978,11 +1989,12 @@ export function CMSDashboard() {
                       </div>
 
                       <CardContent className="p-3.5 flex items-center justify-between bg-white border-t border-[#f1f5f9]">
-                        <Badge className="bg-[#f1f5f9] text-[#475569] border-none text-[10px] font-bold">
-                          {sport.badge || "Popular"}
-                        </Badge>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 truncate pr-2">
+                          <span>{sport.icon || "⚽"}</span>
+                          <span className="truncate">{sport.name}</span>
+                        </div>
 
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-1.5 shrink-0">
                           <Button
                             size="sm"
                             variant="outline"
@@ -1992,7 +2004,7 @@ export function CMSDashboard() {
                                 name: sport.name,
                                 icon: sport.icon || "⚽",
                                 image_url: sport.image_url || "",
-                                badge: sport.badge || "Popular",
+                                badge: "",
                                 description: sport.description || ""
                               });
                               setIsSportModalOpen(true);
@@ -3193,6 +3205,11 @@ export function CMSDashboard() {
                 )}
               </section>
             </div>
+          )}
+
+          {/* ALL TURFS REPORTS & ONBOARDING VIEW */}
+          {activeView === "reports" && (
+            <TurfReportsView />
           )}
 
           {/* REVIEWS MANAGEMENT VIEW */}

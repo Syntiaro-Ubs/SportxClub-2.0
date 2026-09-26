@@ -240,7 +240,7 @@ export function TimeSlots() {
     startPeriod: "AM",
     endTime: "12:10",
     endPeriod: "PM",
-    reason: "Maintenance"
+    reason: "Reserved"
   });
   const [blockedSchedules, setBlockedSchedules] = useState([]);
   const [isSchedulesModalOpen, setIsSchedulesModalOpen] = useState(false);
@@ -315,6 +315,10 @@ export function TimeSlots() {
               const bTime = String(b.time_slot || b.slot_time || b.slotTime || b.time || "").toLowerCase().trim();
               if (!bTime) return false;
 
+              if (bTime.includes("full day") || bTime.includes("24 hrs") || bTime.includes("24 hours") || bTime.includes("all day")) {
+                return true;
+              }
+
               // Check comma-separated multi-slots e.g. "05:00 pm - 06:00 pm, 06:00 pm - 07:00 pm"
               const timeParts = bTime.split(",").map(p => p.trim()).filter(Boolean);
 
@@ -374,11 +378,23 @@ export function TimeSlots() {
               ? (t.peak_price && Number(t.peak_price) > 0 ? Number(t.peak_price) : Math.round(baseRate * 1.15))
               : baseRate;
 
+            const isHoldOrMaintenance = matchingBooking && (
+              String(matchingBooking.status || "").toLowerCase() === "maintenance" ||
+              String(matchingBooking.status || "").toLowerCase() === "blocked" ||
+              String(matchingBooking.status || "").toLowerCase() === "reserved" ||
+              String(matchingBooking.payment_type || "").toLowerCase() === "blocked" ||
+              String(matchingBooking.payment_method || "").toLowerCase() === "blocked" ||
+              String(matchingBooking.user_name || "").toLowerCase().includes("reserved")
+            );
+
+            const bkgReason = String(matchingBooking?.user_name || matchingBooking?.customerName || "");
+
             slots.push({
               time: timeStr,
               rawHour: i,
-              status: matchingBooking ? "Booked" : "Available",
+              status: matchingBooking ? (isHoldOrMaintenance ? "Maintenance" : "Booked") : "Available",
               price: slotPrice,
+              blockedReason: isHoldOrMaintenance ? (bkgReason || "Reserved") : undefined,
               bookingDetails: matchingBooking ? {
                 id: matchingBooking.id,
                 name: matchingBooking.user_name || matchingBooking.customerName || "Customer",
@@ -512,6 +528,7 @@ export function TimeSlots() {
 
     const totalPrice = selectedSlots.reduce((sum, s) => sum + s.price, 0);
     const isBlocking = bookingActionType === "block";
+    const blockReason = bookingDetails.customerName || (isBlocking ? "Reserved" : "Walk-in Customer");
     const passTimeStr = selectedSlots.map(s => s.displayTime).join(", ");
 
     try {
@@ -519,17 +536,17 @@ export function TimeSlots() {
         booking_code: `SX-${Date.now().toString().slice(-6)}`,
         turf_id: turf.id,
         turf_name: turf.name,
-        user_name: bookingDetails.customerName || (isBlocking ? "Maintenance Hold" : "Walk-in Customer"),
+        user_name: blockReason,
         user_phone: bookingDetails.customerPhone || "+91 98765 43210",
-        user_email: "walkin@example.com",
+        user_email: isBlocking ? "hold@sportxclub.com" : "walkin@example.com",
         sport: turf.sportType || "Football",
         time_slot: passTimeStr,
         slot_time: passTimeStr,
         date: format(selectedDate, "yyyy-MM-dd"),
-        amount: totalPrice,
-        status: isBlocking ? "Maintenance" : "Confirmed",
-        payment_method: (bookingDetails.paymentMethod || "CASH").toUpperCase(),
-        payment_type: (bookingDetails.paymentMethod || "CASH").toUpperCase(),
+        amount: isBlocking ? 0 : totalPrice,
+        status: isBlocking ? (blockReason.toLowerCase().includes("reserved") ? "Reserved" : "Maintenance") : "Confirmed",
+        payment_method: isBlocking ? "BLOCKED" : (bookingDetails.paymentMethod || "CASH").toUpperCase(),
+        payment_type: isBlocking ? "BLOCKED" : (bookingDetails.paymentMethod || "CASH").toUpperCase(),
       };
 
       const createdBooking = await adminApi.create("bookings", bookingPayload);
@@ -542,7 +559,7 @@ export function TimeSlots() {
         location: turf.location,
         price: totalPrice,
         slotCount: selectedSlots.length,
-        customerName: bookingDetails.customerName || (isBlocking ? "Maintenance Hold" : "Walk-in Customer"),
+        customerName: blockReason,
         customerPhone: bookingDetails.customerPhone || "N/A",
         paymentMethod: bookingDetails.paymentMethod
       };
@@ -554,7 +571,7 @@ export function TimeSlots() {
 
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new Event("turf_updated"));
-      toast.success(`Booking created successfully for ${pass.customerName} (${selectedSlots.length} slot${selectedSlots.length > 1 ? "s" : ""})!`);
+      toast.success(`${isBlocking ? "Slot hold created" : "Booking created"} successfully for ${pass.customerName} (${selectedSlots.length} slot${selectedSlots.length > 1 ? "s" : ""})!`);
     } catch (err) {
       console.error("Failed to save booking to MySQL", err);
       toast.error("Failed to save booking. Please try again.");
@@ -575,6 +592,7 @@ export function TimeSlots() {
       setSelectedSlotForRelease(null);
 
       window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("turf_updated"));
       toast.success("Slot successfully released back to Available!");
     } catch (err) {
       console.error("Failed to release slot in MySQL", err);
@@ -595,7 +613,7 @@ export function TimeSlots() {
   };
 
   // Custom Time & Multi-Day Block Submission Handler
-  const handleCustomBlockSubmit = (e) => {
+  const handleCustomBlockSubmit = async (e) => {
     e.preventDefault();
     if (!selectedTurfForCustomBlock) return;
 
@@ -616,66 +634,120 @@ export function TimeSlots() {
       }
     }
 
-    if (isMultiDay) {
-      const startDateStr = customBlockForm.startDate;
-      const endDateStr = customBlockForm.endDate;
+    try {
+      if (isMultiDay) {
+        const startDateStr = customBlockForm.startDate;
+        const endDateStr = customBlockForm.endDate;
 
-      if (!startDateStr || !endDateStr || endDateStr < startDateStr) {
-        toast.error("Invalid start or end date range!");
-        return;
+        if (!startDateStr || !endDateStr || endDateStr < startDateStr) {
+          toast.error("Invalid start or end date range!");
+          return;
+        }
+
+        const newRule = {
+          id: `rule-${Date.now()}`,
+          turfId: selectedTurfForCustomBlock.id,
+          turfName: selectedTurfForCustomBlock.name,
+          blockType: "multiday",
+          startDate: startDateStr,
+          endDate: endDateStr,
+          timeScope: customBlockForm.timeScope,
+          startTime: customBlockForm.startTime,
+          startPeriod: customBlockForm.startPeriod,
+          endTime: customBlockForm.endTime,
+          endPeriod: customBlockForm.endPeriod,
+          reason: customBlockForm.reason,
+          blockLabel: timeLabel
+        };
+
+        setBlockedSchedules(prev => [...prev, newRule]);
+
+        const startD = new Date(startDateStr);
+        const endD = new Date(endDateStr);
+        const curD = new Date(startD);
+
+        while (curD <= endD) {
+          const dateStr = format(curD, "yyyy-MM-dd");
+          const bookingPayload = {
+            booking_code: `BLK-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`,
+            turf_id: selectedTurfForCustomBlock.id,
+            turf_name: selectedTurfForCustomBlock.name,
+            user_name: customBlockForm.reason,
+            user_phone: "+91 00000 00000",
+            user_email: "facility-admin@sportxclub.com",
+            sport: selectedTurfForCustomBlock.sportType || "Football",
+            time_slot: isFullDay ? "12:00 am - 11:59 pm" : timeLabel,
+            slot_time: isFullDay ? "12:00 am - 11:59 pm" : timeLabel,
+            date: dateStr,
+            amount: 0,
+            status: customBlockForm.reason === "Reserved" ? "Reserved" : "Maintenance",
+            payment_method: "BLOCKED",
+            payment_type: "BLOCKED",
+          };
+          await adminApi.create("bookings", bookingPayload).catch(err => console.warn("Failed to create multi-day block booking", err));
+          curD.setDate(curD.getDate() + 1);
+        }
+
+        toast.success(`Blocked ${selectedTurfForCustomBlock.name} from ${startDateStr} to ${endDateStr} (${customBlockForm.reason})`);
+      } else {
+        const startDec = timeToDecimal(customBlockForm.startTime, customBlockForm.startPeriod);
+        const endDec = timeToDecimal(customBlockForm.endTime, customBlockForm.endPeriod);
+        const dateStr = format(selectedDate, "yyyy-MM-dd");
+
+        const bookingPayload = {
+          booking_code: `BLK-${Date.now().toString().slice(-6)}`,
+          turf_id: selectedTurfForCustomBlock.id,
+          turf_name: selectedTurfForCustomBlock.name,
+          user_name: customBlockForm.reason,
+          user_phone: "+91 00000 00000",
+          user_email: "facility-admin@sportxclub.com",
+          sport: selectedTurfForCustomBlock.sportType || "Football",
+          time_slot: isFullDay ? "12:00 am - 11:59 pm" : timeLabel,
+          slot_time: isFullDay ? "12:00 am - 11:59 pm" : timeLabel,
+          date: dateStr,
+          amount: 0,
+          status: customBlockForm.reason === "Reserved" ? "Reserved" : "Maintenance",
+          payment_method: "BLOCKED",
+          payment_type: "BLOCKED",
+        };
+
+        await adminApi.create("bookings", bookingPayload).catch(err => console.warn("Failed to create single block booking", err));
+
+        const updatedTurfs = turfs.map(t => {
+          if (t.id === selectedTurfForCustomBlock.id) {
+            const updatedSlots = t.slots.map(slot => {
+              const slotStartHour = parseInt(slot.time.split(':')[0], 10);
+              const slotEndHour = slotStartHour + 1;
+              const overlaps = isFullDay || (Math.max(slotStartHour, startDec) < Math.min(slotEndHour, endDec));
+
+              if (overlaps) {
+                return {
+                  ...slot,
+                  status: 'Maintenance',
+                  blockedTimeRange: timeLabel,
+                  blockedReason: customBlockForm.reason
+                };
+              }
+              return slot;
+            });
+            return { ...t, slots: updatedSlots };
+          }
+          return t;
+        });
+
+        setTurfs(updatedTurfs);
+        toast.success(`Turf blocked for: ${timeLabel} (${customBlockForm.reason})`);
       }
 
-      const newRule = {
-        id: `rule-${Date.now()}`,
-        turfId: selectedTurfForCustomBlock.id,
-        turfName: selectedTurfForCustomBlock.name,
-        blockType: "multiday",
-        startDate: startDateStr,
-        endDate: endDateStr,
-        timeScope: customBlockForm.timeScope,
-        startTime: customBlockForm.startTime,
-        startPeriod: customBlockForm.startPeriod,
-        endTime: customBlockForm.endTime,
-        endPeriod: customBlockForm.endPeriod,
-        reason: customBlockForm.reason,
-        blockLabel: timeLabel
-      };
-
-      setBlockedSchedules(prev => [...prev, newRule]);
-      toast.success(`Blocked ${selectedTurfForCustomBlock.name} from ${startDateStr} to ${endDateStr} (${timeLabel})`);
-    } else {
-      // Single day custom block for currently loaded slots
-      const startDec = timeToDecimal(customBlockForm.startTime, customBlockForm.startPeriod);
-      const endDec = timeToDecimal(customBlockForm.endTime, customBlockForm.endPeriod);
-
-      const updatedTurfs = turfs.map(t => {
-        if (t.id === selectedTurfForCustomBlock.id) {
-          const updatedSlots = t.slots.map(slot => {
-            const slotStartHour = parseInt(slot.time.split(':')[0], 10);
-            const slotEndHour = slotStartHour + 1;
-            const overlaps = isFullDay || (Math.max(slotStartHour, startDec) < Math.min(slotEndHour, endDec));
-
-            if (overlaps) {
-              return {
-                ...slot,
-                status: 'Maintenance',
-                blockedTimeRange: timeLabel,
-                blockedReason: customBlockForm.reason
-              };
-            }
-            return slot;
-          });
-          return { ...t, slots: updatedSlots };
-        }
-        return t;
-      });
-
-      setTurfs(updatedTurfs);
-      toast.success(`Turf blocked for custom interval: ${timeLabel}`);
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event("turf_updated"));
+    } catch (err) {
+      console.error("Error creating block", err);
+      toast.error("Failed to block slot. Please try again.");
+    } finally {
+      setIsBlockModalOpen(false);
+      setSelectedTurfForCustomBlock(null);
     }
-
-    setIsBlockModalOpen(false);
-    setSelectedTurfForCustomBlock(null);
   };
 
   const handleDeleteSchedule = (scheduleId) => {
@@ -1083,15 +1155,18 @@ export function TimeSlots() {
 
                         // Maintenance Grouped Slot
                         if (status === 'Maintenance') {
+                          const isReserved = (slot.blockedReason || slot.bookingDetails?.name || "").toLowerCase().includes("reserved");
                           return (
                             <div
                               key={idx}
                               onClick={() => handleSlotClick(turf, slot, startIndex)}
-                              className={`p-2 sm:p-2.5 rounded-xl border border-amber-500/50 hover:border-amber-500 bg-transparent flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-150 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent pointer-events-none' : ''}`}
+                              className={`p-2 sm:p-2.5 rounded-xl border ${isReserved ? 'border-amber-500/60 hover:border-amber-500 bg-amber-500/5' : 'border-amber-500/50 hover:border-amber-500 bg-transparent'} flex flex-col items-center justify-center gap-0.5 cursor-pointer transition-all duration-150 min-h-[68px] w-full max-w-full overflow-hidden ${isFilteredOut ? 'opacity-20 border-transparent pointer-events-none' : ''}`}
                             >
                               <AlertTriangle className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
                               <span className="font-extrabold text-[10px] sm:text-xs text-foreground text-center tracking-tight truncate max-w-full px-0.5">{displayTime}</span>
-                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500">MAINTENANCE</span>
+                              <span className="text-[9px] uppercase tracking-wider font-extrabold text-amber-500 truncate max-w-full px-1">
+                                {isReserved ? "RESERVED" : (slot.blockedReason || "MAINTENANCE").toUpperCase()}
+                              </span>
                             </div>
                           );
                         }
@@ -1175,7 +1250,10 @@ export function TimeSlots() {
               </button>
               <button
                 type="button"
-                onClick={() => setBookingActionType("block")}
+                onClick={() => {
+                  setBookingActionType("block");
+                  setBookingDetails(prev => ({ ...prev, customerName: "Reserved" }));
+                }}
                 className={`py-2 text-xs font-bold rounded-lg transition-all cursor-pointer border-2 ${bookingActionType === "block"
                   ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-transparent font-extrabold shadow-xs"
                   : "border-transparent text-muted-foreground hover:bg-muted/40"
@@ -1207,9 +1285,29 @@ export function TimeSlots() {
             </div>
 
             {bookingActionType === "block" ? (
-              <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500 text-xs font-medium space-y-1.5">
-                <p className="font-bold flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Block Facility Hold</p>
-                <p>This will temporarily mark {selectedSlots.length} selected slot(s) as Maintenance/Blocked. Regular players won't be able to book them.</p>
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Reason for Holding / Blocking</Label>
+                  <Select
+                    value={bookingDetails.customerName || "Reserved"}
+                    onValueChange={(val) => setBookingDetails({ ...bookingDetails, customerName: val })}
+                  >
+                    <SelectTrigger className="h-10 rounded-lg text-sm">
+                      <SelectValue placeholder="Select Reason" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-lg">
+                      <SelectItem value="Reserved">Reserved</SelectItem>
+                      <SelectItem value="Maintenance Hold">Maintenance Hold</SelectItem>
+                      <SelectItem value="Monsoon / Rain Hold">Monsoon / Rain Hold</SelectItem>
+                      <SelectItem value="Coaching Session">Coaching Session</SelectItem>
+                      <SelectItem value="Private / Owner Event">Private / Owner Event</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="p-3.5 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-600 dark:text-amber-500 text-xs font-medium space-y-1">
+                  <p className="font-bold flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-amber-500" /> Facility Hold Active</p>
+                  <p>This will hold the selected {selectedSlots.length} slot(s) with reason &quot;{bookingDetails.customerName || 'Reserved'}&quot;. The customer website will display &quot;Reserved&quot; and prevent selection.</p>
+                </div>
               </div>
             ) : (
               <>
@@ -1651,6 +1749,7 @@ export function TimeSlots() {
                   <SelectValue placeholder="Select reason" />
                 </SelectTrigger>
                 <SelectContent className="rounded-lg">
+                  <SelectItem value="Reserved">Reserved</SelectItem>
                   <SelectItem value="Maintenance">Maintenance Hold</SelectItem>
                   <SelectItem value="Monsoon Hold">Monsoon / Rain Hold</SelectItem>
                   <SelectItem value="Coaching">Coaching Session</SelectItem>

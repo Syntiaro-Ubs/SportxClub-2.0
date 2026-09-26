@@ -416,6 +416,47 @@ export function MobileHomePage() {
   }, []);
 
   const [turfs, setTurfs] = useState([]);
+  const [popularityMap, setPopularityMap] = useState({});
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchPopularity() {
+      try {
+        const res = await fetch(`/api/turf/turfs/sports-popularity?city=${encodeURIComponent(city)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.sportCounts && isMounted) {
+            setPopularityMap(data.sportCounts);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch sports popularity in mobile:", e);
+      }
+    }
+    fetchPopularity();
+    return () => {
+      isMounted = false;
+    };
+  }, [city]);
+
+  const sortedSportsCategories = useMemo(() => {
+    const getCount = (name) => {
+      if (!name) return 0;
+      const sNorm = String(name).toLowerCase().trim();
+      if (popularityMap[sNorm] !== undefined) return popularityMap[sNorm];
+      for (const [key, val] of Object.entries(popularityMap)) {
+        if (sNorm.includes(key) || key.includes(sNorm)) return val;
+      }
+      return 0;
+    };
+
+    return [...sportsCategories].sort((a, b) => {
+      const cA = getCount(a.name);
+      const cB = getCount(b.name);
+      if (cB !== cA) return cB - cA;
+      return 0;
+    });
+  }, [popularityMap]);
 
   useEffect(() => {
     async function loadTurfs() {
@@ -598,7 +639,7 @@ export function MobileHomePage() {
                 onTouchEnd={handleTouchEnd}
                 className="flex overflow-x-auto gap-2 pb-4 select-none cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
-                {[...sportsCategories, ...sportsCategories].map((item, index) => (
+                {[...sortedSportsCategories, ...sortedSportsCategories].map((item, index) => (
                   <motion.button
                     key={`${item.name}-${index}`}
                     onClick={() => {

@@ -15,14 +15,27 @@ const router = express.Router();
  * Helper to get clean frontend & backend URLs
  */
 function getAppUrls(req) {
-  let frontendUrl = (process.env.APP_FRONTEND_URL || "https://sportxclub.com").replace(/\/+$/, "");
-  if (!frontendUrl.startsWith("https://") && process.env.NODE_ENV === "production") {
-    frontendUrl = "https://sportxclub.com";
-  }
+  const origin = req?.headers?.origin || req?.headers?.referer || "";
+  const isLocalhost = origin.includes("localhost") || origin.includes("127.0.0.1") || process.env.NODE_ENV === "development";
 
-  let backendUrl = (process.env.APP_BACKEND_URL || "https://sportxclub.com").replace(/\/+$/, "");
-  if (!backendUrl.startsWith("https://") && process.env.NODE_ENV === "production") {
-    backendUrl = "https://sportxclub.com";
+  let frontendUrl = "https://sportxclub.com";
+  let backendUrl = "https://sportxclub.com";
+
+  if (isLocalhost) {
+    if (origin) {
+      try {
+        const parsed = new URL(origin);
+        frontendUrl = `${parsed.protocol}//${parsed.host}`;
+      } catch {
+        frontendUrl = process.env.APP_FRONTEND_URL || "http://localhost:5173";
+      }
+    } else {
+      frontendUrl = process.env.APP_FRONTEND_URL || "http://localhost:5173";
+    }
+    backendUrl = `http://localhost:${process.env.PORT || 5000}`;
+  } else {
+    frontendUrl = (process.env.APP_FRONTEND_URL || "https://sportxclub.com").replace(/\/+$/, "");
+    backendUrl = (process.env.APP_BACKEND_URL || "https://sportxclub.com").replace(/\/+$/, "");
   }
 
   return { frontendUrl, backendUrl };
@@ -104,11 +117,13 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
     const cleanSport = String(sport || "Sports").trim();
     const cleanBookingCode = String(bookingCode || `SPXBK${Date.now()}`).trim();
 
-    const { frontendUrl, backendUrl } = getAppUrls(req);
-    const returnUrl = `${frontendUrl}/payment-status?order_id={order_id}`;
-    const notifyUrl = `${backendUrl}/api/payment/cashfree/webhook`;
-
+    // Cashfree API schema strictly requires return_url and notify_url to start with https://
     const isWalletTopup = req.body.orderType === "WALLET_TOPUP";
+    const prodDomain = "https://sportxclub.com";
+    const returnUrl = isWalletTopup
+      ? `${prodDomain}/profile?topup_status=success&order_id={order_id}`
+      : `${prodDomain}/payment-status?order_id={order_id}`;
+    const notifyUrl = `${prodDomain}/api/payment/cashfree/webhook`;
 
     const cashfreeOrderPayload = {
       order_id: orderId,
@@ -121,7 +136,7 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
         customer_phone: cleanPhone,
       },
       order_meta: {
-        return_url: isWalletTopup ? `${frontendUrl}/profile?topup_status=success&order_id={order_id}` : returnUrl,
+        return_url: returnUrl,
         notify_url: notifyUrl,
       },
       order_note: isWalletTopup ? `SportXClub Wallet Top-Up: ₹${formattedAmount}` : `SportXClub Booking: ${resolvedTurfName} (${cleanSport})`,
@@ -130,7 +145,7 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
         turfName: resolvedTurfName.slice(0, 40),
         sport: cleanSport.slice(0, 40),
         date: cleanDate.slice(0, 20),
-        time: cleanTime.slice(0, 30),
+        time: cleanTime.slice(0, 100),
         venueId: String(venueId || ""),
         bookingCode: cleanBookingCode.slice(0, 40),
       },
@@ -155,8 +170,22 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
       });
     }
 
-    // Save pending transaction in MySQL payments table
+    // Save pending transaction in MySQL payments table with complete booking metadata
     try {
+      const initialBookingData = {
+        cleanTime,
+        cleanDate,
+        cleanSport,
+        cleanName,
+        cleanEmail,
+        cleanPhone,
+        resolvedTurfName,
+        venueId,
+        cleanBookingCode,
+        slotCount: count,
+        slots: req.body.slots,
+      };
+
       await pool.query(
         `INSERT INTO payments 
          (transaction_id, merchant_transaction_id, provider_reference_id, user_name, user_email, turf_name, amount, method, status, date, payment_details)
@@ -171,7 +200,7 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
           numericAmount,
           "Cashfree Live",
           cleanDate || new Date().toISOString().split("T")[0],
-          JSON.stringify(responseData),
+          JSON.stringify({ ...responseData, initialBookingData }),
         ]
       );
     } catch (dbErr) {
@@ -210,6 +239,49 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
     }
 
     console.log(`[Cashfree Verify] Fetching status for order: ${order_id}`);
+    const pool = getPool();
+
+    // 1. Check local database first
+    try {
+      const [dbPayments] = await pool.query(
+        "SELECT id, status, amount, user_name, user_email, turf_name, method, date, payment_details FROM payments WHERE merchant_transaction_id = ? OR transaction_id = ? LIMIT 1",
+        [order_id, order_id]
+      );
+
+      if (dbPayments.length > 0 && dbPayments[0].status === "Success") {
+        const p = dbPayments[0];
+        let details = {};
+        try {
+          details = typeof p.payment_details === "string" ? JSON.parse(p.payment_details) : (p.payment_details || {});
+        } catch (e) {}
+
+        const [dbBookings] = await pool.query(
+          "SELECT id, booking_code, user_name, user_email, turf_name, sport, date, time_slot, slot_time, amount, status, payment_method FROM bookings WHERE booking_code = ? OR (user_email = ? AND turf_name = ? AND date = ?) LIMIT 1",
+          [details?.initialBookingData?.cleanBookingCode || order_id, p.user_email, p.turf_name, p.date]
+        );
+
+        return res.json({
+          success: true,
+          status: "Success",
+          isPaid: true,
+          order_status: "PAID",
+          transactionId: p.transaction_id || order_id,
+          order_id: order_id,
+          cf_payment_id: p.transaction_id || order_id,
+          amount: parseFloat(p.amount || 0),
+          booking: dbBookings[0] || {
+            booking_code: order_id,
+            turf_name: p.turf_name,
+            amount: parseFloat(p.amount || 0),
+            date: p.date,
+            status: "Confirmed",
+          },
+          paymentDetails: details,
+        });
+      }
+    } catch (dbCheckErr) {
+      console.warn("DB check note:", dbCheckErr.message);
+    }
 
     const orderRes = await fetch(`${CASHFREE_CONFIG.BASE_URL}/orders/${encodeURIComponent(order_id)}`, {
       method: "GET",
@@ -249,24 +321,32 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
     const paymentMethod = successfulPayment?.payment_group || successfulPayment?.payment_method || "Cashfree Live";
     const numericAmount = parseFloat(orderData.order_amount || 0);
 
-    const pool = getPool();
-
     if (isPaid) {
-      const tags = orderData.order_tags || {};
-      const turfName = tags.turfName || "SportX Arena";
-      const turfId = tags.venueId ? parseInt(tags.venueId, 10) : null;
-      const sportName = tags.sport || "Football";
-      const dateStr = tags.date || new Date().toISOString().split("T")[0];
-      const timeStr = tags.time || "6:00 PM - 7:00 PM";
-      const bookingCode = tags.bookingCode || `SPX-BK-${Date.now()}`;
-      const userEmail = orderData.customer_details?.customer_email || "user@sportxclub.com";
-      const userName = orderData.customer_details?.customer_name || "SportX Player";
-      const userPhone = orderData.customer_details?.customer_phone || "9876543210";
-
       const [existingPayments] = await pool.query(
-        "SELECT id, status FROM payments WHERE merchant_transaction_id = ? OR transaction_id = ? LIMIT 1",
+        "SELECT id, status, payment_details FROM payments WHERE merchant_transaction_id = ? OR transaction_id = ? LIMIT 1",
         [order_id, cfPaymentId]
       );
+
+      let initialBookingData = null;
+      if (existingPayments.length > 0 && existingPayments[0].payment_details) {
+        try {
+          const parsed = typeof existingPayments[0].payment_details === "string"
+            ? JSON.parse(existingPayments[0].payment_details)
+            : existingPayments[0].payment_details;
+          initialBookingData = parsed?.initialBookingData || null;
+        } catch (e) {}
+      }
+
+      const tags = orderData.order_tags || {};
+      const turfName = initialBookingData?.resolvedTurfName || tags.turfName || "SportX Arena";
+      const turfId = initialBookingData?.venueId ? parseInt(initialBookingData.venueId, 10) : (tags.venueId ? parseInt(tags.venueId, 10) : null);
+      const sportName = initialBookingData?.cleanSport || tags.sport || "Football";
+      const dateStr = initialBookingData?.cleanDate || tags.date || new Date().toISOString().split("T")[0];
+      const timeStr = initialBookingData?.cleanTime || tags.time || "6:00 PM - 7:00 PM";
+      const bookingCode = initialBookingData?.cleanBookingCode || tags.bookingCode || `SPX-BK-${Date.now()}`;
+      const userEmail = initialBookingData?.cleanEmail || orderData.customer_details?.customer_email || "user@sportxclub.com";
+      const userName = initialBookingData?.cleanName || orderData.customer_details?.customer_name || "SportX Player";
+      const userPhone = initialBookingData?.cleanPhone || orderData.customer_details?.customer_phone || "9876543210";
 
       let paymentId = existingPayments[0]?.id;
       if (existingPayments.length > 0) {
@@ -274,7 +354,7 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
           `UPDATE payments 
               SET status = 'Success', transaction_id = ?, provider_reference_id = ?, method = ?, payment_details = ?
             WHERE id = ?`,
-          [cfPaymentId, cfPaymentId, paymentMethod, JSON.stringify({ orderData, paymentsList }), paymentId]
+          [cfPaymentId, cfPaymentId, paymentMethod, JSON.stringify({ orderData, paymentsList, initialBookingData }), paymentId]
         );
       } else {
         const [payRes] = await pool.query(
@@ -291,7 +371,7 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
             numericAmount,
             paymentMethod,
             dateStr,
-            JSON.stringify({ orderData, paymentsList }),
+            JSON.stringify({ orderData, paymentsList, initialBookingData }),
           ]
         );
         paymentId = payRes.insertId;
@@ -387,6 +467,8 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
     });
   }
 });
+
+
 
 /**
  * 3. FALLBACK VERIFICATION ROUTE

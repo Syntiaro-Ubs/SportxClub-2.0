@@ -172,6 +172,8 @@ async function generatePassPdfBuffer({
   startTime,
   endTime,
   duration,
+  slotCount = 1,
+  slotList = [],
   amountPaid,
   turfLocation,
   bookingCreatedAt,
@@ -331,16 +333,22 @@ async function generatePassPdfBuffer({
     doc.setFontSize(6.5);
     doc.text(label, bx + 16, by + 5.8);
 
-    // Value
+    // Value with dynamic auto-fit font size to prevent any truncation
     doc.setTextColor(15, 23, 42); // #0F172A
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
     const valStr = String(value || "");
-    doc.text(valStr.length > 20 ? valStr.slice(0, 18) + "..." : valStr, bx + 16, by + 11.6);
+    if (valStr.length > 25) {
+      doc.setFontSize(6.5);
+    } else if (valStr.length > 18) {
+      doc.setFontSize(7.5);
+    } else {
+      doc.setFontSize(8.5);
+    }
+    doc.text(valStr, bx + 16, by + 11.6);
   };
 
   const formattedAmount = `INR ${Number(amountPaid || 0).toLocaleString("en-IN")}`;
-  const displaySlot = startTime && endTime ? `${startTime} – ${endTime}` : "Scheduled Slot";
+  const displaySlot = slotCount > 1 ? `${startTime} – ${endTime} (${slotCount} Slots)` : (startTime && endTime ? `${startTime} – ${endTime}` : "Scheduled Slot");
 
   // Row 1
   drawDetailCard(col1X, gridY, "calendar", "Date:", String(bookingDate || ""));
@@ -350,6 +358,15 @@ async function generatePassPdfBuffer({
   const row2Y = gridY + 19;
   drawDetailCard(col1X, row2Y, "user", "Pass Holder:", String(userName || "SportX Player"));
   drawDetailCard(col2X, row2Y, "rupee", "Amount Paid:", formattedAmount);
+
+  // If multiple slots, add slot breakdown note below details
+  if (slotCount > 1 && slotList.length > 1) {
+    doc.setTextColor(100, 116, 139);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    const slotsLine = `Booked Slots: ${slotList.join(", ")}`;
+    doc.text(slotsLine.length > 60 ? slotsLine.slice(0, 58) + "..." : slotsLine, badgeCx, gridY + 38.5, { align: "center" });
+  }
 
   // 4. Perforated Notch Tear Line
   const tearY = cardY + 102;
@@ -866,6 +883,8 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
           startTime,
           endTime,
           duration,
+          slotCount,
+          slotList,
           amountPaid,
           turfLocation,
           bookingCreatedAt,

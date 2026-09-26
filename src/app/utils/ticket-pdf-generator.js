@@ -1,6 +1,65 @@
 import { jsPDF } from "jspdf";
 
 /**
+ * Helper to parse and consolidate single or multiple time slots
+ */
+export function parseBookingSlots(timeSlot = "") {
+  let startTime = "Scheduled Time";
+  let endTime = "Scheduled End";
+  let duration = "1 Hour";
+  let slotCount = 1;
+  let slotList = [];
+  let displaySlotText = String(timeSlot || "Scheduled Time").trim();
+
+  if (!timeSlot) {
+    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText: displaySlotText };
+  }
+
+  const str = String(timeSlot).trim();
+
+  // 1. Multiple slots separated by comma or semicolon
+  if (str.includes(",") || str.includes(";")) {
+    const slots = str.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+    slotList = slots;
+    slotCount = slots.length;
+
+    const parseSingle = (singleStr) => {
+      const match = singleStr.match(/(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*[-–—to]+\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)/i);
+      if (match) return { start: match[1].trim(), end: match[2].trim() };
+      return { start: singleStr, end: singleStr };
+    };
+
+    const firstParsed = parseSingle(slots[0]);
+    const lastParsed = parseSingle(slots[slots.length - 1]);
+
+    startTime = firstParsed.start;
+    endTime = lastParsed.end;
+    duration = `${slotCount} ${slotCount === 1 ? "Hour" : "Hours"}`;
+    displaySlotText = slots.join(", ");
+    const rangeText = `${startTime} – ${endTime}`;
+
+    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText };
+  }
+
+  // 2. Single range
+  if (str.includes("-") || str.includes("–") || str.includes("—") || str.includes("to")) {
+    const parts = str.split(/[-–—]|to/).map((p) => p.trim());
+    if (parts.length >= 2) {
+      startTime = parts[0];
+      endTime = parts[1];
+      slotList = [str];
+    }
+  } else {
+    startTime = str;
+    endTime = "End of Slot";
+    slotList = [str];
+  }
+
+  const rangeText = `${startTime} – ${endTime}`;
+  return { startTime, endTime, duration, slotCount, slotList, displaySlotText: str, rangeText };
+}
+
+/**
  * Generates an exact 1:1 match of the SportX Match Pass Ticket in PDF
  * Includes vector checkmark badge, venue & sport badge, 2x2 detail cards
  * with vector icons (Calendar, Clock, User silhouette, Rupee ₹),
@@ -15,6 +74,8 @@ export async function generateSportXPassDoc({
   timeSlot = "06:00 PM - 07:00 PM",
   amount = 0,
 }) {
+  const { startTime, endTime, slotCount, slotList, rangeText, displaySlotText } = parseBookingSlots(timeSlot);
+
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -170,24 +231,40 @@ export async function generateSportXPassDoc({
     doc.setFontSize(6.5);
     doc.text(label, bx + 16, by + 5.8);
 
-    // Value
+    // Value with dynamic auto-fit font size to prevent any ugly truncation
     doc.setTextColor(15, 23, 42); // #0F172A
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
     const valStr = String(value || "");
-    doc.text(valStr.length > 20 ? valStr.slice(0, 18) + "..." : valStr, bx + 16, by + 11.6);
+    if (valStr.length > 25) {
+      doc.setFontSize(6.5);
+    } else if (valStr.length > 18) {
+      doc.setFontSize(7.5);
+    } else {
+      doc.setFontSize(8.5);
+    }
+    doc.text(valStr, bx + 16, by + 11.6);
   };
 
   const formattedAmount = `INR ${Number(amount || 0).toLocaleString("en-IN")}`;
+  const displaySlot = slotCount > 1 ? `${startTime} – ${endTime} (${slotCount} Slots)` : (rangeText || "Scheduled Slot");
 
   // Row 1
   drawDetailCard(col1X, gridY, "calendar", "Date:", String(date || ""));
-  drawDetailCard(col2X, gridY, "clock", "Time Slot:", String(timeSlot || ""));
+  drawDetailCard(col2X, gridY, "clock", "Time Slot:", displaySlot);
 
   // Row 2
   const row2Y = gridY + 19;
   drawDetailCard(col1X, row2Y, "user", "Pass Holder:", String(userName || "SportX Player"));
   drawDetailCard(col2X, row2Y, "rupee", "Amount Paid:", formattedAmount);
+
+  // If multiple slots, add slot breakdown note below details
+  if (slotCount > 1 && slotList.length > 1) {
+    doc.setTextColor(100, 116, 139);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    const slotsLine = `Booked Slots: ${slotList.join(", ")}`;
+    doc.text(slotsLine.length > 60 ? slotsLine.slice(0, 58) + "..." : slotsLine, badgeCx, gridY + 38.5, { align: "center" });
+  }
 
   // 4. Perforated Notch Tear Line
   const tearY = cardY + 102;

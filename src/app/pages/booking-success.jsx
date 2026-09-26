@@ -14,7 +14,7 @@ import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
-import { downloadSportXPassPdf } from "../utils/ticket-pdf-generator";
+import { downloadSportXPassPdf, parseBookingSlots } from "../utils/ticket-pdf-generator";
 import { GlobalFooter } from "../components/layout/GlobalFooter";
 
 export function BookingSuccess() {
@@ -38,7 +38,9 @@ export function BookingSuccess() {
   const costPerPlayer = bookingData?.costPerPlayer || bookingData?.price || 600;
   const totalPrice = bookingData?.totalPrice || bookingData?.price || 1200;
   const dateStr = bookingData?.selectedDate || bookingData?.date || "June 18, 2026";
-  const timeStr = bookingData?.startTime ? `${bookingData.startTime} (${bookingData.playHours || 1} hr)` : (bookingData?.time || "6:00 PM - 7:00 PM");
+  const rawTimeStr = bookingData?.startTime ? `${bookingData.startTime} (${bookingData.playHours || 1} hr)` : (bookingData?.time || bookingData?.time_slot || "6:00 PM - 7:00 PM");
+  const parsedSlot = parseBookingSlots(rawTimeStr);
+  const timeStr = parsedSlot.displaySlotText || rawTimeStr;
   const venueName = typeof bookingData?.venue === "object" ? (bookingData.venue.name || "Elite Sports Arena") : (bookingData?.venue || "Elite Sports Arena");
   const venueAddress = typeof bookingData?.venue === "object" ? (bookingData.venue.location || "123 Sports Complex, MG Road, Mumbai") : (bookingData?.location || "123 Sports Complex, MG Road, Mumbai");
   const members = bookingData?.squadLobby?.members || [
@@ -186,10 +188,24 @@ export function BookingSuccess() {
                     </div>
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Time Slot</p>
-                    <div className="flex items-center gap-1.5 text-slate-800 dark:text-white font-semibold text-xs sm:text-sm">
-                      <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600" />
-                      <span>{timeStr}</span>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Time Slot</p>
+                      {parsedSlot.slotCount > 1 && (
+                        <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 px-1.5 py-0.2 rounded-full leading-none">
+                          {parsedSlot.slotCount} Slots
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-start gap-1.5 text-slate-800 dark:text-white font-semibold text-xs sm:text-sm">
+                      <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span>{parsedSlot.rangeText || timeStr}</span>
+                        {parsedSlot.slotCount > 1 && parsedSlot.slotList.length > 1 && (
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-snug">
+                            {parsedSlot.slotList.join(", ")}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
 

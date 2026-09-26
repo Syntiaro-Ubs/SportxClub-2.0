@@ -29,7 +29,7 @@ import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
-import { downloadSportXPassPdf } from "../utils/ticket-pdf-generator";
+import { downloadSportXPassPdf, parseBookingSlots } from "../utils/ticket-pdf-generator";
 import { GlobalFooter } from "../components/layout/GlobalFooter";
 
 export function PaymentStatus() {
@@ -75,9 +75,15 @@ export function PaymentStatus() {
       ? (bookingData.venue.location || "123 Sports Complex, MG Road, Pune")
       : (bookingData?.location || "123 Sports Complex, MG Road, Pune");
   const dateStr = bookingData?.selectedDate || bookingData?.date || "2026-09-25";
-  const timeStr = bookingData?.startTime
-    ? `${bookingData.startTime} (${bookingData.playHours || 1} hr)`
-    : (bookingData?.time || "06:00 PM - 07:00 PM");
+  const rawTimeStr =
+    verificationResult?.booking?.time_slot ||
+    verificationResult?.booking?.slot_time ||
+    (bookingData?.startTime
+      ? `${bookingData.startTime} (${bookingData.playHours || 1} hr)`
+      : bookingData?.time) ||
+    "06:00 PM - 07:00 PM";
+  const parsedSlot = parseBookingSlots(rawTimeStr);
+  const timeStr = parsedSlot.displaySlotText || rawTimeStr;
   const price = bookingData?.price || bookingData?.amount || 1200;
   const sportStr = bookingData?.sport || "Cricket";
   const playerName =
@@ -108,6 +114,8 @@ export function PaymentStatus() {
       setTimeout(() => setCopied(false), 2000);
     }
   };
+
+
 
   useEffect(() => {
     if (verifyingRef.current) return;
@@ -422,17 +430,29 @@ export function PaymentStatus() {
                   </div>
 
                   {/* Time Slot Card */}
-                  <div className="bg-white dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 flex items-center gap-3 shadow-2xs">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <div className="bg-white dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 flex items-start gap-3 shadow-2xs">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
                       <Clock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium leading-none mb-1">
-                        Time Slot:
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium leading-none">
+                          Time Slot:
+                        </p>
+                        {parsedSlot.slotCount > 1 && (
+                          <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 px-1.5 py-0.5 rounded-full leading-none">
+                            {parsedSlot.slotCount} Slots
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                        {parsedSlot.rangeText || timeStr}
                       </p>
-                      <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
-                        {timeStr}
-                      </p>
+                      {parsedSlot.slotCount > 1 && parsedSlot.slotList.length > 1 && (
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1 leading-snug break-words">
+                          {parsedSlot.slotList.join(", ")}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -555,19 +575,21 @@ export function PaymentStatus() {
                 </Link>
               </div>
             ) : (
-              <div className="flex gap-3">
-                <Button
-                  onClick={() => navigate(-1)}
-                  className="flex-1 cursor-pointer text-xs sm:text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 rounded-xl h-12 gap-2"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Try Again
-                </Button>
-                <Link to="/venues" className="flex-1">
-                  <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold border-2 border-slate-300 dark:border-white/20 text-slate-700 dark:text-white rounded-xl h-12">
-                    Explore Turfs
+              <div className="space-y-2.5 w-full">
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => navigate(-1)}
+                    className="flex-1 cursor-pointer text-xs sm:text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 rounded-xl h-12 gap-2"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                    Try Again
                   </Button>
-                </Link>
+                  <Link to="/venues" className="flex-1">
+                    <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold border-2 border-slate-300 dark:border-white/20 text-slate-700 dark:text-white rounded-xl h-12">
+                      Explore Turfs
+                    </Button>
+                  </Link>
+                </div>
               </div>
             )}
           </div>

@@ -153,20 +153,6 @@ const POPULAR_CITIES = [
   { id: "kochi", name: "Kochi", image: kochiImg },
 ];
 
-const SUB_LOCATIONS = {
-  "Mumbai": ["All Mumbai", "Andheri", "Bandra", "Borivali", "Juhu", "South Mumbai", "Powai", "Goregaon"],
-  "Delhi-NCR": ["All Delhi-NCR", "Connaught Place", "Gurugram", "Noida", "Saket", "Vasant Kunj", "Dwarka"],
-  "Bengaluru": ["All Bengaluru", "Koramangala", "Indiranagar", "Whitefield", "Jayanagar", "HSR Layout", "Malleswaram"],
-  "Hyderabad": ["All Hyderabad", "Banjara Hills", "Jubilee Hills", "HITEC City", "Gachibowli", "Madhapur"],
-  "Chandigarh": ["All Chandigarh", "Sector 17", "Sector 22", "Sector 35", "Mohali", "Panchkula"],
-  "Ahmedabad": ["All Ahmedabad", "Vastrapur", "SG Highway", "Navrangpura", "Satellite", "Bopal"],
-  "Pune": ["All Pune", "Koregaon Park", "Viman Nagar", "Hinjewadi", "Kothrud", "Wakad", "Baner"],
-  "Chennai": ["All Chennai", "T Nagar", "Adyar", "Velachery", "Anna Nagar", "Nungambakkam"],
-  "Kolkata": ["All Kolkata", "Park Street", "Salt Lake", "New Town", "Ballygunge", "Alipore"],
-  "Kochi": ["All Kochi", "Edappally", "Fort Kochi", "Kakkanad", "MG Road", "Palarivattom"],
-};
-
-
 export function LocationModal({ trigger, activeCity, onCitySelect }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
@@ -175,6 +161,7 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleRowCount, setVisibleRowCount] = useState(8);
   const [dynamicCities, setDynamicCities] = useState([]);
+  const [dynamicSubLocations, setDynamicSubLocations] = useState({});
   const [isDetecting, setIsDetecting] = useState(false);
   const [selectedMainCity, setSelectedMainCity] = useState(null);
 
@@ -185,8 +172,11 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
         const res = await fetch("/api/turf/turfs/cities");
         if (res.ok) {
           const data = await res.json();
-          if (data.success && Array.isArray(data.cities) && isMounted) {
-            setDynamicCities(data.cities);
+          if (data.success && isMounted) {
+            if (Array.isArray(data.cities)) setDynamicCities(data.cities);
+            if (data.subLocations && typeof data.subLocations === "object") {
+              setDynamicSubLocations(data.subLocations);
+            }
           }
         }
       } catch (e) {
@@ -215,7 +205,9 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
   };
 
   const handleCityClick = (cityName) => {
-    if (SUB_LOCATIONS[cityName]) {
+    const areas = dynamicSubLocations[cityName] || [];
+    // Only open the sub-locations section if there are specific available turf sub-areas (more than just "All {City}")
+    if (areas.length > 1) {
       setSelectedMainCity(cityName === selectedMainCity ? null : cityName);
     } else {
       handleFinalSelect(cityName);
@@ -397,30 +389,35 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
                 })}
               </div>
 
-              {selectedMainCity && SUB_LOCATIONS[selectedMainCity] && (
+              {selectedMainCity && dynamicSubLocations[selectedMainCity] && dynamicSubLocations[selectedMainCity].length > 0 && (
                 <div className="mt-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 animate-in fade-in slide-in-from-top-4 duration-300">
                   <div className="flex items-center justify-between mb-4">
                     <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-white/90">
                       Popular Areas in {selectedMainCity}
                     </h5>
-                    <button onClick={() => setSelectedMainCity(null)} className="text-[11px] font-bold text-emerald-600 dark:text-emerald-600 hover:opacity-80 uppercase tracking-wide">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMainCity(null)}
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-500 hover:opacity-80 uppercase tracking-wide cursor-pointer"
+                    >
                       Close
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-2 sm:gap-3">
-                    {SUB_LOCATIONS[selectedMainCity].map(area => {
+                    {dynamicSubLocations[selectedMainCity].map((area) => {
                       const finalName = area.startsWith("All ") ? selectedMainCity : `${area}, ${selectedMainCity}`;
-                      const isAreaSelected = activeCity === finalName;
+                      const isAreaSelected = activeCity === finalName || (area.startsWith("All ") && activeCity === selectedMainCity);
                       return (
                         <button
                           key={area}
+                          type="button"
                           onClick={() => handleFinalSelect(finalName)}
                           className={cn(
-                            "px-4 py-2 text-xs sm:text-sm rounded-full transition-all font-semibold border shadow-sm",
+                            "px-4 py-2 text-xs sm:text-sm rounded-full transition-all font-semibold border shadow-sm cursor-pointer",
                             isAreaSelected
                               ? isDark
-                                ? "bg-emerald-600/20 border-emerald-600/50 text-emerald-600"
-                                : "bg-emerald-100 border-emerald-300 text-emerald-800"
+                                ? "bg-emerald-600/20 border-emerald-600/50 text-emerald-400 font-bold"
+                                : "bg-emerald-100 border-emerald-300 text-emerald-800 font-bold"
                               : isDark
                                 ? "border-white/10 hover:bg-white/10 hover:text-white text-white/70"
                                 : "border-slate-200 hover:bg-slate-200 hover:text-slate-900 text-slate-600 bg-white"

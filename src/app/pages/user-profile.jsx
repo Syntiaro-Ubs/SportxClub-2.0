@@ -35,7 +35,7 @@ import {
   X,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
-import { downloadSportXPassPdf } from "../utils/ticket-pdf-generator";
+import { downloadSportXPassPdf, parseBookingSlots } from "../utils/ticket-pdf-generator";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { isValidProfileImage } from "../components/ui/utils";
 import { Badge } from "../components/ui/badge";
@@ -704,7 +704,14 @@ export function UserProfile() {
               </div>
               <div>
                 <span className="text-[10px] text-muted-foreground uppercase block font-semibold">Time Slot</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">{activeBooking?.time_slot || activeBooking?.slot_time}</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 block leading-tight">
+                  {parseBookingSlots(activeBooking?.time_slot || activeBooking?.slot_time).rangeText || activeBooking?.time_slot || activeBooking?.slot_time}
+                </span>
+                {parseBookingSlots(activeBooking?.time_slot || activeBooking?.slot_time).slotCount > 1 && (
+                  <span className="text-[10px] text-muted-foreground block mt-0.5">
+                    ({parseBookingSlots(activeBooking?.time_slot || activeBooking?.slot_time).slotCount} Slots: {parseBookingSlots(activeBooking?.time_slot || activeBooking?.slot_time).slotList.join(", ")})
+                  </span>
+                )}
               </div>
             </div>
 

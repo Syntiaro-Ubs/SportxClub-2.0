@@ -65,6 +65,7 @@ export const cashfreeService = {
           sport: bookingPayload.sport,
           venueId: bookingPayload.venueId || (typeof bookingPayload.venue === "object" ? bookingPayload.venue.id : null),
           bookingCode: bookingPayload.bookingCode,
+          orderType: bookingPayload.orderType,
         }),
       });
 
@@ -89,7 +90,7 @@ export const cashfreeService = {
 
   /**
    * 2. Initiate Cashfree Live Payment
-   * Creates order and opens Cashfree Checkout
+   * Creates live order and launches Cashfree Checkout modal directly
    */
   initiatePayment: async (bookingPayload) => {
     try {
@@ -105,12 +106,6 @@ export const cashfreeService = {
       try {
         sessionStorage.setItem("sportxclub_cashfree_order_id", order_id);
       } catch (e) {}
-
-      // 2. Load Cashfree SDK v3
-      const Cashfree = await loadCashfreeSDK();
-      const cashfree = new Cashfree({
-        mode: (orderData.environment === "TEST" || orderData.environment === "SANDBOX") ? "sandbox" : "production",
-      });
 
       // Helper to record confirmed booking in localStorage immediately
       const recordConfirmedLocally = (orderId, statusData = {}) => {
@@ -143,7 +138,13 @@ export const cashfreeService = {
         } catch (e) {}
       };
 
-      // Start automatic live polling in background so that as soon as the user completes payment on phone via QR/UPI, we immediately redirect to success page!
+      // 2. Load official Cashfree SDK v3 in production live mode
+      const Cashfree = await loadCashfreeSDK();
+      const cashfree = new Cashfree({
+        mode: "production",
+      });
+
+      // Start automatic live polling in background
       let isCompleted = false;
       const pollInterval = setInterval(async () => {
         if (isCompleted) return;
@@ -155,15 +156,13 @@ export const cashfreeService = {
             recordConfirmedLocally(order_id, statusRes);
             window.location.href = `/payment-status?order_id=${encodeURIComponent(order_id)}`;
           }
-        } catch (e) {
-          // ignore polling check errors
-        }
+        } catch (e) {}
       }, 2500);
 
-      // Stop polling after 10 minutes to prevent memory leak
+      // Stop polling after 10 minutes
       setTimeout(() => clearInterval(pollInterval), 600000);
 
-      // 3. Launch Checkout in modal (with automatic fallback)
+      // 3. Launch Checkout in modal
       const checkoutOptions = {
         paymentSessionId: payment_session_id,
         redirectTarget: "_modal",
@@ -171,7 +170,6 @@ export const cashfreeService = {
 
       const result = await cashfree.checkout(checkoutOptions);
 
-      // When modal is closed or finished, do an immediate final verification
       setTimeout(async () => {
         if (isCompleted) return;
         try {
@@ -194,7 +192,6 @@ export const cashfreeService = {
         }
       }
 
-      // If completed via modal on current page, navigate to payment-status
       if (result && (result.paymentDetails || result.redirect)) {
         isCompleted = true;
         clearInterval(pollInterval);

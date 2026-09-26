@@ -21,47 +21,124 @@ async function filterTurfColumns(pool, rawBody) {
   return filtered;
 }
 
-// GET /api/turf/turfs/cities - Get all unique onboarded turf cities (Public)
+const KNOWN_CITIES = [
+  'Pune', 'Mumbai', 'Delhi-NCR', 'Delhi', 'Bengaluru', 'Bangalore',
+  'Hyderabad', 'Chandigarh', 'Ahmedabad', 'Chennai', 'Kolkata', 'Kochi',
+  'Nagpur', 'Nashik', 'Surat', 'Jaipur', 'Lucknow', 'Indore', 'Bhopal', 'Pimpri-Chinchwad'
+];
+
+function extractCityAndSubLocation(locationRaw) {
+  if (!locationRaw) return null;
+  let raw = '';
+  if (typeof locationRaw === 'object' && locationRaw !== null) {
+    const city = locationRaw.city || locationRaw.town || '';
+    const area = locationRaw.area || locationRaw.locality || locationRaw.suburb || locationRaw.address || '';
+    raw = [area, city].filter(Boolean).join(', ');
+  } else {
+    raw = String(locationRaw).trim();
+  }
+  raw = raw.replace(/^["']+|["']+$/g, '').trim();
+  if (!raw || raw.toLowerCase() === 'test' || raw.toLowerCase() === 'unknown location' || raw.toLowerCase() === 'null') return null;
+
+  const parts = raw.split(',').map(p => p.trim()).filter(Boolean);
+  let detectedCity = '';
+  let subArea = '';
+
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    const matchedKnown = KNOWN_CITIES.find(c => {
+      const cNorm = c.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const pNorm = part.toLowerCase().replace(/[^a-z0-9]/g, '');
+      return cNorm === pNorm || (pNorm.includes(cNorm) && pNorm.length <= cNorm.length + 4);
+    });
+
+    if (matchedKnown) {
+      detectedCity = matchedKnown;
+      const remainingParts = parts.filter((_, idx) => idx !== i);
+      if (remainingParts.length > 0) {
+        let areaCandidate = remainingParts[0];
+        const cityRegex = new RegExp('\\b' + detectedCity + '\\b', 'gi');
+        areaCandidate = areaCandidate.replace(cityRegex, '').replace(/\s+/g, ' ').trim();
+        if (areaCandidate.length > 1) {
+          subArea = areaCandidate;
+        }
+      }
+      break;
+    }
+  }
+
+  if (!detectedCity && parts.length > 1) {
+    detectedCity = parts[parts.length - 1];
+    let areaCandidate = parts[0];
+    const cityRegex = new RegExp('\\b' + detectedCity + '\\b', 'gi');
+    areaCandidate = areaCandidate.replace(cityRegex, '').replace(/\s+/g, ' ').trim();
+    if (areaCandidate.length > 1) {
+      subArea = areaCandidate;
+    }
+  } else if (!detectedCity && parts.length === 1) {
+    detectedCity = parts[0];
+  }
+
+  const formatTitle = (s) => s.split(/[\s-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+  if (detectedCity) {
+    let standardizedCity = detectedCity.trim();
+    if (standardizedCity.toLowerCase() === 'bangalore' || standardizedCity.toLowerCase() === 'bengaluru') {
+      standardizedCity = 'Bengaluru';
+    } else if (standardizedCity.toLowerCase() === 'delhi' || standardizedCity.toLowerCase() === 'delhi-ncr' || standardizedCity.toLowerCase() === 'delhi ncr') {
+      standardizedCity = 'Delhi-NCR';
+    } else {
+      standardizedCity = formatTitle(standardizedCity);
+    }
+
+    return {
+      city: standardizedCity,
+      area: subArea ? formatTitle(subArea) : null
+    };
+  }
+  return null;
+}
+
+// GET /api/turf/turfs/cities - Get all unique onboarded turf cities and dynamic sub-locations (Public)
 router.get("/cities", async (req, res) => {
   try {
     const pool = getPool();
     const citySet = new Set();
+    const subLocationsMap = {};
 
-    // 1. Fetch cities from turf_owners
-    const [ownerRows] = await pool.query(
-      "SELECT city, setup_data FROM turf_owners"
-    );
-    for (const row of ownerRows) {
-      if (row.city && String(row.city).trim()) {
-        citySet.add(String(row.city).trim());
+    const addLocation = (locRaw) => {
+      const parsed = extractCityAndSubLocation(locRaw);
+      if (!parsed || !parsed.city) return;
+      const { city, area } = parsed;
+      citySet.add(city);
+      if (!subLocationsMap[city]) {
+        subLocationsMap[city] = new Set();
       }
-      if (row.setup_data) {
-        try {
-          const parsed = typeof row.setup_data === 'string' ? JSON.parse(row.setup_data) : row.setup_data;
-          const locCity = parsed?.location?.city || parsed?.business?.city || parsed?.personal?.city;
-          if (locCity && String(locCity).trim()) {
-            citySet.add(String(locCity).trim());
-          }
-        } catch (e) {
-          // ignore parse error
-        }
+      if (area && area.toLowerCase() !== city.toLowerCase()) {
+        subLocationsMap[city].add(area);
       }
-    }
+    };
 
-    // 2. Fetch locations from turfs
+    // 1. Fetch locations from actual turfs table (primary source for available turfs)
     const [turfRows] = await pool.query(
       "SELECT location FROM turfs WHERE location IS NOT NULL AND location != ''"
     );
     for (const row of turfRows) {
-      if (row.location) {
-        // If location is like "Tumsar" or "Station Road, Tumsar"
-        const parts = String(row.location).split(",").map(s => s.trim()).filter(Boolean);
-        if (parts.length === 1) {
-          citySet.add(parts[0]);
-        } else if (parts.length > 1) {
-          // Add the city part (typically the last or second-to-last part)
-          const cityCandidate = parts[parts.length - 1];
-          citySet.add(cityCandidate);
+      addLocation(row.location);
+    }
+
+    // 2. Fetch cities from turf_owners
+    const [ownerRows] = await pool.query(
+      "SELECT city, setup_data FROM turf_owners"
+    );
+    for (const row of ownerRows) {
+      if (row.city) addLocation(row.city);
+      if (row.setup_data) {
+        try {
+          const parsed = typeof row.setup_data === 'string' ? JSON.parse(row.setup_data) : row.setup_data;
+          if (parsed?.location) addLocation(parsed.location);
+        } catch (e) {
+          // ignore parse error
         }
       }
     }
@@ -69,16 +146,102 @@ router.get("/cities", async (req, res) => {
     // Clean, format in Title Case, filter out invalid names, and remove duplicates
     const ignoreWords = ["unknown location", "location not specified", "test", "null", "undefined", "n/a", "none", "string"];
     const formattedCities = Array.from(citySet)
-      .map(c => c.trim())
       .filter(c => c.length > 1 && !/^\d+$/.test(c) && !ignoreWords.includes(c.toLowerCase()))
-      .map(c => c.split(" ").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" "))
-      .filter((v, i, a) => a.indexOf(v) === i)
       .sort((a, b) => a.localeCompare(b));
 
-    return res.json({ success: true, cities: formattedCities });
+    const finalSubLocations = {};
+    for (const city of formattedCities) {
+      const areaSet = subLocationsMap[city] || new Set();
+      const validAreas = Array.from(areaSet)
+        .filter(a => a && a.length > 1 && a.toLowerCase() !== city.toLowerCase() && !ignoreWords.includes(a.toLowerCase()))
+        .sort((a, b) => a.localeCompare(b));
+
+      if (validAreas.length > 0) {
+        finalSubLocations[city] = [`All ${city}`, ...validAreas];
+      } else {
+        finalSubLocations[city] = [`All ${city}`];
+      }
+    }
+
+    return res.json({ success: true, cities: formattedCities, subLocations: finalSubLocations });
   } catch (err) {
     console.error("Fetch Turf Cities Error:", err);
-    return res.status(500).json({ success: false, error: err.message, cities: [] });
+    return res.status(500).json({ success: false, error: err.message, cities: [], subLocations: {} });
+  }
+});
+
+// GET /api/turf/turfs/sports-popularity - Get booking counts per sport for dynamic ranking
+router.get("/sports-popularity", async (req, res) => {
+  try {
+    const pool = getPool();
+    let rawCity = (req.query.city || "All Cities").trim();
+    let isAll = false;
+    if (!rawCity || rawCity.toLowerCase() === "all cities" || rawCity.toLowerCase() === "all" || rawCity.toLowerCase() === "all areas") {
+      isAll = true;
+    }
+
+    let searchTerms = [];
+    if (!isAll) {
+      let cleanCity = rawCity;
+      if (cleanCity.toLowerCase().startsWith("all ")) {
+        cleanCity = cleanCity.replace(/^all\s+/i, "").trim();
+      }
+      const parts = cleanCity.split(/[,•;/|]+/).map(p => p.trim()).filter(Boolean);
+      parts.forEach(p => {
+        if (p.length > 1 && !["all", "cities", "areas"].includes(p.toLowerCase())) {
+          searchTerms.push(p.toLowerCase());
+        }
+      });
+      if (cleanCity.length > 1 && !searchTerms.includes(cleanCity.toLowerCase())) {
+        searchTerms.push(cleanCity.toLowerCase());
+      }
+    }
+
+    let query = `
+      SELECT 
+        LOWER(TRIM(COALESCE(NULLIF(TRIM(b.sport), ''), NULLIF(TRIM(t.sport_type), ''), 'Football'))) as sport_name,
+        COUNT(*) as booking_count
+      FROM bookings b
+      LEFT JOIN turfs t ON (b.turf_id = t.id OR LOWER(TRIM(b.turf_name)) = LOWER(TRIM(t.name)))
+      WHERE (b.status IS NULL OR LOWER(b.status) != 'cancelled')
+    `;
+    const params = [];
+
+    if (searchTerms.length > 0) {
+      const conditions = searchTerms.map(() => `(LOWER(t.location) LIKE ? OR LOWER(b.turf_name) LIKE ?)`).join(" OR ");
+      query += ` AND (${conditions})`;
+      searchTerms.forEach(term => {
+        params.push(`%${term}%`, `%${term}%`);
+      });
+    }
+
+    query += ` GROUP BY LOWER(TRIM(COALESCE(NULLIF(TRIM(b.sport), ''), NULLIF(TRIM(t.sport_type), ''), 'Football'))) ORDER BY booking_count DESC`;
+
+    const [rows] = await pool.query(query, params);
+
+    const sportCounts = {};
+    for (const r of rows) {
+      if (r.sport_name) {
+        const raw = String(r.sport_name).toLowerCase();
+        const subSports = raw.split(/[,•;/]+/).map(s => s.trim()).filter(Boolean);
+        const count = Number(r.booking_count) || 1;
+        for (const sp of subSports) {
+          sportCounts[sp] = (sportCounts[sp] || 0) + count;
+          if (sp.includes("cricket") && sp !== "cricket") {
+            sportCounts["cricket"] = (sportCounts["cricket"] || 0) + count;
+          }
+        }
+      }
+    }
+
+    return res.json({
+      success: true,
+      city: req.query.city || "All Cities",
+      sportCounts
+    });
+  } catch (err) {
+    console.error("Fetch Sports Popularity Error:", err);
+    return res.status(500).json({ success: false, error: err.message, sportCounts: {} });
   }
 });
 

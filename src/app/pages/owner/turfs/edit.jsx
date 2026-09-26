@@ -125,14 +125,17 @@ const WEEK_DAYS = [
 ];
 
 const AMENITIES = [
-  { id: "Parking", label: "Parking Space", icon: "🚗", desc: "Dedicated vehicle parking" },
-  { id: "Washroom", label: "Clean Washrooms", icon: "🚻", desc: "Hygienic restrooms" },
-  { id: "Changing Room", label: "Changing Rooms", icon: "🚪", desc: "Secure locker rooms" },
+  { id: "Parking", label: "Parking", icon: "🚗", desc: "Dedicated vehicle parking" },
+  { id: "Washroom", label: "Washroom", icon: "🚻", desc: "Clean & hygienic restrooms" },
   { id: "Drinking Water", label: "Drinking Water", icon: "💧", desc: "Chilled purified water" },
-  { id: "Floodlights", label: "LED Floodlights", icon: "💡", desc: "High-lumen night lights" },
-  { id: "Equipment Rent", label: "Equipment Rental", icon: "⚽", desc: "Balls, bibs, rackets" },
-  { id: "First Aid", label: "First Aid Kit", icon: "🏥", desc: "Emergency medical kit" },
-  { id: "Cafe", label: "Cafeteria / Snacks", icon: "☕", desc: "Energy drinks & food" },
+  { id: "Flood Lights", label: "Flood Lights", icon: "💡", desc: "High-lumen night lights" },
+  { id: "Changing Room", label: "Changing Room", icon: "🚪", desc: "Secure locker rooms" },
+  { id: "Seating Area", label: "Seating Area", icon: "🪑", desc: "Spectator & rest seating" },
+  { id: "Cafeteria", label: "Cafeteria", icon: "☕", desc: "Energy drinks, food & snacks" },
+  { id: "Equipment Rental", label: "Equipment Rental", icon: "⚽", desc: "Balls, bibs, rackets" },
+  { id: "First Aid", label: "First Aid", icon: "🏥", desc: "Emergency medical kit" },
+  { id: "CCTV", label: "CCTV", icon: "📹", desc: "24x7 security surveillance" },
+  { id: "WiFi", label: "WiFi", icon: "📶", desc: "High-speed wireless internet" },
 ];
 
 const SPORTS = [
@@ -196,12 +199,15 @@ const normalizeAmenity = (val) => {
   const clean = val.toLowerCase().replace(/[^a-z0-9]/g, "");
   if (clean.includes("park")) return "Parking";
   if (clean.includes("wash") || clean.includes("restroom") || clean.includes("toilet")) return "Washroom";
-  if (clean.includes("chang") || clean.includes("locker")) return "Changing Room";
   if (clean.includes("water") || clean.includes("drink")) return "Drinking Water";
-  if (clean.includes("flood") || clean.includes("light")) return "Floodlights";
-  if (clean.includes("equip") || clean.includes("rent") || clean.includes("racket") || clean.includes("ball")) return "Equipment Rent";
+  if (clean.includes("flood") || clean.includes("light")) return "Flood Lights";
+  if (clean.includes("chang") || clean.includes("locker")) return "Changing Room";
+  if (clean.includes("seat") || clean.includes("chair") || clean.includes("bench")) return "Seating Area";
+  if (clean.includes("cafe") || clean.includes("snack") || clean.includes("canteen") || clean.includes("food")) return "Cafeteria";
+  if (clean.includes("equip") || clean.includes("rent") || clean.includes("racket") || clean.includes("ball")) return "Equipment Rental";
   if (clean.includes("aid") || clean.includes("medic")) return "First Aid";
-  if (clean.includes("cafe") || clean.includes("snack") || clean.includes("canteen")) return "Cafe";
+  if (clean.includes("cctv") || clean.includes("camera") || clean.includes("surveil")) return "CCTV";
+  if (clean.includes("wifi") || clean.includes("wi-fi") || clean.includes("internet")) return "WiFi";
   return val;
 };
 

@@ -103,15 +103,17 @@ const marqueeHorizontalStyle = `
 `;
 
 const ALL_AMENITY_DEFS = {
-  parking: { icon: Car, label: "Parking Space", desc: "Dedicated vehicle parking" },
-  washroom: { icon: Droplets, label: "Clean Washrooms", desc: "Hygienic & sanitized" },
-  changingroom: { icon: Shirt, label: "Changing Rooms", desc: "Secure locker rooms" },
+  parking: { icon: Car, label: "Parking", desc: "Dedicated vehicle parking" },
+  washroom: { icon: Droplets, label: "Washroom", desc: "Clean & hygienic restrooms" },
   drinkingwater: { icon: Droplets, label: "Drinking Water", desc: "Chilled purified water" },
-  floodlights: { icon: Sparkles, label: "LED Floodlights", desc: "High-lumen night lights" },
+  floodlights: { icon: Sparkles, label: "Flood Lights", desc: "High-lumen night lights" },
+  changingroom: { icon: Shirt, label: "Changing Room", desc: "Secure locker rooms" },
+  seatingarea: { icon: Users, label: "Seating Area", desc: "Spectator & rest seating" },
+  cafe: { icon: Coffee, label: "Cafeteria", desc: "Energy drinks & food" },
   equipmentrent: { icon: Trophy, label: "Equipment Rental", desc: "Balls, bibs, rackets" },
-  firstaid: { icon: ShieldCheck, label: "First Aid Kit", desc: "Emergency medical kit" },
-  cafe: { icon: Coffee, label: "Cafeteria / Snacks", desc: "Energy drinks & food" },
-  wifi: { icon: Wifi, label: "Free Wi-Fi", desc: "High-speed network" },
+  firstaid: { icon: ShieldCheck, label: "First Aid", desc: "Emergency medical kit" },
+  cctv: { icon: ShieldCheck, label: "CCTV", desc: "24x7 security surveillance" },
+  wifi: { icon: Wifi, label: "WiFi", desc: "High-speed network" },
 };
 
 const CANCEL_REASONS = [
@@ -496,13 +498,15 @@ export function VenueDetails() {
       let matchedKey = null;
       if (clean.includes("park")) matchedKey = "parking";
       else if (clean.includes("wash") || clean.includes("restroom") || clean.includes("toilet")) matchedKey = "washroom";
-      else if (clean.includes("chang") || clean.includes("locker")) matchedKey = "changingroom";
       else if (clean.includes("water") || clean.includes("drink")) matchedKey = "drinkingwater";
       else if (clean.includes("flood") || clean.includes("light")) matchedKey = "floodlights";
+      else if (clean.includes("chang") || clean.includes("locker")) matchedKey = "changingroom";
+      else if (clean.includes("seat") || clean.includes("chair") || clean.includes("bench")) matchedKey = "seatingarea";
+      else if (clean.includes("cafe") || clean.includes("snack") || clean.includes("canteen") || clean.includes("food")) matchedKey = "cafe";
       else if (clean.includes("equip") || clean.includes("rent") || clean.includes("racket") || clean.includes("ball")) matchedKey = "equipmentrent";
       else if (clean.includes("aid") || clean.includes("medic")) matchedKey = "firstaid";
-      else if (clean.includes("cafe") || clean.includes("snack") || clean.includes("canteen")) matchedKey = "cafe";
-      else if (clean.includes("wifi") || clean.includes("wi-fi")) matchedKey = "wifi";
+      else if (clean.includes("cctv") || clean.includes("camera") || clean.includes("surveil")) matchedKey = "cctv";
+      else if (clean.includes("wifi") || clean.includes("wi-fi") || clean.includes("internet")) matchedKey = "wifi";
 
       if (matchedKey && ALL_AMENITY_DEFS[matchedKey]) {
         if (!seen.has(matchedKey)) {
@@ -991,6 +995,10 @@ export function VenueDetails() {
 
     const isHourInTimeSlotString = (h, timeStr) => {
       if (!timeStr) return false;
+      const strLower = String(timeStr).toLowerCase();
+      if (strLower.includes("full day") || strLower.includes("24 hrs") || strLower.includes("24 hours") || strLower.includes("all day")) {
+        return true;
+      }
       const segments = String(timeStr).split(/[,;]+/);
       for (const seg of segments) {
         const s = seg.trim();
@@ -1736,7 +1744,7 @@ export function VenueDetails() {
                         "h-9 px-5 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5",
                         isDark
                           ? "bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold"
-                          : "bg-emerald-600 hover:bg-emerald-700 text-white"
+                          : "bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white border-none"
                       )}
                     >
                       <Send className="w-3.5 h-3.5" />
@@ -2026,8 +2034,8 @@ export function VenueDetails() {
                     </h3>
                   </div>
 
-                  {/* Single Row 3 Dropdown Controls (Sport, Date, Duration) */}
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[620px]">
+                  {/* Single Row 2 Dropdown Controls (Sport, Date) */}
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[440px]">
                     {/* 1. Sport Select */}
                     <div className="space-y-1 min-w-0">
                       <Select value={selectedSport} onValueChange={setSelectedSport}>
@@ -2219,70 +2227,10 @@ export function VenueDetails() {
                         </>
                       )}
                     </div>
-
-                    {/* 3. Duration Select & Direct Manual Input */}
-                    <div className="space-y-1 min-w-0">
-                      <div
-                        className={cn(
-                          "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all flex items-center justify-between px-2 sm:px-3 shadow-xs relative",
-                          isDark
-                            ? "bg-slate-900/60 border-slate-700 text-white focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
-                            : "bg-white border-slate-300 text-slate-900 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500"
-                        )}
-                      >
-                        <div className="flex items-center gap-0.5 sm:gap-1 min-w-0 flex-1">
-                          <span className="shrink-0 text-sm">⏱️</span>
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                            value={tempDuration}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "" || /^[0-9]+$/.test(val)) {
-                                setTempDuration(val);
-                              }
-                            }}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                commitDuration();
-                                e.target.blur();
-                              }
-                            }}
-                            onBlur={commitDuration}
-                            className="w-5 sm:w-6 bg-transparent text-center font-semibold focus:outline-none text-sm p-0 m-0 border-0 focus:ring-0 text-foreground cursor-text"
-                            aria-label="Custom Duration in Hours"
-                          />
-                          <span className="text-xs sm:text-sm font-semibold shrink-0">{playHours === 1 ? "Hr" : "Hrs"}</span>
-                        </div>
-
-                        {/* Dropdown for quick presets */}
-                        <Select
-                          value={String(playHours)}
-                          onValueChange={(val) => setPlayHours(Number(val))}
-                        >
-                          <SelectTrigger
-                            className="h-full w-5 p-0 border-0 shadow-none bg-transparent hover:bg-transparent focus:ring-0 focus:outline-none cursor-pointer flex items-center justify-center shrink-0"
-                            aria-label="Preset Duration Options"
-                          >
-                            <SelectValue placeholder="" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
-                            <SelectItem value="1" className="text-sm font-medium py-2">⏱️ 1 Hr</SelectItem>
-                            <SelectItem value="2" className="text-sm font-medium py-2">⏱️ 2 Hrs</SelectItem>
-                            <SelectItem value="3" className="text-sm font-medium py-2">⏱️ 3 Hrs</SelectItem>
-                            <SelectItem value="4" className="text-sm font-medium py-2">⏱️ 4 Hrs</SelectItem>
-                            <SelectItem value="5" className="text-sm font-medium py-2">⏱️ 5 Hrs</SelectItem>
-                            <SelectItem value="6" className="text-sm font-medium py-2">⏱️ 6 Hrs</SelectItem>
-                            <SelectItem value="8" className="text-sm font-medium py-2">⏱️ 8 Hrs</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
-                {/* Step 4: Time Slot Matrix */}
+                {/* Step: Time Slot Matrix */}
                 <div className="space-y-1.5 pt-0.5">
                   <div className="flex items-center justify-between">
                     <label
@@ -2291,7 +2239,7 @@ export function VenueDetails() {
                         isDark ? "text-white/70" : "text-slate-700",
                       )}
                     >
-                      4. Choose Time Slot ({playHours} Hr{playHours > 1 ? "s" : ""})
+                      Choose Time Slot
                     </label>
                     <span
                       className={cn(
@@ -2317,6 +2265,11 @@ export function VenueDetails() {
                           {timeSlots.filter(s => s.startHour < 24).map((slot) => {
                             const slotHour = slot.startHour;
                             const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
+                            const isReserved = isBooked && (
+                              String(slot.bookedBy || "").toLowerCase().includes("reserved") ||
+                              String(slot.booking?.user_name || "").toLowerCase().includes("reserved") ||
+                              String(slot.booking?.status || "").toLowerCase().includes("reserved")
+                            );
                             const overlaps = isOverlapping(slotHour);
                             const outOfBounds = isOutOfBounds(slotHour);
                             const cannotSelect = isBooked || overlaps || outOfBounds;
@@ -2334,7 +2287,7 @@ export function VenueDetails() {
                             const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
                             const bookedUserId = slot.booking?.user_id;
 
-                            const isMyBooking = isBooked && Boolean(
+                            const isMyBooking = isBooked && !isReserved && Boolean(
                               (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
                               (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
                               (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
@@ -2368,15 +2321,19 @@ export function VenueDetails() {
                                 }}
                                 className={cn(
                                   "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
-                                  !cannotSelect ? "cursor-pointer" : "cursor-default",
+                                  !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
                                   isSelected
                                     ? isDark
                                       ? "bg-emerald-600/10 border-2 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]"
                                       : "bg-emerald-50/70 border-2 border-emerald-700 text-slate-900 shadow-sm"
                                     : cannotSelect
-                                      ? isDark
-                                        ? "border-red-500/60 bg-red-500/10 opacity-70"
-                                        : "border-red-200 bg-red-50 text-red-700 opacity-70"
+                                      ? isReserved
+                                        ? isDark
+                                          ? "border-amber-500/60 bg-amber-500/10 text-amber-300 opacity-90"
+                                          : "border-amber-300 bg-amber-50 text-amber-800 opacity-90"
+                                        : isDark
+                                          ? "border-red-500/60 bg-red-500/10 opacity-70"
+                                          : "border-red-200 bg-red-50 text-red-700 opacity-70"
                                       : isDark
                                         ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
                                         : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
@@ -2386,9 +2343,13 @@ export function VenueDetails() {
                                   className={cn(
                                     "text-xs font-bold",
                                     cannotSelect
-                                      ? isDark
-                                        ? "text-white"
-                                        : "text-red-400"
+                                      ? isReserved
+                                        ? isDark
+                                          ? "text-amber-300"
+                                          : "text-amber-800"
+                                        : isDark
+                                          ? "text-white"
+                                          : "text-red-400"
                                       : isDark
                                         ? "text-white"
                                         : "text-slate-800",
@@ -2418,7 +2379,13 @@ export function VenueDetails() {
                                         ? "text-white"
                                         : "text-emerald-600"
                                       : cannotSelect
-                                        ? isDark ? "text-white" : "text-red-500"
+                                        ? isReserved
+                                          ? isDark
+                                            ? "text-amber-400"
+                                            : "text-amber-600"
+                                          : isDark
+                                            ? "text-white"
+                                            : "text-red-500"
                                         : isDark
                                           ? "text-white"
                                           : "text-emerald-600/70",
@@ -2426,7 +2393,9 @@ export function VenueDetails() {
                                 >
                                   {cannotSelect ? (
                                     <div className="flex flex-col items-center w-full">
-                                      <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
+                                      <span className="block leading-tight font-black">
+                                        {isReserved ? "Reserved" : isBooked ? "Booked" : "Unavailable"}
+                                      </span>
                                       {isBooked && isMyBooking && (
                                         <div className="flex flex-col items-center mt-1 w-full gap-0.5">
                                           <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
@@ -2479,6 +2448,11 @@ export function VenueDetails() {
                             {timeSlots.filter(s => s.startHour >= 24).map((slot) => {
                               const slotHour = slot.startHour;
                               const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
+                              const isReserved = isBooked && (
+                                String(slot.bookedBy || "").toLowerCase().includes("reserved") ||
+                                String(slot.booking?.user_name || "").toLowerCase().includes("reserved") ||
+                                String(slot.booking?.status || "").toLowerCase().includes("reserved")
+                              );
                               const overlaps = isOverlapping(slotHour);
                               const outOfBounds = isOutOfBounds(slotHour);
                               const cannotSelect = isBooked || overlaps || outOfBounds;
@@ -2496,7 +2470,7 @@ export function VenueDetails() {
                               const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
                               const bookedUserId = slot.booking?.user_id;
 
-                              const isMyBooking = isBooked && Boolean(
+                              const isMyBooking = isBooked && !isReserved && Boolean(
                                 (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
                                 (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
                                 (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
@@ -2536,9 +2510,13 @@ export function VenueDetails() {
                                         ? "bg-emerald-600/10 border-2 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]"
                                         : "bg-emerald-50/70 border-2 border-emerald-700 text-slate-900 shadow-sm"
                                       : cannotSelect
-                                        ? isDark
-                                          ? "border-red-500/60 bg-red-500/10 opacity-70"
-                                          : "border-red-200 bg-red-50 text-red-700 opacity-70"
+                                        ? isReserved
+                                          ? isDark
+                                            ? "border-amber-500/60 bg-amber-500/10 text-amber-300 opacity-90"
+                                            : "border-amber-300 bg-amber-50 text-amber-800 opacity-90"
+                                          : isDark
+                                            ? "border-red-500/60 bg-red-500/10 opacity-70"
+                                            : "border-red-200 bg-red-50 text-red-700 opacity-70"
                                         : isDark
                                           ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
                                           : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
@@ -2548,9 +2526,13 @@ export function VenueDetails() {
                                     className={cn(
                                       "text-xs font-bold",
                                       cannotSelect
-                                        ? isDark
-                                          ? "text-white"
-                                          : "text-red-400"
+                                        ? isReserved
+                                          ? isDark
+                                            ? "text-amber-300"
+                                            : "text-amber-800"
+                                          : isDark
+                                            ? "text-white"
+                                            : "text-red-400"
                                         : isDark
                                           ? "text-white"
                                           : "text-slate-800",
@@ -2580,7 +2562,13 @@ export function VenueDetails() {
                                           ? "text-white"
                                           : "text-emerald-600"
                                         : cannotSelect
-                                          ? isDark ? "text-white" : "text-red-500"
+                                          ? isReserved
+                                            ? isDark
+                                              ? "text-amber-400"
+                                              : "text-amber-600"
+                                            : isDark
+                                              ? "text-white"
+                                              : "text-red-500"
                                           : isDark
                                             ? "text-white"
                                             : "text-emerald-600/70",
@@ -2588,7 +2576,9 @@ export function VenueDetails() {
                                   >
                                     {cannotSelect ? (
                                       <div className="flex flex-col items-center w-full">
-                                        <span className="block leading-tight">{isBooked ? "Booked" : "Unavailable"}</span>
+                                        <span className="block leading-tight font-black">
+                                          {isReserved ? "Reserved" : isBooked ? "Booked" : "Unavailable"}
+                                        </span>
                                         {isBooked && isMyBooking && (
                                           <div className="flex flex-col items-center mt-1 w-full gap-0.5">
                                             <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">

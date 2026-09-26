@@ -8,12 +8,19 @@ const currentDir = path.dirname(currentFile);
 dotenv.config({ path: path.resolve(currentDir, "../.env"), override: true });
 dotenv.config({ override: true });
 
+const appId = (process.env.CASHFREE_APP_ID || "").trim();
+const secretKey = (process.env.CASHFREE_SECRET_KEY || "").trim();
+const baseUrl = (process.env.CASHFREE_BASE_URL && !process.env.CASHFREE_BASE_URL.includes("sandbox")
+  ? process.env.CASHFREE_BASE_URL
+  : "https://api.cashfree.com/pg").trim();
+
 export const CASHFREE_CONFIG = {
-  APP_ID: (process.env.CASHFREE_APP_ID || "").trim(),
-  SECRET_KEY: (process.env.CASHFREE_SECRET_KEY || "").trim(),
-  ENV: (process.env.CASHFREE_ENV || "PRODUCTION").trim().toUpperCase(),
+  APP_ID: appId,
+  SECRET_KEY: secretKey,
+  ENV: "PRODUCTION",
   API_VERSION: (process.env.CASHFREE_API_VERSION || "2023-08-01").trim(),
-  BASE_URL: (process.env.CASHFREE_BASE_URL || (process.env.CASHFREE_ENV === "TEST" ? "https://sandbox.cashfree.com/pg" : "https://api.cashfree.com/pg")).trim(),
+  BASE_URL: baseUrl,
+  IS_TEST: false,
 };
 
 export function hasCashfreeCredentials() {
