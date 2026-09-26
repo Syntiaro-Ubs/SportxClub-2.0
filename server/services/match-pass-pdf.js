@@ -1,81 +1,63 @@
 import { jsPDF } from "jspdf";
 
 /**
- * Helper to parse and consolidate single or multiple time slots
+ * Format timestamp into readable Indian Standard Time
  */
-export function parseBookingSlots(timeSlot = "") {
-  let startTime = "Scheduled Time";
-  let endTime = "Scheduled End";
-  let duration = "1 Hour";
-  let slotCount = 1;
-  let slotList = [];
-  let displaySlotText = String(timeSlot || "Scheduled Time").trim();
-
-  if (!timeSlot) {
-    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText: displaySlotText };
+function formatDateTime(dateInput) {
+  try {
+    const date = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(date.getTime())) return new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+    return date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
   }
-
-  const str = String(timeSlot).trim();
-
-  // 1. Multiple slots separated by comma or semicolon
-  if (str.includes(",") || str.includes(";")) {
-    const slots = str.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
-    slotList = slots;
-    slotCount = slots.length;
-
-    const parseSingle = (singleStr) => {
-      const match = singleStr.match(/(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*[-–—to]+\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)/i);
-      if (match) return { start: match[1].trim(), end: match[2].trim() };
-      return { start: singleStr, end: singleStr };
-    };
-
-    const firstParsed = parseSingle(slots[0]);
-    const lastParsed = parseSingle(slots[slots.length - 1]);
-
-    startTime = firstParsed.start;
-    endTime = lastParsed.end;
-    duration = `${slotCount} ${slotCount === 1 ? "Hour" : "Hours"}`;
-    displaySlotText = slots.join(", ");
-    const rangeText = `${startTime} – ${endTime}`;
-
-    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText };
-  }
-
-  // 2. Single range
-  if (str.includes("-") || str.includes("–") || str.includes("—") || str.includes("to")) {
-    const parts = str.split(/[-–—]|to/).map((p) => p.trim());
-    if (parts.length >= 2) {
-      startTime = parts[0];
-      endTime = parts[1];
-      slotList = [str];
-    }
-  } else {
-    startTime = str;
-    endTime = "End of Slot";
-    slotList = [str];
-  }
-
-  const rangeText = `${startTime} – ${endTime}`;
-  return { startTime, endTime, duration, slotCount, slotList, displaySlotText: str, rangeText };
 }
 
 /**
- * Generates exact 1:1 match of the SportX Match Pass Ticket in PDF
+ * Fetches QR Code as Base64 for PDF embedding
  */
-export async function generateSportXPassDoc({
-  orderId = "order_spx_1790347058513_950",
+async function getQrCodeBase64(bookingId) {
+  try {
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(bookingId || "SportXClub-Pass")}`;
+    const res = await fetch(qrUrl);
+    if (res.ok) {
+      const arrayBuffer = await res.arrayBuffer();
+      return `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+    }
+  } catch (err) {
+    console.warn("[BOOKING EMAIL] QR fetch warning:", err.message);
+  }
+  return null;
+}
+
+/**
+ * Generates exact Website Match Pass in PDF format for Email Attachment
+ */
+export async function generatePassPdfBuffer({
+  bookingId = "order_spx_1790347058513_950",
   userName = "Ujjwal Bramhnote",
+  userEmail,
   userPhone = "7410507803",
   turfName = "MODI PUBLIC GROUND",
-  location = "Nagpur",
   sport = "Football",
-  date = "2026-09-25",
-  timeSlot = "10:00 PM - 11:00 PM",
-  amount = 1,
-  paymentDate = "26 Sep 2026, 08:30 PM",
+  bookingDate = "25 Sep 2026",
+  startTime,
+  endTime,
+  duration,
+  slotCount = 1,
+  slotList = [],
+  amountPaid = 1,
+  turfLocation = "Nagpur",
+  bookingCreatedAt,
 }) {
-  const { rangeText } = parseBookingSlots(timeSlot);
-
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -127,15 +109,15 @@ export async function generateSportXPassDoc({
 
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text(String(location || "Nagpur"), badgeCx, cardY + 28, { align: "center" });
+  doc.text(String(turfLocation || "Nagpur"), badgeCx, cardY + 28, { align: "center" });
 
   doc.setFont("courier", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(148, 163, 184);
-  doc.text(String(orderId || "order_spx_1790347058513_950"), badgeCx, cardY + 33, { align: "center" });
+  doc.text(String(bookingId || "order_spx_1790347058513_950"), badgeCx, cardY + 33, { align: "center" });
 
   // 3. Sport Pill Badge
-  const sportName = `FOOTBALL`;
+  const sportName = String(sport || "FOOTBALL").toUpperCase();
   const sportPillW = 32;
   const sportPillH = 6;
   const sportPillX = badgeCx - sportPillW / 2;
@@ -195,9 +177,12 @@ export async function generateSportXPassDoc({
     doc.text(String(val), bx + boxW / 2, by + 12, { align: "center" });
   };
 
-  drawBox(startBoxX, cardRowY, "Date:", String(date || "25 Sep 2026"));
-  drawBox(startBoxX + boxW + gap, cardRowY, "Time Slot:", String(rangeText || timeSlot || "10:00 PM - 11:00 PM"));
-  drawBox(startBoxX + (boxW + gap) * 2, cardRowY, "Amount Paid:", `INR ${Number(amount || 0).toLocaleString("en-IN")}`);
+  const formattedAmount = `INR ${Number(amountPaid || 0).toLocaleString("en-IN")}`;
+  const displaySlot = slotCount > 1 ? `${startTime} – ${endTime}` : (startTime && endTime ? `${startTime} – ${endTime}` : "10:00 PM - 11:00 PM");
+
+  drawBox(startBoxX, cardRowY, "Date:", String(bookingDate || "25 Sep 2026"));
+  drawBox(startBoxX + boxW + gap, cardRowY, "Time Slot:", String(displaySlot));
+  drawBox(startBoxX + (boxW + gap) * 2, cardRowY, "Amount Paid:", formattedAmount);
 
   // 6. Ticket Perforation Notches & Dashed Line
   const tearY = cardY + 104;
@@ -226,18 +211,18 @@ export async function generateSportXPassDoc({
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7.5);
   doc.setTextColor(16, 185, 129);
-  doc.text(`EVENT DATE: ${date || "25 Sep 2026"}`, stubLeftX, stubY);
+  doc.text(`EVENT DATE: ${bookingDate || "25 Sep 2026"}`, stubLeftX, stubY);
 
   // MATCH TIME
   doc.setFontSize(7.5);
   doc.setTextColor(30, 41, 59);
-  doc.text(`MATCH TIME: ${rangeText || timeSlot || "10:00 PM - 11:00 PM"}`, stubLeftX, stubY + 7);
+  doc.text(`MATCH TIME: ${displaySlot}`, stubLeftX, stubY + 7);
 
   // PAYMENT DATE
-  const displayPaymentDate = paymentDate || `${date || "26 Sep 2026"}, 08:30 PM`;
+  const paymentDateStr = formatDateTime(bookingCreatedAt || new Date());
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
-  doc.text(`PAYMENT DATE: ${displayPaymentDate}`, stubLeftX, stubY + 14);
+  doc.text(`PAYMENT DATE: ${paymentDateStr}`, stubLeftX, stubY + 14);
 
   // OFFICIAL PASS PILL
   const offPillY = stubY + 19;
@@ -278,26 +263,13 @@ export async function generateSportXPassDoc({
   doc.line(qrX + qrW - brkPad, qrY + qrH - brkPad, qrX + qrW - brkPad - brkLen, qrY + qrH - brkPad);
   doc.line(qrX + qrW - brkPad, qrY + qrH - brkPad, qrX + qrW - brkPad, qrY + qrH - brkPad - brkLen);
 
-  try {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(orderId || "SportXClub-Pass")}`;
-    const res = await fetch(qrUrl);
-    if (res.ok) {
-      if (typeof window !== "undefined") {
-        const blob = await res.blob();
-        const base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-        doc.addImage(base64, "PNG", qrX + 3.5, qrY + 3.5, qrW - 7, qrH - 7);
-      } else {
-        const arrayBuffer = await res.arrayBuffer();
-        const base64 = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
-        doc.addImage(base64, "PNG", qrX + 3.5, qrY + 3.5, qrW - 7, qrH - 7);
-      }
+  const qrDataUrl = await getQrCodeBase64(bookingId);
+  if (qrDataUrl) {
+    try {
+      doc.addImage(qrDataUrl, "PNG", qrX + 3.5, qrY + 3.5, qrW - 7, qrH - 7);
+    } catch (qrErr) {
+      console.warn("[PDF QR Add Error]:", qrErr.message);
     }
-  } catch (e) {
-    console.warn("QR embedding in PDF:", e);
   }
 
   // 8. Footer Note
@@ -306,13 +278,6 @@ export async function generateSportXPassDoc({
   doc.setTextColor(148, 163, 184);
   doc.text("Please present this PDF Pass at the gate entry desk on match day.", badgeCx, cardY + cardH - 8, { align: "center" });
 
-  return doc;
-}
-
-/**
- * Helper to download PDF directly in browser
- */
-export async function downloadSportXPassPdf(passData, filename = "SportXClub_Pass.pdf") {
-  const doc = await generateSportXPassDoc(passData);
-  doc.save(filename);
+  const arrayBuffer = doc.output("arraybuffer");
+  return Buffer.from(arrayBuffer);
 }

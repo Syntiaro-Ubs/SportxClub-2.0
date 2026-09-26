@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import { jsPDF } from "jspdf";
 import { getPool } from "../db.js";
+import { generatePassPdfBuffer } from "./match-pass-pdf.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -161,7 +162,7 @@ async function getQrCodeBase64(bookingId) {
 /**
  * Generates exact Website Match Pass in PDF format for Email Attachment
  */
-async function generatePassPdfBuffer({
+async function _old_generatePassPdfBuffer({
   bookingId,
   userName,
   userEmail,
