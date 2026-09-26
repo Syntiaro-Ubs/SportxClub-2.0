@@ -102,15 +102,17 @@ const marqueeHorizontalStyle = `
   }
 `;
 
-const amenities = [
-  { icon: Maximize2, label: "Turf Area", desc: "8,500 Sq. Ft. (120ft × 70ft)" },
-  { icon: Car, label: "Free parking", desc: "Spacious parking slot" },
-  { icon: Shirt, label: "Changing rooms", desc: "Clean & sanitized" },
-  { icon: Droplets, label: "Showers", desc: "Hot & cold water" },
-  { icon: Wifi, label: "Free Wi-Fi", desc: "High-speed network" },
-  { icon: Coffee, label: "Cafe Lounge", desc: "Energy drinks & snacks" },
-  { icon: Users, label: "Coaching Pro", desc: "Certified trainers" },
-];
+const ALL_AMENITY_DEFS = {
+  parking: { icon: Car, label: "Parking Space", desc: "Dedicated vehicle parking" },
+  washroom: { icon: Droplets, label: "Clean Washrooms", desc: "Hygienic & sanitized" },
+  changingroom: { icon: Shirt, label: "Changing Rooms", desc: "Secure locker rooms" },
+  drinkingwater: { icon: Droplets, label: "Drinking Water", desc: "Chilled purified water" },
+  floodlights: { icon: Sparkles, label: "LED Floodlights", desc: "High-lumen night lights" },
+  equipmentrent: { icon: Trophy, label: "Equipment Rental", desc: "Balls, bibs, rackets" },
+  firstaid: { icon: ShieldCheck, label: "First Aid Kit", desc: "Emergency medical kit" },
+  cafe: { icon: Coffee, label: "Cafeteria / Snacks", desc: "Energy drinks & food" },
+  wifi: { icon: Wifi, label: "Free Wi-Fi", desc: "High-speed network" },
+};
 
 const CANCEL_REASONS = [
   { id: "schedule", label: "Change of plans / Schedule conflict", icon: "🕒" },
@@ -453,6 +455,80 @@ export function VenueDetails() {
 
     return result;
   }, [venueSportsList, venue.sport]);
+
+  const displayedAmenities = useMemo(() => {
+    let rawList = [];
+    if (activeVenueData?.amenities) {
+      if (Array.isArray(activeVenueData.amenities)) {
+        rawList = activeVenueData.amenities;
+      } else if (typeof activeVenueData.amenities === "string") {
+        try {
+          let parsed = JSON.parse(activeVenueData.amenities);
+          while (typeof parsed === "string") {
+            try { parsed = JSON.parse(parsed); } catch { break; }
+          }
+          if (Array.isArray(parsed)) rawList = parsed;
+        } catch {
+          rawList = activeVenueData.amenities.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+      }
+    }
+
+    if (rawList.length === 0) {
+      return [
+        { icon: Car, label: "Parking Space", desc: "Dedicated vehicle parking" },
+        { icon: Droplets, label: "Clean Washrooms", desc: "Hygienic & sanitized" },
+        { icon: Sparkles, label: "LED Floodlights", desc: "High-lumen night lights" },
+        { icon: Droplets, label: "Drinking Water", desc: "Chilled purified water" },
+        { icon: Shirt, label: "Changing Rooms", desc: "Secure locker rooms" },
+        { icon: Trophy, label: "Turf Area", desc: venue.area || "Standard Dimensions" },
+      ];
+    }
+
+    const result = [];
+    const seen = new Set();
+
+    for (const item of rawList) {
+      if (!item) continue;
+      const str = String(item).trim();
+      const clean = str.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+      let matchedKey = null;
+      if (clean.includes("park")) matchedKey = "parking";
+      else if (clean.includes("wash") || clean.includes("restroom") || clean.includes("toilet")) matchedKey = "washroom";
+      else if (clean.includes("chang") || clean.includes("locker")) matchedKey = "changingroom";
+      else if (clean.includes("water") || clean.includes("drink")) matchedKey = "drinkingwater";
+      else if (clean.includes("flood") || clean.includes("light")) matchedKey = "floodlights";
+      else if (clean.includes("equip") || clean.includes("rent") || clean.includes("racket") || clean.includes("ball")) matchedKey = "equipmentrent";
+      else if (clean.includes("aid") || clean.includes("medic")) matchedKey = "firstaid";
+      else if (clean.includes("cafe") || clean.includes("snack") || clean.includes("canteen")) matchedKey = "cafe";
+      else if (clean.includes("wifi") || clean.includes("wi-fi")) matchedKey = "wifi";
+
+      if (matchedKey && ALL_AMENITY_DEFS[matchedKey]) {
+        if (!seen.has(matchedKey)) {
+          seen.add(matchedKey);
+          result.push(ALL_AMENITY_DEFS[matchedKey]);
+        }
+      } else if (!seen.has(clean)) {
+        seen.add(clean);
+        result.push({
+          icon: ShieldCheck,
+          label: str,
+          desc: "Available at venue",
+        });
+      }
+    }
+
+    if (!seen.has("turfarea")) {
+      result.unshift({
+        icon: Maximize2,
+        label: "Turf Area",
+        desc: venue.area || "8,500 Sq. Ft. (120ft × 70ft)",
+      });
+    }
+
+    return result;
+  }, [activeVenueData?.amenities, venue.area]);
 
   const [selectedSport, setSelectedSport] = useState(
     venue.sport || "Football",
@@ -1377,7 +1453,7 @@ export function VenueDetails() {
                 Venue Amenities
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {amenities.map((item) => {
+                {displayedAmenities.map((item) => {
                   const Icon = item.icon;
                   return (
                     <div

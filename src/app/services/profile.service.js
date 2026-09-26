@@ -10,14 +10,18 @@ const identityParams = (user) => {
 function getAuthHeaders(extraHeaders = {}) {
   let token = null;
   if (typeof window !== "undefined") {
-    token = localStorage.getItem("token") || localStorage.getItem("authToken");
-    if (!token) {
-      try {
-        const pUser = JSON.parse(localStorage.getItem("playerUser") || "{}");
-        const oUser = JSON.parse(localStorage.getItem("turfOwnerUser") || "{}");
-        const cUser = JSON.parse(localStorage.getItem("cmsAdminUser") || "{}");
-        token = pUser.token || oUser.token || cUser.token;
-      } catch (e) {}
+    try {
+      const pUser = JSON.parse(sessionStorage.getItem("playerUser") || localStorage.getItem("playerUser") || "{}");
+      token =
+        sessionStorage.getItem("playerToken") ||
+        localStorage.getItem("playerToken") ||
+        pUser.token;
+
+      if (!token) {
+        token = sessionStorage.getItem("token") || localStorage.getItem("token") || localStorage.getItem("authToken");
+      }
+    } catch (e) {
+      token = sessionStorage.getItem("playerToken") || localStorage.getItem("playerToken") || localStorage.getItem("token") || localStorage.getItem("authToken");
     }
   }
   const headers = { "Content-Type": "application/json", ...extraHeaders };

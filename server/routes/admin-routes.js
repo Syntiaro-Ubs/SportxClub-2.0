@@ -382,16 +382,24 @@ router.get(["/admin/onboarding", "/onboarding"], authenticateToken, requireRole(
           sports: setupData.turf?.sports || (matchedTurf.sport_type ? [matchedTurf.sport_type] : ["Football", "Cricket"]),
           description: setupData.turf?.description || "High quality sports turf with FIFA certified artificial grass, floodlights, and professional amenities.",
           surfaceType: setupData.turf?.surfaceType || "Artificial Grass",
-          facilities: setupData.turf?.facilities || ["Lighting", "Changing Rooms", "Parking", "Water"],
+          facilities: setupData.location?.facilities || setupData.turf?.facilities || setupData.facilities || ["Parking Space", "Clean Washrooms", "Drinking Water", "LED Floodlights"],
           ...setupData.turf
         },
         pricing: {
+          openingTime: setupData.pricing?.openingTime || setupData.pricing?.openTime || "06:00 AM",
+          closingTime: setupData.pricing?.closingTime || setupData.pricing?.closeTime || "11:00 PM",
+          slotDuration: setupData.pricing?.slotDuration || 60,
           weekdayPrice: setupData.pricing?.weekdayPrice || matchedTurf.price_per_hour || 1200,
           weekendPrice: setupData.pricing?.weekendPrice || Math.round((matchedTurf.price_per_hour || 1200) * 1.2),
+          peakPrice: setupData.pricing?.peakPrice || null,
+          peakStartTime: setupData.pricing?.peakStartTime || "05:00 PM",
+          peakEndTime: setupData.pricing?.peakEndTime || "11:00 PM",
+          operationalDays: setupData.pricing?.operationalDays || "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
           advanceBookingDays: setupData.pricing?.advanceBookingDays || 7,
           ...setupData.pricing
         },
         images: setupData.images || {
+          cover: matchedTurf.image_url,
           turf: [matchedTurf.image_url || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=600"],
           gallery: []
         },
@@ -467,8 +475,11 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
           let galleryList = [];
           if (Array.isArray(setupData.images?.gallery) && setupData.images.gallery.length > 0) {
             galleryList = setupData.images.gallery
-              .map(g => (typeof g === 'object' && g !== null ? (g.data || g.url || g.name) : g))
+              .map(g => (typeof g === 'object' && g !== null ? (g.data || g.url) : g))
               .filter(Boolean);
+          }
+          if (coverImage && !galleryList.includes(coverImage)) {
+            galleryList = [coverImage, ...galleryList];
           }
           if (galleryList.length === 0 && coverImage) {
             galleryList = [coverImage];
@@ -476,8 +487,20 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
 
           const sportType = Array.isArray(setupData.turf?.sports) ? setupData.turf.sports.join(", ") : (setupData.turf?.sports || "Football");
           const pricePerHour = Number(setupData.pricing?.weekdayPrice || setupData.pricing?.standardPrice || 1200);
+          const weekendPrice = Number(setupData.pricing?.weekendPrice || Math.round(pricePerHour * 1.2));
+          const openingTime = setupData.pricing?.openingTime || setupData.pricing?.openTime || "06:00 AM";
+          const closingTime = setupData.pricing?.closingTime || setupData.pricing?.closeTime || "11:00 PM";
+          const slotDuration = parseInt(setupData.pricing?.slotDuration) || 60;
+          const peakStartTime = setupData.pricing?.peakStartTime || "05:00 PM";
+          const peakEndTime = setupData.pricing?.peakEndTime || "11:00 PM";
+          const peakPrice = setupData.pricing?.peakPrice ? Number(setupData.pricing.peakPrice) : null;
+          const operationalDays = Array.isArray(setupData.pricing?.operationalDays)
+            ? JSON.stringify(setupData.pricing.operationalDays)
+            : (setupData.pricing?.operationalDays || "Mon,Tue,Wed,Thu,Fri,Sat,Sun");
+
           const description = setupData.turf?.description || "High quality sports turf with professional amenities.";
-          const amenities = Array.isArray(setupData.turf?.facilities) ? JSON.stringify(setupData.turf.facilities) : (typeof setupData.turf?.facilities === 'string' ? setupData.turf.facilities : "[]");
+          const facilitiesRaw = setupData.location?.facilities || setupData.turf?.facilities || setupData.facilities || [];
+          const amenities = Array.isArray(facilitiesRaw) ? JSON.stringify(facilitiesRaw) : (typeof facilitiesRaw === 'string' ? facilitiesRaw : "[]");
           const rules = setupData.turf?.rules || "Please wear appropriate footwear. Respect all turf property.";
 
           if (existingTurfs.length > 0) {
@@ -487,6 +510,14 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
                 location = ?, 
                 sport_type = ?, 
                 price_per_hour = ?, 
+                weekend_price = ?,
+                opening_time = ?,
+                closing_time = ?,
+                slot_duration = ?,
+                peak_start_time = ?,
+                peak_end_time = ?,
+                peak_price = ?,
+                operational_days = ?,
                 image_url = ?, 
                 gallery = ?, 
                 description = ?, 
@@ -497,14 +528,57 @@ router.put(["/admin/onboarding/:id", "/onboarding/:id"], authenticateToken, requ
                 owner_phone = ?, 
                 status = 'Active' 
               WHERE id = ?`,
-              [turfName, turfLocation, sportType, pricePerHour, coverImage, JSON.stringify(galleryList), description, amenities, rules, ownerName, ownerEmail, ownerPhone, existingTurfs[0].id]
+              [
+                turfName, 
+                turfLocation, 
+                sportType, 
+                pricePerHour, 
+                weekendPrice,
+                openingTime,
+                closingTime,
+                slotDuration,
+                peakStartTime,
+                peakEndTime,
+                peakPrice,
+                operationalDays,
+                coverImage, 
+                JSON.stringify(galleryList), 
+                description, 
+                amenities, 
+                rules, 
+                ownerName, 
+                ownerEmail, 
+                ownerPhone, 
+                existingTurfs[0].id
+              ]
             );
           } else {
             await pool.query(
               `INSERT INTO turfs 
-                (name, location, sport_type, price_per_hour, rating, reviews, status, owner_name, owner_email, owner_phone, image_url, gallery, description, amenities, rules)
-               VALUES (?, ?, ?, ?, 5.0, 1, 'Active', ?, ?, ?, ?, ?, ?, ?, ?)`,
-              [turfName, turfLocation, sportType, pricePerHour, ownerName, ownerEmail, ownerPhone, coverImage, JSON.stringify(galleryList), description, amenities, rules]
+                (name, location, sport_type, price_per_hour, weekend_price, opening_time, closing_time, slot_duration, peak_start_time, peak_end_time, peak_price, operational_days, rating, reviews, status, owner_name, owner_email, owner_phone, image_url, gallery, description, amenities, rules)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 5.0, 1, 'Active', ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                turfName, 
+                turfLocation, 
+                sportType, 
+                pricePerHour, 
+                weekendPrice,
+                openingTime,
+                closingTime,
+                slotDuration,
+                peakStartTime,
+                peakEndTime,
+                peakPrice,
+                operationalDays,
+                ownerName, 
+                ownerEmail, 
+                ownerPhone, 
+                coverImage, 
+                JSON.stringify(galleryList), 
+                description, 
+                amenities, 
+                rules
+              ]
             );
           }
         }

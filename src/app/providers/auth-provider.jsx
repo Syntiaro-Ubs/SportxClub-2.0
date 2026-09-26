@@ -95,25 +95,35 @@ export function AuthProvider({ children }) {
         const targetType = res.user.accountType || accountType;
         const userObj = { ...res.user, accountType: targetType, token: res.token || res.user.token };
 
-        if (res.token) {
-          sessionStorage.setItem("token", res.token);
-          localStorage.setItem("token", res.token);
-        }
-
         if (targetType === "turf-owner" || accountType === "turf-owner") {
           setTurfOwnerUser(userObj);
           sessionStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
-          if (res.token) sessionStorage.setItem("sportx_owner_token", res.token);
           localStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
+          if (res.token) {
+            sessionStorage.setItem("sportx_owner_token", res.token);
+            sessionStorage.setItem("turfOwnerToken", res.token);
+            localStorage.setItem("sportx_owner_token", res.token);
+            localStorage.setItem("turfOwnerToken", res.token);
+          }
         } else if (targetType === "cms-admin" || accountType === "cms-admin") {
           setCmsAdminUser(userObj);
           sessionStorage.setItem("cmsAdminUser", JSON.stringify(userObj));
           sessionStorage.setItem("sportx_cms_user", JSON.stringify(userObj));
           localStorage.setItem("cmsAdminUser", JSON.stringify(userObj));
+          if (res.token) {
+            sessionStorage.setItem("sportx_cms_token", res.token);
+            localStorage.setItem("cmsAdminToken", res.token);
+          }
         } else {
           setPlayerUser(userObj);
           sessionStorage.setItem("playerUser", JSON.stringify(userObj));
           localStorage.setItem("playerUser", JSON.stringify(userObj));
+          if (res.token) {
+            sessionStorage.setItem("playerToken", res.token);
+            localStorage.setItem("playerToken", res.token);
+            sessionStorage.setItem("token", res.token);
+            localStorage.setItem("token", res.token);
+          }
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userName", userObj.fullName ? userObj.fullName.split(" ")[0] : "User");
         }
@@ -162,22 +172,29 @@ export function AuthProvider({ children }) {
       });
 
       if (res.success && res.user) {
-        if (res.token) {
-          sessionStorage.setItem("token", res.token);
-          localStorage.setItem("token", res.token);
-        }
         const targetType = res.user.accountType || (role === "owner" ? "turf-owner" : "player");
-        const userObj = { ...res.user, accountType: targetType };
+        const userObj = { ...res.user, accountType: targetType, token: res.token || res.user.token };
 
         if (targetType === "turf-owner" || role === "owner") {
           setTurfOwnerUser(userObj);
           sessionStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
-          if (res.token) sessionStorage.setItem("sportx_owner_token", res.token);
           localStorage.setItem("turfOwnerUser", JSON.stringify(userObj));
+          if (res.token) {
+            sessionStorage.setItem("sportx_owner_token", res.token);
+            sessionStorage.setItem("turfOwnerToken", res.token);
+            localStorage.setItem("sportx_owner_token", res.token);
+            localStorage.setItem("turfOwnerToken", res.token);
+          }
         } else {
           setPlayerUser(userObj);
           sessionStorage.setItem("playerUser", JSON.stringify(userObj));
           localStorage.setItem("playerUser", JSON.stringify(userObj));
+          if (res.token) {
+            sessionStorage.setItem("playerToken", res.token);
+            localStorage.setItem("playerToken", res.token);
+            sessionStorage.setItem("token", res.token);
+            localStorage.setItem("token", res.token);
+          }
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userName", userObj.fullName ? userObj.fullName.split(" ")[0] : "User");
         }
@@ -194,22 +211,29 @@ export function AuthProvider({ children }) {
     try {
       const res = await adminApi.register(userData);
       if (res.success && res.user) {
-        if (res.token) {
-          sessionStorage.setItem("token", res.token);
-          localStorage.setItem("token", res.token);
-        }
         const targetType = res.user.accountType || (userData.role === "owner" ? "turf-owner" : "player");
-        const newUserObj = { ...res.user, accountType: targetType };
+        const newUserObj = { ...res.user, accountType: targetType, token: res.token || res.user.token };
 
         if (targetType === "turf-owner" || userData.role === "owner") {
           setTurfOwnerUser(newUserObj);
           sessionStorage.setItem("turfOwnerUser", JSON.stringify(newUserObj));
-          if (res.token) sessionStorage.setItem("sportx_owner_token", res.token);
           localStorage.setItem("turfOwnerUser", JSON.stringify(newUserObj));
+          if (res.token) {
+            sessionStorage.setItem("sportx_owner_token", res.token);
+            sessionStorage.setItem("turfOwnerToken", res.token);
+            localStorage.setItem("sportx_owner_token", res.token);
+            localStorage.setItem("turfOwnerToken", res.token);
+          }
         } else {
           setPlayerUser(newUserObj);
           sessionStorage.setItem("playerUser", JSON.stringify(newUserObj));
           localStorage.setItem("playerUser", JSON.stringify(newUserObj));
+          if (res.token) {
+            sessionStorage.setItem("playerToken", res.token);
+            localStorage.setItem("playerToken", res.token);
+            sessionStorage.setItem("token", res.token);
+            localStorage.setItem("token", res.token);
+          }
           localStorage.setItem("isLoggedIn", "true");
           localStorage.setItem("userName", newUserObj.fullName ? newUserObj.fullName.split(" ")[0] : "User");
         }

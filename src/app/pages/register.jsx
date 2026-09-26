@@ -433,11 +433,12 @@ export function RegisterPage() {
               <div className="pt-2 flex justify-center">
                 <Button
                   onClick={() => {
-                    localStorage.setItem("isLoggedIn", "true");
-                    localStorage.setItem("userName", formData.firstName);
                     if (formData.role === "owner") {
+                      localStorage.setItem("ownerUserName", formData.firstName);
                       navigate("/owner-setup");
                     } else {
+                      localStorage.setItem("isLoggedIn", "true");
+                      localStorage.setItem("userName", formData.firstName);
                       navigate("/");
                     }
                   }}

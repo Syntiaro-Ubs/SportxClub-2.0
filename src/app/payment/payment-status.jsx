@@ -159,7 +159,7 @@ export function PaymentStatus() {
               localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
             }
             sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
-          } catch (e) {}
+          } catch (e) { }
           setIsLoading(false);
           toast.success("⚡ SportX Wallet Payment Confirmed!");
           return;
@@ -203,7 +203,7 @@ export function PaymentStatus() {
                 localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
               }
               sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
-            } catch (e) {}
+            } catch (e) { }
 
             toast.success("Cashfree Payment Verified & Booking Confirmed!");
           } else if (statusRes.status === "Pending") {
@@ -240,7 +240,7 @@ export function PaymentStatus() {
                   localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
                 }
                 sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
-              } catch (e) {}
+              } catch (e) { }
 
               toast.success("Cashfree Payment Verified & Booking Confirmed!");
             } else {
@@ -287,7 +287,7 @@ export function PaymentStatus() {
             confirmedList.unshift(newBooking);
             localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
             sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
-          } catch (e) {}
+          } catch (e) { }
 
           toast.success("Payment Confirmed!");
         } else {
@@ -361,10 +361,10 @@ export function PaymentStatus() {
           <div className="relative w-full max-w-md mx-auto select-none">
             {/* Emerald Accent Outer Frame Container */}
             <div className="relative bg-white dark:bg-[#0f172a] rounded-[32px] p-1.5 border-2 border-emerald-600/70 dark:border-emerald-500/60 shadow-2xl overflow-hidden transition-all">
-              
+
               {/* Inner White Ticket Body */}
               <div className="relative bg-white dark:bg-[#111827] rounded-[26px] p-5 sm:p-6 space-y-5">
-                
+
                 {/* 1. Header: Green Checkmark + Payment Successful + SPORTX PASS */}
                 <div className="flex flex-col items-center justify-center text-center space-y-1.5 pt-1">
                   {/* Large Green Checkmark Circle */}
@@ -523,9 +523,8 @@ export function PaymentStatus() {
                     {Array.from({ length: 38 }).map((_, i) => (
                       <div
                         key={i}
-                        className={`bg-slate-900 dark:bg-slate-200 rounded-xs ${
-                          i % 5 === 0 ? "w-1 h-6" : i % 3 === 0 ? "w-0.5 h-6" : "w-[1px] h-5"
-                        }`}
+                        className={`bg-slate-900 dark:bg-slate-200 rounded-xs ${i % 5 === 0 ? "w-1 h-6" : i % 3 === 0 ? "w-0.5 h-6" : "w-[1px] h-5"
+                          }`}
                       />
                     ))}
                   </div>

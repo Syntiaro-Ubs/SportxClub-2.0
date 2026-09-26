@@ -191,6 +191,20 @@ function generatePreviewSlots(openingTime = "06:00 AM", closingTime = "11:00 PM"
   return slots;
 }
 
+const normalizeAmenity = (val) => {
+  if (!val || typeof val !== "string") return "";
+  const clean = val.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (clean.includes("park")) return "Parking";
+  if (clean.includes("wash") || clean.includes("restroom") || clean.includes("toilet")) return "Washroom";
+  if (clean.includes("chang") || clean.includes("locker")) return "Changing Room";
+  if (clean.includes("water") || clean.includes("drink")) return "Drinking Water";
+  if (clean.includes("flood") || clean.includes("light")) return "Floodlights";
+  if (clean.includes("equip") || clean.includes("rent") || clean.includes("racket") || clean.includes("ball")) return "Equipment Rent";
+  if (clean.includes("aid") || clean.includes("medic")) return "First Aid";
+  if (clean.includes("cafe") || clean.includes("snack") || clean.includes("canteen")) return "Cafe";
+  return val;
+};
+
 export function EditTurf() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -254,6 +268,15 @@ export function EditTurf() {
   const operationalDays = watch("operational_days") || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const primaryCoverImage = uploadedImages[0] || watch("image") || "https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800";
 
+  const isAmenitySelected = (amenityId) => {
+    const normTarget = normalizeAmenity(amenityId);
+    return selectedAmenities.some((a) => normalizeAmenity(a) === normTarget);
+  };
+
+  const selectedAmenitiesCount = useMemo(() => {
+    return AMENITIES.filter((amenity) => isAmenitySelected(amenity.id)).length;
+  }, [selectedAmenities]);
+
   // Dynamic preview slots calculated from time management settings
   const previewSlots = useMemo(() => {
     return generatePreviewSlots(openingTime, closingTime, slotDuration, turfPrice, peakStartTime, peakPrice);
@@ -267,10 +290,10 @@ export function EditTurf() {
     if (turfPrice) score += 15;
     if (openingTime && closingTime) score += 15;
     if (operationalDays.length > 0) score += 10;
-    if (selectedAmenities.length > 0) score += 15;
+    if (selectedAmenitiesCount > 0) score += 15;
     if (uploadedImages.length > 0) score += 10;
     return score;
-  }, [turfName, turfLocation, turfPrice, openingTime, closingTime, operationalDays, selectedAmenities, uploadedImages]);
+  }, [turfName, turfLocation, turfPrice, openingTime, closingTime, operationalDays, selectedAmenitiesCount, uploadedImages]);
 
   useEffect(() => {
     const fetchTurf = async () => {
@@ -280,6 +303,22 @@ export function EditTurf() {
 
         const result = await turfService.getById(OWNER_ID, id);
         if (result) {
+          // Parse amenities list cleanly
+          let parsedAmenities = [];
+          if (Array.isArray(result.amenities)) {
+            parsedAmenities = result.amenities;
+          } else if (typeof result.amenities === "string" && result.amenities.trim()) {
+            try {
+              let p = JSON.parse(result.amenities);
+              while (typeof p === "string") {
+                try { p = JSON.parse(p); } catch { break; }
+              }
+              if (Array.isArray(p)) parsedAmenities = p;
+            } catch {
+              parsedAmenities = result.amenities.split(",").map((s) => s.trim()).filter(Boolean);
+            }
+          }
+
           reset({
             name: result.name || "",
             description: result.description || "Premium sports arena with state-of-the-art turf surface and night floodlights.",
@@ -305,17 +344,7 @@ export function EditTurf() {
               }
               return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
             })(),
-            amenities: (() => {
-              if (Array.isArray(result.amenities)) return result.amenities;
-              if (typeof result.amenities === "string") {
-                try {
-                  const p = JSON.parse(result.amenities);
-                  if (Array.isArray(p)) return p;
-                } catch { }
-                return result.amenities.split(",").map((s) => s.trim()).filter(Boolean);
-              }
-              return ["Parking", "Floodlights", "Washroom", "Drinking Water"];
-            })(),
+            amenities: parsedAmenities,
             rules: result.rules || "1. Non-marking shoes or turf studs only.\n2. Please report 10 minutes before slot start time.\n3. Outside food & beverages strictly prohibited on the turf.",
             status: result.status || "Active",
             image: result.image_url || result.image || "",
@@ -335,7 +364,7 @@ export function EditTurf() {
               }
               if (Array.isArray(parsed) && parsed.length > 0) {
                 initialImages = parsed
-                  .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url || img.name) : img))
+                  .map((img) => (typeof img === "object" && img !== null ? (img.data || img.url) : img))
                   .filter(Boolean);
               }
             } catch (e) {
@@ -521,10 +550,12 @@ export function EditTurf() {
   };
 
   const toggleAmenity = (amenityId) => {
-    if (selectedAmenities.includes(amenityId)) {
+    const normTarget = normalizeAmenity(amenityId);
+    const isPresent = selectedAmenities.some((a) => normalizeAmenity(a) === normTarget);
+    if (isPresent) {
       setValue(
         "amenities",
-        selectedAmenities.filter((a) => a !== amenityId),
+        selectedAmenities.filter((a) => normalizeAmenity(a) !== normTarget),
       );
     } else {
       setValue("amenities", [...selectedAmenities, amenityId]);
@@ -1311,13 +1342,13 @@ export function EditTurf() {
                           Select Available Amenities & Features
                         </Label>
                         <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                          {selectedAmenities.length} of {AMENITIES.length} Selected
+                          {selectedAmenitiesCount} of {AMENITIES.length} Selected
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                         {AMENITIES.map((amenity) => {
-                          const isSelected = selectedAmenities.includes(amenity.id);
+                          const isSelected = isAmenitySelected(amenity.id);
                           return (
                             <button
                               key={amenity.id}

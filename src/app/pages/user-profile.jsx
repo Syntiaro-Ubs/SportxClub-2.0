@@ -158,7 +158,8 @@ function EmptyState({ children }) {
 
 export function UserProfile() {
   const navigate = useNavigate();
-  const { currentUser, logout, deleteAccount } = useAuth();
+  const { currentUser, playerUser, logout, deleteAccount } = useAuth();
+  const activeUser = playerUser || currentUser;
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -204,20 +205,26 @@ export function UserProfile() {
   const [isSubmittingMatch, setIsSubmittingMatch] = useState(false);
 
   const refreshProfile = useCallback(async () => {
-    if (!currentUser) {
+    const userToFetch = activeUser || (() => {
+      try {
+        return JSON.parse(sessionStorage.getItem("playerUser") || localStorage.getItem("playerUser") || "null");
+      } catch { return null; }
+    })();
+
+    if (!userToFetch) {
       setLoading(false);
       return;
     }
     setLoading(true);
     setError("");
     try {
-      setProfile(await profileService.get(currentUser));
+      setProfile(await profileService.get(userToFetch));
     } catch (requestError) {
       setError(requestError.message);
     } finally {
       setLoading(false);
     }
-  }, [currentUser]);
+  }, [activeUser]);
 
   useEffect(() => {
     const timer = setTimeout(() => refreshProfile(), 0);

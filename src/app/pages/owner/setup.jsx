@@ -70,7 +70,7 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
       if (multiple) {
         const filePromises = Array.from(e.target.files).map(f => fileToBase64(f));
         const base64Files = await Promise.all(filePromises);
-        base64Files.forEach(f => onUpload(f));
+        onUpload(base64Files);
       } else {
         const base64File = await fileToBase64(e.target.files[0]);
         onUpload(base64File);
@@ -105,17 +105,34 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
       )}
 
       {!multiple && file && (
-        <div className="border border-border rounded-xl p-4 bg-background/50 flex items-center justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
-              <FileImage className="h-5 w-5 text-primary" />
-            </div>
+        <div className="border border-border rounded-xl p-3 bg-background/50 flex items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3 overflow-hidden min-w-0">
+            {file.data || file.url ? (
+              <div className="h-12 w-12 rounded-lg overflow-hidden border border-border shrink-0 bg-muted/40">
+                <img
+                  src={file.data || file.url}
+                  alt={file.name || "Upload preview"}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <FileImage className="h-5 w-5 text-primary" />
+              </div>
+            )}
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{file.name}</p>
+              <p className="text-sm font-medium truncate text-foreground">{file.name || "Uploaded file"}</p>
               <p className="text-xs text-emerald-500 font-medium">Uploaded Successfully</p>
             </div>
           </div>
-          <Button type="button" variant="ghost" size="icon" onClick={onRemove} className="text-rose-500 hover:bg-rose-500/10 cursor-pointer">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onRemove}
+            className="text-rose-500 hover:bg-rose-500/10 cursor-pointer shrink-0 rounded-lg"
+            title="Remove file"
+          >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
@@ -132,19 +149,73 @@ const FileUpload = ({ label, hint, file, onUpload, onRemove, multiple = false, f
             </div>
             <p className="text-sm font-medium">Click to upload multiple images</p>
             <p className="text-xs text-muted-foreground mt-1">{hint}</p>
+            {files.length > 0 && (
+              <div className="mt-2.5 flex items-center gap-2">
+                <span className={cn(
+                  "text-xs font-bold px-2.5 py-0.5 rounded-full border",
+                  files.length >= 5 
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" 
+                    : "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                )}>
+                  {files.length} Photo{files.length === 1 ? "" : "s"} Uploaded {files.length < 5 ? `(Minimum 5 required, ${5 - files.length} more needed)` : "✓ Minimum met"}
+                </span>
+              </div>
+            )}
           </div>
+
           {files.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {files.map((f, i) => (
-                <div key={i} className="relative group border border-border rounded-xl overflow-hidden aspect-video bg-muted/50 flex items-center justify-center">
-                  <FileImage className="h-8 w-8 text-muted-foreground/50" />
-                  <div className="absolute inset-0 bg-background/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Button type="button" variant="destructive" size="icon" className="h-8 w-8 rounded-full cursor-pointer" onClick={() => onRemove(i)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {files.map((f, i) => {
+                const imgSrc = typeof f === "string" ? f : (f?.data || f?.url || "");
+                const fileName = typeof f === "object" && f !== null ? (f.name || `Photo #${i + 1}`) : `Photo #${i + 1}`;
+
+                return (
+                  <div
+                    key={i}
+                    className="relative group border border-border/80 rounded-xl overflow-hidden aspect-video bg-muted/30 shadow-xs hover:border-primary/50 transition-all"
+                  >
+                    {imgSrc ? (
+                      <img
+                        src={imgSrc}
+                        alt={fileName}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-muted/60 p-2 text-center">
+                        <FileImage className="h-6 w-6 text-muted-foreground mb-1" />
+                        <span className="text-[10px] text-muted-foreground truncate max-w-full">{fileName}</span>
+                      </div>
+                    )}
+
+                    {/* Number Badge */}
+                    <div className="absolute top-2 left-2 z-10">
+                      <span className="bg-black/75 text-white text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-xs">
+                        #{i + 1}
+                      </span>
+                    </div>
+
+                    {/* Delete Button on Top Right (Always easily clickable) */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemove(i);
+                      }}
+                      className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-rose-600/90 hover:bg-rose-600 text-white flex items-center justify-center shadow-md hover:scale-110 transition-all cursor-pointer"
+                      title="Remove photo"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+
+                    {/* Overlay with file name at the bottom */}
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-4 pointer-events-none">
+                      <p className="text-[11px] font-medium text-white truncate drop-shadow-sm">
+                        {fileName}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -817,7 +888,7 @@ export function OwnerSetupPage() {
         const assignedId = data.ownerId || "26090001";
         setGeneratedOwnerId(String(assignedId));
         localStorage.setItem("ownerId", String(assignedId));
-        localStorage.setItem("userName", formData.personal.fullName);
+        localStorage.setItem("ownerUserName", formData.personal.fullName);
         localStorage.removeItem(getStorageKey());
         setStatus("submitted");
         try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { }
@@ -1762,7 +1833,8 @@ export function OwnerSetupPage() {
                   multiple
                   files={formData.images?.gallery || []}
                   onUpload={(f) => {
-                    updateSection('images', 'gallery', [...(formData.images?.gallery || []), f]);
+                    const toAdd = Array.isArray(f) ? f : [f];
+                    updateSection('images', 'gallery', [...(formData.images?.gallery || []), ...toAdd]);
                   }}
                   onRemove={(idx) => {
                     const newArr = [...(formData.images?.gallery || [])];

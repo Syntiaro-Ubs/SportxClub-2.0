@@ -161,6 +161,16 @@ export function TurfOnboardingView() {
         location: fullLocation,
         sport_type: sportType,
         price_per_hour: price,
+        weekend_price: req.pricing?.weekendPrice ? Number(req.pricing.weekendPrice) : Math.round(price * 1.2),
+        opening_time: req.pricing?.openingTime || req.pricing?.openTime || "06:00 AM",
+        closing_time: req.pricing?.closingTime || req.pricing?.closeTime || "11:00 PM",
+        slot_duration: parseInt(req.pricing?.slotDuration) || 60,
+        peak_start_time: req.pricing?.peakStartTime || "05:00 PM",
+        peak_end_time: req.pricing?.peakEndTime || "11:00 PM",
+        peak_price: req.pricing?.peakPrice ? Number(req.pricing.peakPrice) : null,
+        operational_days: Array.isArray(req.pricing?.operationalDays)
+          ? JSON.stringify(req.pricing.operationalDays)
+          : (req.pricing?.operationalDays || "Mon,Tue,Wed,Thu,Fri,Sat,Sun"),
         rating: "5.0",
         reviews: 0,
         status: "Active",
@@ -170,7 +180,8 @@ export function TurfOnboardingView() {
         image_url: coverImage,
         gallery: JSON.stringify(finalGallery),
         description: req.turf?.description || req.business?.description || "High quality sports turf with FIFA certified artificial grass, floodlights, and professional amenities.",
-        amenities: JSON.stringify(req.location?.facilities || req.turf?.facilities || ["Parking", "Floodlights", "Washroom", "Drinking Water"]),
+        amenities: JSON.stringify(req.location?.facilities || req.turf?.facilities || req.facilities || ["Parking Space", "Clean Washrooms", "Drinking Water", "LED Floodlights"]),
+        rules: req.turf?.rules || req.rules || "Please wear appropriate footwear. Respect all turf property.",
       };
 
       await turfService.create("admin", mappedData);

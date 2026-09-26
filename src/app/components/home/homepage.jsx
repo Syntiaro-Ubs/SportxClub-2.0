@@ -344,11 +344,25 @@ export function Navbar() {
   const { currentUser } = useAuth();
 
   useEffect(() => {
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    const name = localStorage.getItem("userName") || "User";
-    setIsLoggedIn(loggedIn);
-    setUserName(name);
-  }, []);
+    const active = currentUser;
+    if (active && (active.fullName || active.name || active.email)) {
+      setIsLoggedIn(true);
+      setUserName(active.fullName ? active.fullName.split(" ")[0] : (active.name || "User"));
+    } else {
+      try {
+        const pUser = JSON.parse(sessionStorage.getItem("playerUser") || localStorage.getItem("playerUser") || "null");
+        if (pUser && (pUser.fullName || pUser.name || pUser.email)) {
+          setIsLoggedIn(true);
+          setUserName(pUser.fullName ? pUser.fullName.split(" ")[0] : (pUser.name || "User"));
+          return;
+        }
+      } catch (e) {}
+      const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+      const name = localStorage.getItem("userName") || "User";
+      setIsLoggedIn(loggedIn);
+      setUserName(name);
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const handleCityChange = (e) => {
