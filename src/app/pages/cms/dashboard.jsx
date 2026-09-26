@@ -348,6 +348,7 @@ export function CMSDashboard() {
 
   // Modal States
   const [isSportModalOpen, setIsSportModalOpen] = useState(false);
+  const [isUploadingSportImage, setIsUploadingSportImage] = useState(false);
   const [editingSport, setEditingSport] = useState(null);
   const [sportForm, setSportForm] = useState({
     name: "",
@@ -358,6 +359,7 @@ export function CMSDashboard() {
   });
 
   const [isFacilityModalOpen, setIsFacilityModalOpen] = useState(false);
+  const [isUploadingFacilityImage, setIsUploadingFacilityImage] = useState(false);
   const [editingFacility, setEditingFacility] = useState(null);
   const [facilityForm, setFacilityForm] = useState({
     title: "",
@@ -764,6 +766,60 @@ export function CMSDashboard() {
   };
 
   // Popular Sports Cards Handlers
+  const handleSportImageFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (JPG, PNG, WEBP, etc.)");
+      return;
+    }
+
+    setIsUploadingSportImage(true);
+    const toastId = toast.loading("Optimizing sport image...");
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.85 });
+      if (compressed && compressed.data) {
+        setSportForm((prev) => ({ ...prev, image_url: compressed.data }));
+        toast.dismiss(toastId);
+        toast.success("Sport image uploaded & ready!");
+      }
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.warn("Sport image upload error:", err);
+      toast.error("Failed processing image");
+    } finally {
+      setIsUploadingSportImage(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleFacilityImageFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select a valid image file (JPG, PNG, WEBP, etc.)");
+      return;
+    }
+
+    setIsUploadingFacilityImage(true);
+    const toastId = toast.loading("Optimizing equipment image...");
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.85 });
+      if (compressed && compressed.data) {
+        setFacilityForm((prev) => ({ ...prev, image_url: compressed.data }));
+        toast.dismiss(toastId);
+        toast.success("Equipment image uploaded & ready!");
+      }
+    } catch (err) {
+      toast.dismiss(toastId);
+      console.warn("Equipment image upload error:", err);
+      toast.error("Failed processing image");
+    } finally {
+      setIsUploadingFacilityImage(false);
+      e.target.value = "";
+    }
+  };
+
   const handleSaveSportCard = async (e) => {
     e.preventDefault();
     try {
@@ -772,28 +828,36 @@ export function CMSDashboard() {
         return;
       }
       if (editingSport) {
-        await cmsService.updateSport(editingSport.id, sportForm);
+        const updated = await cmsService.updateSport(editingSport.id, sportForm);
+        setSports((prev) => prev.map((s) => (s.id === editingSport.id ? { ...s, ...sportForm, ...(updated || {}) } : s)));
         toast.success("Sport Card updated!");
       } else {
-        await cmsService.createSport(sportForm);
+        const created = await cmsService.createSport(sportForm);
+        if (created) {
+          setSports((prev) => [...prev, created]);
+        }
         toast.success("New Sport Card added!");
       }
       setIsSportModalOpen(false);
       setEditingSport(null);
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error(err.message || "Failed saving sport card");
+      await loadDashboardData();
     }
   };
 
   const handleDeleteSportCard = async (id) => {
     if (!window.confirm("Delete this sport card from Popular Sports?")) return;
+    // Optimistically remove card immediately from UI
+    setSports((prev) => prev.filter((s) => s.id !== id));
     try {
       await cmsService.deleteSport(id);
       toast.success("Sport Card deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting sport card");
+      await loadDashboardData();
     }
   };
 
@@ -805,24 +869,33 @@ export function CMSDashboard() {
         toast.error("Title and Image URL are required");
         return;
       }
-      await cmsService.createFacility(facilityForm);
+      const saved = await cmsService.createFacility(facilityForm);
+      if (editingFacility) {
+        setFacilities((prev) => prev.map((f) => (f.id === editingFacility.id ? { ...f, ...facilityForm, ...(saved || {}) } : f)));
+      } else if (saved) {
+        setFacilities((prev) => [...prev, saved]);
+      }
       toast.success(editingFacility ? "Facility Card updated!" : "New Equipment/Facility Card added!");
       setIsFacilityModalOpen(false);
       setEditingFacility(null);
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error(err.message || "Failed saving facility card");
+      await loadDashboardData();
     }
   };
 
   const handleDeleteFacilityCard = async (id) => {
     if (!window.confirm("Delete this facility/equipment card?")) return;
+    // Optimistically remove card immediately from UI
+    setFacilities((prev) => prev.filter((f) => f.id !== id));
     try {
       await cmsService.deleteFacility(id);
       toast.success("Facility Card deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting facility card");
+      await loadDashboardData();
     }
   };
 
@@ -977,12 +1050,14 @@ export function CMSDashboard() {
 
   const handleDeleteBanner = async (id) => {
     if (!window.confirm("Delete banner slide?")) return;
+    setBanners((prev) => prev.filter((b) => b.id !== id));
     try {
       await cmsService.deleteBanner(id);
       toast.success("Banner slide deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting banner");
+      await loadDashboardData();
     }
   };
 
@@ -993,20 +1068,23 @@ export function CMSDashboard() {
       await cmsService.createFaq(faqForm);
       toast.success("FAQ Card added!");
       setIsFaqModalOpen(false);
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error(err.message || "Failed adding FAQ");
+      await loadDashboardData();
     }
   };
 
   const handleDeleteFaq = async (id) => {
     if (!window.confirm("Delete FAQ?")) return;
+    setFaqs((prev) => prev.filter((f) => f.id !== id));
     try {
       await cmsService.deleteFaq(id);
       toast.success("FAQ deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting FAQ");
+      await loadDashboardData();
     }
   };
 
@@ -1027,9 +1105,10 @@ export function CMSDashboard() {
       }
       setIsOfferModalOpen(false);
       setEditingOffer(null);
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error(err.message || "Failed saving offer");
+      await loadDashboardData();
     }
   };
 
@@ -1038,9 +1117,10 @@ export function CMSDashboard() {
     try {
       await cmsService.deleteOffer(id);
       toast.success("Offer deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting offer");
+      await loadDashboardData();
     }
   };
 
@@ -1061,9 +1141,10 @@ export function CMSDashboard() {
       }
       setIsGalleryModalOpen(false);
       setEditingGallery(null);
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error(err.message || "Failed saving gallery item");
+      await loadDashboardData();
     }
   };
 
@@ -1092,9 +1173,10 @@ export function CMSDashboard() {
     try {
       await cmsService.deleteGallery(id);
       toast.success("Gallery item deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting gallery item");
+      await loadDashboardData();
     }
   };
 
@@ -1115,9 +1197,10 @@ export function CMSDashboard() {
       }
       setIsWhyModalOpen(false);
       setEditingWhy(null);
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error(err.message || "Failed saving feature card");
+      await loadDashboardData();
     }
   };
 
@@ -1126,9 +1209,10 @@ export function CMSDashboard() {
     try {
       await cmsService.deleteWhyCard(id);
       toast.success("Feature card deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting feature card");
+      await loadDashboardData();
     }
   };
 
@@ -1149,20 +1233,23 @@ export function CMSDashboard() {
       }
       setIsEventModalOpen(false);
       setEditingEvent(null);
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error(err.message || "Failed saving tournament event");
+      await loadDashboardData();
     }
   };
 
   const handleDeleteEventCard = async (id) => {
     if (!window.confirm("Delete this tournament event card?")) return;
+    setEvents((prev) => prev.filter((e) => e.id !== id));
     try {
       await cmsService.deleteEvent(id);
       toast.success("Tournament event deleted!");
-      loadDashboardData();
+      await loadDashboardData();
     } catch (err) {
       toast.error("Failed deleting tournament event");
+      await loadDashboardData();
     }
   };
 
@@ -4061,7 +4148,7 @@ export function CMSDashboard() {
 
       {/* 1. Sport Card Add / Edit Modal */}
       <Dialog open={isSportModalOpen} onOpenChange={setIsSportModalOpen}>
-        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-[#e2e8f0] text-[#0f172a] rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="font-extrabold">{editingSport ? "Edit Sport Card" : "Add Card to Popular Sports"}</DialogTitle>
           </DialogHeader>
@@ -4084,8 +4171,70 @@ export function CMSDashboard() {
                 className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Image URL</Label>
+
+            {/* Sport Card Image Upload & URL */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-[#334155]">Sport Card Image</Label>
+                {sportForm.image_url && (
+                  <button
+                    type="button"
+                    onClick={() => setSportForm((prev) => ({ ...prev, image_url: "" }))}
+                    className="text-[11px] font-semibold text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" /> Clear Image
+                  </button>
+                )}
+              </div>
+
+              {/* Upload from Device Button & Preview */}
+              <div className="flex flex-col sm:flex-row gap-2.5 items-start sm:items-center">
+                <input
+                  id="sport-card-file-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleSportImageFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById("sport-card-file-input")?.click()}
+                  disabled={isUploadingSportImage}
+                  className="border-dashed border-2 border-emerald-500/60 bg-emerald-50/60 hover:bg-emerald-100/70 hover:border-emerald-600 text-emerald-800 font-bold text-xs h-9 px-3.5 rounded-xl flex items-center gap-2 cursor-pointer w-full sm:w-auto transition-all"
+                >
+                  {isUploadingSportImage ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                      Uploading & Optimizing...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5 text-emerald-600" />
+                      Upload Image from Device
+                    </>
+                  )}
+                </Button>
+
+                {sportForm.image_url ? (
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1 pr-2.5 max-w-full">
+                    <img
+                      src={sportForm.image_url}
+                      alt="Preview"
+                      className="w-8 h-8 object-cover rounded border border-slate-200"
+                    />
+                    <span className="text-[11px] font-medium text-emerald-700 truncate max-w-[150px]">
+                      ✓ Image Ready
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-slate-400">
+                    (or paste link below)
+                  </span>
+                )}
+              </div>
+
+              {/* URL Input */}
               <Input
                 value={sportForm.image_url}
                 onChange={(e) => setSportForm({ ...sportForm, image_url: e.target.value })}
@@ -4093,6 +4242,7 @@ export function CMSDashboard() {
                 className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
               />
             </div>
+
             <div className="space-y-1">
               <Label className="text-xs font-bold text-[#334155]">Venue Count / Subtext</Label>
               <Input
@@ -4113,7 +4263,7 @@ export function CMSDashboard() {
 
       {/* 2. Facility & Equipment Card Add / Edit Modal */}
       <Dialog open={isFacilityModalOpen} onOpenChange={setIsFacilityModalOpen}>
-        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl">
+        <DialogContent className="bg-white border-emerald-500/30 text-[#0f172a] rounded-2xl max-w-md">
           <DialogHeader>
             <DialogTitle className="font-extrabold">{editingFacility ? "Edit Equipment Card" : "Add Card to Sport Facilities & Equipment"}</DialogTitle>
           </DialogHeader>
@@ -4146,8 +4296,70 @@ export function CMSDashboard() {
                 className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
               />
             </div>
-            <div className="space-y-1">
-              <Label className="text-xs font-bold text-[#334155]">Image URL</Label>
+
+            {/* Equipment Card Image Upload & URL */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold text-[#334155]">Equipment / Facility Image</Label>
+                {facilityForm.image_url && (
+                  <button
+                    type="button"
+                    onClick={() => setFacilityForm((prev) => ({ ...prev, image_url: "" }))}
+                    className="text-[11px] font-semibold text-red-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" /> Clear Image
+                  </button>
+                )}
+              </div>
+
+              {/* Upload from Device Button & Preview */}
+              <div className="flex flex-col sm:flex-row gap-2.5 items-start sm:items-center">
+                <input
+                  id="facility-card-file-input"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFacilityImageFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById("facility-card-file-input")?.click()}
+                  disabled={isUploadingFacilityImage}
+                  className="border-dashed border-2 border-emerald-500/60 bg-emerald-50/60 hover:bg-emerald-100/70 hover:border-emerald-600 text-emerald-800 font-bold text-xs h-9 px-3.5 rounded-xl flex items-center gap-2 cursor-pointer w-full sm:w-auto transition-all"
+                >
+                  {isUploadingFacilityImage ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                      Uploading & Optimizing...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5 text-emerald-600" />
+                      Upload Image from Device
+                    </>
+                  )}
+                </Button>
+
+                {facilityForm.image_url ? (
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-1 pr-2.5 max-w-full">
+                    <img
+                      src={facilityForm.image_url}
+                      alt="Preview"
+                      className="w-8 h-8 object-cover rounded border border-slate-200"
+                    />
+                    <span className="text-[11px] font-medium text-emerald-700 truncate max-w-[150px]">
+                      ✓ Image Ready
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-slate-400">
+                    (or paste link below)
+                  </span>
+                )}
+              </div>
+
+              {/* URL Input */}
               <Input
                 value={facilityForm.image_url}
                 onChange={(e) => setFacilityForm({ ...facilityForm, image_url: e.target.value })}
@@ -4155,6 +4367,7 @@ export function CMSDashboard() {
                 className="bg-[#f8fafc] border-[#cbd5e1] text-xs text-[#0f172a]"
               />
             </div>
+
             <DialogFooter>
               <Button type="submit" className="border border-slate-900 bg-white hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 text-[#0f172a] font-bold text-xs h-9 rounded-xl px-4 cursor-pointer transition-all">
                 Save Facility Card

@@ -1588,13 +1588,15 @@ export function SportsCategories() {
         />
 
         <div className="relative mt-0.5">
-          <button
-            onClick={scrollLeft}
-            aria-label="Scroll left"
-            className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
-          >
-            <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
-          </button>
+          {dynamicSports.length > 6 && (
+            <button
+              onClick={scrollLeft}
+              aria-label="Scroll left"
+              className="hidden md:flex absolute -left-7 sm:-left-9 lg:-left-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
+            >
+              <ChevronLeft120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
+            </button>
+          )}
 
           <div
             ref={scrollRef}
@@ -1605,13 +1607,15 @@ export function SportsCategories() {
             ))}
           </div>
 
-          <button
-            onClick={scrollRight}
-            aria-label="Scroll right"
-            className="hidden md:flex absolute -right-7 sm:-right-9 lg:-right-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
-          >
-            <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
-          </button>
+          {dynamicSports.length > 6 && (
+            <button
+              onClick={scrollRight}
+              aria-label="Scroll right"
+              className="hidden md:flex absolute -right-7 sm:-right-9 lg:-right-11 top-[calc(50%-12px)] -translate-y-1/2 z-30 h-10 w-10 md:h-12 md:w-12 items-center justify-center bg-transparent text-slate-900 dark:text-white hover:scale-125 active:scale-95 transition-all opacity-100 cursor-pointer shadow-none"
+            >
+              <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
+            </button>
+          )}
         </div>
       </div>
     </section>
