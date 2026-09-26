@@ -424,33 +424,42 @@ function extractImageSrc(val) {
         .replace(/\s+/g, " ")
         .trim();
 
-    const vNorm = normalize(venueLoc);
-    const fNorm = normalize(filterCity);
+    let vNorm = normalize(venueLoc);
+    let fNorm = normalize(filterCity);
 
     if (!vNorm) return false;
-    if (vNorm === fNorm || vNorm.includes(fNorm) || fNorm.includes(vNorm)) return true;
-
-    // Tokenized multi-part matching (e.g. "Koregaon Park, Pune" -> ["koregaon park", "pune"])
-    const filterTokens = String(filterCity)
-      .split(/[,•;/|&-]+/)
-      .map((part) => normalize(part))
-      .filter((part) => part.length >= 2);
-
-    for (const token of filterTokens) {
-      if (token && vNorm.includes(token)) {
-        return true;
-      }
+    if (fNorm.startsWith("all ")) {
+      fNorm = fNorm.replace(/^all\s+/, "").trim();
+      if (!fNorm || fNorm === "cities" || fNorm === "areas") return true;
     }
 
-    const venueTokens = String(venueLoc)
-      .split(/[,•;/|&-]+/)
-      .map((part) => normalize(part))
-      .filter((part) => part.length >= 2);
+    if (vNorm === fNorm) return true;
 
-    for (const vToken of venueTokens) {
-      if (vToken && fNorm.includes(vToken)) {
-        return true;
-      }
+    // Split both by commas/separators to extract locality and city components
+    const filterParts = String(filterCity)
+      .split(/[,•;/|]+/)
+      .map((p) => normalize(p))
+      .filter((p) => p.length > 0 && p !== "all" && p !== "all areas" && p !== "all cities");
+
+    const venueParts = String(venueLoc)
+      .split(/[,•;/|]+/)
+      .map((p) => normalize(p))
+      .filter((p) => p.length > 0);
+
+    if (filterParts.length === 0) return true;
+
+    // If filter specifies a specific locality (e.g. "Koregaon Park" in "Koregaon Park, Pune")
+    if (filterParts.length > 1) {
+      const filterPrimary = filterParts[0].replace(/^all\s+/, "").trim();
+      const matchesPrimary = vNorm.includes(filterPrimary) || venueParts.some((vp) => vp.includes(filterPrimary) || filterPrimary.includes(vp));
+      return matchesPrimary;
+    }
+
+    // If filter only has 1 part (e.g. "Pune" or "Koregaon Park"):
+    const singleFilter = filterParts[0].replace(/^all\s+/, "").trim();
+    if (vNorm.includes(singleFilter) || singleFilter.includes(vNorm)) return true;
+    for (const vPart of venueParts) {
+      if (vPart.includes(singleFilter) || singleFilter.includes(vPart)) return true;
     }
 
     return false;
@@ -474,24 +483,8 @@ function extractImageSrc(val) {
     return sportMatchedVenues.filter((venue) => isCityMatch(venue.location, selectedLocation));
   }, [sportMatchedVenues, selectedLocation]);
 
-  // Check if we should fallback to all cities for this sport because current city has 0 venues
-  const isFallbackToAllCities = useMemo(() => {
-    if (selectedLocation === "All Cities" || selectedLocation === "All" || selectedLocation === "All Areas") {
-      return false;
-    }
-    return strictMatchedVenues.length === 0 && sportMatchedVenues.length > 0;
-  }, [strictMatchedVenues.length, sportMatchedVenues.length, selectedLocation]);
-
-  // Final venues to display
-  const venuesToDisplay = useMemo(() => {
-    if (strictMatchedVenues.length > 0) {
-      return strictMatchedVenues;
-    }
-    if (isFallbackToAllCities) {
-      return sportMatchedVenues;
-    }
-    return [];
-  }, [strictMatchedVenues, isFallbackToAllCities, sportMatchedVenues]);
+  // Final venues to display strictly matching selected location
+  const venuesToDisplay = strictMatchedVenues;
 
   // Apply Price / Rating sort
   const sortedVenues = useMemo(() => {
@@ -1040,34 +1033,6 @@ function extractImageSrc(val) {
               </Link>
             </div>
 
-            {/* Smart Fallback Notification Banner */}
-            {isFallbackToAllCities && (
-              <motion.div
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-wrap items-center justify-between gap-2 p-3 sm:px-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs sm:text-sm font-medium mb-3"
-              >
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span>
-                    No {selectedSport !== "All Sports" ? selectedSport : ""} venues found in{" "}
-                    <span className="font-bold underline">{selectedLocation}</span>. Showing all {sportMatchedVenues.length} available {selectedSport !== "All Sports" ? selectedSport : ""} {sportMatchedVenues.length === 1 ? "venue" : "venues"} across other locations.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedLocation("All Cities");
-                    localStorage.setItem("preferred-city", "All Cities");
-                    window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
-                  }}
-                  className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer bg-white/80 dark:bg-slate-900/80 px-2.5 py-1 rounded-lg border border-emerald-500/30 shrink-0 shadow-2xs"
-                >
-                  Set to All Cities
-                </button>
-              </motion.div>
-            )}
-
             {/* Recommended Venues Slider */}
             <div className="relative group/section">
               {premiumVenues.length > 2 && (
@@ -1087,8 +1052,10 @@ function extractImageSrc(val) {
                 {premiumVenues.length > 0 ? (
                   premiumVenues.map(renderVenueCard)
                 ) : (
-                  <div className="w-full py-16 flex flex-col items-center justify-center text-center">
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No recommended venues found</h3>
+                  <div className="w-full py-8 flex flex-col items-center justify-center text-center">
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                      No recommended {selectedSport !== "All Sports" ? selectedSport : ""} turfs found in {selectedLocation}.
+                    </p>
                   </div>
                 )}
               </div>
@@ -1118,13 +1085,13 @@ function extractImageSrc(val) {
               {otherVenues.length > 0 ? (
                 otherVenues.map(renderHorizontalVenueCard)
               ) : (
-                <div className="w-full py-16 flex flex-col items-center justify-center text-center">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                    <MapPin className="w-8 h-8 text-slate-400 dark:text-slate-500" />
+                <div className="w-full py-16 flex flex-col items-center justify-center text-center bg-white/50 dark:bg-slate-900/30 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 p-8 my-2">
+                  <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 flex items-center justify-center mb-4">
+                    <MapPin className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">No venues found</h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[260px]">
-                    We couldn't find any {selectedSport !== "All Sports" ? selectedSport : "sports"} venues in {selectedLocation}. Try adjusting your filters.
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No Turfs Available</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm max-w-[340px] leading-relaxed">
+                    We couldn't find any {selectedSport !== "All Sports" ? selectedSport : ""} turfs in <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedLocation}</span>. Try choosing another area or clearing your filters.
                   </p>
                   <Button
                     onClick={() => {
@@ -1134,8 +1101,9 @@ function extractImageSrc(val) {
                       window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
                     }}
                     variant="outline"
-                    className="mt-6 border-slate-200 dark:border-slate-800 dark:text-white bg-transparent"
+                    className="mt-6 border-slate-200 dark:border-slate-800 dark:text-white bg-white dark:bg-slate-900 hover:border-emerald-500 hover:text-emerald-600 transition-all font-semibold rounded-xl shadow-xs cursor-pointer"
                   >
+                    <RotateCcw className="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                     Clear Filters
                   </Button>
                 </div>

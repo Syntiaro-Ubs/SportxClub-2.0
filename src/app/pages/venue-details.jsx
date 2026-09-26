@@ -1957,29 +1957,29 @@ export function VenueDetails() {
                       <Select value={selectedSport} onValueChange={setSelectedSport}>
                         <SelectTrigger
                           className={cn(
-                            "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-3",
+                            "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-2.5",
                             isDark
                               ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
                               : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
                           )}
                         >
                           <SelectValue placeholder="Select Sport">
-                            <span className="truncate flex items-center gap-1.5 font-bold">
-                              <span className="shrink-0">{getSportEmoji(selectedSport)}</span>
+                            <span className="flex items-center gap-1.5 font-bold truncate">
+                              <span className="shrink-0 text-sm">{getSportEmoji(selectedSport)}</span>
                               <span className="truncate">{selectedSport}</span>
                             </span>
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 max-h-60 overflow-y-auto z-50 p-1 shadow-2xl bg-white dark:bg-slate-900">
+                        <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 max-h-60 overflow-y-auto z-50 p-1 shadow-2xl bg-white dark:bg-slate-900 min-w-[155px] w-auto">
                           {availableSports.map((sportItem) => (
                             <SelectItem
                               key={sportItem.name}
                               value={sportItem.name}
-                              className="text-xs sm:text-sm font-semibold py-2 px-2.5 rounded-lg cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/40 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
+                              className="text-xs sm:text-sm font-semibold py-2 pl-3 pr-8 rounded-lg cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/40 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
                             >
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 whitespace-nowrap">
                                 <span className="text-base shrink-0">{sportItem.icon}</span>
-                                <span className="truncate">{sportItem.name}</span>
+                                <span>{sportItem.name}</span>
                               </div>
                             </SelectItem>
                           ))}

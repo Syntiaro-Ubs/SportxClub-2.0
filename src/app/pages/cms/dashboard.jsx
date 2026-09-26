@@ -771,8 +771,13 @@ export function CMSDashboard() {
         toast.error("Sport name is required");
         return;
       }
-      await cmsService.createSport(sportForm);
-      toast.success(editingSport ? "Sport Card updated!" : "New Sport Card added!");
+      if (editingSport) {
+        await cmsService.updateSport(editingSport.id, sportForm);
+        toast.success("Sport Card updated!");
+      } else {
+        await cmsService.createSport(sportForm);
+        toast.success("New Sport Card added!");
+      }
       setIsSportModalOpen(false);
       setEditingSport(null);
       loadDashboardData();
@@ -1585,7 +1590,7 @@ export function CMSDashboard() {
   }, [currentCmsUser, userPermissions]);
 
   return (
-    <div className="min-h-screen bg-white text-[#0f172a] flex font-sans antialiased w-full max-w-full overflow-x-hidden">
+    <div className="h-screen max-h-screen bg-white text-[#0f172a] flex font-sans antialiased w-full max-w-full overflow-hidden">
       {/* Mobile overlay */}
       {!isSidebarCollapsed && (
         <div 
@@ -1596,8 +1601,8 @@ export function CMSDashboard() {
       
       {/* 1. Left Fixed Sidebar */}
       <aside
-        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-50 fixed md:sticky top-0 h-screen ${isSidebarCollapsed ? "-translate-x-full md:translate-x-0 md:w-20" : "translate-x-0 w-52 md:w-56"
-          }`}
+        className={`bg-white border-r border-[#e2e8f0] flex flex-col transition-all duration-300 z-50 h-screen shrink-0 ${isSidebarCollapsed ? "-translate-x-full md:translate-x-0 md:w-20" : "translate-x-0 w-52 md:w-56"
+          } fixed md:relative top-0 left-0`}
       >
         {/* Brand Header */}
         <div className="h-16 px-2 border-b border-[#e2e8f0] flex items-center justify-center overflow-hidden shrink-0">
@@ -1672,9 +1677,9 @@ export function CMSDashboard() {
       </aside>
 
       {/* 2. Main Workspace */}
-      <div className="flex-1 flex flex-col min-w-0 w-full max-w-full overflow-x-hidden">
+      <div className="flex-1 flex flex-col h-screen max-h-screen min-w-0 w-full overflow-hidden">
         {/* Top Navbar Header */}
-        <header className="h-16 bg-white border-b border-[#e2e8f0] px-3 sm:px-4 md:px-8 flex items-center justify-between sticky top-0 z-20 shadow-xs w-full max-w-full min-w-0">
+        <header className="h-16 bg-white border-b border-[#e2e8f0] px-3 sm:px-4 md:px-8 flex items-center justify-between shrink-0 z-20 shadow-xs w-full min-w-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarCollapsed(false)}

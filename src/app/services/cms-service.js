@@ -132,10 +132,14 @@ export const cmsService = {
   },
 
   // Sports
-  getSports: async () => {
-    const json = await fastCache.fetchWithSWR(`${API_BASE}/sports`, {
-      headers: getAuthHeaders(),
-    });
+  getSports: async (onUpdate = null) => {
+    const json = await fastCache.fetchWithSWR(
+      `${API_BASE}/sports`,
+      {
+        headers: getAuthHeaders(),
+      },
+      onUpdate
+    );
     return json?.data || [];
   },
 
@@ -148,6 +152,18 @@ export const cmsService = {
     });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(data.error || "Failed to create sport");
+    return data.data;
+  },
+
+  updateSport: async (id, sportData) => {
+    fastCache.invalidateAll();
+    const res = await fetch(`${API_BASE}/sports/${id}`, {
+      method: "PUT",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(sportData),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || "Failed to update sport");
     return data.data;
   },
 
@@ -194,10 +210,10 @@ export const cmsService = {
   },
 
   // Facilities & Equipment
-  getFacilities: async () => {
+  getFacilities: async (onUpdate) => {
     const json = await fastCache.fetchWithSWR(`${API_BASE}/facilities`, {
       headers: getAuthHeaders(),
-    });
+    }, onUpdate);
     return json?.data || [];
   },
 

@@ -94,51 +94,6 @@ function ChevronRight120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 d
   );
 }
 
-const sports = [
-  {
-    name: "Football",
-    count: "1,248 venues",
-    image: asset("/venues/new_football_turf_2.png"),
-  },
-  {
-    name: "Cricket",
-    count: "892 venues",
-    image: asset("/venues/new_cricket_turf_2.png"),
-  },
-  {
-    name: "Badminton",
-    count: "734 venues",
-    image: asset("/venues/new_badminton_turf.png"),
-  },
-  {
-    name: "Basketball",
-    count: "641 venues",
-    image: asset("/sports/cat-basketball.webp"),
-  },
-  {
-    name: "Swimming",
-    count: "418 venues",
-    image: asset("/sports/cat-swimming.webp"),
-  },
-  {
-    name: "Tennis",
-    count: "518 venues",
-    image: asset("/venues/new_tennis_turf.png"),
-  },
-  {
-    name: "Padel",
-    count: "102 venues",
-    image: asset("/sports/cat-padel.webp"),
-  },
-];
-
-const moreSports = [
-  { label: "Padel", image: asset("/sports/cat-padel.webp") },
-  { label: "Box MMA", image: asset("/sports/cat-boxmma.webp") },
-  { label: "More", image: asset("/sports/cat-swimming.webp") },
-  { label: "Badminton", image: asset("/sports/cat-badminton.webp") },
-];
-
 const offers = [
   {
     title: "Early bird cashback",
@@ -1268,7 +1223,7 @@ export function RecommendedVenuesSection({ asSlider = false }) {
   );
 }
 
-function SportCard({ name, count, image, index }) {
+function SportCard({ id, name, count, image, badge, icon, index }) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
 
@@ -1299,105 +1254,30 @@ function SportCard({ name, count, image, index }) {
             )}
           />
 
+          {badge && (
+            <div className="absolute top-3 left-3 z-20">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-black/60 text-white backdrop-blur-md border border-white/20 shadow-xs">
+                {icon && <span>{icon}</span>}
+                <span>{badge}</span>
+              </span>
+            </div>
+          )}
+
           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
-          <div className="absolute inset-x-0 bottom-0 z-20 p-6 sm:p-7">
+          <div className="absolute inset-x-0 bottom-0 z-20 p-5 sm:p-6">
             <p
-              className="text-lg sm:text-xl leading-tight !text-white drop-shadow-md font-medium transition-colors duration-300"
+              className="text-lg sm:text-xl leading-tight !text-white drop-shadow-md font-bold transition-colors duration-300"
             >
               {name}
             </p>
-            <div className="flex items-center justify-between gap-3">
+            {count && (
               <p
-                className="text-sm leading-tight !text-white/80 drop-shadow-sm transition-colors duration-300"
+                className="text-xs sm:text-sm mt-1 leading-snug !text-white/80 drop-shadow-sm transition-colors duration-300 line-clamp-2"
               >
                 {count}
               </p>
-            </div>
-          </div>
-        </div>
-      </Link>
-    </motion.div>
-  );
-}
-
-function MoreSportsCard() {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme !== "light";
-  const { currentUser } = useAuth();
-  const navigate = useNavigate();
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.45, delay: 0.35 }}
-      whileHover={{ y: -6, scale: 1.015 }}
-      className="group shrink-0 snap-center w-[45vw] sm:w-[calc(33.33%-10.66px)] md:w-[calc(25%-12px)] lg:w-[calc(20%-12.8px)]"
-    >
-      <Link to="/venues" className="block h-full">
-        <div
-          className={cn(
-            "relative flex h-full min-h-[280px] overflow-hidden rounded-lg border transition-all duration-300 ease-out",
-            isDark
-              ? "border-white/[0.08] bg-[#101216]"
-              : "border-slate-300 bg-white shadow-sm hover:shadow-2xl hover:border-emerald-500/20",
-          )}
-        >
-          <div className="absolute inset-0 grid grid-cols-2 gap-[1px] opacity-80 transition duration-500 ease-out group-hover:scale-[1.06]">
-            {moreSports.map((sport) => (
-              <ImageWithFallback
-                key={sport.label}
-                src={sport.image}
-                alt={sport.label}
-                className={cn(
-                  "h-full w-full object-cover",
-                  !isDark &&
-                  "brightness-[1.05] contrast-[1.08] saturate-[1.08]",
-                )}
-              />
-            ))}
-          </div>
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
-          <div className="absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-black/60 to-transparent z-10" />
-
-          <div className="relative z-20 flex flex-1 flex-col justify-between p-6 sm:p-7">
-            <div className="flex items-center justify-between">
-              <Badge
-                className="rounded-full border border-white/[0.08] bg-white/[0.06] !text-white px-3 py-1 text-[0.7rem] uppercase tracking-[0.2em] transition-all duration-300"
-              >
-                More
-              </Badge>
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#050505]/70 text-emerald-600 transition-all duration-300 ease-out"
-              >
-                <ArrowRight className="h-4 w-4" />
-              </div>
-            </div>
-
-            <div className="mt-5 max-w-[18rem]">
-              <p
-                className="text-xl !text-white drop-shadow-md font-medium transition-colors duration-300"
-              >
-                More courts, more formats.
-              </p>
-              <p
-                className="mt-3 text-sm leading-relaxed !text-white/80 drop-shadow-sm transition-colors duration-300"
-              >
-                Padel, Box MMA, volleyball, and more formats stay one tap away.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {["Volleyball", "Padel", "Box MMA"].map((label) => (
-                  <span
-                    key={label}
-                    className="rounded-full border border-white/[0.08] bg-white/[0.05] !text-white px-3 py-1 text-xs transition-all duration-300"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </Link>
@@ -1640,52 +1520,48 @@ export function SportsBackgroundAnimation() {
 export function SportsCategories() {
   const scrollRef = useRef(null);
   const [dynamicSports, setDynamicSports] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchSports() {
       try {
-        const [cmsData, turfsData] = await Promise.all([
-          cmsService.getSports().catch(() => []),
-          adminApi.getAll("turfs").catch(() => []),
-        ]);
+        const handleData = (dataList) => {
+          if (!Array.isArray(dataList)) return;
+          const mapped = dataList
+            .filter((s) => s.is_active !== 0 && s.is_active !== false)
+            .map((s) => ({
+              id: s.id,
+              name: s.name,
+              count: s.description || "Venues available",
+              image: s.image_url || asset("/venues/new_football_turf_2.png"),
+              icon: s.icon,
+              badge: s.badge,
+            }));
+          if (isMounted) {
+            setDynamicSports(mapped);
+          }
+        };
 
-        let mapped = [];
-        if (cmsData && cmsData.length > 0) {
-          mapped = cmsData.map((s) => ({
-            name: s.name,
-            count: s.description || "Venues available",
-            image: s.image_url || asset("/venues/new_football_turf_2.png"),
-            icon: s.icon,
-          }));
-        } else {
-          mapped = [...sports];
-        }
+        const cmsData = await cmsService.getSports((fresh) => {
+          handleData(fresh?.data || fresh);
+        });
 
-        // Merge any new sports added in MySQL turfs
-        if (turfsData && turfsData.length > 0) {
-          const names = new Set(mapped.map((s) => s.name.toLowerCase()));
-          turfsData.forEach((t) => {
-            const sportName = t.sport_type || t.sportType;
-            if (sportName && !names.has(sportName.toLowerCase())) {
-              names.add(sportName.toLowerCase());
-              mapped.push({
-                name: sportName,
-                count: "Active Turf Arenas",
-                image: t.image_url || t.image || asset("/venues/turf-1.webp"),
-              });
-            }
-          });
-        }
-
-        setDynamicSports(mapped);
+        handleData(cmsData);
       } catch (err) {
         console.error("Failed fetching dynamic CMS sports cards:", err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     }
-    fetchSports();
-  }, []);
 
-  const sportsToRender = dynamicSports.length > 0 ? dynamicSports : sports;
+    fetchSports();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -1698,6 +1574,10 @@ export function SportsCategories() {
       scrollRef.current.scrollBy({ left: 350, behavior: "smooth" });
     }
   };
+
+  if (!isLoading && dynamicSports.length === 0) {
+    return null;
+  }
 
   return (
     <section className="pt-2 sm:pt-2.5 md:pt-3 pb-1 relative overflow-hidden group/section">
@@ -1720,8 +1600,8 @@ export function SportsCategories() {
             ref={scrollRef}
             className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x gap-2.5 sm:gap-3.5 pt-2 sm:pt-2.5 pb-3 sm:pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {sportsToRender.map((sport, index) => (
-              <SportCard key={sport.name} index={index} {...sport} />
+            {dynamicSports.map((sport, index) => (
+              <SportCard key={sport.id || sport.name} index={index} {...sport} />
             ))}
           </div>
 
@@ -1950,89 +1830,6 @@ export function WhySportXClub() {
 
 
 
-const storeProducts = [
-  {
-    id: 1,
-    name: "Premium Football Size 5",
-    category: "Equipment",
-    price: "₹1,499",
-    rating: "4.8",
-    image: asset("/sports/cat-football.webp"),
-  },
-  {
-    id: 2,
-    name: "Professional Badminton Racket",
-    category: "Equipment",
-    price: "₹3,499",
-    rating: "4.9",
-    image: asset("/sports/cat-badminton.webp"),
-  },
-  {
-    id: 3,
-    name: "Cricket Bat Grade 1 English Willow",
-    category: "Equipment",
-    price: "₹8,500",
-    rating: "4.7",
-    image: asset("/sports/cat-cricket.webp"),
-  },
-  {
-    id: 4,
-    name: "Sports Training Cones Set",
-    category: "Accessories",
-    price: "₹599",
-    rating: "4.6",
-    image: asset("/sports/cat-basketball.webp"),
-  },
-  {
-    id: 5,
-    name: "Elite Series Pickleball Paddle",
-    category: "Equipment",
-    price: "₹2,499",
-    rating: "4.8",
-    image: asset("/sports/cat-padel.webp"),
-  },
-  {
-    id: 6,
-    name: "Premium Leather Cricket Ball",
-    category: "Accessories",
-    price: "₹899",
-    rating: "4.7",
-    image: asset("/venues/new_cricket_turf_2.png"),
-  },
-  {
-    id: 7,
-    name: "Anti-Slip Performance Grip Socks",
-    category: "Apparel",
-    price: "₹399",
-    rating: "4.9",
-    image: asset("/sports/cat-swimming.webp"),
-  },
-  {
-    id: 8,
-    name: "Carbon Fiber Pro Shin Guards",
-    category: "Accessories",
-    price: "₹1,299",
-    rating: "4.8",
-    image: asset("/venues/champions_sports_arena_football.jpg"),
-  },
-  {
-    id: 9,
-    name: "Pro Match Tennis Balls (Pack of 3)",
-    category: "Accessories",
-    price: "₹649",
-    rating: "4.7",
-    image: asset("/sports/cat-tennis.webp"),
-  },
-  {
-    id: 10,
-    name: "Multi-Sport Duffel Bag 45L",
-    category: "Apparel",
-    price: "₹2,199",
-    rating: "4.9",
-    image: asset("/sports/cat-boxmma.webp"),
-  },
-];
-
 export function StoreSection() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
@@ -2043,12 +1840,14 @@ export function StoreSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const [addedItems, setAddedItems] = useState({});
   const [dynamicFacilities, setDynamicFacilities] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadFacilities() {
       try {
-        const data = await cmsService.getFacilities();
-        if (data && data.length > 0) {
+        const handleData = (data) => {
+          if (!Array.isArray(data)) return;
           const mapped = data.map((f, idx) => ({
             id: f.id || idx + 1,
             name: f.title,
@@ -2057,16 +1856,28 @@ export function StoreSection() {
             rating: f.rating || "4.8",
             image: f.image_url,
           }));
-          setDynamicFacilities(mapped);
-        }
+          if (isMounted) {
+            setDynamicFacilities(mapped);
+          }
+        };
+
+        const initial = await cmsService.getFacilities((fresh) => {
+          handleData(fresh?.data || fresh);
+        });
+        handleData(initial);
       } catch (e) {
-        console.error("Failed fetching facilities:", e);
+        console.error("Failed fetching dynamic CMS facilities:", e);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     }
     loadFacilities();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  const activeProducts = dynamicFacilities.length > 0 ? dynamicFacilities : storeProducts;
+  const activeProducts = dynamicFacilities;
 
   const handleAddToCart = (e, product) => {
     e.stopPropagation();
@@ -2074,9 +1885,9 @@ export function StoreSection() {
   };
 
   const filteredModalProducts = activeProducts.filter((product) => {
-    const matchesCat = selectedCat === "All" || product.category === selectedCat;
-    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCat = selectedCat === "All" || product.category?.toLowerCase() === selectedCat.toLowerCase();
+    const matchesSearch = (product.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.category || "").toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesSearch;
   });
 
@@ -2207,6 +2018,10 @@ export function StoreSection() {
     };
   }, [isStoreModalOpen]);
 
+  if (!isLoading && activeProducts.length === 0) {
+    return null;
+  }
+
   return (
     <section className="pt-2 pb-2 md:pt-3 md:pb-4 relative overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
@@ -2234,9 +2049,9 @@ export function StoreSection() {
           onTouchMove={handleTouchMove}
           className="flex gap-3 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden cursor-grab select-none w-full"
         >
-          {activeProducts.map((product) => (
+          {activeProducts.map((product, idx) => (
             <div
-              key={`first-${product.id}`}
+              key={`first-${product.id || idx}`}
               className="w-[280px] sm:w-[310px] shrink-0"
             >
               <div
@@ -2317,10 +2132,10 @@ export function StoreSection() {
             </div>
           ))}
 
-          {/* Second copy for seamless looping */}
-          {storeProducts.map((product) => (
+          {/* Second copy for seamless looping if items exist */}
+          {activeProducts.length > 1 && activeProducts.map((product, idx) => (
             <div
-              key={`second-${product.id}`}
+              key={`second-${product.id || idx}`}
               className="w-[280px] sm:w-[310px] shrink-0"
             >
               <div

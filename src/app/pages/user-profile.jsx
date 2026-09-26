@@ -35,6 +35,7 @@ import {
   X,
 } from "lucide-react";
 import { jsPDF } from "jspdf";
+import { downloadSportXPassPdf } from "../utils/ticket-pdf-generator";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { isValidProfileImage } from "../components/ui/utils";
 import { Badge } from "../components/ui/badge";
@@ -496,143 +497,20 @@ export function UserProfile() {
     }
   };
 
-  const downloadPdfPass = (booking, userObj) => {
+  const downloadPdfPass = async (booking, userObj) => {
     const loadingToast = toast.loading("Generating your digital entry pass PDF...");
     try {
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
+      const orderCode = booking?.booking_code || booking?.id || "SX-PASS";
+      await downloadSportXPassPdf({
+        orderId: orderCode,
+        userName: userObj?.fullName || booking?.user_name || "SportX Player",
+        turfName: booking?.turf_name || "SportX Arena",
+        sport: booking?.sport || "Cricket",
+        date: formatDate(booking?.date) || String(booking?.date || "2026-09-25"),
+        timeSlot: booking?.time_slot || booking?.slot_time || "Scheduled Slot",
+        amount: booking?.amount || 0,
+      }, `SportX_EntryPass_${orderCode}.pdf`);
 
-      // Dark slate header
-      doc.setFillColor(15, 23, 42); // slate-900
-      doc.rect(0, 0, 210, 45, "F");
-
-      // Emerald accent bar
-      doc.setFillColor(5, 150, 105); // emerald-600
-      doc.rect(0, 45, 210, 3, "F");
-
-      // Title
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.text("SPORTXCLUB", 20, 24);
-
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(148, 163, 184);
-      doc.text("OFFICIAL MATCH ENTRY PASS", 20, 34);
-
-      // Pass Reference on top right
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(52, 211, 153); // emerald-400
-      doc.setFontSize(11);
-      doc.text(`PASS ID: #${booking?.booking_code || booking?.id || "SX-PASS"}`, 125, 24);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(203, 213, 225);
-      doc.setFontSize(9);
-      doc.text(`Status: CONFIRMED / VALID`, 125, 32);
-
-      // Match Details Box
-      doc.setFillColor(248, 250, 252);
-      doc.roundedRect(20, 58, 170, 105, 4, 4, "F");
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(20, 58, 170, 105, 4, 4, "S");
-
-      // Section title
-      doc.setTextColor(15, 23, 42);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.text("MATCH & VENUE DETAILS", 28, 72);
-
-      doc.setDrawColor(203, 213, 225);
-      doc.line(28, 76, 182, 76);
-
-      // Details Grid
-      doc.setFontSize(10);
-
-      // Turf
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("TURF / VENUE:", 28, 88);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(15, 23, 42);
-      doc.text(String(booking?.turf_name || "SportX Arena"), 75, 88);
-
-      // Sport
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("SPORT:", 28, 98);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(5, 150, 105);
-      doc.text(String(booking?.sport || "Multi-sport").toUpperCase(), 75, 98);
-
-      // Date
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("MATCH DATE:", 28, 108);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(15, 23, 42);
-      doc.text(formatDate(booking?.date) || "Confirmed Date", 75, 108);
-
-      // Time Slot
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("TIME SLOT:", 28, 118);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(15, 23, 42);
-      doc.text(String(booking?.time_slot || booking?.slot_time || "Scheduled Slot"), 75, 118);
-
-      // Pass Holder
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("PASS HOLDER:", 28, 128);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(15, 23, 42);
-      doc.text(String(userObj?.fullName || booking?.user_name || "SportX Player"), 75, 128);
-
-      // Amount Paid
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("AMOUNT PAID:", 28, 138);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(5, 150, 105);
-      doc.text(`Rs. ${booking?.amount || 0} (PAID)`, 75, 138);
-
-      // Booking Code
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(100, 116, 139);
-      doc.text("BOOKING CODE:", 28, 148);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(15, 23, 42);
-      doc.text(String(booking?.booking_code || booking?.id || "N/A"), 75, 148);
-
-      // Guidelines Box
-      doc.setFillColor(236, 253, 245);
-      doc.roundedRect(20, 172, 170, 48, 3, 3, "F");
-      doc.setDrawColor(167, 243, 208);
-      doc.roundedRect(20, 172, 170, 48, 3, 3, "S");
-
-      doc.setTextColor(6, 95, 70);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("ENTRY GUIDELINES & INSTRUCTIONS", 28, 185);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(55, 65, 81);
-      doc.text("1. Present this digital pass or the live QR code at the turf reception counter.", 28, 194);
-      doc.text("2. Please arrive 10-15 minutes before your scheduled slot time.", 28, 201);
-      doc.text("3. Proper sports attire and non-marking shoes / turf studs are mandatory.", 28, 208);
-      doc.text("4. Instant support: support@sportxclub.com or in-app live chat.", 28, 215);
-
-      // Footer
-      doc.setTextColor(148, 163, 184);
-      doc.setFontSize(8);
-      doc.text(`Generated on ${new Date().toLocaleString()} | Verified by SportXClub 2.0 Digital Ticketing`, 20, 275);
-
-      doc.save(`SportX_EntryPass_${booking?.booking_code || booking?.id || "ticket"}.pdf`);
       toast.success("Entry pass PDF downloaded successfully!", { id: loadingToast });
     } catch (err) {
       console.error("PDF generation error:", err);
