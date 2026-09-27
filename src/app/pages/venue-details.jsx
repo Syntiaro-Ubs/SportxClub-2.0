@@ -1628,7 +1628,7 @@ export function VenueDetails() {
                   "p-4 sm:p-5 rounded-2xl border transition-all duration-300 shadow-sm space-y-3",
                   isDark
                     ? "bg-white/[0.03] border-white/10"
-                    : "bg-gradient-to-br from-slate-50 to-emerald-50/20 border-slate-200"
+                    : "bg-white border-slate-200"
                 )}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -1740,14 +1740,9 @@ export function VenueDetails() {
                     <Button
                       type="submit"
                       disabled={isSubmittingReview || !reviewComment.trim()}
-                      className={cn(
-                        "h-9 px-5 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5",
-                        isDark
-                          ? "bg-emerald-600 hover:bg-emerald-500 text-black font-extrabold"
-                          : "bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white border-none"
-                      )}
+                      className="h-9 px-5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 bg-transparent hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-600 dark:border-emerald-500 shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Send className="w-3.5 h-3.5" />
+                      <Send className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       {isSubmittingReview ? "Posting..." : "Post Review"}
                     </Button>
                   </div>
@@ -2802,18 +2797,15 @@ export function VenueDetails() {
                           setIsWalletPaying(false);
                         }
                       }}
-                      className="group h-11 w-full sm:w-auto px-5 rounded-xl font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center gap-2 select-none bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white shadow-lg shadow-emerald-500/25 active:scale-[0.97] cursor-pointer border-0"
+                      className="group h-11 w-full sm:w-auto px-5 rounded-xl font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center select-none bg-transparent border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-[0.97] cursor-pointer shadow-none"
                     >
                       {isWalletPaying ? (
-                        <>
+                        <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin" />
                           <span>Deducting ₹{totalSlotPrice}...</span>
-                        </>
+                        </div>
                       ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 text-emerald-200 animate-pulse" />
-                          <span>⚡ 1-Click Pay with Wallet (₹{totalSlotPrice})</span>
-                        </>
+                        <span>1-Click Pay with Wallet (₹{totalSlotPrice})</span>
                       )}
                     </Button>
                   )}

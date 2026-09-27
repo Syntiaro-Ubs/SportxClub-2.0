@@ -602,9 +602,9 @@ function extractImageSrc(val) {
           />
 
           {/* Bottom Overlay & Text */}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-2.5 px-2.5 z-10 flex items-end justify-between gap-1">
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pt-16 pb-2.5 px-3 z-10 flex items-end justify-between gap-1.5">
             <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-start gap-3 mb-1.5 w-full whitespace-nowrap text-[9px] sm:text-[10px] leading-none">
+              <div className="flex items-start justify-start gap-3 mb-1.5 w-full whitespace-nowrap text-[10px] sm:text-[11px] leading-none">
                 <span className="!text-white font-extrabold tracking-wider uppercase drop-shadow-sm shrink-0 mt-0.5">
                   {venue.sports}
                 </span>
@@ -612,14 +612,14 @@ function extractImageSrc(val) {
                   <div className="flex items-center gap-0.5 text-white font-semibold">
                     {venue.reviews > 0 && Number(venue.rating) > 0 ? (
                       <>
-                        <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400 shrink-0" />
                         <span>{Number(venue.rating).toFixed(1)}</span>
                         <span className="text-white/70 font-medium ml-0.5">({venue.reviews})</span>
                       </>
                     ) : (
                       <>
-                        <Star className="w-2.5 h-2.5 text-white/40 shrink-0" />
-                        <span className="text-[10px] text-white/80 font-medium">New</span>
+                        <Star className="w-3 h-3 text-white/40 shrink-0" />
+                        <span className="text-[11px] text-white/80 font-medium">New</span>
                       </>
                     )}
                   </div>
@@ -628,17 +628,17 @@ function extractImageSrc(val) {
                       e.stopPropagation();
                       handleOpenReviewModal(venue);
                     }}
-                    className="flex items-center gap-1 text-[9px] text-white hover:text-white/80 font-medium cursor-pointer leading-none transition-transform duration-200 hover:scale-110"
+                    className="flex items-center gap-1 text-[10px] text-white hover:text-white/80 font-medium cursor-pointer leading-none transition-transform duration-200 hover:scale-110"
                   >
-                    Review <PenLine className="w-2.5 h-2.5" />
+                    Review <PenLine className="w-3 h-3" />
                   </button>
                 </div>
               </div>
               <div className="flex flex-col gap-0.5 w-full">
-                <h3 className="text-white font-bold text-[12px] sm:text-[14px] leading-snug line-clamp-2">
+                <h3 className="text-white font-bold text-[13px] sm:text-[15px] leading-snug line-clamp-2">
                   {venue.name}
                 </h3>
-                <span className="text-white/80 text-[9px] sm:text-[11px] font-medium truncate">
+                <span className="text-white/80 text-[10px] sm:text-[12px] font-medium truncate">
                   {typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}
                 </span>
               </div>
@@ -648,7 +648,7 @@ function extractImageSrc(val) {
                 e.stopPropagation();
                 navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
               }}
-              className="bg-transparent text-white border border-white/40 hover:bg-white/10 hover:border-white hover:text-white font-bold rounded-lg h-7 px-2 text-[10px] sm:text-[11px] transition-colors shadow-none shrink-0"
+              className="bg-transparent text-white border border-white/40 hover:bg-white/10 hover:border-white hover:text-white font-bold rounded-lg h-8 px-3 text-xs transition-colors shadow-none shrink-0"
             >
               Book Slot
             </Button>
@@ -737,25 +737,25 @@ function extractImageSrc(val) {
             </div>
 
             {/* Right Column in Right Side: Info & Button */}
-            <div className="flex flex-col flex-1 justify-between py-3 sm:py-4 pr-6 sm:pr-8 min-w-0">
+            <div className="flex flex-col flex-1 justify-between py-3.5 sm:py-4 pr-6 sm:pr-8 min-w-0">
               {/* Top: Stars & Sport */}
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-end gap-1.5 w-full">
-                  <span className="text-foreground/60 font-extrabold tracking-wider uppercase text-[9px] sm:text-[10px]">
+                  <span className="text-foreground/60 font-extrabold tracking-wider uppercase text-[11px] sm:text-[12px]">
                     {venue.sports}
                   </span>
                 </div>
-                <div className="flex flex-col items-end gap-0.5 mt-0.5">
-                  <div className="flex items-center justify-end gap-1 text-slate-800 dark:text-slate-200 font-semibold text-[10px] sm:text-xs">
+                <div className="flex flex-col items-end gap-1 mt-0.5">
+                  <div className="flex items-center justify-end gap-1 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-[13px]">
                     {venue.reviews > 0 && Number(venue.rating) > 0 ? (
                       <>
                         <span>{Number(venue.rating).toFixed(1)}</span>
-                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-yellow-400 text-yellow-400 shrink-0" />
+                        <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400 shrink-0" />
                         <span className="text-slate-500 font-medium">({venue.reviews})</span>
                       </>
                     ) : (
                       <>
-                        <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-300 dark:text-slate-600 shrink-0" />
+                        <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-300 dark:text-slate-600 shrink-0" />
                         <span className="text-slate-500 font-medium">New</span>
                       </>
                     )}
@@ -765,18 +765,18 @@ function extractImageSrc(val) {
                       e.stopPropagation();
                       handleOpenReviewModal(venue);
                     }}
-                    className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium cursor-pointer leading-none transition-transform duration-200 hover:scale-110"
+                    className="flex items-center gap-1.5 text-xs sm:text-[12px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium cursor-pointer leading-none transition-transform duration-200 hover:scale-110"
                   >
-                    Review <PenLine className="w-2.5 h-2.5" />
+                    Review <PenLine className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                   </button>
                 </div>
               </div>
 
               {/* Middle: Address */}
               <div className="flex flex-col items-end text-right my-2">
-                <div className="text-slate-600 dark:text-slate-400 text-[10px] sm:text-xs font-medium line-clamp-2 flex items-start justify-end gap-1 w-full max-w-[200px]">
+                <div className="text-slate-600 dark:text-slate-400 text-xs sm:text-[13px] font-medium line-clamp-2 flex items-start justify-end gap-1.5 w-full max-w-[220px]">
                   {typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}
-                  <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 mt-0.5 text-slate-400" />
+                  <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 mt-0.5 text-slate-400" />
                 </div>
               </div>
 
@@ -787,7 +787,7 @@ function extractImageSrc(val) {
                     e.stopPropagation();
                     navigate(`/venues/${venue.id}`, { state: { venue: { ...venue, price: venuePrice } } });
                   }}
-                  className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-[#0f172a] hover:border-emerald-600 dark:hover:border-emerald-500 font-bold rounded-lg h-8 sm:h-9 px-4 sm:px-6 text-[10px] sm:text-xs transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 shadow-none cursor-pointer"
+                  className="bg-white dark:bg-[#0f172a] text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 hover:bg-white dark:hover:bg-[#0f172a] hover:border-emerald-600 dark:hover:border-emerald-500 font-bold rounded-lg h-9 sm:h-10 px-5 sm:px-7 text-xs sm:text-sm transition-all duration-300 ease-out transform hover:scale-105 active:scale-95 shadow-none cursor-pointer"
                 >
                   Book Slot
                 </Button>
@@ -1246,7 +1246,7 @@ function extractImageSrc(val) {
                     </Button>
                     <Button
                       onClick={handleCloseReviewModal}
-                      className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white active:!text-white border-none cursor-pointer shadow-sm"
+                      className="text-xs font-bold bg-transparent hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-600 dark:border-emerald-500 cursor-pointer shadow-none rounded-xl"
                     >
                       Done
                     </Button>
@@ -1319,7 +1319,7 @@ function extractImageSrc(val) {
                     <Button
                       onClick={handleReviewSubmit}
                       disabled={isSubmittingReview || reviewRating === 0}
-                      className="bg-emerald-600 hover:bg-emerald-700 !text-white hover:!text-white active:!text-white font-bold text-xs cursor-pointer shadow-sm border-none disabled:opacity-50"
+                      className="bg-transparent hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-600 dark:border-emerald-500 font-bold text-xs cursor-pointer shadow-none disabled:opacity-50 rounded-xl"
                     >
                       {isSubmittingReview ? (
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
