@@ -1197,3 +1197,55 @@ export async function downloadSportXPassPdf(
     filename
   );
 }
+
+export function parseBookingSlots(timeSlot = "") {
+  let startTime = "Scheduled Time";
+  let endTime = "Scheduled End";
+  let duration = "1 Hour";
+  let slotCount = 1;
+  let slotList = [];
+
+  let displaySlotText = String(timeSlot || "Scheduled Time").trim();
+
+  if (!timeSlot) {
+    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText: displaySlotText };
+  }
+
+  const str = String(timeSlot).trim();
+
+  if (str.includes(",") || str.includes(";")) {
+    const slots = str.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+    slotList = slots;
+    slotCount = slots.length;
+
+    const parseSingle = (singleStr) => {
+      const match = singleStr.match(/(d{1,2}(?::d{2})?s*(?:AM|PM)?)s*[-??????to]+s*(d{1,2}(?::d{2})?s*(?:AM|PM)?)/i);
+      if (match) return { start: match[1].trim(), end: match[2].trim() };
+      return { start: singleStr, end: singleStr };
+    };
+
+    const firstParsed = parseSingle(slots[0]);
+    const lastParsed = parseSingle(slots[slots.length - 1]);
+    startTime = firstParsed.start;
+    endTime = lastParsed.end;
+    duration = `${slotCount} ${slotCount === 1 ? "Hour" : "Hours"}`;
+    displaySlotText = slots.join(", ");
+
+    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText: `${startTime} - ${endTime}` };
+  }
+
+  if (str.includes("-") || str.includes("to")) {
+    const parts = str.split(/[-??????]|to/).map((p) => p.trim());
+    if (parts.length >= 2) {
+      startTime = parts[0];
+      endTime = parts[1];
+      slotList = [str];
+    }
+  } else {
+    startTime = str;
+    endTime = "End of Slot";
+    slotList = [str];
+  }
+
+  return { startTime, endTime, duration, slotCount, slotList, displaySlotText: str, rangeText: `${startTime} - ${endTime}` };
+}
