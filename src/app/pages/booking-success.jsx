@@ -151,153 +151,158 @@ export function BookingSuccess() {
             </motion.p>
           </div>
 
-          {/* Entry Pass / Ticket */}
-          <div className="relative mt-4 max-w-lg mx-auto w-full">
-            <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#050505] border-r border-border/40 z-10 hidden sm:block" />
-            <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#050505] border-l border-border/40 z-10 hidden sm:block" />
+          {/* 🎟️ Exact 1:1 Matching SportX Official Match Entry Ticket (Image 3 Replica) */}
+          <div className="relative w-full max-w-[480px] mx-auto select-none pt-8">
+            {/* Outer Pure White Ticket Card (No Outer Dark Border, Soft Shadow) */}
+            <div className="relative bg-white dark:bg-[#111827] rounded-[28px] p-6 sm:p-8 pt-9 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-800/60 space-y-4 text-center transition-all">
 
-            <Card className="border-border/40 shadow-xl overflow-hidden bg-white dark:bg-[#101216] border-dashed sm:border-solid rounded-[28px]">
-              <CardContent className="p-5 space-y-4">
-                {/* Header */}
-                <div className="flex items-center justify-between border-b border-border/20 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-600 animate-pulse" />
-                    <span className="text-xs font-black tracking-widest text-emerald-600 uppercase">SportX Entry Pass</span>
-                  </div>
-                  <span className="text-[10px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 font-bold uppercase px-2 py-0.5 rounded-full">
-                    Active / Paid
-                  </span>
-                </div>
-
-                {/* Grid Details */}
-                <div className="grid grid-cols-2 gap-3 text-left text-sm">
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Pass Holder</p>
-                    <p className="font-semibold text-slate-800 dark:text-white text-xs sm:text-sm">You (Host)</p>
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Pass ID</p>
-                    <p className="font-mono text-xs font-bold text-slate-800 dark:text-white">#SX-260714-EP</p>
-                  </div>
-
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Date</p>
-                    <div className="flex items-center gap-1.5 text-slate-800 dark:text-white font-semibold text-xs sm:text-sm">
-                      <Calendar className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600" />
-                      <span>{dateStr}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-0.5">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Time Slot</p>
-                      {parsedSlot.slotCount > 1 && (
-                        <span className="text-[9px] font-extrabold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 px-1.5 py-0.2 rounded-full leading-none">
-                          {parsedSlot.slotCount} Slots
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-start gap-1.5 text-slate-800 dark:text-white font-semibold text-xs sm:text-sm">
-                      <Clock className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600 shrink-0 mt-0.5" />
-                      <div>
-                        <span>{parsedSlot.rangeText || timeStr}</span>
-                        {parsedSlot.slotCount > 1 && parsedSlot.slotList.length > 1 && (
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-snug">
-                            {parsedSlot.slotList.join(", ")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-0.5 col-span-2">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider">Venue Address</p>
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[9px] font-bold text-emerald-600 dark:text-emerald-600 hover:underline flex items-center gap-0.5 transition-colors cursor-pointer"
-                      >
-                        Get Directions ↗
-                      </a>
-                    </div>
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueAddress)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-start gap-1.5 text-slate-800 dark:text-white font-semibold hover:text-emerald-600 dark:hover:text-emerald-600 transition-colors cursor-pointer text-xs sm:text-sm"
-                    >
-                      <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-600 mt-0.5 shrink-0" />
-                      <span>{venueAddress}</span>
-                    </a>
+              {/* 🟢 Top Elevated Circular Checkmark Disc Badge */}
+              <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
+                <div className="h-14 w-14 rounded-full bg-white dark:bg-[#111827] flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-800">
+                  <div className="h-11 w-11 rounded-full border-[2.5px] border-emerald-500 flex items-center justify-center">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-500 stroke-[2.5px]" />
                   </div>
                 </div>
+              </div>
 
-                {/* Dotted Line Divider */}
-                <div className="relative py-1">
-                  <div className="absolute left-0 right-0 top-1/2 border-b border-dashed border-slate-200 dark:border-white/10" />
+              {/* 1. Header: Payment Successful + Venue Name + City + Order ID */}
+              <div className="flex flex-col items-center justify-center text-center space-y-1 pt-2">
+                <h1 className="text-2xl sm:text-[26px] font-bold text-emerald-500 tracking-normal">
+                  Payment Successful!
+                </h1>
+
+                <h2 className="text-xl sm:text-[22px] font-extrabold text-slate-900 dark:text-white uppercase tracking-wide pt-1">
+                  {venueName}
+                </h2>
+
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  {venueAddress?.split(",")?.slice(-2)?.[0]?.trim() || venueAddress?.split(",")?.slice(-1)?.[0]?.trim() || "Nagpur"}
+                </p>
+
+                <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono pt-0.5">
+                  <span>{bookingData?.bookingId || bookingData?.orderId || "order_spx_1790347058513_950"}</span>
+                </div>
+              </div>
+
+              {/* 2. Sport Badge Pill */}
+              <div className="flex justify-center pt-0.5 pb-1">
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-slate-800 dark:border-slate-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider shadow-2xs">
+                  <span>⚽</span>
+                  <span>{String(bookingData?.sport || "FOOTBALL").toUpperCase()}</span>
+                </div>
+              </div>
+
+              {/* 3. Player Full Name & Mobile Number */}
+              <div className="space-y-1 text-center pt-0.5">
+                <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+                  {bookingData?.userName || localStorage.getItem("userName") || "Ujjwal Bramhnote"}
+                </h3>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                  Mobile Number: {bookingData?.phone || bookingData?.userPhone || localStorage.getItem("userPhone") || "7410507803"}
+                </p>
+              </div>
+
+              {/* 4. Green Center Divider with Solid Emerald Dot */}
+              <div className="relative flex items-center justify-center my-3 px-2">
+                <div className="w-full border-t-[1.5px] border-emerald-500" />
+                <div className="absolute h-3 w-3 rounded-full bg-emerald-500 shadow-xs" />
+              </div>
+
+              {/* 5. 3 Rounded Detail Cards Grid (Side by Side) */}
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3 text-center pt-1">
+                {/* Card 1: Event Date */}
+                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border border-slate-700 dark:border-slate-500 shadow-2xs">
+                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-none mb-1.5">
+                    Event Date:
+                  </p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                    {dateStr}
+                  </p>
                 </div>
 
-                {/* QR Code Container */}
-                <div className="flex flex-col items-center justify-center pt-1">
-                  <div className="bg-slate-50 dark:bg-black/40 p-3 rounded-2xl flex flex-col items-center justify-center border border-slate-100 dark:border-white/[0.05] shadow-inner w-full max-w-[210px]">
-                    <div className="h-28 w-28 bg-white flex items-center justify-center p-2 rounded-xl">
-                      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=SportXClub-Ticket" alt="QR Code" className="h-full w-full object-contain mix-blend-multiply" />
-                    </div>
-                    <span className="text-[8px] font-mono text-slate-600 dark:text-white/50 mt-2 font-semibold tracking-[0.25em] uppercase">
-                      Scan at Reception
-                    </span>
-                  </div>
+                {/* Card 2: Event Time Slot */}
+                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border border-slate-700 dark:border-slate-500 shadow-2xs">
+                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-none mb-1.5">
+                    Event Time Slot:
+                  </p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                    {parsedSlot.rangeText || timeStr}
+                  </p>
                 </div>
 
-                {/* Paid Players List */}
-                {paidMembers.length > 0 && (
-                  <div className="border-t border-border/20 pt-3.5 space-y-2 text-left">
-                    <p className="text-[10px] uppercase text-slate-400 dark:text-white/40 tracking-wider font-extrabold flex justify-between items-center">
-                      <span>Paid Teammates</span>
-                      <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 font-bold px-2 py-0.5 rounded-full">
-                        {paidMembers.length} Joined
-                      </span>
+                {/* Card 3: Amount Paid */}
+                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border border-slate-700 dark:border-slate-500 shadow-2xs">
+                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-none mb-1.5">
+                    Amount Paid:
+                  </p>
+                  <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                    ₹{Number(isSplit ? costPerPlayer : totalPrice).toLocaleString("en-IN")}
+                  </p>
+                </div>
+              </div>
+
+              {/* 6. Ticket Perforation Notches & Dashed Tear Line */}
+              <div className="relative flex items-center justify-center my-4">
+                <div className="absolute -left-6 sm:-left-8 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#030712] shadow-inner z-10" />
+                <div className="w-full border-b border-dashed border-slate-300 dark:border-slate-700" />
+                <div className="absolute -right-6 sm:-right-8 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#030712] shadow-inner z-10" />
+              </div>
+
+              {/* 7. Bottom Section: Payment Date, Official Pass Badge & Bracketed QR Code */}
+              <div className="flex items-center justify-between gap-4 text-left pt-1 px-1">
+                {/* Left Side Details */}
+                <div className="space-y-3.5 flex-1 min-w-0">
+                  <div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-normal">Payment Date:</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white pt-0.5 leading-tight">
+                      25 Sep 2026, 08:30 PM
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {paidMembers.map((member) => (
-                        <div key={member.id} className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-100 dark:border-white/[0.04] transition-all duration-300">
-                          <div className="h-5 w-5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-600 flex items-center justify-center text-[10px] font-black">
-                            ✓
-                          </div>
-                          <span className="text-xs font-semibold text-slate-700 dark:text-white/80 truncate max-w-[120px]">
-                            {member.name}
-                          </span>
-                        </div>
-                      ))}
+                  </div>
+
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-slate-800 dark:border-slate-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider shadow-2xs">
+                      <span>OFFICIAL PASS</span>
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
                     </div>
                   </div>
-                )}
-
-                {/* Action Buttons inside Ticket */}
-                <div className="pt-3 border-t border-border/20 flex justify-center">
-                  <Button
-                    onClick={handleDownloadReceipt}
-                    variant="outline"
-                    className="w-1/2 bg-transparent border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 font-bold rounded-xl gap-2 h-10 cursor-pointer text-xs transition-all shadow-xs"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    Receipt
-                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+
+                {/* Right Side: Bracketed Square QR Code */}
+                <div className="relative p-2.5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700 shadow-sm shrink-0">
+                  <div className="absolute top-1 left-1 w-4 h-4 border-t-2 border-l-2 border-slate-900 dark:border-white rounded-tl-[2px] pointer-events-none" />
+                  <div className="absolute top-1 right-1 w-4 h-4 border-t-2 border-r-2 border-slate-900 dark:border-white rounded-tr-[2px] pointer-events-none" />
+                  <div className="absolute bottom-1 left-1 w-4 h-4 border-b-2 border-l-2 border-slate-900 dark:border-white rounded-bl-[2px] pointer-events-none" />
+                  <div className="absolute bottom-1 right-1 w-4 h-4 border-b-2 border-r-2 border-slate-900 dark:border-white rounded-br-[2px] pointer-events-none" />
+
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(bookingData?.bookingId || "SportXClub-Pass")}`}
+                    alt="Gate Pass QR"
+                    className="h-24 w-24 sm:h-28 sm:w-28 object-contain"
+                  />
+                </div>
+              </div>
+
+              {/* 8. Footer Gate Desk Note */}
+              <div className="pt-3 text-center border-t border-slate-100 dark:border-slate-800/80">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal">
+                  Please present this PDF Pass at the gate entry desk on match day.
+                </p>
+              </div>
+
+            </div>
           </div>
 
-          <div className="pt-4 space-y-4">
-            <div className="flex flex-row gap-3 w-full">
-              <Link to="/profile" className="flex-1">
-                <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-emerald-600 dark:text-emerald-600 dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-emerald-600/5 transition-all duration-300">
-                  Go to Profile
-                </Button>
-              </Link>
+          <div className="pt-4 space-y-4 max-w-[480px] mx-auto w-full">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Button
+                onClick={handleDownloadReceipt}
+                className="flex-1 cursor-pointer text-sm font-bold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 bg-transparent rounded-xl h-12 gap-2 shadow-xs transition-all hover:scale-[1.01]"
+              >
+                <Download className="h-4 w-4" />
+                Download Entry Pass
+              </Button>
               <Link to="/venues" className="flex-1">
-                <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold bg-transparent border-2 border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/20 dark:border-emerald-600 dark:text-emerald-600 dark:hover:border-green-400 dark:hover:text-green-400 dark:hover:bg-emerald-600/5 transition-all duration-300">
+                <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50/30 rounded-xl h-12">
                   Book Another Turf
                 </Button>
               </Link>

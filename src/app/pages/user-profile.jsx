@@ -1222,7 +1222,7 @@ export function UserProfile() {
             <Button
               onClick={handleAddReview}
               disabled={isSubmittingReview}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              className="bg-transparent hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-600 dark:border-emerald-500 font-bold shadow-none disabled:opacity-50"
             >
               {isSubmittingReview ? "Posting..." : "Post Review"}
             </Button>

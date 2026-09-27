@@ -2037,7 +2037,7 @@ export function CMSDashboard() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDeleteSportCard(sport.id)}
-                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
+                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 hover:border-red-500 hover:text-red-600 cursor-pointer"
                             title="Delete Card"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2124,7 +2124,7 @@ export function CMSDashboard() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleDeleteFacilityCard(fac.id)}
-                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
+                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 hover:border-red-500 hover:text-red-600 cursor-pointer"
                               title="Delete Card"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -2199,7 +2199,7 @@ export function CMSDashboard() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDeleteOffer(off.id)}
-                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
+                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 hover:border-red-500 hover:text-red-600 cursor-pointer"
                             title="Delete Offer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2272,7 +2272,7 @@ export function CMSDashboard() {
                               size="sm"
                               variant="outline"
                               onClick={() => handleDeleteEventCard(evt.id)}
-                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
+                              className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 hover:border-red-500 hover:text-red-600 cursor-pointer"
                               title="Delete Tournament Event"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -2349,7 +2349,7 @@ export function CMSDashboard() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleDeleteGalleryItem(item.id)}
-                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
+                            className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 hover:border-red-500 hover:text-red-600 cursor-pointer"
                             title="Delete Item"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -2419,7 +2419,7 @@ export function CMSDashboard() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleDeleteWhyCard(card.id)}
-                          className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 cursor-pointer"
+                          className="h-8 w-8 p-0 text-red-600 border-[#fecaca] hover:bg-red-50 hover:border-red-500 hover:text-red-600 cursor-pointer"
                           title="Delete Feature Card"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -3594,7 +3594,7 @@ export function CMSDashboard() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleDeleteCmsTournament(t.id, t.name || t.title)}
-                                className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50 rounded-lg cursor-pointer"
+                                className="h-8 w-8 p-0 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-500 hover:text-red-600 rounded-lg cursor-pointer"
                                 title="Delete Tournament"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -3783,7 +3783,7 @@ export function CMSDashboard() {
                                   size="sm"
                                   variant="outline"
                                   onClick={() => handleUpdateTeamStatus(team.id, "Rejected")}
-                                  className="h-7 text-[10px] font-extrabold text-red-600 border-red-200 hover:bg-red-50 px-2 rounded-lg cursor-pointer"
+                                  className="h-7 text-[10px] font-extrabold text-red-600 border-red-200 hover:bg-red-50 hover:border-red-500 hover:text-red-600 px-2 rounded-lg cursor-pointer"
                                 >
                                   Reject
                                 </Button>

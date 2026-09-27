@@ -2551,7 +2551,7 @@ export function TurfGallery() {
           titleClassName="!text-base sm:!text-lg md:!text-xl lg:!text-2xl"
         />
 
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">
+        <div className="mt-5 sm:mt-6 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">
           {galleryToRender.map((turf) => (
             <motion.div
               key={turf.id}
