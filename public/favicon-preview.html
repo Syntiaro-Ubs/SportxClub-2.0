@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Favicon Preview</title>
+  <style>
+    body {
+      background: #0f172a;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+      gap: 30px;
+    }
+    .grid {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .card.light {
+      background: #ffffff;
+      color: #000;
+    }
+    .tab-sim {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #2d3748;
+      border-radius: 8px 8px 0 0;
+      font-size: 13px;
+    }
+    .tab-sim.light {
+      background: #e2e8f0;
+      color: #1a202c;
+    }
+  </style>
+</head>
+<body>
+  <h1>SportXClub Tab Icon (Favicon) Preview</h1>
+
+  <div class="grid">
+    <div class="card">
+      <h3>512px Vector</h3>
+      <img src="favicon.svg" width="256" height="256" />
+    </div>
+    <div class="card light">
+      <h3>On Light Background</h3>
+      <img src="favicon.svg" width="256" height="256" />
+    </div>
+  </div>
+
+  <h2>Browser Tab Simulation</h2>
+  <div class="grid">
+    <div class="card">
+      <p>Dark Theme Browser Tab</p>
+      <div class="tab-sim">
+        <img src="favicon.svg" width="16" height="16" />
+        <span>SportXClub - Sports Booking</span>
+      </div>
+    </div>
+    <div class="card light">
+      <p>Light Theme Browser Tab</p>
+      <div class="tab-sim light">
+        <img src="favicon.svg" width="16" height="16" />
+        <span>SportXClub - Sports Booking</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>Different Standard Favicon Sizes</h2>
+  <div class="grid">
+    <div class="card">
+      <span>16x16</span>
+      <img src="favicon.svg" width="16" height="16" />
+    </div>
+    <div class="card">
+      <span>24x24</span>
+      <img src="favicon.svg" width="24" height="24" />
+    </div>
+    <div class="card">
+      <span>32x32</span>
+      <img src="favicon.svg" width="32" height="32" />
+    </div>
+    <div class="card">
+      <span>48x48</span>
+      <img src="favicon.svg" width="48" height="48" />
+    </div>
+    <div class="card">
+      <span>64x64</span>
+      <img src="favicon.svg" width="64" height="64" />
+    </div>
+  </div>
+</body>
+</html>

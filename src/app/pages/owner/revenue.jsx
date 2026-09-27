@@ -55,6 +55,9 @@ export function Revenue() {
   const [payments, setPayments] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [turfs, setTurfs] = useState([]);
+  const [settlements, setSettlements] = useState([]);
+  const [isProcessingSettlement, setIsProcessingSettlement] = useState(false);
+  const [viewMode, setViewMode] = useState("settlements"); // "settlements" | "transactions"
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -71,20 +74,46 @@ export function Revenue() {
     try {
       setIsLoading(true);
       setError(null);
-      const [paymentRes, bookingRes, turfRes] = await Promise.allSettled([
+      const [paymentRes, bookingRes, turfRes, settleRes] = await Promise.allSettled([
         adminApi.getAll("payments"),
         adminApi.getAll("bookings"),
         adminApi.getAll("turfs"),
+        fetch("/api/settlements").then((r) => r.json()),
       ]);
 
       if (paymentRes.status === "fulfilled") setPayments(paymentRes.value || []);
       if (bookingRes.status === "fulfilled") setBookings(bookingRes.value || []);
       if (turfRes.status === "fulfilled") setTurfs(turfRes.value || []);
+      if (settleRes.status === "fulfilled" && settleRes.value?.settlements) {
+        setSettlements(settleRes.value.settlements || []);
+      }
     } catch (err) {
       console.error("Failed to load live revenue data from MySQL", err);
       setError("Failed to load revenue data from database.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleManualSettlementRun = async () => {
+    try {
+      setIsProcessingSettlement(true);
+      const res = await fetch("/api/settlements/process-manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || "Daily midnight settlements processed successfully!");
+        fetchRevenueData();
+      } else {
+        toast.error(data.message || "Failed to process settlements.");
+      }
+    } catch (err) {
+      toast.error(`Settlement trigger error: ${err.message}`);
+    } finally {
+      setIsProcessingSettlement(false);
     }
   };
 
@@ -451,18 +480,61 @@ export function Revenue() {
         </Card>
       </div>
 
-      {/* Transaction History Table */}
+      {/* Transaction & Settlement History Table */}
       <Card className="rounded-2xl border border-border/40 bg-card/30 backdrop-blur-xl shadow-lg">
         <CardHeader className="flex flex-col gap-3 border-b border-border/40 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle className="text-base font-bold tracking-tight">Transaction History</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex p-1 bg-muted/30 rounded-xl border border-border/40">
+              <button
+                onClick={() => setViewMode("settlements")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === "settlements"
+                    ? "bg-emerald-500 text-white shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                🏦 Daily Midnight Settlements ({settlements.length})
+              </button>
+              <button
+                onClick={() => setViewMode("transactions")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === "transactions"
+                    ? "bg-emerald-500 text-white shadow-md"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                💳 Player Transactions ({currentTransactions.length})
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {viewMode === "settlements" && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isProcessingSettlement}
+                onClick={handleManualSettlementRun}
+                className="h-8 rounded-md text-xs font-bold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+              >
+                {isProcessingSettlement ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                    Run 12:00 AM Payout Now
+                  </>
+                )}
+              </Button>
+            )}
+
             <div className="relative flex-1 min-w-[130px] sm:max-w-[200px]">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search transaction ID..."
+                placeholder={viewMode === "settlements" ? "Search UTR or Turf..." : "Search transaction ID..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-8 rounded-md bg-background/60 border border-slate-300 dark:border-slate-700/80 focus:border-emerald-500 text-xs w-full font-medium"
@@ -484,62 +556,133 @@ export function Revenue() {
         </CardHeader>
 
         <CardContent className="p-0">
-          <div className="w-full overflow-x-auto scrollbar-visible pb-2">
-            <table className="w-full min-w-[750px] text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground">
-                  <th className="px-4 py-2.5 text-left">Transaction ID</th>
-                  <th className="px-4 py-2.5 text-left">Date</th>
-                  <th className="px-4 py-2.5 text-left">Facility / Source</th>
-                  <th className="px-4 py-2.5 text-left">Amount</th>
-                  <th className="px-4 py-2.5 text-left">Method</th>
-                  <th className="px-4 py-2.5 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/30 text-xs">
-                {currentTransactions.length > 0 ? (
-                  currentTransactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="px-4 py-3 font-mono text-[11px] font-bold text-foreground text-left">
-                        #{tx.id}
-                      </td>
-                      <td className="px-4 py-3 text-left text-muted-foreground font-semibold">
-                        {tx.date}
-                      </td>
-                      <td className="px-4 py-3 text-left font-bold text-foreground">
-                        {tx.source}
-                      </td>
-                      <td className="px-4 py-3 text-left font-bold text-foreground">
-                        ₹{tx.amount.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-3 text-left font-semibold text-muted-foreground uppercase text-[10px]">
-                        {tx.method}
-                      </td>
-                      <td className="px-4 py-3 text-left">
-                        <Badge
-                          className={`text-[9px] font-bold rounded-md px-2 py-0.5 ${
-                            tx.status === "completed" || tx.status === "success" || tx.status === "settled"
-                              ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                              : tx.status === "pending"
-                              ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
-                              : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
-                          }`}
-                        >
-                          {tx.status}
-                        </Badge>
+          {viewMode === "settlements" ? (
+            <div className="w-full overflow-x-auto scrollbar-visible pb-2">
+              <table className="w-full min-w-[850px] text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground">
+                    <th className="px-4 py-2.5 text-left">Settlement ID</th>
+                    <th className="px-4 py-2.5 text-left">Slot Date</th>
+                    <th className="px-4 py-2.5 text-left">Turf Facility</th>
+                    <th className="px-4 py-2.5 text-center">Slots</th>
+                    <th className="px-4 py-2.5 text-right">Gross Total</th>
+                    <th className="px-4 py-2.5 text-right">Platform Fee</th>
+                    <th className="px-4 py-2.5 text-right">Net Payout</th>
+                    <th className="px-4 py-2.5 text-left">Cashfree UTR / Ref</th>
+                    <th className="px-4 py-2.5 text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/30 text-xs">
+                  {settlements.length > 0 ? (
+                    settlements.map((st) => (
+                      <tr key={st.id || st.settlement_id} className="hover:bg-muted/10 transition-colors">
+                        <td className="px-4 py-3 font-mono text-[11px] font-bold text-foreground text-left">
+                          {st.settlement_id}
+                        </td>
+                        <td className="px-4 py-3 text-left text-muted-foreground font-semibold">
+                          {st.settlement_date}
+                        </td>
+                        <td className="px-4 py-3 text-left font-bold text-foreground">
+                          {st.turf_name || "SportXClub Turf"}
+                        </td>
+                        <td className="px-4 py-3 text-center font-bold text-foreground">
+                          {st.total_bookings}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">
+                          ₹{Number(st.gross_amount || 0).toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-rose-500">
+                          -₹{Number(st.platform_fee || 0).toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-4 py-3 text-right font-black text-emerald-500">
+                          ₹{Number(st.net_payout_amount || 0).toLocaleString("en-IN")}
+                        </td>
+                        <td className="px-4 py-3 text-left font-mono text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          {st.utr_number || "PROCESSING"}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Badge
+                            className={`text-[9px] font-bold rounded-md px-2 py-0.5 ${
+                              st.status === "SUCCESS" || st.status === "COMPLETED" || st.status === "PAID"
+                                ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                                : st.status === "PENDING" || st.status === "PROCESSING"
+                                ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                            }`}
+                          >
+                            {st.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="9" className="py-12 text-center text-muted-foreground text-xs">
+                        No automated daily midnight settlements recorded yet. Next scheduled run: <strong>Tonight at 12:00 AM</strong>.
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="py-12 text-center text-muted-foreground text-xs">
-                      No payment transactions recorded in MySQL database (`payments` table).
-                    </td>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="w-full overflow-x-auto scrollbar-visible pb-2">
+              <table className="w-full min-w-[750px] text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-border/40 bg-muted/10 text-[11px] font-bold text-muted-foreground">
+                    <th className="px-4 py-2.5 text-left">Transaction ID</th>
+                    <th className="px-4 py-2.5 text-left">Date</th>
+                    <th className="px-4 py-2.5 text-left">Facility / Source</th>
+                    <th className="px-4 py-2.5 text-left">Amount</th>
+                    <th className="px-4 py-2.5 text-left">Method</th>
+                    <th className="px-4 py-2.5 text-left">Status</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border/30 text-xs">
+                  {currentTransactions.length > 0 ? (
+                    currentTransactions.map((tx) => (
+                      <tr key={tx.id} className="hover:bg-muted/10 transition-colors">
+                        <td className="px-4 py-3 font-mono text-[11px] font-bold text-foreground text-left">
+                          #{tx.id}
+                        </td>
+                        <td className="px-4 py-3 text-left text-muted-foreground font-semibold">
+                          {tx.date}
+                        </td>
+                        <td className="px-4 py-3 text-left font-bold text-foreground">
+                          {tx.source}
+                        </td>
+                        <td className="px-4 py-3 text-left font-bold text-foreground">
+                          ₹{tx.amount.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-left font-semibold text-muted-foreground uppercase text-[10px]">
+                          {tx.method}
+                        </td>
+                        <td className="px-4 py-3 text-left">
+                          <Badge
+                            className={`text-[9px] font-bold rounded-md px-2 py-0.5 ${
+                              tx.status === "completed" || tx.status === "success" || tx.status === "settled"
+                                ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                                : tx.status === "pending"
+                                ? "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                : "bg-rose-500/10 text-rose-500 border border-rose-500/20"
+                            }`}
+                          >
+                            {tx.status}
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="py-12 text-center text-muted-foreground text-xs">
+                        No payment transactions recorded in MySQL database (`payments` table).
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

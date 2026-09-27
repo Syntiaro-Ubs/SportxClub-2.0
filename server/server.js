@@ -21,6 +21,8 @@ import cmsRoutes from "./routes/cms/index.js";
 import profileRoutes from "./routes/profile.js";
 import aiAssistantRoutes from "./routes/ai-assistant.js";
 import cashfreeRoutes from "./payment/cashfree-routes.js";
+import settlementsRoutes from "./routes/settlements.js";
+import { startMidnightPayoutScheduler } from "./services/payout-cron-service.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -99,6 +101,7 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/ai-assistant", aiAssistantRoutes);
 app.use("/api/payment/cashfree", cashfreeRoutes);
 app.use("/api/payment", cashfreeRoutes);
+app.use("/api/settlements", settlementsRoutes);
 app.use("/api/turf", turfRoutes);
 app.use("/api/cms", cmsRoutes);
 app.use("/api/admin", adminRoutes);
@@ -120,6 +123,10 @@ app.use((req, res) => {
 async function startServer() {
   try {
     await initDatabase();
+    
+    // Start automated 12:00 AM Midnight Turf Payout Cron Scheduler
+    startMidnightPayoutScheduler();
+
     app.listen(PORT, () => {
       console.log(`=================================`);
       console.log(`Backend Server running on http://localhost:${PORT}`);

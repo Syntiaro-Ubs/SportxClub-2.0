@@ -57,6 +57,8 @@ import {
   List,
   MoreVertical,
   BarChart3,
+  Landmark,
+  IndianRupee,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -78,6 +80,7 @@ import { turfService } from "../../services/turf.service";
 import { TurfOnboardingView } from "./turf-onboarding-view";
 import { ReviewsManagementView } from "./reviews-management-view";
 import { TurfReportsView } from "./turf-reports-view";
+import { DailySettlementsView } from "./daily-settlements-view";
 import { compressImage } from "../../utils/image-compressor";
 import { fastCache } from "../../services/fast-cache";
 
@@ -89,6 +92,14 @@ export const CONSOLE_MODULES = [
     icon: Home,
     tag: "CMS Content",
     color: "text-blue-600 bg-blue-50 border-blue-200",
+  },
+  {
+    key: "settlements",
+    label: "Daily Settlements",
+    description: "Automated 12:00 AM Midnight bank payouts, commission splits, and email reports for turf owners.",
+    icon: Landmark,
+    tag: "Finance & Payouts",
+    color: "text-emerald-700 bg-emerald-50 border-emerald-200",
   },
   {
     key: "reports",
@@ -152,13 +163,13 @@ export const ROLE_PRESETS = {
   "Super Admin": {
     label: "Super Admin",
     description: "Full unrestricted access to all console modules and user management.",
-    permissions: ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"],
+    permissions: ["home-page", "settlements", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"],
     badgeClass: "bg-purple-100 text-purple-700 border-purple-200",
   },
   "Manager": {
     label: "Console Manager",
     description: "Access to manage home page, reports, onboarding, turfs, reviews, tournaments, and community feed.",
-    permissions: ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community"],
+    permissions: ["home-page", "settlements", "reports", "onboarding", "turfs", "reviews", "tournaments", "community"],
     badgeClass: "bg-blue-100 text-blue-700 border-blue-200",
   },
   "Editor": {
@@ -209,18 +220,26 @@ export function CMSDashboard() {
   });
 
   const userPermissions = useMemo(() => {
-    if (!currentCmsUser) return ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
-    if (currentCmsUser.role === "Super Admin" || currentCmsUser.role === "Admin") {
-      return ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
+    const allPermissions = ["home-page", "settlements", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
+    if (!currentCmsUser) return allPermissions;
+    const role = (currentCmsUser.role || "").toLowerCase();
+    if (role === "super admin" || role === "admin" || role === "superadmin") {
+      return allPermissions;
     }
-    return Array.isArray(currentCmsUser.permissions) && currentCmsUser.permissions.length > 0
+    const perms = Array.isArray(currentCmsUser.permissions) && currentCmsUser.permissions.length > 0
       ? currentCmsUser.permissions
-      : ["home-page", "reports"];
+      : ["home-page", "settlements", "reports"];
+    
+    // Automatically grant settlements to any admin or manager who has access to reports or home-page
+    if (!perms.includes("settlements")) {
+      return [...perms, "settlements"];
+    }
+    return perms;
   }, [currentCmsUser]);
 
   // Active view tab
   const currentView = params.view || (userPermissions[0] || "home-page");
-  const validViews = ["home-page", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
+  const validViews = ["home-page", "settlements", "reports", "onboarding", "turfs", "reviews", "tournaments", "community", "team"];
   const [activeView, setActiveView] = useState(validViews.includes(currentView) ? currentView : (userPermissions[0] || "home-page"));
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(window.innerWidth < 768);
 
@@ -1674,6 +1693,7 @@ export function CMSDashboard() {
   const menuItems = useMemo(() => {
     const allItems = [
       { key: "home-page", label: "Home Page", icon: Home },
+      { key: "settlements", label: "Daily Settlements", icon: Landmark },
       { key: "reports", label: "Turfs Reports", icon: BarChart3 },
       { key: "onboarding", label: "Onboarding Requests", icon: CheckSquare },
       { key: "turfs", label: "Turfs", icon: MapPin },
@@ -3205,6 +3225,11 @@ export function CMSDashboard() {
                 )}
               </section>
             </div>
+          )}
+
+          {/* DAILY SETTLEMENTS & TURF PAYOUTS VIEW */}
+          {activeView === "settlements" && (
+            <DailySettlementsView />
           )}
 
           {/* ALL TURFS REPORTS & ONBOARDING VIEW */}

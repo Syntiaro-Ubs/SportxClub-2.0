@@ -139,6 +139,59 @@ export async function initDatabase() {
         )
       `);
     } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE bookings ADD COLUMN platform_fee DECIMAL(10,2) DEFAULT 0.00");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE bookings ADD COLUMN owner_payout_amount DECIMAL(10,2) DEFAULT 0.00");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE bookings ADD COLUMN payout_status VARCHAR(50) DEFAULT 'PENDING'");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE bookings ADD COLUMN payout_id VARCHAR(100) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE bookings ADD COLUMN payout_utr VARCHAR(100) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE bookings ADD COLUMN payout_date VARCHAR(50) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turf_owners ADD COLUMN cashfree_beneficiary_id VARCHAR(100) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS owner_settlements (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          settlement_id VARCHAR(100) UNIQUE NOT NULL,
+          owner_id VARCHAR(50) NOT NULL,
+          owner_email VARCHAR(255) NOT NULL,
+          turf_id INT DEFAULT NULL,
+          turf_name VARCHAR(255) DEFAULT NULL,
+          settlement_date VARCHAR(50) NOT NULL,
+          total_bookings INT DEFAULT 0,
+          gross_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          platform_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          net_payout_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+          bank_name VARCHAR(100),
+          account_holder VARCHAR(255),
+          account_number VARCHAR(100),
+          ifsc_code VARCHAR(50),
+          upi_id VARCHAR(100),
+          cashfree_transfer_id VARCHAR(100),
+          utr_number VARCHAR(100),
+          transfer_mode VARCHAR(20) DEFAULT 'IMPS',
+          status VARCHAR(50) DEFAULT 'PENDING',
+          failure_reason TEXT,
+          email_sent TINYINT(1) DEFAULT 0,
+          email_sent_at TIMESTAMP NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_settle_owner (owner_email, settlement_date),
+          INDEX idx_settle_status (status)
+        )
+      `);
+    } catch (e) {}
     // 4. Auto seed initial demo data
     await seedData();
 
@@ -249,11 +302,46 @@ async function createTables() {
       time_slot VARCHAR(100),
       slot_time VARCHAR(100),
       amount DECIMAL(10,2),
+      platform_fee DECIMAL(10,2) DEFAULT 0.00,
+      owner_payout_amount DECIMAL(10,2) DEFAULT 0.00,
+      payout_status VARCHAR(50) DEFAULT 'PENDING',
+      payout_id VARCHAR(100) DEFAULT NULL,
+      payout_utr VARCHAR(100) DEFAULT NULL,
+      payout_date VARCHAR(50) DEFAULT NULL,
       status VARCHAR(50) DEFAULT 'Confirmed',
       payment_method VARCHAR(50) DEFAULT 'UPI',
       payment_type VARCHAR(50) DEFAULT 'UPI',
       email_sent TINYINT(1) DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+
+    `CREATE TABLE IF NOT EXISTS owner_settlements (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      settlement_id VARCHAR(100) UNIQUE NOT NULL,
+      owner_id VARCHAR(50) NOT NULL,
+      owner_email VARCHAR(255) NOT NULL,
+      turf_id INT DEFAULT NULL,
+      turf_name VARCHAR(255) DEFAULT NULL,
+      settlement_date VARCHAR(50) NOT NULL,
+      total_bookings INT DEFAULT 0,
+      gross_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      platform_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      net_payout_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      bank_name VARCHAR(100),
+      account_holder VARCHAR(255),
+      account_number VARCHAR(100),
+      ifsc_code VARCHAR(50),
+      upi_id VARCHAR(100),
+      cashfree_transfer_id VARCHAR(100),
+      utr_number VARCHAR(100),
+      transfer_mode VARCHAR(20) DEFAULT 'IMPS',
+      status VARCHAR(50) DEFAULT 'PENDING',
+      failure_reason TEXT,
+      email_sent TINYINT(1) DEFAULT 0,
+      email_sent_at TIMESTAMP NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_settle_owner (owner_email, settlement_date),
+      INDEX idx_settle_status (status)
     )`,
 
     `CREATE TABLE IF NOT EXISTS staff (
