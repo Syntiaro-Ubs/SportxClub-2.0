@@ -1,49 +1,115 @@
 import { jsPDF } from "jspdf";
 
 /**
- * Helper to parse and consolidate single or multiple time slots
+ * Helper to parse and consolidate single or multiple time slots.
  */
-export function parseBookingSlots(timeSlot = "") {
+export function parseBookingSlots(
+  timeSlot = ""
+) {
   let startTime = "Scheduled Time";
   let endTime = "Scheduled End";
   let duration = "1 Hour";
   let slotCount = 1;
   let slotList = [];
-  let displaySlotText = String(timeSlot || "Scheduled Time").trim();
+
+  let displaySlotText = String(
+    timeSlot || "Scheduled Time"
+  ).trim();
 
   if (!timeSlot) {
-    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText: displaySlotText };
+    return {
+      startTime,
+      endTime,
+      duration,
+      slotCount,
+      slotList,
+      displaySlotText,
+      rangeText: displaySlotText,
+    };
   }
 
-  const str = String(timeSlot).trim();
+  const str =
+    String(timeSlot).trim();
 
-  // 1. Multiple slots separated by comma or semicolon
-  if (str.includes(",") || str.includes(";")) {
-    const slots = str.split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
+  if (
+    str.includes(",") ||
+    str.includes(";")
+  ) {
+    const slots = str
+      .split(/[,;]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
     slotList = slots;
     slotCount = slots.length;
 
-    const parseSingle = (singleStr) => {
-      const match = singleStr.match(/(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*[-–—to]+\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)/i);
-      if (match) return { start: match[1].trim(), end: match[2].trim() };
-      return { start: singleStr, end: singleStr };
+    const parseSingle = (
+      singleStr
+    ) => {
+      const match =
+        singleStr.match(
+          /(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)\s*[-–—to]+\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM)?)/i
+        );
+
+      if (match) {
+        return {
+          start: match[1].trim(),
+          end: match[2].trim(),
+        };
+      }
+
+      return {
+        start: singleStr,
+        end: singleStr,
+      };
     };
 
-    const firstParsed = parseSingle(slots[0]);
-    const lastParsed = parseSingle(slots[slots.length - 1]);
+    const firstParsed =
+      parseSingle(slots[0]);
 
-    startTime = firstParsed.start;
-    endTime = lastParsed.end;
-    duration = `${slotCount} ${slotCount === 1 ? "Hour" : "Hours"}`;
-    displaySlotText = slots.join(", ");
-    const rangeText = `${startTime} – ${endTime}`;
+    const lastParsed =
+      parseSingle(
+        slots[slots.length - 1]
+      );
 
-    return { startTime, endTime, duration, slotCount, slotList, displaySlotText, rangeText };
+    startTime =
+      firstParsed.start;
+
+    endTime =
+      lastParsed.end;
+
+    duration =
+      `${slotCount} ${slotCount === 1
+        ? "Hour"
+        : "Hours"
+      }`;
+
+    displaySlotText =
+      slots.join(", ");
+
+    return {
+      startTime,
+      endTime,
+      duration,
+      slotCount,
+      slotList,
+      displaySlotText,
+      rangeText:
+        `${startTime} – ${endTime}`,
+    };
   }
 
-  // 2. Single range
-  if (str.includes("-") || str.includes("–") || str.includes("—") || str.includes("to")) {
-    const parts = str.split(/[-–—]|to/).map((p) => p.trim());
+  if (
+    str.includes("-") ||
+    str.includes("–") ||
+    str.includes("—") ||
+    str.includes("to")
+  ) {
+    const parts =
+      str
+        .split(/[-–—]|to/)
+        .map((p) => p.trim());
+
     if (parts.length >= 2) {
       startTime = parts[0];
       endTime = parts[1];
@@ -55,288 +121,1203 @@ export function parseBookingSlots(timeSlot = "") {
     slotList = [str];
   }
 
-  const rangeText = `${startTime} – ${endTime}`;
-  return { startTime, endTime, duration, slotCount, slotList, displaySlotText: str, rangeText };
+  return {
+    startTime,
+    endTime,
+    duration,
+    slotCount,
+    slotList,
+    displaySlotText: str,
+    rangeText:
+      `${startTime} – ${endTime}`,
+  };
+}
+
+function drawFootballIcon(
+  doc,
+  cx,
+  cy,
+  r = 2.1
+) {
+  doc.setDrawColor(
+    15,
+    23,
+    42
+  );
+
+  doc.setFillColor(
+    255,
+    255,
+    255
+  );
+
+  doc.setLineWidth(
+    0.35
+  );
+
+  doc.circle(
+    cx,
+    cy,
+    r,
+    "FD"
+  );
+
+  doc.line(
+    cx - r * 0.75,
+    cy - r * 0.1,
+    cx - r * 0.15,
+    cy - r * 0.55
+  );
+
+  doc.line(
+    cx - r * 0.15,
+    cy - r * 0.55,
+    cx + r * 0.55,
+    cy - r * 0.3
+  );
+
+  doc.line(
+    cx + r * 0.55,
+    cy - r * 0.3,
+    cx + r * 0.7,
+    cy + r * 0.45
+  );
+
+  doc.line(
+    cx + r * 0.7,
+    cy + r * 0.45,
+    cx + r * 0.1,
+    cy + r * 0.8
+  );
+
+  doc.line(
+    cx + r * 0.1,
+    cy + r * 0.8,
+    cx - r * 0.5,
+    cy + r * 0.45
+  );
+
+  doc.line(
+    cx - r * 0.5,
+    cy + r * 0.45,
+    cx - r * 0.75,
+    cy - r * 0.1
+  );
+}
+
+function drawCheckBadge(
+  doc,
+  cx,
+  cy
+) {
+  const r = 9;
+
+  doc.setFillColor(
+    255,
+    255,
+    255
+  );
+
+  doc.setDrawColor(
+    226,
+    232,
+    240
+  );
+
+  doc.setLineWidth(
+    0.35
+  );
+
+  doc.circle(
+    cx,
+    cy,
+    r,
+    "FD"
+  );
+
+  doc.setDrawColor(
+    16,
+    185,
+    129
+  );
+
+  doc.setLineWidth(
+    0.75
+  );
+
+  doc.circle(
+    cx,
+    cy,
+    r - 2,
+    "S"
+  );
+
+  doc.setLineWidth(
+    1.0
+  );
+
+  doc.line(
+    cx - 3.1,
+    cy - 0.1,
+    cx - 0.7,
+    cy + 2.7
+  );
+
+  doc.line(
+    cx - 0.7,
+    cy + 2.7,
+    cx + 4.0,
+    cy - 3.0
+  );
+}
+
+function drawMetricBox(
+  doc,
+  bx,
+  by,
+  bw,
+  bh,
+  label,
+  value
+) {
+  doc.setFillColor(
+    255,
+    255,
+    255
+  );
+
+  doc.setDrawColor(
+    15,
+    23,
+    42
+  );
+
+  doc.setLineWidth(
+    0.45
+  );
+
+  doc.roundedRect(
+    bx,
+    by,
+    bw,
+    bh,
+    3.5,
+    3.5,
+    "FD"
+  );
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(8);
+
+  doc.setTextColor(
+    71,
+    85,
+    105
+  );
+
+  doc.text(
+    label,
+    bx + bw / 2,
+    by + 6.3,
+    {
+      align: "center",
+    }
+  );
+
+  const val =
+    String(value ?? "");
+
+  let fontSize = 9.2;
+
+  if (val.length > 19) {
+    fontSize = 7.5;
+  } else if (val.length > 14) {
+    fontSize = 8.2;
+  }
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(
+    fontSize
+  );
+
+  doc.setTextColor(
+    15,
+    23,
+    42
+  );
+
+  doc.text(
+    val,
+    bx + bw / 2,
+    by + 15.0,
+    {
+      align: "center",
+    }
+  );
+}
+
+function drawOfficialPassPill(
+  doc,
+  x,
+  y
+) {
+  const w = 38;
+  const h = 8;
+
+  doc.setFillColor(
+    255,
+    255,
+    255
+  );
+
+  doc.setDrawColor(
+    15,
+    23,
+    42
+  );
+
+  doc.setLineWidth(
+    0.4
+  );
+
+  doc.roundedRect(
+    x,
+    y,
+    w,
+    h,
+    4,
+    4,
+    "FD"
+  );
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(
+    7.2
+  );
+
+  doc.setTextColor(
+    15,
+    23,
+    42
+  );
+
+  doc.text(
+    "OFFICIAL PASS",
+    x + 5,
+    y + 5.4
+  );
+
+  doc.setFillColor(
+    16,
+    185,
+    129
+  );
+
+  doc.circle(
+    x + w - 5,
+    y + h / 2,
+    1.45,
+    "F"
+  );
+}
+
+function drawQrBrackets(
+  doc,
+  x,
+  y,
+  size
+) {
+  doc.setDrawColor(
+    15,
+    23,
+    42
+  );
+
+  doc.setLineWidth(
+    1.0
+  );
+
+  const pad = 1.4;
+  const len = 6.2;
+
+  // Top-left
+  doc.line(
+    x + pad,
+    y + pad,
+    x + pad + len,
+    y + pad
+  );
+
+  doc.line(
+    x + pad,
+    y + pad,
+    x + pad,
+    y + pad + len
+  );
+
+  // Top-right
+  doc.line(
+    x + size - pad,
+    y + pad,
+    x + size - pad - len,
+    y + pad
+  );
+
+  doc.line(
+    x + size - pad,
+    y + pad,
+    x + size - pad,
+    y + pad + len
+  );
+
+  // Bottom-left
+  doc.line(
+    x + pad,
+    y + size - pad,
+    x + pad + len,
+    y + size - pad
+  );
+
+  doc.line(
+    x + pad,
+    y + size - pad,
+    x + pad,
+    y + size - pad - len
+  );
+
+  // Bottom-right
+  doc.line(
+    x + size - pad,
+    y + size - pad,
+    x + size - pad - len,
+    y + size - pad
+  );
+
+  doc.line(
+    x + size - pad,
+    y + size - pad,
+    x + size - pad,
+    y + size - pad - len
+  );
 }
 
 /**
- * Generates exact 1:1 match of the SportX Match Pass Ticket in PDF (Image 3 Replica)
+ * Generates the SportXClub PDF ticket using the same structure
+ * as the WhatsApp reference ticket.
  */
 export async function generateSportXPassDoc({
-  orderId = "order_spx_1790347058513_950",
-  userName = "Ujjwal Bramhnote",
-  userPhone = "7410507803",
-  turfName = "MODI PUBLIC GROUND",
-  location = "Nagpur",
-  sport = "Football",
-  date = "25 Sep 2026",
-  timeSlot = "10:00 PM - 11:00 PM",
+  orderId =
+  "order_spx_1790347058513_950",
+
+  userName =
+  "Ujjwal Bramhnote",
+
+  userPhone =
+  "7410507803",
+
+  turfName =
+  "MODI PUBLIC GROUND",
+
+  location =
+  "Nagpur",
+
+  sport =
+  "Football",
+
+  date =
+  "25 Sep 2026",
+
+  timeSlot =
+  "10:00 PM - 11:00 PM",
+
   amount = 1,
-  paymentDate = "25 Sep 2026, 08:30 PM",
+
+  paymentDate =
+  "25 Sep 2026, 08:30 PM",
 }) {
-  const { rangeText } = parseBookingSlots(timeSlot);
+  const {
+    rangeText,
+  } =
+    parseBookingSlots(
+      timeSlot
+    );
 
-  const doc = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a4",
-  });
+  const doc =
+    new jsPDF({
+      orientation:
+        "portrait",
 
-  // Soft Background Canvas
-  doc.setFillColor(241, 245, 249); // #F1F5F9
-  doc.rect(0, 0, 210, 297, "F");
+      unit:
+        "mm",
 
-  // Center Ticket Card Container (Tall Portrait Proportions ~1:1.45)
-  const cardW = 144;
-  const cardH = 206;
-  const cardX = (210 - cardW) / 2; // 33mm
-  const cardY = (297 - cardH) / 2; // 45.5mm
+      format:
+        "a4",
+    });
 
-  // Card Shadow Simulation (Soft Subtle Blur Under Card)
-  doc.setFillColor(226, 232, 240);
-  doc.roundedRect(cardX - 0.6, cardY + 0.6, cardW + 1.2, cardH + 1.2, 7, 7, "F");
+  // ============================================================
+  // 1. PAGE BACKGROUND
+  // ============================================================
 
-  // Main Pure White Ticket Card (No Outer Dark Border)
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(241, 245, 249);
-  doc.setLineWidth(0.2);
-  doc.roundedRect(cardX, cardY, cardW, cardH, 7, 7, "FD");
+  doc.setFillColor(
+    159,
+    178,
+    199
+  );
 
-  // 1. 🟢 Top Elevated Circular Checkmark Disc Badge
-  const badgeCx = cardX + cardW / 2;
-  const badgeCy = cardY;
-  const badgeR = 8.5;
+  doc.rect(
+    0,
+    0,
+    210,
+    297,
+    "F"
+  );
 
-  // Disc Body
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(241, 245, 249);
-  doc.setLineWidth(0.3);
-  doc.circle(badgeCx, badgeCy, badgeR, "FD");
+  // ============================================================
+  // 2. LARGE TICKET
+  // ============================================================
 
-  // Inner Green Ring
-  doc.setDrawColor(16, 185, 129); // #10B981
-  doc.setLineWidth(0.7);
-  doc.circle(badgeCx, badgeCy, badgeR - 1.8, "S");
+  const cardW = 176;
+  const cardH = 248;
 
-  // Sharp Green Checkmark
-  doc.setDrawColor(16, 185, 129);
-  doc.setLineWidth(0.85);
-  doc.line(badgeCx - 2.8, badgeCy - 0.2, badgeCx - 0.6, badgeCy + 2.4);
-  doc.line(badgeCx - 0.6, badgeCy + 2.4, badgeCx + 3.2, badgeCy - 2.4);
+  const cardX =
+    (210 - cardW) / 2;
 
-  // 2. Header: Payment Successful + Venue Name + City + Order ID
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14.5);
-  doc.setTextColor(16, 185, 129);
-  doc.text("Payment Successful!", badgeCx, cardY + 17, { align: "center" });
+  const cardY =
+    (297 - cardH) / 2;
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(15, 23, 42); // #0F172A
-  doc.text(String(turfName || "MODI PUBLIC GROUND").toUpperCase(), badgeCx, cardY + 25, { align: "center" });
+  // Shadow
+  doc.setFillColor(
+    133,
+    153,
+    175
+  );
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(71, 85, 105); // #475569
-  doc.text(String(location || "Nagpur"), badgeCx, cardY + 31, { align: "center" });
+  doc.roundedRect(
+    cardX + 0.8,
+    cardY + 1.3,
+    cardW,
+    cardH,
+    7,
+    7,
+    "F"
+  );
 
-  doc.setFont("courier", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(100, 116, 139); // #64748B
-  doc.text(String(orderId || "order_spx_1790347058513_950"), badgeCx, cardY + 36.5, { align: "center" });
+  // White ticket + navy border
+  doc.setFillColor(
+    255,
+    255,
+    255
+  );
 
-  // 3. Sport Pill Badge (Stadium Oval with Thin Dark Border)
-  const sportUpper = String(sport || "FOOTBALL").toUpperCase();
-  const sportPillW = 34;
-  const sportPillH = 6.5;
-  const sportPillX = badgeCx - sportPillW / 2;
-  const sportPillY = cardY + 41.5;
+  doc.setDrawColor(
+    15,
+    42,
+    67
+  );
 
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(30, 41, 59); // slate-800
-  doc.setLineWidth(0.35);
-  doc.roundedRect(sportPillX, sportPillY, sportPillW, sportPillH, 3.25, 3.25, "FD");
+  doc.setLineWidth(
+    1.15
+  );
 
-  // Sport Icon Mini Circle
-  doc.setDrawColor(30, 41, 59);
-  doc.circle(sportPillX + 4.5, sportPillY + 3.25, 1.6, "S");
+  doc.roundedRect(
+    cardX,
+    cardY,
+    cardW,
+    cardH,
+    7,
+    7,
+    "FD"
+  );
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.setTextColor(15, 23, 42);
-  doc.text(sportUpper, sportPillX + 19, sportPillY + 4.6, { align: "center" });
+  const centerX =
+    cardX + cardW / 2;
 
-  // 4. Pass Holder Name & Mobile Number
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14.5);
-  doc.setTextColor(15, 23, 42);
-  doc.text(String(userName || "Ujjwal Bramhnote"), badgeCx, cardY + 56.5, { align: "center" });
+  // ============================================================
+  // 3. SUCCESS BADGE
+  // ============================================================
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  doc.setTextColor(71, 85, 105);
-  doc.text(`Mobile Number: ${userPhone || "7410507803"}`, badgeCx, cardY + 63, { align: "center" });
+  drawCheckBadge(
+    doc,
+    centerX,
+    cardY
+  );
 
-  // 5. Emerald Green Center Divider with Solid Emerald Dot
-  const lineY = cardY + 69.5;
-  doc.setDrawColor(16, 185, 129); // #10B981
-  doc.setLineWidth(0.45);
-  doc.line(cardX + 12, lineY, cardX + cardW - 12, lineY);
+  // ============================================================
+  // 4. HEADER
+  // ============================================================
 
-  doc.setFillColor(16, 185, 129);
-  doc.circle(badgeCx, lineY, 1.5, "F");
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
 
-  // 6. 3 Rounded Detail Cards Grid (Side by Side Horizontally)
-  const cardRowY = cardY + 76;
-  const boxW = 37;
-  const boxH = 17;
-  const gap = 4.5;
-  const totalBoxesW = boxW * 3 + gap * 2; // 120mm
-  const startBoxX = cardX + (cardW - totalBoxesW) / 2;
+  doc.setFontSize(
+    15.5
+  );
 
-  const drawMetricBox = (bx, by, label, val) => {
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(51, 65, 85); // slate-700
-    doc.setLineWidth(0.35);
-    doc.roundedRect(bx, by, boxW, boxH, 3.2, 3.2, "FD");
+  doc.setTextColor(
+    16,
+    185,
+    129
+  );
 
-    // Top Label
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    doc.setTextColor(71, 85, 105); // slate-600
-    doc.text(label, bx + boxW / 2, by + 5.2, { align: "center" });
+  doc.text(
+    "Payment Successful!",
+    centerX,
+    cardY + 18,
+    {
+      align: "center",
+    }
+  );
 
-    // Value
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.setTextColor(15, 23, 42);
-    doc.text(String(val), bx + boxW / 2, by + 12.2, { align: "center" });
-  };
+  // Venue
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
 
-  const formattedAmount = `INR ${Number(amount || 0).toLocaleString("en-IN")}`;
-  const displaySlot = rangeText || timeSlot || "10:00 PM - 11:00 PM";
+  doc.setFontSize(
+    14.2
+  );
 
-  drawMetricBox(startBoxX, cardRowY, "Event Date:", String(date || "25 Sep 2026"));
-  drawMetricBox(startBoxX + boxW + gap, cardRowY, "Event Time Slot:", String(displaySlot));
-  drawMetricBox(startBoxX + (boxW + gap) * 2, cardRowY, "Amount Paid:", formattedAmount);
+  doc.setTextColor(
+    15,
+    23,
+    42
+  );
 
-  // 7. Perforated Notch Tear Line with Semicircular Cutouts
-  const tearY = cardY + 110;
-  const notchR = 5.0;
+  const venue =
+    String(
+      turfName ||
+      "MODI PUBLIC GROUND"
+    ).toUpperCase();
 
-  // Background cutouts
-  doc.setFillColor(241, 245, 249);
-  doc.circle(cardX, tearY, notchR, "F");
-  doc.circle(cardX + cardW, tearY, notchR, "F");
+  doc.text(
+    venue.length > 28
+      ? venue.slice(0, 27) + "..."
+      : venue,
+    centerX,
+    cardY + 27,
+    {
+      align: "center",
+    }
+  );
 
-  // Dashed Perforation Line
-  doc.setDrawColor(203, 213, 225); // slate-300
-  doc.setLineWidth(0.4);
-  doc.setLineDashPattern([1.5, 1.5], 0);
-  doc.line(cardX + notchR + 2, tearY, cardX + cardW - notchR - 2, tearY);
-  doc.setLineDashPattern([], 0);
+  // Location
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
 
-  // 8. Bottom Section: Left Side Details + Right Bracketed QR Code
-  const stubLeftX = cardX + 14;
-  const stubY = tearY + 14;
+  doc.setFontSize(
+    10.5
+  );
 
-  // Payment Date Label & Value
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(71, 85, 105);
-  doc.text("Payment Date:", stubLeftX, stubY);
+  doc.setTextColor(
+    71,
+    85,
+    105
+  );
 
-  const displayPaymentDate = paymentDate || "25 Sep 2026, 08:30 PM";
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.setTextColor(15, 23, 42);
-  doc.text(displayPaymentDate, stubLeftX, stubY + 6.5);
+  doc.text(
+    String(
+      location || "Nagpur"
+    ),
+    centerX,
+    cardY + 34.5,
+    {
+      align: "center",
+    }
+  );
 
-  // Stadium Pill: OFFICIAL PASS 🟢
-  const offPillY = stubY + 14;
-  const offPillW = 34;
-  const offPillH = 7.0;
+  // Order ID
+  doc.setFont(
+    "courier",
+    "normal"
+  );
 
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(30, 41, 59); // slate-800
-  doc.setLineWidth(0.35);
-  doc.roundedRect(stubLeftX, offPillY, offPillW, offPillH, 3.5, 3.5, "FD");
+  doc.setFontSize(
+    8.5
+  );
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.setTextColor(15, 23, 42);
-  doc.text("OFFICIAL PASS", stubLeftX + 4.5, offPillY + 4.8);
+  doc.setTextColor(
+    100,
+    116,
+    139
+  );
 
-  // Right Solid Green Circle Dot
-  doc.setFillColor(16, 185, 129);
-  doc.circle(stubLeftX + offPillW - 4.5, offPillY + 3.5, 1.4, "F");
+  doc.text(
+    String(
+      orderId ||
+      "SportXClub-Pass"
+    ),
+    centerX,
+    cardY + 41,
+    {
+      align: "center",
+    }
+  );
 
-  // Right Side: Large Bracketed QR Code
-  const qrW = 42;
-  const qrH = 42;
-  const qrX = cardX + cardW - 14 - qrW;
-  const qrY = stubY - 4;
+  // ============================================================
+  // 5. SPORT PILL
+  // ============================================================
 
-  // QR Container Box
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(241, 245, 249);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(qrX, qrY, qrW, qrH, 3.5, 3.5, "FD");
+  const sportUpper =
+    String(
+      sport || "Football"
+    ).toUpperCase();
 
-  // 4 Corner Bracket Markers [  ]
-  doc.setDrawColor(15, 23, 42);
-  doc.setLineWidth(0.9);
-  const brkLen = 5.5;
-  const brkPad = 1.2;
+  const sportPillW =
+    Math.max(
+      42,
+      Math.min(
+        52,
+        sportUpper.length *
+        2.7 +
+        17
+      )
+    );
 
-  // Top-Left
-  doc.line(qrX + brkPad, qrY + brkPad, qrX + brkPad + brkLen, qrY + brkPad);
-  doc.line(qrX + brkPad, qrY + brkPad, qrX + brkPad, qrY + brkPad + brkLen);
-  // Top-Right
-  doc.line(qrX + qrW - brkPad, qrY + brkPad, qrX + qrW - brkPad - brkLen, qrY + brkPad);
-  doc.line(qrX + qrW - brkPad, qrY + brkPad, qrX + qrW - brkPad, qrY + brkPad + brkLen);
-  // Bottom-Left
-  doc.line(qrX + brkPad, qrY + qrH - brkPad, qrX + brkPad + brkLen, qrY + qrH - brkPad);
-  doc.line(qrX + brkPad, qrY + qrH - brkPad, qrX + brkPad, qrY + qrH - brkPad - brkLen);
-  // Bottom-Right
-  doc.line(qrX + qrW - brkPad, qrY + qrH - brkPad, qrX + qrW - brkPad - brkLen, qrY + qrH - brkPad);
-  doc.line(qrX + qrW - brkPad, qrY + qrH - brkPad, qrX + qrW - brkPad, qrY + qrH - brkPad - brkLen);
+  const sportPillH = 8.5;
+
+  const sportPillX =
+    centerX -
+    sportPillW / 2;
+
+  const sportPillY =
+    cardY + 46.5;
+
+  doc.setFillColor(
+    255,
+    255,
+    255
+  );
+
+  doc.setDrawColor(
+    15,
+    23,
+    42
+  );
+
+  doc.setLineWidth(
+    0.45
+  );
+
+  doc.roundedRect(
+    sportPillX,
+    sportPillY,
+    sportPillW,
+    sportPillH,
+    sportPillH / 2,
+    sportPillH / 2,
+    "FD"
+  );
+
+  drawFootballIcon(
+    doc,
+    sportPillX + 6,
+    sportPillY +
+    sportPillH / 2,
+    2.0
+  );
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(
+    8.3
+  );
+
+  doc.setTextColor(
+    15,
+    23,
+    42
+  );
+
+  doc.text(
+    sportUpper,
+    sportPillX + 11,
+    sportPillY + 5.7
+  );
+
+  // ============================================================
+  // 6. USER DETAILS
+  // ============================================================
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(
+    15.5
+  );
+
+  doc.setTextColor(
+    15,
+    23,
+    42
+  );
+
+  doc.text(
+    String(
+      userName ||
+      "SportX Player"
+    ),
+    centerX,
+    cardY + 64,
+    {
+      align: "center",
+    }
+  );
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(
+    10
+  );
+
+  doc.setTextColor(
+    71,
+    85,
+    105
+  );
+
+  doc.text(
+    `Mobile Number: ${userPhone || "-"
+    }`,
+    centerX,
+    cardY + 71,
+    {
+      align: "center",
+    }
+  );
+
+  // ============================================================
+  // 7. GREEN DIVIDER
+  // ============================================================
+
+  const lineY =
+    cardY + 78;
+
+  doc.setDrawColor(
+    16,
+    185,
+    129
+  );
+
+  doc.setLineWidth(
+    0.45
+  );
+
+  doc.line(
+    cardX + 12,
+    lineY,
+    centerX - 2.2,
+    lineY
+  );
+
+  doc.line(
+    centerX + 2.2,
+    lineY,
+    cardX + cardW - 12,
+    lineY
+  );
+
+  doc.setFillColor(
+    16,
+    185,
+    129
+  );
+
+  doc.circle(
+    centerX,
+    lineY,
+    1.65,
+    "F"
+  );
+
+  // ============================================================
+  // 8. THREE METRIC BOXES
+  // ============================================================
+
+  const rowY =
+    cardY + 86;
+
+  const boxW = 51.5;
+  const boxH = 22;
+  const gap = 5;
+
+  const totalW =
+    boxW * 3 +
+    gap * 2;
+
+  const startX =
+    cardX +
+    (cardW - totalW) / 2;
+
+  const formattedAmount =
+    `₹${Number(
+      amount || 0
+    ).toLocaleString(
+      "en-IN"
+    )}`;
+
+  const displaySlot =
+    rangeText ||
+    timeSlot ||
+    "Scheduled Time";
+
+  drawMetricBox(
+    doc,
+    startX,
+    rowY,
+    boxW,
+    boxH,
+    "Event Date:",
+    String(date || "")
+  );
+
+  drawMetricBox(
+    doc,
+    startX + boxW + gap,
+    rowY,
+    boxW,
+    boxH,
+    "Event Time Slot:",
+    String(displaySlot)
+  );
+
+  drawMetricBox(
+    doc,
+    startX +
+    (boxW + gap) * 2,
+    rowY,
+    boxW,
+    boxH,
+    "Amount Paid:",
+    formattedAmount
+  );
+
+  // ============================================================
+  // 9. PERFORATED DIVIDER
+  // ============================================================
+
+  const tearY =
+    cardY + 154;
+
+  const notchR = 5.2;
+
+  doc.setFillColor(
+    159,
+    178,
+    199
+  );
+
+  doc.circle(
+    cardX,
+    tearY,
+    notchR,
+    "F"
+  );
+
+  doc.circle(
+    cardX + cardW,
+    tearY,
+    notchR,
+    "F"
+  );
+
+  doc.setDrawColor(
+    203,
+    213,
+    225
+  );
+
+  doc.setLineWidth(
+    0.45
+  );
+
+  doc.setLineDashPattern(
+    [1.8, 1.7],
+    0
+  );
+
+  doc.line(
+    cardX + notchR + 2,
+    tearY,
+    cardX + cardW - notchR - 2,
+    tearY
+  );
+
+  doc.setLineDashPattern(
+    [],
+    0
+  );
+
+  // Navy notch accents
+  doc.setDrawColor(
+    15,
+    42,
+    67
+  );
+
+  doc.setLineWidth(
+    0.55
+  );
+
+  doc.line(
+    cardX + 0.7,
+    tearY - 5.2,
+    cardX + 4.2,
+    tearY - 1.7
+  );
+
+  doc.line(
+    cardX + 0.7,
+    tearY + 5.2,
+    cardX + 4.2,
+    tearY + 1.7
+  );
+
+  doc.line(
+    cardX + cardW - 0.7,
+    tearY - 5.2,
+    cardX + cardW - 4.2,
+    tearY - 1.7
+  );
+
+  doc.line(
+    cardX + cardW - 0.7,
+    tearY + 5.2,
+    cardX + cardW - 4.2,
+    tearY + 1.7
+  );
+
+  // ============================================================
+  // 10. PAYMENT DATE
+  // ============================================================
+
+  const stubX =
+    cardX + 12;
+
+  const stubY =
+    tearY + 16;
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(
+    8.8
+  );
+
+  doc.setTextColor(
+    71,
+    85,
+    105
+  );
+
+  doc.text(
+    "Payment Date:",
+    stubX,
+    stubY
+  );
+
+  doc.setFont(
+    "helvetica",
+    "bold"
+  );
+
+  doc.setFontSize(
+    9.2
+  );
+
+  doc.setTextColor(
+    15,
+    23,
+    42
+  );
+
+  doc.text(
+    String(
+      paymentDate || ""
+    ),
+    stubX,
+    stubY + 7.5
+  );
+
+  drawOfficialPassPill(
+    doc,
+    stubX,
+    stubY + 17
+  );
+
+  // ============================================================
+  // 11. QR CODE
+  // ============================================================
+
+  const qrSize = 50;
+
+  const qrX =
+    cardX +
+    cardW -
+    12 -
+    qrSize;
+
+  const qrY =
+    tearY + 9;
+
+  doc.setFillColor(
+    255,
+    255,
+    255
+  );
+
+  doc.rect(
+    qrX,
+    qrY,
+    qrSize,
+    qrSize,
+    "F"
+  );
+
+  drawQrBrackets(
+    doc,
+    qrX,
+    qrY,
+    qrSize
+  );
 
   try {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(orderId || "SportXClub-Pass")}`;
-    const res = await fetch(qrUrl);
+    const qrUrl =
+      `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=` +
+      encodeURIComponent(
+        orderId ||
+        "SportXClub-Pass"
+      );
+
+    const res =
+      await fetch(qrUrl);
+
     if (res.ok) {
-      if (typeof window !== "undefined") {
-        const blob = await res.blob();
-        const base64 = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-        doc.addImage(base64, "PNG", qrX + 3.0, qrY + 3.0, qrW - 6.0, qrH - 6.0);
+      if (
+        typeof window !==
+        "undefined"
+      ) {
+        const blob =
+          await res.blob();
+
+        const base64 =
+          await new Promise(
+            (resolve) => {
+              const reader =
+                new FileReader();
+
+              reader.onloadend =
+                () =>
+                  resolve(
+                    reader.result
+                  );
+
+              reader.readAsDataURL(
+                blob
+              );
+            }
+          );
+
+        doc.addImage(
+          base64,
+          "PNG",
+          qrX + 5,
+          qrY + 5,
+          qrSize - 10,
+          qrSize - 10
+        );
       } else {
-        const arrayBuffer = await res.arrayBuffer();
-        const base64 = `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
-        doc.addImage(base64, "PNG", qrX + 3.0, qrY + 3.0, qrW - 6.0, qrH - 6.0);
+        const arrayBuffer =
+          await res.arrayBuffer();
+
+        const base64 =
+          `data:image/png;base64,${Buffer.from(
+            arrayBuffer
+          ).toString("base64")}`;
+
+        doc.addImage(
+          base64,
+          "PNG",
+          qrX + 5,
+          qrY + 5,
+          qrSize - 10,
+          qrSize - 10
+        );
       }
     }
   } catch (e) {
-    console.warn("QR embedding in PDF:", e);
+    console.warn(
+      "QR embedding in PDF:",
+      e
+    );
   }
 
-  // 9. Footer Note
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7.5);
-  doc.setTextColor(100, 116, 139);
-  doc.text("Please present this PDF Pass at the gate entry desk on match day.", badgeCx, cardY + cardH - 8, { align: "center" });
+  // ============================================================
+  // 12. FOOTER
+  // ============================================================
+
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(
+    8.2
+  );
+
+  doc.setTextColor(
+    71,
+    85,
+    105
+  );
+
+  doc.text(
+    "Please present this PDF Pass at the gate entry desk on match day.",
+    centerX,
+    cardY + cardH - 10,
+    {
+      align: "center",
+    }
+  );
 
   return doc;
 }
 
-/**
- * Helper to download PDF directly in browser
- */
-export async function downloadSportXPassPdf(passData, filename = "SportXClub_Pass.pdf") {
-  const doc = await generateSportXPassDoc(passData);
+export async function downloadSportXPassPdf(
+  passData,
+  filename =
+    "SportXClub_Pass.pdf"
+) {
+  const doc =
+    await generateSportXPassDoc(
+      passData
+    );
+
   doc.save(filename);
 }

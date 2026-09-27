@@ -1,19 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { Button } from "../components/ui/button";
-import { Card, CardContent } from "../components/ui/card";
 import {
   CheckCircle2,
-  Calendar,
-  Clock,
-  MapPin,
   Download,
   ArrowRight,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { Container } from "../components/ui/container";
 import { toast } from "sonner";
-import { jsPDF } from "jspdf";
 import { downloadSportXPassPdf, parseBookingSlots } from "../utils/ticket-pdf-generator";
 import { GlobalFooter } from "../components/layout/GlobalFooter";
 
@@ -53,7 +48,33 @@ export function BookingSuccess() {
   const [paidMemberIds, setPaidMemberIds] = useState(
     isSplit ? [hostId] : members.map(m => m.id)
   );
-  const paidMembers = members.filter(member => member.role === "host" && paidMemberIds.includes(member.id));
+
+  const getSportEmoji = (sport) => {
+    const s = String(sport || "").toLowerCase();
+    if (s.includes("cricket")) return "🏏";
+    if (s.includes("football") || s.includes("soccer")) return "⚽";
+    if (s.includes("badminton")) return "🏸";
+    if (s.includes("tennis")) return "🎾";
+    if (s.includes("basketball")) return "🏀";
+    if (s.includes("pickleball")) return "🏓";
+    if (s.includes("swimming")) return "🏊";
+    if (s.includes("volleyball")) return "🏐";
+    return "⚡";
+  };
+
+  const currentPaymentDate = (() => {
+    try {
+      const now = new Date();
+      return now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) + ", " + now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    } catch {
+      return "26 Sep 2026, 08:30 PM";
+    }
+  })();
+  
+  const playerName = bookingData?.userName || localStorage.getItem("userName") || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}")?.name : "") || "SportX Player";
+  const playerPhone = bookingData?.phone || bookingData?.userPhone || localStorage.getItem("userPhone") || "7410507803";
+  const orderId = bookingData?.bookingId || bookingData?.orderId || "order_spx_1790347058513_950";
+  const sportStr = bookingData?.sport || "FOOTBALL";
 
   // Simulate players payment completion after 10 seconds
   useEffect(() => {
@@ -70,14 +91,17 @@ export function BookingSuccess() {
 
     try {
       await downloadSportXPassPdf({
-        orderId: bookingData?.bookingId || bookingData?.orderId || "SPX-MATCH-PASS",
-        userName: "You (Host)",
+        orderId: orderId,
+        userName: playerName,
+        userPhone: playerPhone,
         turfName: venueName || "SportX Arena",
-        sport: bookingData?.sport || "Cricket",
+        location: venueAddress?.split(",")?.slice(-2)?.[0]?.trim() || venueAddress?.split(",")?.slice(-1)?.[0]?.trim() || "Nagpur",
+        sport: sportStr,
         date: dateStr || "2026-09-25",
         timeSlot: timeStr || "06:00 PM - 07:00 PM",
         amount: (isSplit ? costPerPlayer : totalPrice) || 0,
-      }, "SportXClub-Match-Pass.pdf");
+        paymentDate: currentPaymentDate,
+      }, `SportXClub_Pass_${orderId}.pdf`);
 
       toast.dismiss(loadingToastId);
       toast.success("SportX Entry Pass downloaded successfully!");
@@ -180,25 +204,25 @@ export function BookingSuccess() {
                 </p>
 
                 <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono pt-0.5">
-                  <span>{bookingData?.bookingId || bookingData?.orderId || "order_spx_1790347058513_950"}</span>
+                  <span>{orderId}</span>
                 </div>
               </div>
 
               {/* 2. Sport Badge Pill */}
               <div className="flex justify-center pt-0.5 pb-1">
                 <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-slate-800 dark:border-slate-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider shadow-2xs">
-                  <span>⚽</span>
-                  <span>{String(bookingData?.sport || "FOOTBALL").toUpperCase()}</span>
+                  <span>{getSportEmoji(sportStr)}</span>
+                  <span>{String(sportStr).toUpperCase()}</span>
                 </div>
               </div>
 
               {/* 3. Player Full Name & Mobile Number */}
               <div className="space-y-1 text-center pt-0.5">
                 <h3 className="text-2xl sm:text-[26px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
-                  {bookingData?.userName || localStorage.getItem("userName") || "Ujjwal Bramhnote"}
+                  {playerName}
                 </h3>
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Mobile Number: {bookingData?.phone || bookingData?.userPhone || localStorage.getItem("userPhone") || "7410507803"}
+                  Mobile Number: {playerPhone}
                 </p>
               </div>
 
@@ -255,7 +279,7 @@ export function BookingSuccess() {
                   <div>
                     <p className="text-xs text-slate-600 dark:text-slate-400 font-normal">Payment Date:</p>
                     <p className="text-sm font-bold text-slate-900 dark:text-white pt-0.5 leading-tight">
-                      25 Sep 2026, 08:30 PM
+                      {currentPaymentDate}
                     </p>
                   </div>
 
@@ -275,7 +299,7 @@ export function BookingSuccess() {
                   <div className="absolute bottom-1 right-1 w-4 h-4 border-b-2 border-r-2 border-slate-900 dark:border-white rounded-br-[2px] pointer-events-none" />
 
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(bookingData?.bookingId || "SportXClub-Pass")}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(orderId)}`}
                     alt="Gate Pass QR"
                     className="h-24 w-24 sm:h-28 sm:w-28 object-contain"
                   />

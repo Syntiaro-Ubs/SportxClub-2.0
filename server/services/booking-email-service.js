@@ -886,6 +886,7 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
           duration,
           slotCount,
           slotList,
+          timeSlot: displaySlotText,
           amountPaid,
           turfLocation,
           bookingCreatedAt,
