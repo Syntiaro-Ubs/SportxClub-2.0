@@ -177,7 +177,7 @@ export function TurfReportsView() {
         setData(json);
         try {
           sessionStorage.setItem(CACHE_KEY, JSON.stringify(json));
-        } catch {}
+        } catch { }
         setLastRefreshed(new Date());
         if (isManual) toast.success("Turf reports refreshed successfully!");
       } else {
@@ -566,16 +566,16 @@ export function TurfReportsView() {
     const bookingsToExport = fromModal && modalFilteredTurfData
       ? modalFilteredTurfData.visibleBookings
       : (targetTurf.allTurfBookings || rawBookings.filter((b) => {
-          const matchTurf =
-            (targetTurf.turfId && Number(b.turf_id) === Number(targetTurf.turfId)) ||
-            (b.turf_name && b.turf_name.trim().toLowerCase() === targetTurf.turfName?.trim().toLowerCase());
-          if (!matchTurf) return false;
-          const bDate = b.date || b.created_at;
-          return (
-            isDateInPeriod(bDate, periodFilter, customStartDate, customEndDate) ||
-            isDateInPeriod(b.created_at, periodFilter, customStartDate, customEndDate)
-          );
-        }));
+        const matchTurf =
+          (targetTurf.turfId && Number(b.turf_id) === Number(targetTurf.turfId)) ||
+          (b.turf_name && b.turf_name.trim().toLowerCase() === targetTurf.turfName?.trim().toLowerCase());
+        if (!matchTurf) return false;
+        const bDate = b.date || b.created_at;
+        return (
+          isDateInPeriod(bDate, periodFilter, customStartDate, customEndDate) ||
+          isDateInPeriod(b.created_at, periodFilter, customStartDate, customEndDate)
+        );
+      }));
 
     const periodName = fromModal
       ? getPeriodLabel(activeModalPeriod, activeModalCustomStart, activeModalCustomEnd)
@@ -650,16 +650,16 @@ export function TurfReportsView() {
       const bookingsList = fromModal && modalFilteredTurfData
         ? modalFilteredTurfData.visibleBookings
         : (targetTurf.allTurfBookings || rawBookings.filter((b) => {
-            const matchTurf =
-              (targetTurf.turfId && Number(b.turf_id) === Number(targetTurf.turfId)) ||
-              (b.turf_name && b.turf_name.trim().toLowerCase() === targetTurf.turfName?.trim().toLowerCase());
-            if (!matchTurf) return false;
-            const bDate = b.date || b.created_at;
-            return (
-              isDateInPeriod(bDate, periodFilter, customStartDate, customEndDate) ||
-              isDateInPeriod(b.created_at, periodFilter, customStartDate, customEndDate)
-            );
-          }));
+          const matchTurf =
+            (targetTurf.turfId && Number(b.turf_id) === Number(targetTurf.turfId)) ||
+            (b.turf_name && b.turf_name.trim().toLowerCase() === targetTurf.turfName?.trim().toLowerCase());
+          if (!matchTurf) return false;
+          const bDate = b.date || b.created_at;
+          return (
+            isDateInPeriod(bDate, periodFilter, customStartDate, customEndDate) ||
+            isDateInPeriod(b.created_at, periodFilter, customStartDate, customEndDate)
+          );
+        }));
 
       const periodName = fromModal
         ? getPeriodLabel(activeModalPeriod, activeModalCustomStart, activeModalCustomEnd)
@@ -967,41 +967,36 @@ export function TurfReportsView() {
           <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
             <button
               onClick={() => setPeriodFilter("all")}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodFilter === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${periodFilter === "all" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               All Time
             </button>
             <button
               onClick={() => setPeriodFilter("today")}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodFilter === "today" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${periodFilter === "today" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               Today
             </button>
             <button
               onClick={() => setPeriodFilter("7days")}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodFilter === "7days" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${periodFilter === "7days" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               7 Days
             </button>
             <button
               onClick={() => setPeriodFilter("1month")}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodFilter === "1month" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${periodFilter === "1month" ? "bg-emerald-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               1 Month
             </button>
             <button
               onClick={() => setPeriodFilter("custom")}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                periodFilter === "custom" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${periodFilter === "custom" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               Custom
             </button>
@@ -1020,10 +1015,10 @@ export function TurfReportsView() {
           <button
             type="button"
             onClick={handleExportAllTurfsCSV}
-            className="h-9 px-3.5 inline-flex items-center gap-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white hover:text-white rounded-xl shadow-xs transition-colors cursor-pointer border-0 outline-none"
+            className="h-9 px-3.5 inline-flex items-center gap-2 text-xs font-bold bg-transparent border border-emerald-600 hover:border-emerald-500 hover:ring-2 hover:ring-emerald-500/50 text-emerald-600 rounded-xl transition-all active:scale-95 cursor-pointer outline-none"
           >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
-            <span className="text-white">Export CSV</span>
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-emerald-600">Export CSV</span>
           </button>
         </div>
       </div>
@@ -1078,7 +1073,7 @@ export function TurfReportsView() {
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/10 rounded-full blur-2xl -mr-6 -mt-6 pointer-events-none" />
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800">
+              <span className="text-xs font-extrabold tracking-wider text-emerald-800">
                 Today's Onboarding
               </span>
               <span className="p-2 rounded-xl bg-emerald-600 text-white shadow-sm">
@@ -1094,8 +1089,8 @@ export function TurfReportsView() {
               </span>
             </div>
             <p className="mt-1.5 text-xs text-slate-500 font-medium">
-              {periodKPIs.todayOwnersOnboarded > 0 
-                ? `${periodKPIs.todayOwnersOnboarded} owner application${periodKPIs.todayOwnersOnboarded > 1 ? "s" : ""} today` 
+              {periodKPIs.todayOwnersOnboarded > 0
+                ? `${periodKPIs.todayOwnersOnboarded} owner application${periodKPIs.todayOwnersOnboarded > 1 ? "s" : ""} today`
                 : "Turfs added & live today"}
             </p>
           </CardContent>
@@ -1105,7 +1100,7 @@ export function TurfReportsView() {
         <Card className="border-slate-200/80 bg-white shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-extrabold tracking-wider text-slate-500">
                 Total Registered Turfs
               </span>
               <span className="p-2 rounded-xl bg-blue-50 text-blue-600">
@@ -1130,7 +1125,7 @@ export function TurfReportsView() {
         <Card className="border-slate-200/80 bg-white shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-extrabold tracking-wider text-slate-500">
                 Booked Slots ({globalPeriodLabel})
               </span>
               <span className="p-2 rounded-xl bg-indigo-50 text-indigo-600">
@@ -1155,7 +1150,7 @@ export function TurfReportsView() {
         <Card className="border-slate-200/80 bg-white shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-extrabold tracking-wider text-slate-500">
                 Cancelled Slots ({globalPeriodLabel})
               </span>
               <span className="p-2 rounded-xl bg-rose-50 text-rose-600">
@@ -1166,11 +1161,10 @@ export function TurfReportsView() {
               <span className="text-3xl font-black text-rose-600">
                 {periodKPIs.cancelledBookings}
               </span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                periodKPIs.cancellationRate > 20 
-                  ? "bg-rose-100 text-rose-700" 
-                  : "bg-amber-100 text-amber-700"
-              }`}>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${periodKPIs.cancellationRate > 20
+                ? "bg-rose-100 text-rose-700"
+                : "bg-amber-100 text-amber-700"
+                }`}>
                 {periodKPIs.cancellationRate}% Rate
               </span>
             </div>
@@ -1184,7 +1178,7 @@ export function TurfReportsView() {
         <Card className="border-slate-200/80 bg-white shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-extrabold tracking-wider text-slate-500">
                 Reserved / Blocked
               </span>
               <span className="p-2 rounded-xl bg-amber-50 text-amber-600">
@@ -1388,7 +1382,7 @@ export function TurfReportsView() {
           <Card className="border-slate-200/80 shadow-sm overflow-hidden bg-white">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 uppercase font-black tracking-wider text-[11px]">
+                <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 font-black tracking-wider text-[11px]">
                   <tr>
                     <th className="py-3.5 px-4">Turf Details & City</th>
                     <th className="py-3.5 px-3">Owner Info</th>
@@ -1428,9 +1422,8 @@ export function TurfReportsView() {
                     filteredTurfs.map((turf) => (
                       <tr
                         key={turf.turfId || turf.turfName}
-                        className={`hover:bg-slate-50/80 transition-colors ${
-                          turf.isOnboardedToday ? "bg-emerald-50/40" : ""
-                        }`}
+                        className={`hover:bg-slate-50/80 transition-colors ${turf.isOnboardedToday ? "bg-emerald-50/40" : ""
+                          }`}
                       >
                         {/* Turf Details */}
                         <td className="py-3.5 px-4">
@@ -1498,13 +1491,12 @@ export function TurfReportsView() {
                               {turf.cancelledBookings}
                             </span>
                             {turf.totalBookings > 0 && (
-                              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                                turf.cancellationRate > 20 
-                                  ? "bg-rose-100 text-rose-700" 
-                                  : turf.cancelledBookings > 0 
-                                  ? "bg-amber-100 text-amber-700" 
+                              <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${turf.cancellationRate > 20
+                                ? "bg-rose-100 text-rose-700"
+                                : turf.cancelledBookings > 0
+                                  ? "bg-amber-100 text-amber-700"
                                   : "bg-slate-100 text-slate-500"
-                              }`}>
+                                }`}>
                                 {turf.cancellationRate}%
                               </span>
                             )}
@@ -1768,19 +1760,19 @@ export function TurfReportsView() {
                     <button
                       type="button"
                       onClick={() => handleExportParticularTurfPDF(selectedTurf, true)}
-                      className="h-8 px-3.5 inline-flex items-center gap-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white hover:text-white rounded-xl shadow-xs transition-colors cursor-pointer border-0 outline-none"
+                      className="h-8 px-3.5 inline-flex items-center gap-1.5 text-xs font-bold bg-transparent border border-rose-600 hover:border-rose-500 hover:ring-2 hover:ring-rose-500/50 text-rose-600 rounded-xl transition-all active:scale-95 cursor-pointer outline-none"
                     >
-                      <FileText className="w-3.5 h-3.5 text-white" />
-                      <span className="text-white">Download PDF</span>
+                      <FileText className="w-3.5 h-3.5 text-rose-600" />
+                      <span className="text-rose-600">Download PDF</span>
                     </button>
 
                     <button
                       type="button"
                       onClick={() => handleExportParticularTurfCSV(selectedTurf, true)}
-                      className="h-8 px-3.5 inline-flex items-center gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white hover:text-white rounded-xl shadow-xs transition-colors cursor-pointer border-0 outline-none"
+                      className="h-8 px-3.5 inline-flex items-center gap-1.5 text-xs font-bold bg-transparent border border-emerald-600 hover:border-emerald-500 hover:ring-2 hover:ring-emerald-500/50 text-emerald-600 rounded-xl transition-all active:scale-95 cursor-pointer outline-none"
                     >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
-                      <span className="text-white">Export Excel (CSV)</span>
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-600">Export Excel (CSV)</span>
                     </button>
                   </div>
                 </div>
@@ -1945,13 +1937,12 @@ export function TurfReportsView() {
                             </td>
                             <td className="py-2.5 px-3 text-center">
                               <Badge
-                                className={`text-[10px] font-bold ${
-                                  String(b.status).toLowerCase() === "confirmed"
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : String(b.status).toLowerCase() === "cancelled"
+                                className={`text-[10px] font-bold ${String(b.status).toLowerCase() === "confirmed"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : String(b.status).toLowerCase() === "cancelled"
                                     ? "bg-rose-100 text-rose-800"
                                     : "bg-amber-100 text-amber-800"
-                                }`}
+                                  }`}
                               >
                                 {b.status}
                               </Badge>
@@ -1972,7 +1963,7 @@ export function TurfReportsView() {
                 <button
                   type="button"
                   onClick={() => setIsTurfModalOpen(false)}
-                  className="h-9 px-4 inline-flex items-center justify-center bg-slate-900 text-white hover:text-white hover:bg-slate-800 rounded-xl text-xs font-bold cursor-pointer transition-colors border-0 outline-none"
+                  className="h-9 px-4 inline-flex items-center justify-center bg-transparent border border-slate-900 hover:border-slate-800 hover:ring-2 hover:ring-slate-800/50 text-slate-900 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer outline-none"
                 >
                   Close Ledger
                 </button>

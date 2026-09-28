@@ -389,19 +389,19 @@ export function LoginPage() {
         {/* Unified Form Wrapper */}
         <div className="w-full my-auto space-y-4">
           {/* HEADER LOGO */}
-          <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10">
+          <div className="w-full flex flex-col items-center justify-center m-0 p-0 z-10 -mt-8 sm:-mt-16">
             <Link to="/" className="flex items-center m-0 p-0">
-              <Logo className="h-[120px] sm:h-22" />
+              <Logo className="h-[120px] sm:h-[130px]" />
             </Link>
           </div>
 
           {/* Sign In Form */}
           <div className="space-y-3 pt-1">
             <div className="space-y-0.5 mb-2">
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-foreground leading-tight">
+              <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground leading-tight">
                 {loginType === "owner" ? "Turf Owner & Staff Login" : "Player Login"}
               </h1>
-              <p className="text-xs text-muted-foreground pt-1">
+              <p className="text-[11px] text-muted-foreground pt-1">
                 {loginType === "owner"
                   ? "Enter your credentials below to access your Turf Owner or Staff dashboard."
                   : "Enter your credentials below to access your player profile & bookings."}
@@ -410,7 +410,7 @@ export function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
+                <Label htmlFor="email" className="text-xs font-semibold text-foreground">
                   {loginType === "owner" ? "Email, Turf Owner ID or Staff ID" : "Email Address, Phone or Username"}
                 </Label>
                 <div className="relative">
@@ -420,7 +420,7 @@ export function LoginPage() {
                     name="email"
                     type="text"
                     placeholder={loginType === "owner" ? "Enter your email, Owner ID, or Staff ID" : "Enter your email or phone"}
-                    className="pl-11 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-xs sm:text-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-[10px] sm:placeholder:text-[11px] placeholder:text-muted-foreground bg-background"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -430,7 +430,7 @@ export function LoginPage() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-semibold text-foreground">Password</Label>
+                  <Label htmlFor="password" className="text-xs font-semibold text-foreground">Password</Label>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3.5 top-2.5 h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
@@ -439,7 +439,7 @@ export function LoginPage() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-11 pr-10 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-xs sm:text-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-muted-foreground bg-background"
+                    className="pl-11 pr-10 h-10 rounded-lg border-slate-400/80 dark:border-slate-600 text-sm focus-visible:ring-1 focus-visible:ring-primary focus-visible:border-primary placeholder:text-[10px] sm:placeholder:text-[11px] placeholder:text-muted-foreground bg-background"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
@@ -564,14 +564,14 @@ export function LoginPage() {
                     to="/login"
                     className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
                   >
-                    Are you a Player? Click here to Login
+                    Player Login
                   </Link>
                 ) : (
                   <Link
                     to="/admin-login"
                     className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
                   >
-                    Are you a Turf Owner? Admin Login
+                    Admin Login
                   </Link>
                 )}
               </div>
@@ -764,11 +764,10 @@ export function LoginPage() {
                 setForgotMode("password");
                 setForgotStep(1);
               }}
-              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                forgotMode === "password"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${forgotMode === "password"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted"
+                }`}
             >
               Forgot Password
             </button>
@@ -778,11 +777,10 @@ export function LoginPage() {
                 setForgotMode("email");
                 setForgotStep(1);
               }}
-              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                forgotMode === "email"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${forgotMode === "email"
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-muted"
+                }`}
             >
               Forgot Email
             </button>
