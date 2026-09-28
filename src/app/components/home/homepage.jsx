@@ -437,7 +437,7 @@ export function Navbar() {
         className={cn(
           "sticky top-0 z-50 border-b backdrop-blur-2xl transition-colors duration-200 shadow-sm dark:shadow-[0_4px_30px_rgba(0,0,0,0.6)]",
           isDark
-            ? "border-white/[0.08] bg-black/95 text-white"
+            ? "border-slate-800/80 bg-[#0b0f19]/90 text-white"
             : "border-slate-200/80 bg-white/95 text-slate-900",
         )}
       >
@@ -2631,7 +2631,7 @@ export function HomePage() {
     <div
       className={cn(
         "theme-adaptive min-h-screen",
-        isDark ? "bg-[#050505] text-white" : "bg-white text-slate-900",
+        isDark ? "bg-[#0b0f19] text-white" : "bg-white text-slate-900",
       )}
     >
       <Navbar />

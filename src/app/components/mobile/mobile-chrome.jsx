@@ -154,7 +154,7 @@ export function MobileAppBar() {
 
   return (
     <>
-      <header className="sticky top-0 z-45 border-b border-border/40 bg-background/88 dark:bg-black/88 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
+      <header className="sticky top-0 z-45 border-b border-border/40 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur-2xl md:hidden">
         <div className="flex h-[46px] sm:h-[50px] items-center justify-between px-3.5">
           {/* Left: Brand Identity & Back */}
           <div className="flex items-center gap-2">

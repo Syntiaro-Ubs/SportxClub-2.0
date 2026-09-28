@@ -765,7 +765,7 @@ export function LoginPage() {
                 setForgotStep(1);
               }}
               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${forgotMode === "password"
-                ? "bg-primary text-primary-foreground"
+                ? "border border-emerald-600 bg-transparent text-emerald-600 dark:text-emerald-400"
                 : "text-muted-foreground hover:bg-muted"
                 }`}
             >
@@ -778,7 +778,7 @@ export function LoginPage() {
                 setForgotStep(1);
               }}
               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${forgotMode === "email"
-                ? "bg-primary text-primary-foreground"
+                ? "border border-emerald-600 bg-transparent text-emerald-600 dark:text-emerald-400"
                 : "text-muted-foreground hover:bg-muted"
                 }`}
             >
@@ -806,7 +806,7 @@ export function LoginPage() {
               <Button
                 type="submit"
                 disabled={isOtpLoading}
-                className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs rounded-xl cursor-pointer"
+                className="w-full h-10 bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-600 font-bold text-xs rounded-xl cursor-pointer transition-colors"
               >
                 {isOtpLoading ? "Generating OTP..." : "Send OTP Code"}
               </Button>

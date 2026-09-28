@@ -260,7 +260,7 @@ export function OwnerLayout() {
 
       {/* Main Content Area — Expands to 100% full width when sidebar is hidden */}
       <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-56"}`}>
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/80 dark:bg-black/80 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 md:hidden">
             <button
               type="button"

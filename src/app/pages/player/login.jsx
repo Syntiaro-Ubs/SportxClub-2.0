@@ -631,7 +631,7 @@ export function PlayerLoginPage() {
               }}
               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                 forgotMode === "password"
-                  ? "bg-emerald-600 text-white"
+                  ? "border border-emerald-600 bg-transparent text-emerald-600 dark:text-emerald-400"
                   : "text-muted-foreground hover:bg-muted"
               }`}
             >
@@ -645,7 +645,7 @@ export function PlayerLoginPage() {
               }}
               className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
                 forgotMode === "email"
-                  ? "bg-emerald-600 text-white"
+                  ? "border border-emerald-600 bg-transparent text-emerald-600 dark:text-emerald-400"
                   : "text-muted-foreground hover:bg-muted"
               }`}
             >
@@ -673,7 +673,7 @@ export function PlayerLoginPage() {
               <Button
                 type="submit"
                 disabled={isOtpLoading}
-                className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                className="w-full h-10 bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-600 font-bold text-xs rounded-xl cursor-pointer transition-colors"
               >
                 {isOtpLoading ? "Generating OTP..." : "Send OTP Code"}
               </Button>
