@@ -1787,7 +1787,7 @@ export function CMSDashboard() {
                 </a>
               </p>
               <span className="text-[10px] font-mono font-extrabold text-[#64748b] tracking-normal lowercase px-2.5 py-0.5 rounded-full bg-[#f1f5f9] border border-[#e2e8f0]">
-                v2.0.4
+                v1.0.1
               </span>
             </div>
           )}

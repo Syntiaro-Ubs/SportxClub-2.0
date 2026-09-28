@@ -1549,7 +1549,8 @@ export function UserProfile() {
               </div>
               <Button
                 size="sm"
-                className="w-full font-bold cursor-pointer rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white"
+                variant="outline"
+                className="w-full font-bold cursor-pointer rounded-xl bg-transparent border border-slate-300 text-slate-700 hover:border-emerald-600 hover:text-emerald-600 hover:bg-transparent dark:border-slate-700 dark:text-slate-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400 dark:hover:bg-transparent transition-colors"
                 disabled={selectedProductId === item.id}
                 onClick={() => {
                   handlePurchase(item, `Purchased ${item.name || item.title}! Billed to SportX Wallet.`);

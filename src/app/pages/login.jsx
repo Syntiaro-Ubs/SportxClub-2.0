@@ -579,6 +579,15 @@ export function LoginPage() {
           </div>
         </div>
 
+        {/* Version Indicator */}
+        <div className="absolute bottom-6 left-0 w-full flex flex-col items-center justify-center pointer-events-none">
+          <p className="text-[11px] font-medium tracking-widest text-slate-700 dark:text-slate-400">
+            POWERED BY <span className="text-[#3b82f6] dark:text-[#3b9388] text-primary font-semibold">SYNTIARO</span>
+          </p>
+          <div className="w-40 border-t border-slate-300 dark:border-slate-700 my-2"></div>
+          <p className="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-500 tracking-wider">v1.0.1</p>
+        </div>
+
         {/* Premium UI/UX Success Modal Overlay */}
         {isSuccess && (
           <div className="absolute inset-0 bg-card/95 backdrop-blur-md z-30 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
