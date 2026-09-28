@@ -11,8 +11,9 @@ html {
   scrollbar-gutter: stable;
 }
 
+html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* High-specificity override over react-remove-scroll / Radix UI injected styles */

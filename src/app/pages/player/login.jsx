@@ -629,11 +629,10 @@ export function PlayerLoginPage() {
                 setForgotMode("password");
                 setForgotStep(1);
               }}
-              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                forgotMode === "password"
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${forgotMode === "password"
                   ? "border border-emerald-600 bg-transparent text-emerald-600 dark:text-emerald-400"
                   : "text-muted-foreground hover:bg-muted"
-              }`}
+                }`}
             >
               Forgot Password
             </button>
@@ -643,11 +642,10 @@ export function PlayerLoginPage() {
                 setForgotMode("email");
                 setForgotStep(1);
               }}
-              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                forgotMode === "email"
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${forgotMode === "email"
                   ? "border border-emerald-600 bg-transparent text-emerald-600 dark:text-emerald-400"
                   : "text-muted-foreground hover:bg-muted"
-              }`}
+                }`}
             >
               Forgot Email
             </button>
@@ -696,7 +694,7 @@ export function PlayerLoginPage() {
                 <Input
                   value={forgotOtp}
                   onChange={(e) => setForgotOtp(e.target.value)}
-                  placeholder="e.g. 123456"
+                  placeholder="******"
                   maxLength={6}
                   className="h-10 text-center font-mono text-base tracking-widest rounded-xl"
                   required

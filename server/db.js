@@ -161,6 +161,19 @@ export async function initDatabase() {
       await pool.query("ALTER TABLE turf_owners ADD COLUMN cashfree_beneficiary_id VARCHAR(100) DEFAULT NULL");
     } catch (e) {}
     try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN city VARCHAR(100) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN state VARCHAR(100) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE turfs ADD COLUMN pincode VARCHAR(20) DEFAULT NULL");
+    } catch (e) {}
+    try {
+      // Auto populate city for any existing Nanded turfs
+      await pool.query("UPDATE turfs SET city = 'Nanded', state = 'Maharashtra' WHERE location LIKE '%Nanded%' AND (city IS NULL OR city = '' OR city REGEXP '^[0-9]+$')");
+    } catch (e) {}
+    try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS owner_settlements (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -271,6 +284,9 @@ async function createTables() {
       id INT AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
       location VARCHAR(255),
+      city VARCHAR(100) DEFAULT NULL,
+      state VARCHAR(100) DEFAULT NULL,
+      pincode VARCHAR(20) DEFAULT NULL,
       sport_type VARCHAR(100),
       price_per_hour DECIMAL(10,2),
       rating DECIMAL(3,2) DEFAULT 0.0,

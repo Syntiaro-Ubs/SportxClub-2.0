@@ -435,7 +435,7 @@ export function Navbar() {
     <>
       <header
         className={cn(
-          "sticky top-0 z-50 border-b backdrop-blur-2xl transition-colors duration-200 shadow-sm dark:shadow-[0_4px_30px_rgba(0,0,0,0.6)]",
+          "sticky top-0 z-50 w-full border-b backdrop-blur-2xl transition-colors duration-200 shadow-sm dark:shadow-[0_4px_30px_rgba(0,0,0,0.6)]",
           isDark
             ? "border-slate-800/80 bg-[#0b0f19]/90 text-white"
             : "border-slate-200/80 bg-white/95 text-slate-900",
@@ -2473,41 +2473,122 @@ export function StoreSection() {
 
 const galleryTurfs = [
   {
-    id: 1,
-    name: "Elite Football Arena",
-    location: "Mumbai Central",
-    rating: "4.9",
-    reviews: 124,
-    image: asset("/venues/turf-1.webp"),
-    className: "md:col-span-2 md:row-span-2",
-  },
-  {
-    id: 2,
-    name: "Smash & Drive Badminton",
-    location: "Andheri West",
-    rating: "4.8",
-    reviews: 89,
-    image: asset("/venues/turf-3.webp"),
-    className: "md:col-span-1 md:row-span-1",
-  },
-  {
-    id: 3,
-    name: "GreenPark Tennis Club",
-    location: "Bandra",
-    rating: "4.7",
-    reviews: 56,
-    image: asset("/venues/turf-4.webp"),
-    className: "md:col-span-1 md:row-span-1",
-  },
-  {
-    id: 4,
+    id: "g1",
     name: "Hoops Rooftop Court",
     location: "South Mumbai",
     rating: "5.0",
     reviews: 210,
     image: asset("/venues/turf-6.webp"),
-    className: "md:col-span-2 md:row-span-1",
   },
+  {
+    id: "g2",
+    name: "Elite Football Arena",
+    location: "Mumbai Central",
+    rating: "4.9",
+    reviews: 124,
+    image: asset("/venues/turf-1.webp"),
+  },
+  {
+    id: "g3",
+    name: "Smash & Drive Badminton",
+    location: "Andheri West, Mumbai",
+    rating: "4.8",
+    reviews: 89,
+    image: asset("/venues/turf-3.webp"),
+  },
+  {
+    id: "g4",
+    name: "GreenPark Tennis Club",
+    location: "Bandra, Mumbai",
+    rating: "4.7",
+    reviews: 56,
+    image: asset("/venues/turf-4.webp"),
+  },
+];
+
+const CITY_METRO_CLUSTERS = {
+  mumbai: [
+    "mumbai", "south mumbai", "mumbai central", "bandra", "andheri", "andheri west", 
+    "andheri east", "juhu", "powai", "borivali", "dadar", "worli", "colaba", 
+    "kurla", "malad", "goregaon", "ghatkopar", "mulund", "chembur", "thane", 
+    "navi mumbai", "vashi", "kandivali", "santacruz", "khar", "bkc"
+  ],
+  pune: [
+    "pune", "akurdi", "koregaon park", "viman nagar", "hinjewadi", "wakad", 
+    "baner", "kothrud", "hadapsar", "aundh", "shivaji nagar", "kalyani nagar", 
+    "pimpri", "chinchwad", "magarpatta", "bavdhan", "kharadi", "swargate"
+  ],
+  bengaluru: [
+    "bengaluru", "bangalore", "koramangala", "indiranagar", "whitefield", 
+    "hsr", "hsr layout", "bellandur", "jayanagar", "electronic city", 
+    "marathahalli", "hebbal", "jp nagar", "malleshwaram", "yelahanka"
+  ],
+  delhi: [
+    "delhi", "new delhi", "delhi-ncr", "delhi ncr", "connaught place", 
+    "gurgaon", "gurugram", "noida", "greater noida", "ghaziabad", "faridabad",
+    "saket", "dwarka", "rohini", "hauz khas", "vasant kunj"
+  ],
+  hyderabad: [
+    "hyderabad", "secunderabad", "gachibowli", "hitec city", "madhapur", 
+    "jubilee hills", "banjara hills", "kondapur", "kukkatpally", "begumpet"
+  ],
+  ahmedabad: [
+    "ahmedabad", "gandhinagar", "sg highway", "satellite", "bodakdev", "vastrapur", "navrangpura"
+  ],
+  chennai: [
+    "chennai", "t nagar", "adyar", "velachery", "anna nagar", "omr", "mylapore"
+  ],
+  kolkata: [
+    "kolkata", "salt lake", "new town", "park street", "howrah", "alipore"
+  ],
+  chandigarh: [
+    "chandigarh", "mohali", "panchkula", "zirakpur"
+  ],
+  kochi: [
+    "kochi", "cochin", "kakkanad", "ernakulam", "edapally"
+  ]
+};
+
+const normalizeCityText = (str) =>
+  String(str || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+function getMetroCluster(text) {
+  const norm = normalizeCityText(text);
+  if (!norm) return null;
+  for (const [metro, localities] of Object.entries(CITY_METRO_CLUSTERS)) {
+    if (norm === metro || norm.includes(metro)) return metro;
+    for (const loc of localities) {
+      if (norm.includes(loc) || loc.includes(norm)) return metro;
+    }
+  }
+  return null;
+}
+
+function isLocationMatchCity(venueLoc, filterCity) {
+  if (!filterCity || filterCity === "All Cities" || filterCity === "All" || filterCity === "All Areas") return true;
+  let fNorm = normalizeCityText(filterCity).replace(/^all\s+/, "").trim();
+  let vNorm = normalizeCityText(venueLoc);
+  if (!vNorm) return false;
+  if (!fNorm || fNorm === "cities" || fNorm === "areas") return true;
+
+  if (vNorm === fNorm || vNorm.includes(fNorm) || fNorm.includes(vNorm)) return true;
+
+  const vCluster = getMetroCluster(vNorm);
+  const fCluster = getMetroCluster(fNorm);
+  if (vCluster && fCluster && vCluster === fCluster) return true;
+
+  return false;
+}
+
+const gridClassNames = [
+  "md:col-span-2 md:row-span-2", // Card 1 (First Number): Top/Highest Reviewed Turf in selected location
+  "md:col-span-1 md:row-span-1", // Card 2: 2nd Highest
+  "md:col-span-1 md:row-span-1", // Card 3: 3rd Highest
+  "md:col-span-2 md:row-span-1", // Card 4: 4th Highest
 ];
 
 export function TurfGallery() {
@@ -2516,108 +2597,254 @@ export function TurfGallery() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
+  const [activeCity, setActiveCity] = useState(
+    () => localStorage.getItem("preferred-city") || "All Cities"
+  );
+  const [dbTurfs, setDbTurfs] = useState([]);
   const [dynamicGallery, setDynamicGallery] = useState([]);
 
+  // 1. Listen for City changes in Navbar / LocationModal
   useEffect(() => {
-    async function fetchGallery() {
-      try {
-        const data = await cmsService.getGallery();
-        if (data && data.length > 0) {
-          const mapped = data.map((item) => ({
-            id: item.id,
-            name: item.name,
-            location: item.location,
-            rating: item.rating || "4.9",
-            reviews: item.reviews || 100,
-            image: item.image_url,
-            className: item.className || "md:col-span-1 md:row-span-1"
-          }));
-          setDynamicGallery(mapped);
-        }
-      } catch (err) {
-        console.error("Failed fetching CMS gallery:", err);
-      }
-    }
-    fetchGallery();
+    const handleCityChange = (e) => {
+      const newCity = e?.detail || localStorage.getItem("preferred-city") || "All Cities";
+      setActiveCity(newCity);
+    };
+    window.addEventListener("preferredCityChanged", handleCityChange);
+    return () => window.removeEventListener("preferredCityChanged", handleCityChange);
   }, []);
 
-  const galleryToRender = dynamicGallery.length > 0 ? dynamicGallery : galleryTurfs;
+  // 2. Fetch Turfs (with dynamic review counts and ratings) & CMS Gallery
+  useEffect(() => {
+    let isMounted = true;
+    async function loadData() {
+      try {
+        const [turfsRes, galleryData] = await Promise.all([
+          fetch("/api/turf/turfs")
+            .then((r) => r.json())
+            .then((d) => (d && d.success && Array.isArray(d.data) ? d.data : []))
+            .catch(async () => {
+              const fallback = await adminApi.getAll("turfs").catch(() => []);
+              return Array.isArray(fallback) ? fallback : [];
+            }),
+          cmsService.getGallery().catch(() => []),
+        ]);
+
+        if (isMounted) {
+          if (turfsRes && turfsRes.length > 0) setDbTurfs(turfsRes);
+          if (galleryData && galleryData.length > 0) setDynamicGallery(galleryData);
+        }
+      } catch (err) {
+        console.error("Failed fetching turfs for Immersive Turf Experiences:", err);
+      }
+    }
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 3. Filter by Location & Rank by Reviews (Highest Review = First Card #1)
+  const galleryToRender = useMemo(() => {
+    const combined = [];
+    const seenNames = new Set();
+
+    const addTurf = (item) => {
+      if (!item || !item.name) return;
+      const normName = String(item.name).trim().toLowerCase();
+      if (seenNames.has(normName)) return;
+      seenNames.add(normName);
+
+      const revCount =
+        typeof item.reviews === "number"
+          ? item.reviews
+          : Number(String(item.reviews ?? item.reviews_count ?? 0).replace(/[^0-9.]/g, "")) || 0;
+
+      const ratVal =
+        typeof item.rating === "number"
+          ? item.rating
+          : Number(String(item.rating ?? 0).replace(/[^0-9.]/g, "")) || 0;
+
+      // Extract image
+      let img = "";
+      if (item.image_url && typeof item.image_url === "string" && item.image_url.trim()) {
+        const tr = item.image_url.trim();
+        if (!tr.startsWith("{") && !tr.startsWith("[")) img = tr;
+      }
+      if (!img && item.image && typeof item.image === "string") img = item.image;
+      if (!img && item.gallery) {
+        try {
+          let parsed = item.gallery;
+          while (typeof parsed === "string") {
+            try { parsed = JSON.parse(parsed); } catch { break; }
+          }
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const first = parsed[0];
+            if (typeof first === "string") img = first;
+            else if (first?.url) img = first.url;
+          }
+        } catch {}
+      }
+      if (!img) img = asset("/venues/turf-1.webp");
+
+      const locStr =
+        typeof item.location === "object"
+          ? (item.location?.city || item.location?.address || "Location unavailable")
+          : (item.location || "Location unavailable");
+
+      combined.push({
+        id: item.id || normName,
+        name: item.name,
+        location: locStr,
+        rating: ratVal > 0 ? ratVal.toFixed(1) : "4.8",
+        reviews: revCount,
+        image: img,
+      });
+    };
+
+    // DB turfs first (has live reviews from users)
+    dbTurfs.forEach(addTurf);
+    // CMS gallery items
+    dynamicGallery.forEach(addTurf);
+    // Fallback static turfs
+    galleryTurfs.forEach(addTurf);
+
+    // Sorting helper: Highest reviews first, then highest rating
+    const sortByReviewsDesc = (a, b) => {
+      if (b.reviews !== a.reviews) return b.reviews - a.reviews;
+      const ratA = parseFloat(a.rating) || 0;
+      const ratB = parseFloat(b.rating) || 0;
+      if (ratB !== ratA) return ratB - ratA;
+      return String(a.name).localeCompare(String(b.name));
+    };
+
+    // Filter STRICTLY by selected city - NEVER mix or backfill other cities!
+    const cityMatched = combined.filter((t) => isLocationMatchCity(t.location, activeCity));
+    // Sort strictly by review count descending, then rating descending (highest review on card #1)
+    cityMatched.sort(sortByReviewsDesc);
+
+    // Limit to top 4 turfs of THIS city (or all available if <= 4)
+    const finalTurfs = cityMatched.slice(0, 4);
+
+    const total = finalTurfs.length;
+    return finalTurfs.map((turf, idx) => {
+      let cls = "md:col-span-1 md:row-span-1";
+      if (total === 1) {
+        cls = "md:col-span-4 md:row-span-2 max-w-3xl mx-auto w-full";
+      } else if (total === 2) {
+        cls = "md:col-span-2 md:row-span-2";
+      } else if (total === 3) {
+        cls = idx === 0 ? "md:col-span-2 md:row-span-2" : "md:col-span-2 md:row-span-1";
+      } else {
+        cls = gridClassNames[idx] || "md:col-span-1 md:row-span-1";
+      }
+      return {
+        ...turf,
+        className: cls,
+      };
+    });
+  }, [dbTurfs, dynamicGallery, activeCity]);
 
   return (
     <section className="pt-0 pb-4 md:pb-6 relative overflow-hidden">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Gallery"
+          eyebrow={activeCity && activeCity !== "All Cities" ? `Gallery • ${activeCity}` : "Gallery"}
           title="Immersive Turf Experiences"
           titleClassName="!text-base sm:!text-lg md:!text-xl lg:!text-2xl"
         />
 
-        <div className="mt-5 sm:mt-6 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">
-          {galleryToRender.map((turf) => (
-            <motion.div
-              key={turf.id}
-              initial={{ opacity: 0, scale: 0.98 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className={cn(
-                "always-dark group relative overflow-hidden rounded-3xl bg-[#101216]",
-                turf.className,
-              )}
+        {galleryToRender.length > 0 ? (
+          <div className="mt-5 sm:mt-6 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">
+            {galleryToRender.map((turf) => (
+              <motion.div
+                key={turf.id}
+                initial={{ opacity: 0, scale: 0.98 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5 }}
+                className={cn(
+                  "always-dark group relative overflow-hidden rounded-3xl bg-[#101216]",
+                  turf.className,
+                )}
+              >
+                <ImageWithFallback
+                  src={turf.image}
+                  alt={turf.name}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-100" />
+
+                <div className="absolute top-4 right-4 z-10">
+                  <div className="flex flex-col items-end">
+                    <Badge
+                      className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-400 border-emerald-500/30"
+                    >
+                      <Star className="h-3.5 w-3.5 fill-current" />
+                      <span className="text-sm">{turf.rating}</span>
+                    </Badge>
+                    <span className="mt-1 text-[10px] text-[#ffffff]/90 drop-shadow-md mr-1">
+                      {turf.reviews} Reviews
+                    </span>
+                  </div>
+                </div>
+
+                <div className="absolute bottom-0 left-0 w-full p-6 z-10 translate-y-2 transition-transform duration-300 group-hover:translate-y-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="h-4 w-4 text-emerald-400" />
+                    <span className="text-sm text-[#ffffff]/90 drop-shadow-md">
+                      {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl text-[#ffffff] drop-shadow-lg font-bold">
+                    {turf.name}
+                  </h3>
+
+                  <div className="mt-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <button
+                      onClick={() => {
+                        if (!currentUser) {
+                          toast.error("Please login first to view venue details and book.");
+                          navigate("/login");
+                        } else {
+                          if (turf.id && typeof turf.id === "number") {
+                            navigate(`/venues/${turf.id}`, { state: { venue: turf } });
+                          } else {
+                            navigate("/venues");
+                          }
+                        }
+                      }}
+                      className="always-dark rounded-xl bg-slate-800/60 text-white border border-white/20 hover:border-2 hover:border-emerald-500 hover:bg-slate-800/80 hover:text-white backdrop-blur-md px-5 py-2 text-sm font-semibold transition-all duration-300 cursor-pointer shadow-sm hover:shadow-[0_0_16px_rgba(16,185,129,0.4)] inline-flex items-center justify-center"
+                      style={{ backgroundColor: 'rgba(30, 41, 59, 0.65)', color: '#ffffff' }}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 flex flex-col items-center justify-center py-16 px-4 text-center rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 backdrop-blur-md">
+            <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+              <MapPin className="h-7 w-7" />
+            </div>
+            <h4 className="text-xl font-bold text-foreground">No turfs found in {activeCity}</h4>
+            <p className="text-sm text-muted-foreground mt-1.5 max-w-md">
+              We currently don't have registered turfs in {activeCity}. Explore turfs from other cities or view all turfs.
+            </p>
+            <button
+              onClick={() => {
+                localStorage.setItem("preferred-city", "All Cities");
+                setActiveCity("All Cities");
+                window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
+              }}
+              className="mt-5 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition-all shadow-md cursor-pointer"
             >
-              <ImageWithFallback
-                src={turf.image}
-                alt={turf.name}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-100" />
-
-              <div className="absolute top-4 right-4 z-10">
-                <div className="flex flex-col items-end">
-                  <Badge
-                    className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-400 border-emerald-500/30"
-                  >
-                    <Star className="h-3.5 w-3.5 fill-current" />
-                    <span className="text-sm">{turf.rating}</span>
-                  </Badge>
-                  <span className="mt-1 text-[10px] text-[#ffffff]/90 drop-shadow-md mr-1">
-                    {turf.reviews} Reviews
-                  </span>
-                </div>
-              </div>
-
-              <div className="absolute bottom-0 left-0 w-full p-6 z-10 translate-y-2 transition-transform duration-300 group-hover:translate-y-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <MapPin className="h-4 w-4 text-emerald-400" />
-                  <span className="text-sm text-[#ffffff]/90 drop-shadow-md">
-                    {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
-                  </span>
-                </div>
-                <h3 className="text-2xl text-[#ffffff] drop-shadow-lg font-bold">
-                  {turf.name}
-                </h3>
-
-                <div className="mt-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  <button
-                    onClick={() => {
-                      if (!currentUser) {
-                        toast.error("Please login first to view venue details and book.");
-                        navigate("/login");
-                      } else {
-                        navigate("/venues");
-                      }
-                    }}
-                    className="always-dark rounded-xl bg-slate-800/60 text-white border border-white/20 hover:border-2 hover:border-emerald-500 hover:bg-slate-800/80 hover:text-white backdrop-blur-md px-5 py-2 text-sm font-semibold transition-all duration-300 cursor-pointer shadow-sm hover:shadow-[0_0_16px_rgba(16,185,129,0.4)] inline-flex items-center justify-center"
-                    style={{ backgroundColor: 'rgba(30, 41, 59, 0.65)', color: '#ffffff' }}
-                  >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              Explore All Cities
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

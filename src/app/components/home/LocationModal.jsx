@@ -236,30 +236,41 @@ export function LocationModal({ trigger, activeCity, onCitySelect }) {
 
   // Combine Popular Cities + dynamically onboarded cities from DB
   const dynamicOtherCities = useMemo(() => {
-    const citySet = new Set();
+    const popularNorm = new Map();
+    POPULAR_CITIES.forEach((p) => {
+      popularNorm.set(p.name.toLowerCase().replace(/[^a-z0-9]/g, ""), p.name);
+    });
+
+    const cityMap = new Map();
 
     // 1. Add all 10 Popular Cities
     POPULAR_CITIES.forEach((p) => {
-      citySet.add(p.name);
+      const key = p.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      cityMap.set(key, p.name);
     });
 
     // 2. Add dynamic onboarded cities from DB
     const ignoreList = ["unknown location", "location not specified", "test", "null", "undefined", "n/a", "none", "string"];
-    dynamicCities.forEach((c) => {
+    (dynamicCities || []).forEach((c) => {
       if (c && typeof c === "string" && c.trim().length > 1) {
         const lower = c.trim().toLowerCase();
-        if (!ignoreList.includes(lower)) {
-          const formatted = c
-            .trim()
-            .split(" ")
-            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-            .join(" ");
-          citySet.add(formatted);
+        if (!ignoreList.includes(lower) && !/^\d+$/.test(lower)) {
+          const key = lower.replace(/[^a-z0-9]/g, "");
+          if (popularNorm.has(key)) {
+            cityMap.set(key, popularNorm.get(key));
+          } else {
+            const formatted = c
+              .trim()
+              .split(/[\s-]+/)
+              .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+              .join(" ");
+            cityMap.set(key, formatted);
+          }
         }
       }
     });
 
-    return Array.from(citySet).sort((a, b) => a.localeCompare(b));
+    return Array.from(cityMap.values()).sort((a, b) => a.localeCompare(b));
   }, [dynamicCities]);
 
   const filteredOther = dynamicOtherCities.filter((c) =>

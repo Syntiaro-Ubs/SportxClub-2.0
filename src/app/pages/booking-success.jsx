@@ -393,20 +393,50 @@ export function BookingSuccess() {
                 </div>
               </div>
 
-              {/* 6. Ticket Perforation Notches & Dashed Tear Line (Exact 1:1 with PDF) */}
+              {/* 6. Ticket Perforation Notches & Dashed Tear Line (Exact 1:1 with match-pass-pdf.js) */}
               <div className="relative flex items-center justify-center my-4 -mx-6 sm:-mx-8">
-                {/* Left Semicircular Inward Notch */}
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-7 overflow-hidden z-10">
-                  <div className="w-7 h-7 rounded-full bg-[#f8fafc] dark:bg-[#0A0C10] border-[1.5px] border-[#0F2A43] dark:border-slate-300 -translate-x-1/2" />
-                </div>
+                {/* Left Inward Notch (Cleanly breaks ticket border & indents inward) */}
+                <svg
+                  className="absolute -left-[1.5px] top-1/2 -translate-y-1/2 z-10 overflow-visible pointer-events-none"
+                  width="16"
+                  height="32"
+                  viewBox="0 0 16 32"
+                >
+                  {/* Knockout fill to erase straight card border behind notch */}
+                  <polygon points="-3,-2 3,-2 14,16 3,34 -3,34" className="fill-white dark:fill-[#0b0f19]" />
+                  {/* Inward Notch Chevron Line */}
+                  <polyline
+                    points="0,0 13,16 0,32"
+                    fill="none"
+                    className="stroke-[#0F2A43] dark:stroke-slate-300"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
 
-                {/* Dashed Line */}
+                {/* Dashed Tear Line */}
                 <div className="w-full border-b border-dashed border-slate-300 dark:border-slate-700 mx-5" />
 
-                {/* Right Semicircular Inward Notch */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-7 overflow-hidden z-10 flex justify-end">
-                  <div className="w-7 h-7 rounded-full bg-[#f8fafc] dark:bg-[#0A0C10] border-[1.5px] border-[#0F2A43] dark:border-slate-300 translate-x-1/2" />
-                </div>
+                {/* Right Inward Notch (Cleanly breaks ticket border & indents inward) */}
+                <svg
+                  className="absolute -right-[1.5px] top-1/2 -translate-y-1/2 z-10 overflow-visible pointer-events-none"
+                  width="16"
+                  height="32"
+                  viewBox="0 0 16 32"
+                >
+                  {/* Knockout fill to erase straight card border behind notch */}
+                  <polygon points="19,-2 13,-2 2,16 13,34 19,34" className="fill-white dark:fill-[#0b0f19]" />
+                  {/* Inward Notch Chevron Line */}
+                  <polyline
+                    points="16,0 3,16 16,32"
+                    fill="none"
+                    className="stroke-[#0F2A43] dark:stroke-slate-300"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
 
               {/* 7. Bottom Section: Payment Date, Official Pass Badge & Bracketed QR Code */}

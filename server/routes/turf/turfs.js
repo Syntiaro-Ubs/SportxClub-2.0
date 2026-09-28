@@ -24,8 +24,25 @@ async function filterTurfColumns(pool, rawBody) {
 const KNOWN_CITIES = [
   'Pune', 'Mumbai', 'Delhi-NCR', 'Delhi', 'Bengaluru', 'Bangalore',
   'Hyderabad', 'Chandigarh', 'Ahmedabad', 'Chennai', 'Kolkata', 'Kochi',
-  'Nagpur', 'Nashik', 'Surat', 'Jaipur', 'Lucknow', 'Indore', 'Bhopal', 'Pimpri-Chinchwad'
+  'Nanded', 'Nagpur', 'Nashik', 'Surat', 'Jaipur', 'Lucknow', 'Indore', 'Bhopal',
+  'Pimpri-Chinchwad', 'Aurangabad', 'Chhatrapati Sambhajinagar', 'Kolhapur',
+  'Solapur', 'Latur', 'Amravati', 'Akola', 'Thane', 'Navi Mumbai', 'Goa'
 ];
+
+const INDIAN_STATES = new Set([
+  'maharashtra', 'karnataka', 'delhi', 'gujarat', 'rajasthan', 'uttar pradesh',
+  'tamil nadu', 'telangana', 'kerala', 'west bengal', 'madhya pradesh', 'punjab',
+  'haryana', 'goa', 'bihar', 'odisha', 'orissa', 'assam', 'andhra pradesh',
+  'uttarakhand', 'himachal pradesh', 'jharkhand', 'chhattisgarh', 'jammu and kashmir'
+]);
+
+function formatTitle(s) {
+  if (!s) return '';
+  return s
+    .split(/[\s-]+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
 
 function extractCityAndSubLocation(locationRaw) {
   if (!locationRaw) return null;
@@ -33,6 +50,12 @@ function extractCityAndSubLocation(locationRaw) {
   if (typeof locationRaw === 'object' && locationRaw !== null) {
     const city = locationRaw.city || locationRaw.town || '';
     const area = locationRaw.area || locationRaw.locality || locationRaw.suburb || locationRaw.address || '';
+    if (city && city.trim().length > 1 && !/^\d+$/.test(city.trim())) {
+      return {
+        city: formatTitle(city.trim()),
+        area: area ? formatTitle(area.trim()) : null,
+      };
+    }
     raw = [area, city].filter(Boolean).join(', ');
   } else {
     raw = String(locationRaw).trim();
@@ -44,6 +67,7 @@ function extractCityAndSubLocation(locationRaw) {
   let detectedCity = '';
   let subArea = '';
 
+  // 1. Check if any part matches known cities
   for (let i = parts.length - 1; i >= 0; i--) {
     const part = parts[i];
     const matchedKnown = KNOWN_CITIES.find(c => {
@@ -67,22 +91,31 @@ function extractCityAndSubLocation(locationRaw) {
     }
   }
 
-  if (!detectedCity && parts.length > 1) {
-    detectedCity = parts[parts.length - 1];
-    let areaCandidate = parts[0];
-    const cityRegex = new RegExp('\\b' + detectedCity + '\\b', 'gi');
-    areaCandidate = areaCandidate.replace(cityRegex, '').replace(/\s+/g, ' ').trim();
-    if (areaCandidate.length > 1) {
-      subArea = areaCandidate;
+  // 2. If no known city matched, filter out pincodes, India, and known Indian states
+  if (!detectedCity) {
+    const candidateParts = parts.filter(p => {
+      const pLower = p.toLowerCase().trim();
+      if (!pLower || /^\d+$/.test(pLower)) return false; // Pincode
+      if (pLower === 'india' || INDIAN_STATES.has(pLower)) return false; // Country / State
+      if (pLower.endsWith(' district')) return false; // E.g. "Nanded District"
+      return true;
+    });
+
+    if (candidateParts.length > 0) {
+      // In Indian addresses, city is usually the last candidate part before state/pincode
+      detectedCity = candidateParts[candidateParts.length - 1];
+      if (candidateParts.length > 1) {
+        subArea = candidateParts[0];
+      }
+    } else if (parts.length > 0) {
+      // Fallback: pick the first non-numeric part
+      const nonNum = parts.find(p => !/^\d+$/.test(p.trim()) && p.trim().toLowerCase() !== 'india');
+      if (nonNum) detectedCity = nonNum;
     }
-  } else if (!detectedCity && parts.length === 1) {
-    detectedCity = parts[0];
   }
 
-  const formatTitle = (s) => s.split(/[\s-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-
   if (detectedCity) {
-    let standardizedCity = detectedCity.trim();
+    let standardizedCity = detectedCity.trim().replace(/\s+district$/i, '');
     if (standardizedCity.toLowerCase() === 'bangalore' || standardizedCity.toLowerCase() === 'bengaluru') {
       standardizedCity = 'Bengaluru';
     } else if (standardizedCity.toLowerCase() === 'delhi' || standardizedCity.toLowerCase() === 'delhi-ncr' || standardizedCity.toLowerCase() === 'delhi ncr') {
@@ -119,12 +152,21 @@ router.get("/cities", async (req, res) => {
       }
     };
 
-    // 1. Fetch locations from actual turfs table (primary source for available turfs)
+    // 1. Fetch locations and city from actual turfs table (primary source for available turfs)
     const [turfRows] = await pool.query(
-      "SELECT location FROM turfs WHERE location IS NOT NULL AND location != ''"
+      "SELECT location, city FROM turfs WHERE (location IS NOT NULL AND location != '') OR (city IS NOT NULL AND city != '')"
     );
     for (const row of turfRows) {
-      addLocation(row.location);
+      if (row.city && typeof row.city === 'string' && row.city.trim().length > 1 && !/^\d+$/.test(row.city.trim())) {
+        const cFormatted = formatTitle(row.city.trim());
+        citySet.add(cFormatted);
+        if (!subLocationsMap[cFormatted]) {
+          subLocationsMap[cFormatted] = new Set();
+        }
+      }
+      if (row.location) {
+        addLocation(row.location);
+      }
     }
 
     // 2. Fetch cities from turf_owners
@@ -137,6 +179,7 @@ router.get("/cities", async (req, res) => {
         try {
           const parsed = typeof row.setup_data === 'string' ? JSON.parse(row.setup_data) : row.setup_data;
           if (parsed?.location) addLocation(parsed.location);
+          if (parsed?.city) addLocation(parsed.city);
         } catch (e) {
           // ignore parse error
         }

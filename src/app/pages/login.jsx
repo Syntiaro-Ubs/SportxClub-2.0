@@ -829,7 +829,7 @@ export function LoginPage() {
                 <Input
                   value={forgotOtp}
                   onChange={(e) => setForgotOtp(e.target.value)}
-                  placeholder="e.g. 123456"
+                  placeholder="******"
                   maxLength={6}
                   className="h-10 text-center font-mono text-base tracking-widest rounded-xl border-slate-400/80 dark:border-slate-600"
                   required

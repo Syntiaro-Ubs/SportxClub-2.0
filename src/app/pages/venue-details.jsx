@@ -1421,9 +1421,9 @@ export function VenueDetails() {
                     if (venue.gallery && Array.isArray(venue.gallery)) {
                       photos = Array.from(new Set(venue.gallery.filter(Boolean)));
                     }
-                    if (photos.length > 1) {
-                      photos = photos.slice(1);
-                    } else {
+                    const mainImg = venue.image;
+                    photos = photos.filter((img) => img && img !== mainImg);
+                    if (photos.length === 0) {
                       photos = [
                         "/assets/venues/turf-2.webp",
                         "/assets/venues/turf-3.webp",

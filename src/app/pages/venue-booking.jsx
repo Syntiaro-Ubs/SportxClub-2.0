@@ -347,13 +347,11 @@ function extractImageSrc(val) {
       }
       
       const singleCover = extractImageSrc(t.image_url || t.image);
+      const mainImage = singleCover || galleryList[0] || "/assets/venues/turf-1.webp";
+
       if (galleryList.length === 0 && singleCover) {
         galleryList = [singleCover];
-      } else if (singleCover && !galleryList.includes(singleCover)) {
-        galleryList = [singleCover, ...galleryList];
       }
-
-      const mainImage = galleryList[0] || singleCover || "/assets/venues/turf-1.webp";
 
       return {
         id: t.id,
@@ -664,18 +662,13 @@ function extractImageSrc(val) {
       list = venue.gallery.map(img => extractImageSrc(img)).filter(Boolean);
     } else if (venue.images && Array.isArray(venue.images) && venue.images.length > 0) {
       list = venue.images.map(img => extractImageSrc(img)).filter(Boolean);
-    } else if (venue.image) {
-      const single = extractImageSrc(venue.image);
-      if (single) list = [single];
     }
 
-    // Filter unique valid images
-    const uniqueImages = Array.from(new Set(list));
+    const mainImg = extractImageSrc(venue.image);
+    // Secondary photos: distinct gallery photos excluding the main cover photo
+    const secondary = Array.from(new Set(list)).filter(img => img && img !== mainImg);
 
-    // If venue has 2 or more distinct uploaded photos:
-    if (uniqueImages.length >= 2) {
-      // Secondary photos (excluding the main cover image at index 0)
-      const secondary = uniqueImages.slice(1);
+    if (secondary.length > 0) {
       const result = [];
       for (let i = 0; i < 3; i++) {
         result.push(secondary[i % secondary.length]);
@@ -683,7 +676,7 @@ function extractImageSrc(val) {
       return result;
     }
 
-    // If only 1 image (or none) was uploaded, display 3 distinct themed angle views rather than repeating the single cover photo 3 times
+    // If no secondary photos were uploaded, display 3 distinct themed angle views rather than repeating the single cover photo 3 times
     return [
       "/assets/venues/turf-2.webp",
       "/assets/venues/turf-3.webp",

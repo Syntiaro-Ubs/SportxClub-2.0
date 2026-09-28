@@ -252,14 +252,14 @@ export function OwnerLayout() {
   );
 
   return (
-    <div className="flex min-h-dvh bg-background text-foreground overflow-x-hidden w-full max-w-full">
+    <div className="flex min-h-dvh bg-background text-foreground overflow-x-clip w-full max-w-full">
       {/* Desktop Sidebar — Completely hides 100% offscreen when collapsed */}
       <aside className={`hidden flex-col border-r border-border/40 bg-card/30 md:flex fixed inset-y-0 z-50 w-56 transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "-translate-x-full opacity-0 pointer-events-none" : "translate-x-0 opacity-100"}`}>
         <SidebarContent />
       </aside>
 
       {/* Main Content Area — Expands to 100% full width when sidebar is hidden */}
-      <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-56"}`}>
+      <div className={`flex flex-col flex-1 w-full max-w-full overflow-x-clip transition-all duration-300 ease-in-out ${isSidebarCollapsed ? "md:pl-0" : "md:pl-56"}`}>
         <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-xs backdrop-blur-2xl sm:gap-x-6 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 md:hidden">
             <button
