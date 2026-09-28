@@ -713,7 +713,7 @@ export function PlayerLoginPage() {
                 <Button
                   type="submit"
                   disabled={isOtpLoading}
-                  className="w-2/3 h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                  className="w-2/3 h-10 bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-600 font-bold text-xs rounded-xl cursor-pointer transition-colors"
                 >
                   {isOtpLoading ? "Verifying..." : "Verify OTP"}
                 </Button>
@@ -755,7 +755,7 @@ export function PlayerLoginPage() {
                   <Button
                     type="submit"
                     disabled={isOtpLoading}
-                    className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                    className="w-full h-10 bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-600 font-bold text-xs rounded-xl cursor-pointer transition-colors"
                   >
                     {isOtpLoading ? "Updating Database..." : "Reset Password & Save"}
                   </Button>
@@ -773,7 +773,7 @@ export function PlayerLoginPage() {
                       setIsForgotModalOpen(false);
                       toast.success("Email auto-filled in login form!");
                     }}
-                    className="w-full h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl cursor-pointer"
+                    className="w-full h-10 bg-transparent hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-600 font-bold text-xs rounded-xl cursor-pointer transition-colors"
                   >
                     Auto-Fill Email in Login Form
                   </Button>

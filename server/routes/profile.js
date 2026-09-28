@@ -373,8 +373,8 @@ router.post("/bookings/wallet-pay", optionalAuth, async (req, res) => {
     // Record in payments table
     await connection.query(
       `INSERT INTO payments 
-       (transaction_id, merchant_transaction_id, user_name, user_email, turf_name, amount, payment_method, status, date, payment_details)
-       VALUES (?, ?, ?, ?, ?, ?, 'SportX Wallet', 'Paid', ?, ?)`,
+       (transaction_id, merchant_transaction_id, user_name, user_email, turf_name, amount, method, status, date, payment_details)
+       VALUES (?, ?, ?, ?, ?, ?, 'SportX Wallet', 'Success', ?, ?)`,
       [
         walletTxnId,
         walletOrderId,
