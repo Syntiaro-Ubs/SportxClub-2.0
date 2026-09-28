@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import {
   Building2,
   CalendarDays,
@@ -606,32 +607,46 @@ export function TurfReportsView() {
 
     const rows = bookingsToExport.map((b) => [
       b.booking_code || `#${b.id}`,
-      `"${(targetTurf.turfName || b.turf_name || "").replace(/"/g, '""')}"`,
-      `"${(b.user_name || "Reserved / Blocked").replace(/"/g, '""')}"`,
-      `"${(b.user_email || "").replace(/"/g, '""')}"`,
-      `"${(b.user_phone || "").replace(/"/g, '""')}"`,
+      targetTurf.turfName || b.turf_name || "",
+      b.user_name || "Reserved / Blocked",
+      b.user_email || "",
+      b.user_phone || "",
       b.date || "N/A",
-      `"${(b.time_slot || b.slot_time || "").replace(/"/g, '""')}"`,
-      `"${(b.sport || targetTurf.sportType || "").replace(/"/g, '""')}"`,
+      b.time_slot || b.slot_time || "",
+      b.sport || targetTurf.sportType || "",
       parseFloat(b.amount) || 0,
-      `"${(b.payment_method || b.payment_type || "UPI").replace(/"/g, '""')}"`,
+      b.payment_method || b.payment_type || "UPI",
       b.status || "Confirmed",
-      `"${(b.cancellation_reason || "").replace(/"/g, '""')}"`,
+      b.cancellation_reason || "",
       formatDateDisplay(b.created_at),
-      `"${periodName}"`,
-      `"${statusLabel}"`,
+      periodName,
+      statusLabel,
     ]);
 
     const cleanTurfName = (targetTurf.turfName || "turf").toLowerCase().replace(/[^a-z0-9]/gi, "_");
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${cleanTurfName}-report-${fromModal ? activeModalPeriod : periodFilter}-${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Exported Excel/CSV for ${targetTurf.turfName} (${bookingsToExport.length} records)!`);
+    
+    // Force all values to string to ensure left-alignment in Excel
+    const stringRows = rows.map(row => row.map(cell => String(cell ?? "")));
+    
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...stringRows]);
+    
+    // Auto-adjust column widths
+    const colWidths = headers.map((header, i) => {
+      const maxWidth = Math.max(
+        header.length,
+        ...stringRows.map(row => row[i].length)
+      );
+      return { wch: maxWidth + 2 }; // Add padding
+    });
+    worksheet['!cols'] = colWidths;
+    
+    // Create workbook and export
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Turf Report");
+    XLSX.writeFile(workbook, `${cleanTurfName}-report-${fromModal ? activeModalPeriod : periodFilter}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    
+    toast.success(`Exported Excel for ${targetTurf.turfName} (${bookingsToExport.length} records)!`);
   };
 
   // ==========================================
@@ -896,17 +911,17 @@ export function TurfReportsView() {
 
     const rows = filteredTurfs.map((t) => [
       t.turfId || "N/A",
-      `"${(t.turfName || "").replace(/"/g, '""')}"`,
-      `"${(t.location || "").replace(/"/g, '""')}"`,
-      `"${(t.sportType || "").replace(/"/g, '""')}"`,
+      t.turfName || "",
+      t.location || "",
+      t.sportType || "",
       t.pricePerHour || 0,
-      `"${(t.ownerName || "").replace(/"/g, '""')}"`,
-      `"${(t.ownerEmail || "").replace(/"/g, '""')}"`,
-      `"${(t.ownerPhone || "").replace(/"/g, '""')}"`,
+      t.ownerName || "",
+      t.ownerEmail || "",
+      t.ownerPhone || "",
       t.status || "Active",
       t.isOnboardedToday ? "YES" : "NO",
       formatDateDisplay(t.createdAt),
-      `"${periodLabel}"`,
+      periodLabel,
       t.totalBookings || 0,
       t.confirmedBookings || 0,
       t.cancelledBookings || 0,
@@ -916,15 +931,28 @@ export function TurfReportsView() {
       t.cancelledRevenue || 0,
     ]);
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sportx-all-turfs-report-${periodFilter}-${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Exported All Turfs CSV (${periodLabel})!`);
+    // Force all values to string to ensure left-alignment in Excel
+    const stringRows = rows.map(row => row.map(cell => String(cell ?? "")));
+    
+    // Create worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...stringRows]);
+    
+    // Auto-adjust column widths
+    const colWidths = headers.map((header, i) => {
+      const maxWidth = Math.max(
+        header.length,
+        ...stringRows.map(row => row[i].length)
+      );
+      return { wch: maxWidth + 2 }; // Add padding
+    });
+    worksheet['!cols'] = colWidths;
+    
+    // Create workbook and export
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "All Turfs");
+    XLSX.writeFile(workbook, `sportx-all-turfs-report-${periodFilter}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    
+    toast.success(`Exported All Turfs Excel (${periodLabel})!`);
   };
 
   const handleOpenTurfModal = (turf) => {

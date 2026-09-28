@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import * as XLSX from "xlsx";
 import { motion } from "motion/react";
 import {
   FileText,
@@ -331,7 +332,7 @@ export function OwnerReport() {
     return "All Time";
   };
 
-  // Export CSV / Excel Download
+  // Export Excel Download
   const exportToCSV = () => {
     if (filteredData.length === 0) {
       toast.error("No report data available to export for selected filter.");
@@ -339,73 +340,61 @@ export function OwnerReport() {
     }
 
     const reportLabel = getDateRangeLabel();
-    const csvRows = [];
+    let headers = [];
+    const rows = [];
 
     if (reportType === "schedule") {
-      // Turf Schedule Report Header
-      csvRows.push(`"SPORTXCLUB TURF OPERATING SCHEDULE & CLOSED/OPEN DATES REPORT"`);
-      csvRows.push(`"Report Period: ${reportLabel}"`);
-      csvRows.push(`"Generated On: ${new Date().toLocaleString()}"`);
-      csvRows.push(`"Total Turfs: ${summaryMetrics.totalTurfs}"`);
-      csvRows.push(`"Open & Operating: ${summaryMetrics.openCount}"`);
-      csvRows.push(`"Closed / Maintenance: ${summaryMetrics.closedCount + summaryMetrics.maintenanceCount}"`);
-      csvRows.push("");
-
-      const headers = ["Turf ID", "Turf Name", "Location", "Sport", "Date", "Operating Hours", "Status", "Reason / Remarks"];
-      csvRows.push(headers.join(","));
-
+      headers = ["Turf ID", "Turf Name", "Location", "Sport", "Date", "Operating Hours", "Status", "Reason / Remarks"];
+      
       filteredData.forEach((row) => {
-        csvRows.push([
-          `"${row.id}"`,
-          `"${row.turfName}"`,
-          `"${row.location}"`,
-          `"${row.sport}"`,
-          `"${row.date}"`,
-          `"${row.operatingHours}"`,
-          `"${row.status}"`,
-          `"${row.reason}"`
-        ].join(","));
+        rows.push([
+          row.id,
+          row.turfName,
+          row.location,
+          row.sport,
+          row.date,
+          row.operatingHours,
+          row.status,
+          row.reason
+        ]);
       });
     } else {
-      // Financial / Booking Statement Header
-      csvRows.push(`"SPORTXCLUB TURF FINANCIAL STATEMENT REPORT"`);
-      csvRows.push(`"Report Period: ${reportLabel}"`);
-      csvRows.push(`"Generated On: ${new Date().toLocaleString()}"`);
-      csvRows.push(`"Total Revenue: Rs.${summaryMetrics.totalRevenue}"`);
-      csvRows.push(`"Successful Bookings: ${summaryMetrics.successfulCount}"`);
-      csvRows.push(`"Cancellations: ${summaryMetrics.cancelledCount}"`);
-      csvRows.push(`"Refunds Processed: Rs.${summaryMetrics.refundAmount}"`);
-      csvRows.push("");
-
-      const headers = ["Transaction ID", "Customer Name", "Turf Venue", "Sport", "Date", "Slot Time", "Amount (INR)", "Payment Method", "Status"];
-      csvRows.push(headers.join(","));
-
+      headers = ["Transaction ID", "Customer Name", "Turf Venue", "Sport", "Date", "Slot Time", "Amount (INR)", "Payment Method", "Status"];
+      
       filteredData.forEach((row) => {
-        csvRows.push([
-          `"${row.id}"`,
-          `"${row.player}"`,
-          `"${row.turf}"`,
-          `"${row.sport}"`,
-          `"${row.date}"`,
-          `"${row.time}"`,
+        rows.push([
+          row.id,
+          row.player,
+          row.turf,
+          row.sport,
+          row.date,
+          row.time,
           row.amount,
-          `"${row.paymentMethod}"`,
-          `"${row.status}"`
-        ].join(","));
+          row.paymentMethod,
+          row.status
+        ]);
       });
     }
 
-    const csvString = csvRows.join("\n");
-    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const filename = `Turf_${reportType === "schedule" ? "Schedule_Report" : "Statement_Report"}_${periodPreset}_${periodPreset === "single-date" ? singleDate : format(new Date(), "yyyyMMdd")}.csv`;
+    // Force all values to string to ensure left-alignment in Excel
+    const stringRows = rows.map(row => row.map(cell => String(cell ?? "")));
 
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.aoa_to_sheet([headers, ...stringRows]);
+    
+    const colWidths = headers.map((header, i) => {
+      const maxWidth = Math.max(
+        header.length,
+        ...stringRows.map(row => row[i].length)
+      );
+      return { wch: maxWidth + 2 };
+    });
+    worksheet['!cols'] = colWidths;
+    
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+    
+    const filename = `Turf_${reportType === "schedule" ? "Schedule_Report" : "Statement_Report"}_${periodPreset}_${periodPreset === "single-date" ? singleDate : format(new Date(), "yyyyMMdd")}.xlsx`;
+    XLSX.writeFile(workbook, filename);
 
     toast.success(`Report downloaded successfully: ${filename}`);
   };
