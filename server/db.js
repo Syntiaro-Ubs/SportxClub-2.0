@@ -968,6 +968,9 @@ async function createTables() {
   try {
     await conn.query("ALTER TABLE bookings ADD COLUMN refund_arn VARCHAR(255);");
   } catch (e) { }
+  try {
+    await conn.query("ALTER TABLE bookings ADD COLUMN user_id INT;");
+  } catch (e) { }
 
   // Clean up any historical duplicate payments (same email, turf, amount, date created within 60s)
   try {
