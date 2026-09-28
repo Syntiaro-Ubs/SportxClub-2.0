@@ -109,7 +109,7 @@ export function DailySettlementsView() {
     try {
       setIsProcessing(true);
       toast.info(`Processing automated 12:00 AM settlements for ${dateToRun}...`);
-      
+
       const res = await fetch("/api/settlements/process-manual", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -307,16 +307,15 @@ export function DailySettlementsView() {
             size="sm"
             disabled={isProcessing}
             onClick={() => handleTriggerSettlement(selectedDate)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-9 px-3.5 rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5 transition-all active:scale-95"
+            className="bg-transparent border border-emerald-600 hover:border-emerald-500 hover:ring-2 hover:ring-emerald-500/50 text-emerald-600 font-extrabold text-xs h-9 px-3.5 rounded-xl cursor-pointer flex items-center gap-1.5 transition-all active:scale-95"
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
                 Processing...
               </>
             ) : (
               <>
-                <Zap className="w-3.5 h-3.5 fill-white" />
                 Run 12:00 AM Settlement Batch
               </>
             )}
@@ -339,7 +338,7 @@ export function DailySettlementsView() {
         {/* Total Net Payouts */}
         <Card className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-400">
+            <span className="text-[11px] font-extrabold tracking-wider text-emerald-800 dark:text-emerald-400">
               Total Net Payouts
             </span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -355,7 +354,7 @@ export function DailySettlementsView() {
         {/* Platform Commission Earned */}
         <Card className="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-800 dark:text-blue-400">
+            <span className="text-[11px] font-extrabold tracking-wider text-blue-800 dark:text-blue-400">
               Platform Commission (5%)
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600">
@@ -371,7 +370,7 @@ export function DailySettlementsView() {
         {/* Total Gross Volume */}
         <Card className="bg-white border border-slate-200 hover:border-slate-300 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-extrabold tracking-wider text-slate-500">
               Total Gross Bookings
             </span>
             <div className="p-2 rounded-xl bg-slate-100 text-slate-700">
@@ -387,7 +386,7 @@ export function DailySettlementsView() {
         {/* Queued Today's Payouts */}
         <Card className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+            <span className="text-[11px] font-extrabold tracking-wider text-amber-800 dark:text-amber-400">
               Today's Queued Slots
             </span>
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600">
@@ -409,31 +408,28 @@ export function DailySettlementsView() {
           <div className="flex p-1 bg-slate-200/70 rounded-xl w-fit">
             <button
               onClick={() => setActiveTab("settlements")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "settlements"
-                  ? "bg-white text-slate-900 shadow-xs font-extrabold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === "settlements"
+                ? "bg-white text-slate-900 shadow-xs font-extrabold"
+                : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               🏦 Completed Settlements ({settlements.length})
             </button>
             <button
               onClick={() => setActiveTab("queued")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "queued"
-                  ? "bg-white text-slate-900 shadow-xs font-extrabold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === "queued"
+                ? "bg-white text-slate-900 shadow-xs font-extrabold"
+                : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               ⏳ Today's Queued Slots ({queuedTodayBookings.length})
             </button>
             <button
               onClick={() => setActiveTab("owners")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "owners"
-                  ? "bg-white text-slate-900 shadow-xs font-extrabold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === "owners"
+                ? "bg-white text-slate-900 shadow-xs font-extrabold"
+                : "text-slate-600 hover:text-slate-900"
+                }`}
             >
               👤 Turf Owners & Banks ({turfOwners.length})
             </button>
@@ -456,7 +452,7 @@ export function DailySettlementsView() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-8.5 px-2.5 text-xs font-bold bg-white border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer"
+                  className="h-8.5 pl-3 pr-8 bg-[position:right_12px_center] text-xs font-bold bg-white border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer"
                 >
                   <option value="ALL">All Status</option>
                   <option value="SUCCESS">Success</option>
@@ -485,7 +481,7 @@ export function DailySettlementsView() {
             <div className="w-full overflow-x-auto">
               <table className="w-full min-w-[950px] text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-100/70 text-[11px] font-extrabold uppercase text-slate-600 tracking-wider">
+                  <tr className="border-b border-slate-200 bg-slate-100/70 text-[11px] font-extrabold text-slate-600 tracking-wider">
                     <th className="px-4 py-3">Settlement ID</th>
                     <th className="px-4 py-3">Slot Date</th>
                     <th className="px-4 py-3">Turf & Owner</th>
@@ -578,13 +574,12 @@ export function DailySettlementsView() {
                         {/* Status */}
                         <td className="px-3 py-3 text-center">
                           <Badge
-                            className={`text-[9px] font-bold rounded-md px-2 py-0.5 ${
-                              st.status === "SUCCESS" || st.status === "PAID"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : st.status === "PENDING" || st.status === "PROCESSING"
+                            className={`text-[9px] font-bold rounded-md px-2 py-0.5 ${st.status === "SUCCESS" || st.status === "PAID"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : st.status === "PENDING" || st.status === "PROCESSING"
                                 ? "bg-amber-50 text-amber-700 border border-amber-200"
                                 : "bg-rose-50 text-rose-700 border border-rose-200"
-                            }`}
+                              }`}
                           >
                             {st.status}
                           </Badge>
@@ -664,7 +659,7 @@ export function DailySettlementsView() {
               <div className="w-full overflow-x-auto border border-slate-200 rounded-xl">
                 <table className="w-full min-w-[750px] text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-100 text-[11px] font-extrabold uppercase text-slate-600">
+                    <tr className="border-b border-slate-200 bg-slate-100 text-[11px] font-extrabold text-slate-600">
                       <th className="px-4 py-2.5">Booking ID</th>
                       <th className="px-4 py-2.5">Turf Arena</th>
                       <th className="px-4 py-2.5">Player Name</th>
@@ -714,7 +709,7 @@ export function DailySettlementsView() {
               <div className="w-full overflow-x-auto border border-slate-200 rounded-xl">
                 <table className="w-full min-w-[800px] text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 bg-slate-100 text-[11px] font-extrabold uppercase text-slate-600">
+                    <tr className="border-b border-slate-200 bg-slate-100 text-[11px] font-extrabold text-slate-600">
                       <th className="px-4 py-2.5">Owner ID / Name</th>
                       <th className="px-4 py-2.5">Email & Phone</th>
                       <th className="px-4 py-2.5">Registered Bank</th>
@@ -729,7 +724,7 @@ export function DailySettlementsView() {
                       let setupData = {};
                       try {
                         setupData = typeof owner.setup_data === "string" ? JSON.parse(owner.setup_data) : (owner.setup_data || {});
-                      } catch (e) {}
+                      } catch (e) { }
                       const bank = setupData.bank || {};
                       const hasBank = Boolean(bank.accountNumber || bank.upiId || owner.account_number);
 
@@ -814,15 +809,27 @@ export function DailySettlementsView() {
               </div>
 
               {/* UTR & Bank Reference */}
-              <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Cashfree UTR Reference</span>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Cashfree UTR</span>
                   <p className="font-mono font-bold text-emerald-800 text-xs">{selectedSettlement.utr_number || "CF_TRANSFERRED"}</p>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase">Beneficiary Bank / Account</span>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Bank Name</span>
                   <p className="font-bold text-slate-800 text-xs">
-                    {selectedSettlement.bank_name || "Bank Account"} ({selectedSettlement.account_number ? `•••• ${selectedSettlement.account_number.slice(-4)}` : selectedSettlement.upi_id})
+                    {selectedSettlement.bank_name || (selectedSettlement.upi_id ? "UPI Direct" : "Bank Transfer")}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">Account / UPI</span>
+                  <p className="font-mono font-bold text-slate-800 text-xs">
+                    {selectedSettlement.account_number || selectedSettlement.upi_id || "Registered"}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 font-bold uppercase">IFSC Code</span>
+                  <p className="font-mono font-bold text-slate-800 text-xs">
+                    {selectedSettlement.ifsc_code || "N/A"}
                   </p>
                 </div>
               </div>

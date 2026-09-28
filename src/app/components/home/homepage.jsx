@@ -741,7 +741,7 @@ export function Navbar() {
             </div>
 
             {/* Powered By & Version Footer at bottom of Menu */}
-            <div className="pt-3 pb-1 border-t border-slate-100 dark:border-white/[0.06] flex flex-col items-center justify-center gap-1.5 select-none text-center">
+            <div className="pt-3 pb-1 flex flex-col items-center justify-center gap-1.5 select-none text-center">
               <p className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-white/60 font-semibold whitespace-nowrap">
                 Powered By{" "}
                 <a
@@ -756,8 +756,9 @@ export function Navbar() {
                   SYNTIARO
                 </a>
               </p>
+              <div className="w-3/4 border-t border-slate-100 dark:border-white/[0.06] my-1" />
               <span className="text-[10.5px] font-mono font-bold text-slate-400 dark:text-white/40 tracking-wider">
-                v2.0.4
+                v1.0.1
               </span>
             </div>
           </motion.div>
