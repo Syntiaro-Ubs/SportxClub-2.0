@@ -31,7 +31,8 @@ import {
   FileSpreadsheet,
   FileText,
   Info,
-  CalendarRange
+  CalendarRange,
+  ChevronDown
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
@@ -1312,68 +1313,80 @@ export function TurfReportsView() {
                   <Calendar className="w-3.5 h-3.5 text-emerald-600" />
                   Period:
                 </span>
-                <select
-                  value={periodFilter}
-                  onChange={(e) => setPeriodFilter(e.target.value)}
-                  className="h-10 px-3 text-xs font-extrabold bg-emerald-50/70 border border-emerald-300 text-emerald-900 rounded-xl outline-none cursor-pointer hover:bg-emerald-100/70 transition-colors"
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="1month">This Month (1 Month)</option>
-                  <option value="7days">Last 7 Days</option>
-                  <option value="custom">Custom Date Range...</option>
-                </select>
+                <div className="relative inline-flex items-center">
+                  <select
+                    value={periodFilter}
+                    onChange={(e) => setPeriodFilter(e.target.value)}
+                    className="h-9 w-[102px] sm:w-[108px] pl-2.5 pr-6 text-xs font-extrabold bg-emerald-50/70 border border-emerald-300 text-emerald-900 rounded-xl outline-none cursor-pointer hover:bg-emerald-100/70 transition-colors appearance-none truncate"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="1month">This Month</option>
+                    <option value="7days">Last 7 Days</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-800" />
+                </div>
               </div>
 
               {/* Sport Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold text-slate-500 hidden sm:inline">Sport:</span>
-                <select
-                  value={selectedSport}
-                  onChange={(e) => setSelectedSport(e.target.value)}
-                  className="h-10 px-3 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer"
-                >
-                  <option value="all">All Sports</option>
-                  <option value="cricket">Cricket</option>
-                  <option value="football">Football</option>
-                  <option value="badminton">Badminton</option>
-                  <option value="tennis">Tennis</option>
-                  <option value="pickleball">Pickleball</option>
-                  <option value="basketball">Basketball</option>
-                </select>
+                <div className="relative inline-flex items-center">
+                  <select
+                    value={selectedSport}
+                    onChange={(e) => setSelectedSport(e.target.value)}
+                    className="h-9 w-[95px] sm:w-[100px] pl-2.5 pr-6 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer appearance-none truncate"
+                  >
+                    <option value="all">All Sports</option>
+                    <option value="cricket">Cricket</option>
+                    <option value="football">Football</option>
+                    <option value="badminton">Badminton</option>
+                    <option value="tennis">Tennis</option>
+                    <option value="pickleball">Pickleball</option>
+                    <option value="basketball">Basketball</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
+                </div>
               </div>
 
               {/* Status Filter */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold text-slate-500 hidden sm:inline">Status:</span>
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => setSelectedStatus(e.target.value)}
-                  className="h-10 px-3 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer"
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="pending">Pending</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                <div className="relative inline-flex items-center">
+                  <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="h-9 w-[98px] sm:w-[102px] pl-2.5 pr-6 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer appearance-none truncate"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
+                </div>
               </div>
 
               {/* Sort By */}
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold text-slate-500 hidden sm:inline">Sort:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="h-10 px-3 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer"
-                >
-                  <option value="bookings_desc">Most Bookings</option>
-                  <option value="revenue_desc">Highest Revenue (₹)</option>
-                  <option value="cancellations_desc">Most Cancellations</option>
-                  <option value="rate_desc">Highest Cancellation %</option>
-                  <option value="today_first">Today Onboarded First</option>
-                  <option value="newest">Newest Onboarded</option>
-                  <option value="name_asc">Turf Name (A-Z)</option>
-                </select>
+                <div className="relative inline-flex items-center">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="h-9 w-[122px] sm:w-[128px] pl-2.5 pr-6 text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl text-slate-700 outline-none cursor-pointer appearance-none truncate"
+                  >
+                    <option value="bookings_desc">Most Bookings</option>
+                    <option value="revenue_desc">Highest Revenue</option>
+                    <option value="cancellations_desc">Most Cancellations</option>
+                    <option value="rate_desc">Cancellation %</option>
+                    <option value="today_first">Today Onboarded</option>
+                    <option value="newest">Newest Onboarded</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                  </select>
+                  <ChevronDown className="w-3.5 h-3.5 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
+                </div>
               </div>
             </div>
           </div>
@@ -1788,7 +1801,7 @@ export function TurfReportsView() {
                   <select
                     value={modalPeriodFilter}
                     onChange={(e) => setModalPeriodFilter(e.target.value)}
-                    className="h-8 px-2.5 font-bold bg-white border border-slate-200 rounded-lg text-slate-800 outline-none cursor-pointer"
+                    className="h-8 pl-3 pr-7.5 font-bold bg-white border border-slate-200 rounded-lg text-slate-800 outline-none cursor-pointer"
                   >
                     <option value="inherit">Same as Dashboard ({globalPeriodLabel})</option>
                     <option value="all">All Time</option>
@@ -1802,7 +1815,7 @@ export function TurfReportsView() {
                   <select
                     value={modalStatusFilter}
                     onChange={(e) => setModalStatusFilter(e.target.value)}
-                    className="h-8 px-2.5 font-semibold bg-white border border-slate-200 rounded-lg text-slate-700 outline-none cursor-pointer"
+                    className="h-8 pl-3 pr-7.5 font-semibold bg-white border border-slate-200 rounded-lg text-slate-700 outline-none cursor-pointer"
                   >
                     <option value="all">All Statuses</option>
                     <option value="confirmed">Confirmed Only</option>

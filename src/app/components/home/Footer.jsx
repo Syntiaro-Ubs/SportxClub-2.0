@@ -14,7 +14,7 @@ export function Footer() {
       id="contact"
       className={cn(
         "relative overflow-hidden border-t pb-4 md:pb-8 pt-6 md:pt-8 transition-colors duration-200",
-        isDark ? "border-white/[0.08] bg-[#050505]" : "border-slate-200 bg-white"
+        isDark ? "border-slate-800/80 bg-[#0b0f19]" : "border-slate-200 bg-white"
       )}
     >
       <div className="absolute inset-0">
@@ -31,7 +31,7 @@ export function Footer() {
         <div className={cn(
           "absolute inset-0",
           isDark
-            ? "bg-[linear-gradient(180deg,rgba(5,5,5,0.72),#050505)]"
+            ? "bg-[linear-gradient(180deg,rgba(11,15,25,0.72),#0b0f19)]"
             : "bg-[linear-gradient(180deg,rgba(255,255,255,0.72),#ffffff)]"
         )} />
       </div>

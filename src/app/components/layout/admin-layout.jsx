@@ -96,7 +96,7 @@ export function AdminLayout() {
 
       {/* Mobile Header and Main */}
       <div className="flex flex-col flex-1 md:pl-64 w-full max-w-full overflow-x-hidden">
-        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 dark:bg-black/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-border/40 bg-background/90 px-4 shadow-sm backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8">
           <button type="button" className="-m-2.5 p-2.5 text-muted-foreground md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
             <span className="sr-only">Open sidebar</span>
             <Menu className="h-6 w-6" aria-hidden="true" />
