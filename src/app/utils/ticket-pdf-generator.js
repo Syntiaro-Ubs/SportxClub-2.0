@@ -64,11 +64,12 @@ function drawCheckBadge(doc, cx, cy) {
   const points = [];
 
   /*
-   * Opening remains at the upper-right.
+   * Opening is centered precisely where the checkmark passes through (approx 317° / -43°).
+   * Spanning from -20° (340°) clockwise to 294°, leaving a clean 46° gap centered at 317°.
    */
 
-  const startAngle = 8;
-  const endAngle = 300;
+  const startAngle = -20;
+  const endAngle = 294;
 
   for (
     let angle = startAngle;
@@ -136,63 +137,174 @@ function drawCheckBadge(doc, cx, cy) {
 }
 
 /* ============================================================
-   FOOTBALL ICON
+   SPORT ICON (Cricket, Football, Tennis, Badminton, etc.)
 ============================================================ */
 
+function drawSportIcon(doc, cx, cy, sport = "") {
+  const s = String(sport || "").toLowerCase();
+
+  if (s.includes("cricket")) {
+    // ==========================================
+    // CRICKET ICON: Classic Bat & Ball (🏏)
+    // ==========================================
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.7);
+    // Bat Handle (angled at ~45 degrees, top-left)
+    doc.line(cx - 2.4, cy - 2.5, cx - 1.1, cy - 1.2);
+
+    // Bat Blade (willow body angled down-right)
+    const p1 = { x: cx - 1.5, y: cy - 0.8 };
+    const p2 = { x: cx - 0.8, y: cy - 1.5 };
+    const p3 = { x: cx + 1.9, y: cy + 1.2 };
+    const p4 = { x: cx + 1.2, y: cy + 1.9 };
+
+    doc.setFillColor(...COLORS.text);
+    doc.triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, "F");
+    doc.triangle(p1.x, p1.y, p3.x, p3.y, p4.x, p4.y, "F");
+
+    // Bat Toe (flat bottom edge)
+    doc.setLineWidth(0.35);
+    doc.line(p4.x, p4.y, p3.x, p3.y);
+
+    // Spine crease reflection on bat
+    doc.setDrawColor(...COLORS.white);
+    doc.setLineWidth(0.25);
+    doc.line(cx - 0.9, cy - 0.9, cx + 1.4, cy + 1.4);
+
+    // Cricket Ball (filled circle at top-right)
+    doc.setFillColor(...COLORS.text);
+    doc.setDrawColor(...COLORS.text);
+    doc.circle(cx + 1.8, cy - 1.4, 0.95, "FD");
+
+    // White seam curve on cricket ball
+    doc.setDrawColor(...COLORS.white);
+    doc.setLineWidth(0.2);
+    doc.line(cx + 1.2, cy - 1.6, cx + 2.4, cy - 1.2);
+
+  } else if (s.includes("football") || s.includes("soccer")) {
+    // ==========================================
+    // FOOTBALL ICON: Classic Soccer Ball with Filled Pentagon (⚽)
+    // ==========================================
+    const r = 2.8;
+    doc.setFillColor(...COLORS.white);
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+    doc.circle(cx, cy, r, "FD");
+
+    // Central black pentagon
+    const pR = 1.15;
+    const p = [];
+    for (let i = 0; i < 5; i++) {
+      const a = (-90 + i * 72) * (Math.PI / 180);
+      p.push({
+        x: cx + pR * Math.cos(a),
+        y: cy + pR * Math.sin(a),
+      });
+    }
+    doc.setFillColor(...COLORS.text);
+    doc.triangle(p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, "F");
+    doc.triangle(p[0].x, p[0].y, p[2].x, p[2].y, p[3].x, p[3].y, "F");
+    doc.triangle(p[0].x, p[0].y, p[3].x, p[3].y, p[4].x, p[4].y, "F");
+
+    // 5 radial seam lines
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+    for (let i = 0; i < 5; i++) {
+      const a = (-90 + i * 72) * (Math.PI / 180);
+      doc.line(p[i].x, p[i].y, cx + r * Math.cos(a), cy + r * Math.sin(a));
+    }
+
+  } else if (s.includes("tennis")) {
+    // ==========================================
+    // TENNIS ICON: Tennis Ball with curved seams (🎾)
+    // ==========================================
+    const r = 2.8;
+    doc.setFillColor(...COLORS.white);
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+    doc.circle(cx, cy, r, "FD");
+
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+    // Left inward curved seam
+    doc.line(cx - 1.6, cy - 2.1, cx - 0.9, cy);
+    doc.line(cx - 0.9, cy, cx - 1.6, cy + 2.1);
+    // Right inward curved seam
+    doc.line(cx + 1.6, cy - 2.1, cx + 0.9, cy);
+    doc.line(cx + 0.9, cy, cx + 1.6, cy + 2.1);
+
+  } else if (s.includes("badminton")) {
+    // ==========================================
+    // BADMINTON ICON: Shuttlecock (🏸)
+    // ==========================================
+    doc.setFillColor(...COLORS.text);
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+
+    doc.circle(cx, cy + 1.8, 1.0, "FD");
+
+    const p1 = { x: cx - 0.9, y: cy + 1.4 };
+    const p2 = { x: cx - 2.3, y: cy - 2.0 };
+    const p3 = { x: cx + 2.3, y: cy - 2.0 };
+    const p4 = { x: cx + 0.9, y: cy + 1.4 };
+    doc.setFillColor(...COLORS.white);
+    doc.triangle(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, "FD");
+    doc.triangle(p1.x, p1.y, p3.x, p3.y, p4.x, p4.y, "FD");
+
+    doc.line(cx, cy + 1.4, cx, cy - 2.0);
+    doc.line(cx - 1.5, cy - 0.5, cx + 1.5, cy - 0.5);
+    doc.line(cx - 1.9, cy - 1.2, cx + 1.9, cy - 1.2);
+
+  } else if (s.includes("basketball")) {
+    // ==========================================
+    // BASKETBALL ICON (🏀)
+    // ==========================================
+    const r = 2.8;
+    doc.setFillColor(...COLORS.white);
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+    doc.circle(cx, cy, r, "FD");
+
+    doc.line(cx - r, cy, cx + r, cy);
+    doc.line(cx, cy - r, cx, cy + r);
+    doc.line(cx - 1.7, cy - 1.9, cx - 1.1, cy);
+    doc.line(cx - 1.1, cy, cx - 1.7, cy + 1.9);
+    doc.line(cx + 1.7, cy - 1.9, cx + 1.1, cy);
+    doc.line(cx + 1.1, cy, cx + 1.7, cy + 1.9);
+
+  } else {
+    // Default Soccer Ball (⚽)
+    const r = 2.8;
+    doc.setFillColor(...COLORS.white);
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+    doc.circle(cx, cy, r, "FD");
+
+    const pR = 1.15;
+    const p = [];
+    for (let i = 0; i < 5; i++) {
+      const a = (-90 + i * 72) * (Math.PI / 180);
+      p.push({
+        x: cx + pR * Math.cos(a),
+        y: cy + pR * Math.sin(a),
+      });
+    }
+    doc.setFillColor(...COLORS.text);
+    doc.triangle(p[0].x, p[0].y, p[1].x, p[1].y, p[2].x, p[2].y, "F");
+    doc.triangle(p[0].x, p[0].y, p[2].x, p[2].y, p[3].x, p[3].y, "F");
+    doc.triangle(p[0].x, p[0].y, p[3].x, p[3].y, p[4].x, p[4].y, "F");
+
+    doc.setDrawColor(...COLORS.text);
+    doc.setLineWidth(0.35);
+    for (let i = 0; i < 5; i++) {
+      const a = (-90 + i * 72) * (Math.PI / 180);
+      doc.line(p[i].x, p[i].y, cx + r * Math.cos(a), cy + r * Math.sin(a));
+    }
+  }
+}
+
 function drawFootballIcon(doc, cx, cy) {
-  const r = 3;
-
-  doc.setFillColor(
-    ...COLORS.white
-  );
-
-  doc.setDrawColor(
-    ...COLORS.text
-  );
-
-  doc.setLineWidth(0.35);
-
-  doc.circle(
-    cx,
-    cy,
-    r,
-    "FD"
-  );
-
-  doc.line(
-    cx - 2,
-    cy - 0.5,
-    cx - 0.7,
-    cy - 2
-  );
-
-  doc.line(
-    cx - 0.7,
-    cy - 2,
-    cx + 1.6,
-    cy - 1.1
-  );
-
-  doc.line(
-    cx + 1.6,
-    cy - 1.1,
-    cx + 2,
-    cy + 1.3
-  );
-
-  doc.line(
-    cx + 2,
-    cy + 1.3,
-    cx + 0.3,
-    cy + 2.2
-  );
-
-  doc.line(
-    cx + 0.3,
-    cy + 2.2,
-    cx - 1.8,
-    cy + 1.2
-  );
+  drawSportIcon(doc, cx, cy, "football");
 }
 
 /* ============================================================
@@ -562,12 +674,17 @@ async function getQrCode(
       return null;
     }
 
-    const blob = await response.blob();
-    return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => { resolve(reader.result); };
-      reader.readAsDataURL(blob);
-    });
+    if (typeof FileReader !== "undefined") {
+      const blob = await response.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => { resolve(reader.result); };
+        reader.readAsDataURL(blob);
+      });
+    } else {
+      const arrayBuffer = await response.arrayBuffer();
+      return `data:image/png;base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+    }
   } catch (error) {
     console.error(
       "QR generation failed:",
@@ -787,11 +904,25 @@ export async function generateSportXPassDoc({
   ========================================================== */
 
   const sportText =
-    String(sport)
+    String(sport || "FOOTBALL")
       .toUpperCase();
 
-  const pillW = 61;
-  const pillH = 10;
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(10);
+
+  const textW = doc.getTextWidth(sportText);
+  const iconR = 2.8;
+  const iconDiam = iconR * 2;
+  const iconTextGap = 3.0;
+  const padX = 5.5;
+
+  const contentW = iconDiam + iconTextGap + textW;
+  const pillW = Math.max(36, contentW + padX * 2);
+  const pillH = 9.5;
 
   const pillX =
     centerX -
@@ -815,23 +946,40 @@ export async function generateSportXPassDoc({
     pillY,
     pillW,
     pillH,
-    5,
-    5,
+    pillH / 2,
+    pillH / 2,
     "FD"
   );
 
-  drawFootballIcon(
+  const contentStartX = centerX - contentW / 2;
+  const iconCx = contentStartX + iconR;
+  const iconCy = pillY + pillH / 2;
+
+  drawSportIcon(
     doc,
-    pillX + 8,
-    pillY + 5
+    iconCx,
+    iconCy,
+    sport
   );
 
-  doc.setFontSize(10.5);
+  doc.setFont(
+    "helvetica",
+    "normal"
+  );
+
+  doc.setFontSize(10);
+
+  doc.setTextColor(
+    ...COLORS.text
+  );
+
+  const textX = contentStartX + iconDiam + iconTextGap;
+  const textY = pillY + pillH / 2 + 1.2;
 
   doc.text(
     sportText,
-    pillX + 14,
-    pillY + 6.7
+    textX,
+    textY
   );
 
   /* ==========================================================

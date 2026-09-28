@@ -350,8 +350,8 @@ export function TurfOnboardingView() {
               onClick={() => setStatusFilter("Pending")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "Pending"
-                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
-                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-400 duration-200"
               }`}
             >
               <Clock className={`w-3.5 h-3.5 ${statusFilter === "Pending" ? "text-amber-500" : "text-slate-400"}`} />
@@ -370,8 +370,8 @@ export function TurfOnboardingView() {
               onClick={() => setStatusFilter("Approved")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "Approved"
-                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
-                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-400 duration-200"
               }`}
             >
               <CheckCircle2 className={`w-3.5 h-3.5 ${statusFilter === "Approved" ? "text-emerald-600" : "text-slate-400"}`} />
@@ -390,8 +390,8 @@ export function TurfOnboardingView() {
               onClick={() => setStatusFilter("Rejected")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "Rejected"
-                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
-                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-400 duration-200"
               }`}
             >
               <XCircle className={`w-3.5 h-3.5 ${statusFilter === "Rejected" ? "text-rose-500" : "text-slate-400"}`} />
@@ -410,8 +410,8 @@ export function TurfOnboardingView() {
               onClick={() => setStatusFilter("All")}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
                 statusFilter === "All"
-                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 hover:scale-105 active:scale-95 duration-200"
-                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-300"
+                  ? "bg-white text-slate-900 shadow-xs border border-slate-900 hover:border-emerald-600 duration-200"
+                  : "bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 hover:border-slate-400 duration-200"
               }`}
             >
               <Layers className={`w-3.5 h-3.5 ${statusFilter === "All" ? "text-slate-800" : "text-slate-400"}`} />

@@ -32,6 +32,122 @@ import { jsPDF } from "jspdf";
 import { downloadSportXPassPdf, parseBookingSlots } from "../utils/ticket-pdf-generator";
 import { GlobalFooter } from "../components/layout/GlobalFooter";
 
+/* ============================================================
+   AUTHENTIC SPORT SVG ICON (Matches PDF)
+============================================================ */
+const SportIcon = ({ sport, className = "w-3.5 h-3.5" }) => {
+  const s = String(sport || "").toLowerCase();
+  if (s.includes("cricket")) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <line x1="3.5" y1="3.5" x2="8" y2="8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+        <polygon points="7,9.5 9.5,7 20.5,18 18,20.5" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+        <line x1="8.5" y1="8.5" x2="19" y2="19" stroke="white" strokeWidth="0.9" />
+        <circle cx="18" cy="6" r="3.2" fill="currentColor" stroke="currentColor" strokeWidth="0.8" />
+        <path d="M15.5 6 C17 7.5, 19 7.5, 20.5 6" stroke="white" strokeWidth="0.8" fill="none" />
+      </svg>
+    );
+  }
+  if (s.includes("football") || s.includes("soccer")) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <circle cx="12" cy="12" r="9.5" />
+        <polygon points="12,7.5 15.8,10.2 14.3,14.8 9.7,14.8 8.2,10.2" fill="currentColor" stroke="currentColor" />
+        <line x1="12" y1="7.5" x2="12" y2="2.5" />
+        <line x1="15.8" y1="10.2" x2="20.5" y2="8.5" />
+        <line x1="14.3" y1="14.8" x2="17.5" y2="19.5" />
+        <line x1="9.7" y1="14.8" x2="6.5" y2="19.5" />
+        <line x1="8.2" y1="10.2" x2="3.5" y2="8.5" />
+      </svg>
+    );
+  }
+  if (s.includes("tennis")) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M6 3.5 C9 8, 9 16, 6 20.5" strokeWidth="1.5" />
+        <path d="M18 3.5 C15 8, 15 16, 18 20.5" strokeWidth="1.5" />
+      </svg>
+    );
+  }
+  if (s.includes("badminton")) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <circle cx="12" cy="19" r="2.5" fill="currentColor" />
+        <polygon points="9.5,16.5 4,5 20,5 14.5,16.5" stroke="currentColor" fill="none" />
+        <line x1="12" y1="5" x2="12" y2="16.5" />
+        <line x1="7" y1="10" x2="17" y2="10" />
+      </svg>
+    );
+  }
+  if (s.includes("basketball")) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+        <circle cx="12" cy="12" r="9.5" />
+        <line x1="2.5" y1="12" x2="21.5" y2="12" />
+        <line x1="12" y1="2.5" x2="12" y2="21.5" />
+        <path d="M5.5 5.5 C8.5 8.5, 8.5 15.5, 5.5 18.5" />
+        <path d="M18.5 5.5 C15.5 8.5, 15.5 15.5, 18.5 18.5" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="12" cy="12" r="9.5" />
+      <polygon points="12,7.5 15.8,10.2 14.3,14.8 9.7,14.8 8.2,10.2" fill="currentColor" stroke="currentColor" />
+      <line x1="12" y1="7.5" x2="12" y2="2.5" />
+      <line x1="15.8" y1="10.2" x2="20.5" y2="8.5" />
+      <line x1="14.3" y1="14.8" x2="17.5" y2="19.5" />
+      <line x1="9.7" y1="14.8" x2="6.5" y2="19.5" />
+      <line x1="8.2" y1="10.2" x2="3.5" y2="8.5" />
+    </svg>
+  );
+};
+
+/* ============================================================
+   TOP CHECKMARK BADGE (1:1 with PDF drawCheckBadge)
+============================================================ */
+function CheckBadge() {
+  return (
+    <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
+      <div className="relative h-14 w-14 flex items-center justify-center">
+        {/* White Knockout Circle to cleanly mask ticket border behind badge */}
+        <div className="absolute inset-0 rounded-full bg-white dark:bg-[#111827]" />
+        {/* SVG open circle + checkmark extending out top-right */}
+        <svg className="w-14 h-14 relative z-10" viewBox="0 0 56 56" fill="none">
+          {/* Open Circle Arc with symmetric gap at top-right (-20° to 294°) */}
+          <path
+            d="M 46.79 21.16 A 20 20 0 1 1 36.13 9.73"
+            stroke="#10B981"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+          />
+          {/* Checkmark short leg */}
+          <line
+            x1="18.5"
+            y1="27"
+            x2="26"
+            y2="34.2"
+            stroke="#10B981"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+          />
+          {/* Checkmark long leg extending right through opening center */}
+          <line
+            x1="26"
+            y1="34.2"
+            x2="43.6"
+            y2="13.2"
+            stroke="#10B981"
+            strokeWidth="2.8"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export function PaymentStatus() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -385,19 +501,13 @@ export function PaymentStatus() {
           transition={{ duration: 0.35 }}
           className="text-center space-y-6 max-w-[490px] w-full"
         >
-          {/* 🎟️ Exact 1:1 Matching SportX Official Match Entry Ticket (Image 3) */}
+          {/* 🎟️ Exact 1:1 Matching SportX Official Match Entry Ticket (Matches match-pass-pdf.js) */}
           <div className="relative w-full max-w-[480px] mx-auto select-none pt-8">
-            {/* Outer Pure White Ticket Card (No Outer Dark Border, Soft Shadow) */}
-            <div className="relative bg-white dark:bg-[#111827] rounded-[28px] p-6 sm:p-8 pt-9 shadow-[0_20px_50px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-800/60 space-y-4 text-center transition-all">
+            {/* Outer Ticket Card with 1:1 PDF Navy Border */}
+            <div className="relative bg-white dark:bg-[#111827] rounded-[24px] p-6 sm:p-8 pt-9 shadow-[0_20px_50px_rgba(0,0,0,0.06)] border-[1.5px] border-[#0F2A43] dark:border-slate-300 space-y-4 text-center transition-all">
 
-              {/* 🟢 Top Elevated Circular Checkmark Disc Badge */}
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-20">
-                <div className="h-14 w-14 rounded-full bg-white dark:bg-[#111827] flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-800">
-                  <div className="h-11 w-11 rounded-full border-[2.5px] border-emerald-500 flex items-center justify-center">
-                    <Check className="h-6 w-6 text-emerald-500 stroke-[3px]" />
-                  </div>
-                </div>
-              </div>
+              {/* 🟢 Top Elevated Circular Checkmark Disc Badge (Exact 1:1 match with PDF) */}
+              <CheckBadge />
 
               {/* 1. Header: Payment Successful + Venue Name + City + Order ID */}
               <div className="flex flex-col items-center justify-center text-center space-y-1 pt-2">
@@ -429,11 +539,11 @@ export function PaymentStatus() {
                 </div>
               </div>
 
-              {/* 2. Sport Badge Pill */}
+              {/* 2. Sport Badge Pill (Snug & Centered 1:1 with PDF) */}
               <div className="flex justify-center pt-0.5 pb-1">
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full border border-slate-800 dark:border-slate-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider shadow-2xs">
-                  <span>{getSportEmoji(sportStr)}</span>
-                  <span>{sportStr || "FOOTBALL"}</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full border-[1.2px] border-[#0F2A43] dark:border-slate-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider">
+                  <SportIcon sport={sportStr} className="w-3.5 h-3.5 text-slate-900 dark:text-white" />
+                  <span>{String(sportStr || "FOOTBALL").toUpperCase()}</span>
                 </div>
               </div>
 
@@ -447,17 +557,17 @@ export function PaymentStatus() {
                 </p>
               </div>
 
-              {/* 4. Green Center Divider with Solid Emerald Dot */}
-              <div className="relative flex items-center justify-center my-3 px-2">
-                <div className="w-full border-t-[1.5px] border-emerald-500" />
-                <div className="absolute h-3 w-3 rounded-full bg-emerald-500 shadow-xs" />
+              {/* 4. Center Divider with Solid Emerald Dot (Exact 1:1 with PDF) */}
+              <div className="relative flex items-center justify-center my-3.5 w-3/5 mx-auto">
+                <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+                <div className="absolute h-2.5 w-2.5 rounded-full bg-emerald-500" />
               </div>
 
-              {/* 5. 3 Rounded Detail Cards Grid (Side by Side) */}
+              {/* 5. 3 Rounded Detail Cards Grid (Side by Side 1:1 with PDF) */}
               <div className="grid grid-cols-3 gap-2.5 sm:gap-3 text-center pt-1">
                 {/* Card 1: Event Date */}
-                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border border-slate-700 dark:border-slate-500 shadow-2xs">
-                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-none mb-1.5">
+                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border-[1.2px] border-[#0F2A43] dark:border-slate-600 shadow-2xs">
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium leading-none mb-1.5">
                     Event Date:
                   </p>
                   <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
@@ -474,8 +584,8 @@ export function PaymentStatus() {
                 </div>
 
                 {/* Card 2: Event Time Slot */}
-                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border border-slate-700 dark:border-slate-500 shadow-2xs">
-                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-none mb-1.5">
+                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border-[1.2px] border-[#0F2A43] dark:border-slate-600 shadow-2xs">
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium leading-none mb-1.5">
                     Event Time Slot:
                   </p>
                   <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
@@ -484,21 +594,30 @@ export function PaymentStatus() {
                 </div>
 
                 {/* Card 3: Amount Paid */}
-                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border border-slate-700 dark:border-slate-500 shadow-2xs">
-                  <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 font-medium leading-none mb-1.5">
+                <div className="bg-white dark:bg-slate-800/90 py-2.5 px-1.5 sm:px-2 rounded-xl border-[1.2px] border-[#0F2A43] dark:border-slate-600 shadow-2xs">
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-medium leading-none mb-1.5">
                     Amount Paid:
                   </p>
                   <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                    ₹{Number(price || 0).toLocaleString("en-IN")}
+                    Rs. {Number(price || 0).toLocaleString("en-IN")}
                   </p>
                 </div>
               </div>
 
-              {/* 6. Ticket Perforation Notches & Dashed Tear Line */}
-              <div className="relative flex items-center justify-center my-4">
-                <div className="absolute -left-6 sm:-left-8 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#030712] shadow-inner z-10" />
-                <div className="w-full border-b border-dashed border-slate-300 dark:border-slate-700" />
-                <div className="absolute -right-6 sm:-right-8 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#030712] shadow-inner z-10" />
+              {/* 6. Ticket Perforation Notches & Dashed Tear Line (Exact 1:1 with PDF) */}
+              <div className="relative flex items-center justify-center my-4 -mx-6 sm:-mx-8">
+                {/* Left Semicircular Inward Notch */}
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-3.5 h-7 overflow-hidden z-10">
+                  <div className="w-7 h-7 rounded-full bg-[#f8fafc] dark:bg-[#0A0C10] border-[1.5px] border-[#0F2A43] dark:border-slate-300 -translate-x-1/2" />
+                </div>
+
+                {/* Dashed Line */}
+                <div className="w-full border-b border-dashed border-slate-300 dark:border-slate-700 mx-5" />
+
+                {/* Right Semicircular Inward Notch */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-7 overflow-hidden z-10 flex justify-end">
+                  <div className="w-7 h-7 rounded-full bg-[#f8fafc] dark:bg-[#0A0C10] border-[1.5px] border-[#0F2A43] dark:border-slate-300 translate-x-1/2" />
+                </div>
               </div>
 
               {/* 7. Bottom Section: Payment Date, Official Pass Badge & Bracketed QR Code */}
@@ -515,7 +634,7 @@ export function PaymentStatus() {
 
                   {/* Stadium Pill: OFFICIAL PASS 🟢 */}
                   <div>
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-slate-800 dark:border-slate-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider shadow-2xs">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border-[1.2px] border-[#0F2A43] dark:border-slate-300 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-bold uppercase tracking-wider">
                       <span>OFFICIAL PASS</span>
                       <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0" />
                     </div>

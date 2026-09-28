@@ -12,9 +12,9 @@ async function testEmail() {
     userEmail: "waghmareshrinivas99@gmail.com",
     userPhone: "9876543210",
     turfName: "Urban Sports Hub",
-    sport: "BOX CRICKET",
-    date: "2026-09-26",
-    timeSlot: "10:00 PM – 11:00 PM",
+    sport: "Cricket",
+    date: "2026-09-28",
+    timeSlot: "12:00 PM – 01:00 PM",
     amount: 1,
     turfLocation: "Koramangala, Bangalore",
   });
