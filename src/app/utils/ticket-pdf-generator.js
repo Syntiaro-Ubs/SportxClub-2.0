@@ -843,75 +843,47 @@ export async function generateSportXPassDoc({
      TURF NAME
   ========================================================== */
 
-  doc.setFont(
-    "helvetica",
-    "bold"
-  );
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.setTextColor(...COLORS.text);
 
-  doc.setFontSize(17);
-
-  doc.setTextColor(
-    ...COLORS.text
-  );
-
-  doc.text(
-    String(turfName)
-      .toUpperCase(),
-    centerX,
-    cardY + 47,
-    {
-      align: "center",
-    }
-  );
+  const turfLines = doc.splitTextToSize(String(turfName || "SPORTX ARENA").toUpperCase(), 160);
+  const turfY = cardY + 44;
+  doc.text(turfLines, centerX, turfY, { align: "center", lineHeightFactor: 1.15 });
+  const turfBottom = turfY + (turfLines.length - 1) * 5.5;
 
   /* ==========================================================
-     LOCATION
+     LOCATION (Automatic Word Wrap to Next Lines)
   ========================================================== */
 
-  doc.setFont(
-    "helvetica",
-    "normal"
-  );
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...COLORS.muted);
 
-  doc.setFontSize(13);
-
-  doc.text(
-    String(location),
-    centerX,
-    cardY + 56,
-    {
-      align: "center",
-    }
-  );
+  const maxLocationWidth = 145; // mm - stays safely inside 190mm card borders
+  const locLines = doc.splitTextToSize(String(location || ""), maxLocationWidth);
+  const locStartY = turfBottom + 6.5;
+  doc.text(locLines, centerX, locStartY, { align: "center", lineHeightFactor: 1.25 });
+  const locBottom = locStartY + (locLines.length - 1) * 4.2;
 
   /* ==========================================================
      ORDER ID
   ========================================================== */
 
-  doc.setFontSize(9.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...COLORS.text);
 
-  doc.text(
-    String(orderId),
-    centerX,
-    cardY + 65,
-    {
-      align: "center",
-    }
-  );
+  const orderIdY = locBottom + 6.5;
+  doc.text(String(orderId), centerX, orderIdY, { align: "center" });
 
   /* ==========================================================
      SPORT PILL
   ========================================================== */
 
-  const sportText =
-    String(sport || "FOOTBALL")
-      .toUpperCase();
+  const sportText = String(sport || "FOOTBALL").toUpperCase();
 
-  doc.setFont(
-    "helvetica",
-    "normal"
-  );
-
+  doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
 
   const textW = doc.getTextWidth(sportText);
@@ -924,12 +896,8 @@ export async function generateSportXPassDoc({
   const pillW = Math.max(36, contentW + padX * 2);
   const pillH = 9.5;
 
-  const pillX =
-    centerX -
-    pillW / 2;
-
-  const pillY =
-    cardY + 73;
+  const pillX = centerX - pillW / 2;
+  const pillY = Math.max(orderIdY + 5.5, cardY + 70);
 
   doc.setFillColor(
     ...COLORS.white

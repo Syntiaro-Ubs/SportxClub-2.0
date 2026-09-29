@@ -19,7 +19,7 @@ dotenv.config();
 function getTransporter() {
   const host = process.env.SMTP_HOST || process.env.EMAIL_HOST;
   const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 587;
-  const user = (process.env.SMTP_USER || process.env.EMAIL_USER || "waghmareshrinivas99@gmail.com").trim();
+  const user = (process.env.SMTP_USER || process.env.EMAIL_USER || "sportxclub.com@gmail.com").trim();
   const pass = (process.env.SMTP_PASS || process.env.EMAIL_PASS || "").replace(/\s+/g, "");
 
   if (host && host !== "smtp.gmail.com") {
@@ -487,6 +487,53 @@ async function _old_generatePassPdfBuffer({
 /**
  * 1. Template: User Booking Confirmation Email
  */
+/**
+ * Generates Plain Text version of Player Booking Confirmation (Matches previous design)
+ */
+function getPlayerBookingConfirmationText({
+  userName,
+  bookingId,
+  amountPaid,
+  turfName,
+  sportName,
+  turfLocation,
+  bookingDate,
+  startTime,
+  endTime,
+  duration,
+  slotCount,
+  displaySlotText,
+}) {
+  const formattedAmount = Number(amountPaid || 0).toLocaleString("en-IN");
+
+  return `Welcome to SportXClub! 🎉
+We're happy to confirm your turf slot booking with us.
+
+Your turf slot booking has been successfully confirmed on the SportXClub platform.
+
+Booking Details:
+Turf Name :- ${turfName}
+Location :- ${turfLocation || "Registered Arena"}
+Sport :- ${sportName}
+Player Name :- ${userName || "Player"}
+Booking ID :- ${bookingId}
+Date :- ${bookingDate}
+Time Slot :- ${displaySlotText || `${startTime} – ${endTime}`}
+Duration :- ${duration} (${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"})
+Total Paid :- ₹${formattedAmount}
+
+If you need any assistance with your booking, feel free to contact our support team.
+
+Thank you for choosing SportXClub. We look forward to seeing you on the ground!
+
+Best Regards,
+SportXClub Team
+https://sportxclub.com`.trim();
+}
+
+/**
+ * 1. Template: User Booking Confirmation Email (Exact Previous Design)
+ */
 function getPlayerBookingConfirmationHtml({
   userName,
   bookingId,
@@ -537,7 +584,60 @@ function getPlayerBookingConfirmationHtml({
 }
 
 /**
- * 2. Template: Turf Owner New Booking Notification Email
+ * Generates Plain Text version of Owner Booking Alert (Matches previous design)
+ */
+function getOwnerNewBookingText({
+  ownerName,
+  bookingId,
+  turfName,
+  sportName,
+  turfLocation,
+  bookingDate,
+  startTime,
+  endTime,
+  duration,
+  slotCount,
+  displaySlotText,
+  userName,
+  userEmail,
+  userPhone,
+  amountPaid,
+  paymentDateTime,
+}) {
+  const formattedAmount = Number(amountPaid || 0).toLocaleString("en-IN");
+
+  return `Dear ${ownerName || "Turf Owner"},
+
+You have received a new booking for your turf ${turfName} on the SportXClub platform.
+
+Booking Details:
+Turf Name :- ${turfName}
+Location :- ${turfLocation || "Registered Arena"}
+Sport :- ${sportName}
+Booking ID :- ${bookingId}
+Date :- ${bookingDate}
+Time Slot :- ${displaySlotText || `${startTime} – ${endTime}`}
+Duration :- ${duration} (${slotCount || 1} ${Number(slotCount || 1) === 1 ? "Slot" : "Slots"})
+Amount :- ₹${formattedAmount}
+
+Customer Details:
+Player Name :- ${userName || "Customer"}
+Email :- ${userEmail || "N/A"}
+Phone :- ${userPhone || "N/A"}
+Payment Date & Time :- ${paymentDateTime}
+
+Owner Dashboard: https://sportxclub.com/admin-login
+
+If you need any assistance with your turf or owner account, feel free to contact our support team.
+
+Thank you for choosing SportXClub.
+
+Best Regards,
+SportXClub Team`.trim();
+}
+
+/**
+ * 2. Template: Turf Owner New Booking Notification Email (Exact Previous Design)
  */
 function getOwnerNewBookingHtml({
   ownerName,
@@ -581,7 +681,7 @@ function getOwnerNewBookingHtml({
     <strong>Customer Details:</strong><br>
     <strong>Player Name :-</strong> ${userName || "Customer"}<br>
     <strong>Email :-</strong> ${userEmail || "N/A"}<br>
-    <strong>Phone :-</strong> ${userPhone || "N/A"}<br>
+    <strong>Phone :-</strong> ${userPhone || "N/A"}
     <strong>Payment Date & Time :-</strong> ${paymentDateTime}
   </p>
 
@@ -602,7 +702,56 @@ function getOwnerNewBookingHtml({
 }
 
 /**
- * 3. Template: User Booking Cancellation Email
+ * Generates Plain Text version of Player Booking Cancellation
+ */
+function getPlayerCancellationText({
+  userName,
+  bookingId,
+  turfName,
+  sportName,
+  turfLocation,
+  bookingDate,
+  startTime,
+  endTime,
+  duration,
+  cancellationDateTime,
+  refundMode,
+  refundId,
+  amount,
+}) {
+  const isDirectBank = refundMode === "source";
+  const refundText = isDirectBank
+    ? `Refund of Rs. ${amount || 0} initiated directly to your original payment method (Bank/UPI via Cashfree). Expected settlement: 24 hours to 5 working days.`
+    : `Refund of Rs. ${amount || 0} credited instantly to your SportX Wallet.`;
+
+  return `Hello ${userName || "Player"},
+
+Your booking at ${turfName} has been cancelled.
+
+CANCELLATION DETAILS:
+- Turf Name: ${turfName}
+- Location: ${turfLocation || "Registered Arena"}
+- Sport: ${sportName}
+- Booking ID: ${bookingId}
+- Date: ${bookingDate}
+- Time Slot: ${startTime} - ${endTime}
+- Duration: ${duration}
+- Status: Cancelled
+- Cancelled On: ${cancellationDateTime}
+
+REFUND INFORMATION:
+${refundText}
+${refundId ? `Refund Reference ID: ${refundId}` : ""}
+
+If you have any questions regarding your cancellation or refund, reply directly to this email or reach us at sportxclub.com@gmail.com.
+
+Best Regards,
+SportXClub Team
+https://sportxclub.com`.trim();
+}
+
+/**
+ * 3. Template: User Booking Cancellation Email (Clean Table Layout)
  */
 function getPlayerCancellationHtml({
   userName,
@@ -624,47 +773,145 @@ function getPlayerCancellationHtml({
     ? `Refund of ₹${amount || 0} initiated directly to your original payment method (Bank/UPI via Cashfree). Expected settlement: 24 hours to 5 working days.`
     : `Refund of ₹${amount || 0} credited instantly to your SportX Wallet.`;
 
-  return `
-<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
-  <p style="margin: 0 0 16px 0;">Dear <strong>${userName || "Player"}</strong>,</p>
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SportXClub Booking Cancellation</title>
+</head>
+<body style="margin: 0; padding: 20px 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc;">
+    <tr>
+      <td align="center" style="padding: 10px 15px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="padding: 22px 28px; background-color: #0F2A43; color: #ffffff;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td>
+                    <span style="font-size: 20px; font-weight: 800; color: #ffffff;">Sport<span style="color: #10B981;">X</span>Club</span>
+                  </td>
+                  <td align="right">
+                    <span style="display: inline-block; padding: 4px 10px; background-color: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 20px; color: #f87171; font-size: 11px; font-weight: 700; text-transform: uppercase;">Cancelled</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 28px;">
+              <h2 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #0f172a;">Booking Cancelled</h2>
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                Hello <strong>${userName || "Player"}</strong>, your booking for <strong>${turfName}</strong> has been cancelled as requested.
+              </p>
 
-  <p style="margin: 0 0 16px 0;">Your turf booking has been successfully cancelled as requested.</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <table role="presentation" width="100%" cellpadding="6" cellspacing="0" border="0" style="font-size: 13px; color: #334155;">
+                      <tr>
+                        <td width="35%" style="color: #64748b; font-weight: 600;">Turf Name:</td>
+                        <td style="color: #0f172a; font-weight: 700;">${turfName}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Location:</td>
+                        <td>${turfLocation || "Registered Arena"}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Sport:</td>
+                        <td>${sportName}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Booking ID:</td>
+                        <td style="font-family: monospace; font-weight: 600; color: #0F2A43;">${bookingId}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Event Date:</td>
+                        <td>${bookingDate}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Time Slot:</td>
+                        <td>${startTime} – ${endTime} (${duration})</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Cancelled On:</td>
+                        <td>${cancellationDateTime}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-  <p style="margin: 0 0 16px 0;">
-    <strong>Booking Details:</strong><br>
-    <strong>Turf Name :-</strong> ${turfName}<br>
-    <strong>Location :-</strong> ${turfLocation || "Registered Arena"}<br>
-    <strong>Sport :-</strong> ${sportName}<br>
-    <strong>Booking ID :-</strong> ${bookingId}<br>
-    <strong>Date :-</strong> ${bookingDate}<br>
-    <strong>Time Slot :-</strong> ${startTime} – ${endTime}<br>
-    <strong>Duration :-</strong> ${duration}<br>
-    <strong>Status :-</strong> Cancelled<br>
-    <strong>Cancelled On :-</strong> ${cancellationDateTime}
-  </p>
+              <div style="margin: 0 0 20px 0; padding: 14px 16px; background-color: #ecfdf5; border-left: 4px solid #10b981; border-radius: 6px; font-size: 13px; line-height: 1.6; color: #065f46;">
+                <strong>Refund Details:</strong><br>
+                ${refundText}<br>
+                ${refundId ? `<span style="font-size: 12px; color: #047857;"><strong>Refund Reference ID:</strong> ${refundId}</span>` : ""}
+              </div>
 
-  <div style="margin: 0 0 16px 0; padding: 12px; background-color: #ecfdf5; border-left: 4px solid #10b981; border-radius: 4px;">
-    <strong>Refund Status:</strong><br>
-    ${refundText}<br>
-    ${refundId ? `<strong>Refund Ref ID:</strong> ${refundId}` : ""}
-  </div>
+              <p style="margin: 0 0 20px 0; font-size: 13px; line-height: 1.6; color: #475569;">
+                The selected slot is now released. If you have any questions, reply directly to this email or contact us at <a href="mailto:sportxclub.com@gmail.com" style="color: #059669; text-decoration: underline;">sportxclub.com@gmail.com</a>.
+              </p>
 
-  <p style="margin: 0 0 16px 0;">The selected slot is no longer reserved under your account.</p>
-
-  <p style="margin: 0 0 16px 0;">If you have any questions regarding your cancellation or refund, feel free to contact our support team.</p>
-
-  <p style="margin: 0 0 16px 0;">We hope to see you back on the field soon!</p>
-
-  <p style="margin: 0; line-height: 1.5;">
-    Best Regards,<br>
-    <strong>SportXClub Team</strong>
-  </p>
-</div>
-  `.trim();
+              <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #334155;">
+                Best Regards,<br>
+                <strong>SportXClub Team</strong><br>
+                <a href="https://sportxclub.com" style="color: #059669; text-decoration: none; font-size: 12px;">https://sportxclub.com</a>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px 28px; background-color: #f1f5f9; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b;">
+              This is a transactional notification regarding your booking on SportXClub.<br>
+              © ${new Date().getFullYear()} SportXClub. All rights reserved.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
 }
 
 /**
- * 4. Template: Turf Owner Booking Cancellation Notification Email
+ * Generates Plain Text version of Owner Booking Cancellation Alert
+ */
+function getOwnerCancellationText({
+  ownerName,
+  bookingId,
+  turfName,
+  sportName,
+  turfLocation,
+  bookingDate,
+  startTime,
+  endTime,
+  duration,
+  cancellationDateTime,
+}) {
+  return `Dear ${ownerName || "Turf Owner"},
+
+A booking for your turf ${turfName} has been cancelled by the customer. The slot is now available again for other players.
+
+BOOKING DETAILS:
+- Turf Name: ${turfName}
+- Location: ${turfLocation || "Registered Arena"}
+- Sport: ${sportName}
+- Booking ID: ${bookingId}
+- Date: ${bookingDate}
+- Time Slot: ${startTime} - ${endTime}
+- Duration: ${duration}
+- Status: Cancelled
+- Cancelled On: ${cancellationDateTime}
+
+Owner Dashboard: https://sportxclub.com/admin-login
+
+Best Regards,
+SportXClub Team`.trim();
+}
+
+/**
+ * 4. Template: Turf Owner Booking Cancellation Notification Email (Clean Layout)
  */
 function getOwnerCancellationHtml({
   ownerName,
@@ -678,39 +925,88 @@ function getOwnerCancellationHtml({
   duration,
   cancellationDateTime,
 }) {
-  return `
-<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
-  <p style="margin: 0 0 16px 0;">Dear <strong>${ownerName || "Turf Owner"}</strong>,</p>
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turf Booking Cancelled Alert</title>
+</head>
+<body style="margin: 0; padding: 20px 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc;">
+    <tr>
+      <td align="center" style="padding: 10px 15px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 580px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+          <tr>
+            <td style="padding: 22px 28px; background-color: #0F2A43; color: #ffffff;">
+              <span style="font-size: 20px; font-weight: 800; color: #ffffff;">Sport<span style="color: #10B981;">X</span>Club</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 28px;">
+              <h2 style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #0f172a;">Slot Booking Cancelled</h2>
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                Dear <strong>${ownerName || "Turf Owner"}</strong>, a customer has cancelled their booking for <strong>${turfName}</strong>. The slot is now reopened for new reservations.
+              </p>
 
-  <p style="margin: 0 0 16px 0;">A booking for your turf <strong>${turfName}</strong> has been cancelled by the customer. The slot is now available again for other players.</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
+                <tr>
+                  <td style="padding: 16px 20px;">
+                    <table role="presentation" width="100%" cellpadding="6" cellspacing="0" border="0" style="font-size: 13px; color: #334155;">
+                      <tr>
+                        <td width="35%" style="color: #64748b; font-weight: 600;">Turf Name:</td>
+                        <td style="color: #0f172a; font-weight: 700;">${turfName}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Location:</td>
+                        <td>${turfLocation || "Registered Arena"}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Sport:</td>
+                        <td>${sportName}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Booking ID:</td>
+                        <td style="font-family: monospace; font-weight: 600; color: #0F2A43;">${bookingId}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Date:</td>
+                        <td style="font-weight: 600;">${bookingDate}</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Slot:</td>
+                        <td style="font-weight: 600; color: #dc2626;">${startTime} – ${endTime} (${duration})</td>
+                      </tr>
+                      <tr>
+                        <td style="color: #64748b; font-weight: 600;">Cancelled On:</td>
+                        <td>${cancellationDateTime}</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-  <p style="margin: 0 0 16px 0;">
-    <strong>Booking Details:</strong><br>
-    <strong>Turf Name :-</strong> ${turfName}<br>
-    <strong>Location :-</strong> ${turfLocation || "Registered Arena"}<br>
-    <strong>Sport :-</strong> ${sportName}<br>
-    <strong>Booking ID :-</strong> ${bookingId}<br>
-    <strong>Date :-</strong> ${bookingDate}<br>
-    <strong>Time Slot :-</strong> ${startTime} – ${endTime}<br>
-    <strong>Duration :-</strong> ${duration}<br>
-    <strong>Status :-</strong> Cancelled<br>
-    <strong>Cancelled On :-</strong> ${cancellationDateTime}
-  </p>
+              <p style="margin: 0 0 20px 0; font-size: 13px;">
+                <a href="https://sportxclub.com/admin-login" style="display: inline-block; padding: 10px 18px; background-color: #059669; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 700;">Open Owner Dashboard</a>
+              </p>
 
-  <p style="margin: 0 0 16px 0;">
-    <strong>Owner Dashboard:</strong> <a href="https://sportxclub.com/admin-login" target="_blank" style="color: #059669; text-decoration: underline;">https://sportxclub.com/admin-login</a>
-  </p>
-
-  <p style="margin: 0 0 16px 0;">If you need any assistance with your turf or owner account, feel free to contact our support team.</p>
-
-  <p style="margin: 0 0 16px 0;">Thank you for partnering with SportXClub.</p>
-
-  <p style="margin: 0; line-height: 1.5;">
-    Best Regards,<br>
-    <strong>SportXClub Team</strong>
-  </p>
-</div>
-  `.trim();
+              <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #334155;">
+                Best Regards,<br>
+                <strong>SportXClub Team</strong>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px 28px; background-color: #f1f5f9; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b;">
+              SportXClub Owner Notification Service.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`.trim();
 }
 
 // In-Memory Concurrency & Deduplication Locks (Prevents duplicate email delivery on rapid parallel API requests)
@@ -848,12 +1144,28 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
     }
 
     const transporter = getTransporter();
-    const smtpFrom = `SportXClub <${process.env.SMTP_USER || "waghmareshrinivas99@gmail.com"}>`;
+    const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || "sportxclub.com@gmail.com").trim();
+    const smtpFrom = `"SportXClub" <${smtpUser}>`;
 
     const emailPromises = [];
 
     // 4. Send Email to Player / Customer with PDF Match Pass Attachment
     if (userEmail && userEmail.includes("@")) {
+      const playerText = getPlayerBookingConfirmationText({
+        userName,
+        bookingId: bookingCode,
+        amountPaid,
+        turfName,
+        sportName,
+        turfLocation,
+        bookingDate,
+        startTime,
+        endTime,
+        duration,
+        slotCount,
+        displaySlotText,
+      });
+
       const playerHtml = getPlayerBookingConfirmationHtml({
         userName,
         bookingId: bookingCode,
@@ -898,8 +1210,17 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
       const mailOptions = {
         from: smtpFrom,
         to: userEmail,
-        subject: `Booking Confirmed: ${turfName} - Booking ID: ${bookingCode}`,
+        replyTo: smtpUser,
+        subject: `Booking Confirmed: ${turfName}`,
+        text: playerText,
         html: playerHtml,
+        priority: "high",
+        headers: {
+          "X-Priority": "1",
+          "X-MSMail-Priority": "High",
+          "Importance": "High",
+          "X-Entity-Ref-ID": `booking-${bookingCode}`,
+        },
       };
 
       if (passPdfBuffer) {
@@ -928,6 +1249,25 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
 
     // 5. Send Email to Turf Owner
     if (ownerEmail && ownerEmail.includes("@")) {
+      const ownerText = getOwnerNewBookingText({
+        ownerName,
+        bookingId: bookingCode,
+        turfName,
+        sportName,
+        turfLocation,
+        bookingDate,
+        startTime,
+        endTime,
+        duration,
+        slotCount,
+        displaySlotText,
+        userName,
+        userEmail,
+        userPhone,
+        amountPaid,
+        paymentDateTime,
+      });
+
       const ownerHtml = getOwnerNewBookingHtml({
         ownerName,
         bookingId: bookingCode,
@@ -952,8 +1292,17 @@ export async function sendBookingEmails(bookingIdentifier, overrideData = {}) {
           .sendMail({
             from: smtpFrom,
             to: ownerEmail,
-            subject: `New Booking Alert: ${turfName} - Slot: ${bookingDate} (${startTime} – ${endTime})`,
+            replyTo: smtpUser,
+            subject: `New Booking Alert: ${turfName} - #${bookingCode}`,
+            text: ownerText,
             html: ownerHtml,
+            priority: "high",
+            headers: {
+              "X-Priority": "1",
+              "X-MSMail-Priority": "High",
+              "Importance": "High",
+              "X-Entity-Ref-ID": `owner-booking-${bookingCode}`,
+            },
           })
           .then((info) => {
             console.log(`[BOOKING EMAIL] ✓ Alert email sent to Turf Owner: ${ownerEmail} (MsgId: ${info.messageId})`);
@@ -1076,12 +1425,29 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
     }
 
     const transporter = getTransporter();
-    const smtpFrom = `SportXClub <${process.env.SMTP_USER || "waghmareshrinivas99@gmail.com"}>`;
+    const smtpUser = (process.env.SMTP_USER || process.env.EMAIL_USER || "sportxclub.com@gmail.com").trim();
+    const smtpFrom = `"SportXClub" <${smtpUser}>`;
 
     const cancelPromises = [];
 
     // 1. Send Cancellation Email to User
     if (userEmail && userEmail.includes("@")) {
+      const playerCancelText = getPlayerCancellationText({
+        userName,
+        bookingId: bookingCode,
+        turfName,
+        sportName,
+        turfLocation,
+        bookingDate,
+        startTime,
+        endTime,
+        duration,
+        cancellationDateTime,
+        refundMode: details.refundMode || booking?.refund_mode || "wallet",
+        refundId: details.refundId || booking?.refund_arn || booking?.refund_id,
+        amount: details.amount || booking?.amount || 0,
+      });
+
       const playerCancelHtml = getPlayerCancellationHtml({
         userName,
         bookingId: bookingCode,
@@ -1103,8 +1469,18 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
           .sendMail({
             from: smtpFrom,
             to: userEmail,
-            subject: `Booking Cancelled: ${turfName} - Booking ID: ${bookingCode}`,
+            replyTo: smtpUser,
+            subject: `Booking Cancelled: ${turfName} - #${bookingCode}`,
+            text: playerCancelText,
             html: playerCancelHtml,
+            priority: "high",
+            headers: {
+              "X-Priority": "1",
+              "X-MSMail-Priority": "High",
+              "Importance": "High",
+              "X-Entity-Ref-ID": `cancel-${bookingCode}`,
+              "Feedback-ID": `cancel:sportxclub:transactional`,
+            },
           })
           .then((info) => {
             console.log(`[CANCELLATION EMAIL] ✓ Cancellation email sent to Player: ${userEmail} (MsgId: ${info.messageId})`);
@@ -1119,6 +1495,19 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
 
     // 2. Send Cancellation Email to Turf Owner
     if (ownerEmail && ownerEmail.includes("@")) {
+      const ownerCancelText = getOwnerCancellationText({
+        ownerName,
+        bookingId: bookingCode,
+        turfName,
+        sportName,
+        turfLocation,
+        bookingDate,
+        startTime,
+        endTime,
+        duration,
+        cancellationDateTime,
+      });
+
       const ownerCancelHtml = getOwnerCancellationHtml({
         ownerName,
         bookingId: bookingCode,
@@ -1137,8 +1526,18 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
           .sendMail({
             from: smtpFrom,
             to: ownerEmail,
-            subject: `Booking Cancelled Alert: ${turfName} - Booking ID: ${bookingCode}`,
+            replyTo: smtpUser,
+            subject: `Booking Cancelled Alert: ${turfName} - #${bookingCode}`,
+            text: ownerCancelText,
             html: ownerCancelHtml,
+            priority: "high",
+            headers: {
+              "X-Priority": "1",
+              "X-MSMail-Priority": "High",
+              "Importance": "High",
+              "X-Entity-Ref-ID": `owner-cancel-${bookingCode}`,
+              "Feedback-ID": `owner-cancel:sportxclub:transactional`,
+            },
           })
           .then((info) => {
             console.log(`[CANCELLATION EMAIL] ✓ Cancellation email sent to Turf Owner: ${ownerEmail} (MsgId: ${info.messageId})`);

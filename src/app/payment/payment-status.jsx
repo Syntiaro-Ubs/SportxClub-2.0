@@ -625,24 +625,28 @@ export function PaymentStatus() {
                 </div>
               </div>
 
-              {/* 6. Ticket Perforation Notches & Dashed Tear Line (Exact 1:1 with match-pass-pdf.js) */}
+              {/* 6. Ticket Perforation Notches & Dashed Tear Line (Seamless Alignment with Border) */}
               <div className="relative flex items-center justify-center my-4 -mx-6 sm:-mx-8">
-                {/* Left Inward Notch (Cleanly breaks ticket border & indents inward) */}
+                {/* Left Inward Notch (Seamlessly joins the straight border line) */}
                 <svg
-                  className="absolute -left-[1.5px] top-1/2 -translate-y-1/2 z-10 overflow-visible pointer-events-none"
+                  className="absolute top-1/2 -translate-y-1/2 z-10 overflow-visible pointer-events-none"
+                  style={{ left: "-0.75px" }}
                   width="16"
-                  height="32"
-                  viewBox="0 0 16 32"
+                  height="36"
+                  viewBox="-4 -2 20 40"
                 >
-                  {/* Knockout fill to erase straight card border behind notch */}
-                  <polygon points="-3,-2 3,-2 14,16 3,34 -3,34" className="fill-white dark:fill-[#0b0f19]" />
-                  {/* Inward Notch Chevron Line */}
+                  {/* Knockout fill to erase straight card border only behind the notch */}
+                  <polygon
+                    points="-4,0 1,0 13,16 1,32 -4,32"
+                    className="fill-white dark:fill-[#111827]"
+                  />
+                  {/* Inward Notch Chevron Line with continuous border overlap */}
                   <polyline
-                    points="0,0 13,16 0,32"
+                    points="0,-2 0,0 12.5,16 0,32 0,34"
                     fill="none"
                     className="stroke-[#0F2A43] dark:stroke-slate-300"
                     strokeWidth="1.5"
-                    strokeLinecap="round"
+                    strokeLinecap="square"
                     strokeLinejoin="round"
                   />
                 </svg>
@@ -650,22 +654,26 @@ export function PaymentStatus() {
                 {/* Dashed Tear Line */}
                 <div className="w-full border-b border-dashed border-slate-300 dark:border-slate-700 mx-5" />
 
-                {/* Right Inward Notch (Cleanly breaks ticket border & indents inward) */}
+                {/* Right Inward Notch (Seamlessly joins the straight border line) */}
                 <svg
-                  className="absolute -right-[1.5px] top-1/2 -translate-y-1/2 z-10 overflow-visible pointer-events-none"
+                  className="absolute top-1/2 -translate-y-1/2 z-10 overflow-visible pointer-events-none"
+                  style={{ right: "-0.75px" }}
                   width="16"
-                  height="32"
-                  viewBox="0 0 16 32"
+                  height="36"
+                  viewBox="-4 -2 20 40"
                 >
-                  {/* Knockout fill to erase straight card border behind notch */}
-                  <polygon points="19,-2 13,-2 2,16 13,34 19,34" className="fill-white dark:fill-[#0b0f19]" />
-                  {/* Inward Notch Chevron Line */}
+                  {/* Knockout fill to erase straight card border only behind the notch */}
+                  <polygon
+                    points="20,0 15,0 3,16 15,32 20,32"
+                    className="fill-white dark:fill-[#111827]"
+                  />
+                  {/* Inward Notch Chevron Line with continuous border overlap */}
                   <polyline
-                    points="16,0 3,16 16,32"
+                    points="16,-2 16,0 3.5,16 16,32 16,34"
                     fill="none"
                     className="stroke-[#0F2A43] dark:stroke-slate-300"
                     strokeWidth="1.5"
-                    strokeLinecap="round"
+                    strokeLinecap="square"
                     strokeLinejoin="round"
                   />
                 </svg>
