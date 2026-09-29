@@ -2854,6 +2854,9 @@ export function VenueDetails() {
                         sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
                         sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
                         sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+                        localStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+                        localStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+                        localStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
                       } catch (e) {
                         console.warn("Storage note:", e.message);
                       }

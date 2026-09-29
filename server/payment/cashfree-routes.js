@@ -119,11 +119,17 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
 
     // Cashfree API schema strictly requires return_url and notify_url to start with https://
     const isWalletTopup = req.body.orderType === "WALLET_TOPUP";
-    const prodDomain = "https://sportxclub.com";
+    const reqOrigin = (req.headers.origin || req.headers.referer || "").replace(/\/+$/, "");
+    const baseDomain = reqOrigin.startsWith("https://")
+      ? reqOrigin
+      : ((process.env.APP_FRONTEND_URL && process.env.APP_FRONTEND_URL.startsWith("https://"))
+          ? process.env.APP_FRONTEND_URL.replace(/\/+$/, "")
+          : "https://sportxclub.com");
+
     const returnUrl = isWalletTopup
-      ? `${prodDomain}/profile?topup_status=success&order_id={order_id}`
-      : `${prodDomain}/payment-status?order_id={order_id}`;
-    const notifyUrl = `${prodDomain}/api/payment/cashfree/webhook`;
+      ? `${baseDomain}/profile?topup_status=success&order_id={order_id}`
+      : `${baseDomain}/payment-status?order_id={order_id}`;
+    const notifyUrl = `${(process.env.APP_BACKEND_URL || baseDomain).replace(/\/+$/, "")}/api/payment/cashfree/webhook`;
 
     const cashfreeOrderPayload = {
       order_id: orderId,

@@ -158,6 +158,7 @@ export function PaymentStatus() {
     searchParams.get("txnid") ||
     searchParams.get("merchantTransactionId") ||
     (typeof window !== "undefined" ? sessionStorage.getItem("sportxclub_cashfree_order_id") : "") ||
+    (typeof window !== "undefined" ? localStorage.getItem("sportxclub_cashfree_order_id") : "") ||
     "";
 
   const queryStatus = searchParams.get("status") || "";
@@ -168,13 +169,16 @@ export function PaymentStatus() {
   const [copied, setCopied] = useState(false);
   const verifyingRef = useRef(false);
 
-  // Read saved booking payload
+  // Read saved booking payload (checks both session and local storage for mobile redirects)
   let bookingData = null;
   try {
     const saved =
       sessionStorage.getItem("sportxclub_last_booking") ||
       sessionStorage.getItem("sportxclub_pending_booking") ||
-      sessionStorage.getItem("sportxclub_booking");
+      sessionStorage.getItem("sportxclub_booking") ||
+      localStorage.getItem("sportxclub_last_booking") ||
+      localStorage.getItem("sportxclub_pending_booking") ||
+      localStorage.getItem("sportxclub_booking");
     if (saved) {
       bookingData = JSON.parse(saved);
     }

@@ -43,6 +43,19 @@ export function loadCashfreeSDK() {
   return cashfreeSdkPromise;
 }
 
+/**
+ * Detects whether the current client is a mobile device / mobile browser
+ */
+export function isMobileDevice() {
+  if (typeof window === "undefined") return false;
+  const userAgent = navigator.userAgent || navigator.vendor || window.opera || "";
+  const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS/i;
+  const isSmallScreen = window.innerWidth <= 768;
+  const hasTouchScreen = Boolean(navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+
+  return mobileRegex.test(userAgent) || (isSmallScreen && hasTouchScreen);
+}
+
 export const cashfreeService = {
   /**
    * 1. Create Order and Get Cashfree payment_session_id
@@ -90,9 +103,11 @@ export const cashfreeService = {
 
   /**
    * 2. Initiate Cashfree Live Payment
-   * Creates live order and launches Cashfree Checkout modal directly
+   * Creates live order and launches Cashfree Checkout.
+   * On Mobile: Uses redirectTarget: "_self" so the browser can directly open UPI apps (PhonePe, GPay, BHIM, Paytm).
+   * On Desktop: Uses redirectTarget: "_modal" for a clean popup checkout experience.
    */
-  initiatePayment: async (bookingPayload) => {
+  initiatePayment: async (bookingPayload, customOptions = {}) => {
     try {
       // 1. Create order on backend
       const orderData = await cashfreeService.createOrder(bookingPayload);
@@ -102,15 +117,21 @@ export const cashfreeService = {
         throw new Error("No payment session ID returned from Cashfree.");
       }
 
-      // Save order_id to session storage for recovery
+      // Save order_id & booking details to both session & local storage for 100% recovery across external UPI app switches
       try {
         sessionStorage.setItem("sportxclub_cashfree_order_id", order_id);
+        sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+        sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+
+        localStorage.setItem("sportxclub_cashfree_order_id", order_id);
+        localStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+        localStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
       } catch (e) {}
 
       // Helper to record confirmed booking in localStorage immediately
       const recordConfirmedLocally = (orderId, statusData = {}) => {
         try {
-          const saved = sessionStorage.getItem("sportxclub_last_booking") || sessionStorage.getItem("sportxclub_pending_booking") || sessionStorage.getItem("sportxclub_booking");
+          const saved = sessionStorage.getItem("sportxclub_last_booking") || sessionStorage.getItem("sportxclub_pending_booking") || sessionStorage.getItem("sportxclub_booking") || localStorage.getItem("sportxclub_last_booking");
           const bData = saved ? JSON.parse(saved) : bookingPayload;
           const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
           const newBooking = {
@@ -144,7 +165,16 @@ export const cashfreeService = {
         mode: "production",
       });
 
-      // Start automatic live polling in background
+      const isMobile = isMobileDevice();
+      // On mobile devices, redirect to Cashfree checkout page directly using "_self".
+      // This allows mobile browsers (Chrome, Safari, etc.) to trigger native UPI Intent apps
+      // (PhonePe, Google Pay, Paytm, BHIM) without being blocked by iframe security restrictions.
+      // On desktop, retain "_modal" for smooth popup UX.
+      const redirectTarget = customOptions.redirectTarget || (isMobile ? "_self" : "_modal");
+
+      console.log(`[Cashfree Checkout] Launching mode: ${redirectTarget} (isMobile: ${isMobile}) for order ${order_id}`);
+
+      // Start automatic live polling in background (useful if modal or if user returns back)
       let isCompleted = false;
       const pollInterval = setInterval(async () => {
         if (isCompleted) return;
@@ -162,10 +192,10 @@ export const cashfreeService = {
       // Stop polling after 10 minutes
       setTimeout(() => clearInterval(pollInterval), 600000);
 
-      // 3. Launch Checkout in modal
+      // 3. Launch Checkout
       const checkoutOptions = {
         paymentSessionId: payment_session_id,
-        redirectTarget: "_modal",
+        redirectTarget,
       };
 
       const result = await cashfree.checkout(checkoutOptions);
