@@ -401,7 +401,7 @@ export function BookingSuccess() {
                   style={{ left: "-0.75px" }}
                   width="16"
                   height="36"
-                  viewBox="-4 -2 20 40"
+                  viewBox="0 -2 20 40"
                 >
                   {/* Knockout fill to erase straight card border only behind the notch */}
                   <polygon
