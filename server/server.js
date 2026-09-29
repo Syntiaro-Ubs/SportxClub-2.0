@@ -12,11 +12,13 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import rateLimit from "express-rate-limit";
-import { initDatabase } from "./db.js";
+import { initDatabase, getPool } from "./db.js";
 import authRoutes from "./routes/auth.js";
 import adminRoutes from "./routes/admin-routes.js";
 import turfRoutes from "./routes/turf/index.js";
+import { syncApprovedTurfOwners } from "./routes/turf/turfs.js";
 import cmsRoutes from "./routes/cms/index.js";
 import profileRoutes from "./routes/profile.js";
 import aiAssistantRoutes from "./routes/ai-assistant.js";
@@ -28,6 +30,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.disable("x-powered-by");
+
+// Enable Gzip / Deflate compression for all responses (JS/CSS/JSON/HTML)
+app.use(compression());
 
 // Apply HTTP security headers
 app.use(
@@ -114,15 +119,37 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date() });
 });
 
-// Serve frontend in production
-app.use(express.static(path.join(__dirname, "../dist")));
+// Serve frontend in production with optimized cache headers
+app.use(
+  express.static(path.join(__dirname, "../dist"), {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders: (res, filePath) => {
+      // index.html should not be cached long term so new deploys are picked up immediately
+      if (filePath.endsWith("index.html") || filePath.endsWith(".html")) {
+        res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+      }
+    },
+  })
+);
+
 app.use((req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
   res.sendFile(path.join(__dirname, "../dist/index.html"));
 });
 
 async function startServer() {
   try {
     await initDatabase();
+
+    // Initial background sync for approved turf owners once on server boot
+    try {
+      const pool = getPool();
+      await syncApprovedTurfOwners(pool);
+      console.log("Turf owners initial sync completed.");
+    } catch (syncErr) {
+      console.warn("Initial turf sync warning:", syncErr.message);
+    }
     
     // Start automated 12:00 AM Midnight Turf Payout Cron Scheduler
     startMidnightPayoutScheduler();

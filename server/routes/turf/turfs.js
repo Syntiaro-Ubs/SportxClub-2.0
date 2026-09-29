@@ -288,7 +288,7 @@ router.get("/sports-popularity", async (req, res) => {
   }
 });
 
-async function syncApprovedTurfOwners(pool) {
+export async function syncApprovedTurfOwners(pool) {
   try {
     const [owners] = await pool.query(
       "SELECT id, owner_id, name, email, phone, city, status, setup_data FROM turf_owners WHERE setup_data IS NOT NULL AND status IN ('Approved', 'Active', 'approved', 'active')"
@@ -440,7 +440,6 @@ router.get("/", async (req, res) => {
   try {
     res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
     const pool = getPool();
-    await syncApprovedTurfOwners(pool);
     const [rows] = await pool.query(`
       SELECT t.*, 
         COALESCE(r.review_count, t.reviews, 0) AS reviews,
@@ -469,7 +468,6 @@ router.get("/:id", async (req, res) => {
   try {
     res.set("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
     const pool = getPool();
-    await syncApprovedTurfOwners(pool);
     const [rows] = await pool.query(`
       SELECT t.*, 
         COALESCE(r.review_count, t.reviews, 0) AS reviews,
