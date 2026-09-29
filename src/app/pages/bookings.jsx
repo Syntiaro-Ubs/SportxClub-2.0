@@ -1,309 +1,394 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { motion } from "motion/react";
+import { useState, useEffect, useMemo } from "react";
+import { Link, useNavigate } from "react-router";
+import { motion, AnimatePresence } from "motion/react";
 import {
-  ArrowRight,
   CalendarDays,
-  Check,
   Clock3,
-  CreditCard,
   MapPin,
   Plus,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Download,
+  IndianRupee,
+  Activity,
+  Ticket,
+  ExternalLink,
+  ChevronRight,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
 
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-
-const asset = (path) => `/assets${path}`;
-
-const upcomingBookings = [
-  {
-    id: 1,
-    venue: "Elite Turf Arena",
-    sport: "Football",
-    date: "Today, 6:00 PM",
-    duration: "60 mins",
-    location: "Powai, Mumbai",
-    image: asset("/venues/turf-1.webp"),
-    status: "Confirmed",
-  },
-  {
-    id: 2,
-    venue: "Ace Tennis Academy",
-    sport: "Tennis",
-    date: "Tomorrow, 8:00 AM",
-    duration: "90 mins",
-    location: "Bandra, Mumbai",
-    image: asset("/venues/turf-3.webp"),
-    status: "Confirmed",
-  },
-];
-
-const dateSlots = ["Today", "Tomorrow", "Sat 27", "Sun 28", "Mon 29"];
-const timeSlots = [
-  "6:00 AM",
-  "7:00 AM",
-  "8:00 AM",
-  "5:00 PM",
-  "6:00 PM",
-  "7:00 PM",
-  "8:00 PM",
-];
-const playerCounts = ["2 Players", "4 Players", "6 Players", "8 Players"];
+import { useAuth } from "../providers/auth-provider";
+import { profileService } from "../services/profile.service";
+import { downloadSportXPassPdf } from "../utils/ticket-pdf-generator";
+import { toast } from "sonner";
 
 export function BookingsPage() {
-  const [selectedDate, setSelectedDate] = useState("Today");
-  const [selectedTime, setSelectedTime] = useState("7:00 PM");
-  const [selectedPlayers, setSelectedPlayers] = useState("4 Players");
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
-  return (
-    <div className="space-y-5 py-2 pb-6 w-full max-w-full overflow-x-hidden min-w-0 px-0.5">
-      <div className="space-y-5">
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
+  const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filterTab, setFilterTab] = useState("all");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchUserBookings = async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
+    else setIsRefreshing(true);
+
+    try {
+      let token = null;
+      try {
+        const pUser = JSON.parse(sessionStorage.getItem("playerUser") || localStorage.getItem("playerUser") || "{}");
+        token = sessionStorage.getItem("playerToken") || localStorage.getItem("playerToken") || pUser.token || localStorage.getItem("token") || localStorage.getItem("authToken");
+      } catch (e) {
+        token = localStorage.getItem("token") || localStorage.getItem("authToken");
+      }
+
+      let fetchedList = [];
+
+      // 1. Try fetching via /api/turf/bookings
+      if (token) {
+        try {
+          const res = await fetch("/api/turf/bookings", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const json = await res.json();
+          if (json && json.success && Array.isArray(json.data)) {
+            fetchedList = json.data;
+          }
+        } catch (e) {
+          console.error("Error calling /api/turf/bookings:", e);
+        }
+      }
+
+      // 2. Fallback to profile API if no bookings found yet
+      if (fetchedList.length === 0 && currentUser) {
+        try {
+          const profData = await profileService.get(currentUser);
+          if (profData?.activeBooking) {
+            fetchedList.push(profData.activeBooking);
+          }
+        } catch (e) {
+          console.error("Error fetching profile bookings:", e);
+        }
+      }
+
+      setBookings(fetchedList);
+    } catch (err) {
+      console.error("Failed to load user bookings:", err);
+      toast.error("Failed to load bookings");
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserBookings();
+  }, [currentUser]);
+
+  const filteredBookings = useMemo(() => {
+    if (filterTab === "all") return bookings;
+    if (filterTab === "upcoming") {
+      return bookings.filter(
+        (b) => String(b.status || "").toLowerCase() === "confirmed" || String(b.status || "").toLowerCase() === "upcoming"
+      );
+    }
+    if (filterTab === "completed") {
+      return bookings.filter((b) => String(b.status || "").toLowerCase() === "completed");
+    }
+    if (filterTab === "cancelled") {
+      return bookings.filter(
+        (b) => String(b.status || "").toLowerCase() === "cancelled" || String(b.status || "").toLowerCase() === "canceled"
+      );
+    }
+    return bookings;
+  }, [bookings, filterTab]);
+
+  const handleDownloadTicket = (booking) => {
+    try {
+      const passData = {
+        bookingId: booking.id || booking.booking_id,
+        turfName: booking.turf_name || booking.venue || "SportX Arena",
+        customerName: booking.user_name || currentUser?.fullName || currentUser?.name || "Player",
+        customerEmail: booking.user_email || currentUser?.email || "",
+        customerPhone: booking.user_phone || currentUser?.phone || "",
+        date: booking.date || "Scheduled Date",
+        timeSlot: booking.time_slot || booking.timeSlot || "Scheduled Slot",
+        amountPaid: Number(booking.amount || booking.price || 0),
+        sportType: booking.sport_type || booking.sport || "Football",
+        status: booking.status || "Confirmed",
+        paymentMethod: booking.payment_method || "Online",
+      };
+      downloadSportXPassPdf(passData);
+      toast.success("Downloading match ticket pass...");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      toast.error("Could not generate ticket PDF.");
+    }
+  };
+
+  if (!currentUser && !localStorage.getItem("token") && !localStorage.getItem("playerToken")) {
+    return (
+      <div className="max-w-4xl mx-auto py-12 px-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="rounded-[28px] border border-primary/10 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-[0_18px_42px_-30px_rgba(15,23,42,0.35)] w-full min-w-0 overflow-hidden"
+          className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white/60 dark:bg-[#10131c] p-8 md:p-12 backdrop-blur-xl shadow-xl"
         >
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-xs  uppercase tracking-[0.24em] text-primary">
-                Your bookings
-              </p>
-              <h1 className="mt-2 text-2xl  tracking-tight">
-                Manage bookings like a native app
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Review upcoming sessions, select a slot, and confirm payment
-                with a single sticky CTA.
-              </p>
-            </div>
+          <div className="h-16 w-16 mx-auto rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4">
+            <Ticket className="h-8 w-8" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Your SportX Bookings</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2 max-w-md mx-auto">
+            Log in with your account to view your confirmed sessions, upcoming match slots, and download your match passes.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-12 w-12 rounded-2xl border border-border/60 bg-background/80 text-foreground"
-              aria-label="Add booking"
+              onClick={() => navigate("/player-login")}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-6 h-11"
             >
-              <Plus className="h-5 w-5" />
+              Sign In to View Bookings
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/venues")}
+              className="rounded-xl border-slate-300 dark:border-white/20 font-semibold px-6 h-11"
+            >
+              Browse Venues
             </Button>
           </div>
-        </motion.section>
-
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base ">Upcoming sessions</h2>
-            <Link
-              to="/venues"
-              className="inline-flex items-center gap-1 text-sm  text-primary"
-            >
-              Book more
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {upcomingBookings.map((booking) => (
-              <motion.article
-                key={booking.id}
-                whileTap={{ scale: 0.99 }}
-                className="flex gap-3 rounded-[24px] border border-border/60 bg-card p-3 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.3)]"
-              >
-                <div className="h-24 w-24 shrink-0 overflow-hidden rounded-[18px]">
-                  <ImageWithFallback
-                    src={booking.image}
-                    alt={booking.venue}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="truncate text-base ">{booking.venue}</h3>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {booking.sport}
-                      </p>
-                    </div>
-                    <Badge className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[0.65rem]  uppercase tracking-[0.18em] text-primary">
-                      {booking.status}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <CalendarDays className="h-4 w-4 text-primary" />
-                      {booking.date}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock3 className="h-4 w-4 text-primary" />
-                      {booking.duration}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      {typeof booking.location === 'object' ? (booking.location?.city || booking.location?.address || 'Location unavailable') : booking.location}
-                    </div>
-                  </div>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr] w-full min-w-0 overflow-hidden">
-          <Card className="rounded-[28px] border-border/60 bg-card shadow-[0_12px_34px_-26px_rgba(15,23,42,0.35)] w-full min-w-0 overflow-hidden">
-            <CardContent className="space-y-5 p-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs  uppercase tracking-[0.24em] text-primary">
-                    Booking flow
-                  </p>
-                  <h2 className="mt-2 text-lg ">Choose a session</h2>
-                </div>
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary">
-                  <CalendarDays className="h-5 w-5" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm  text-foreground">Date</p>
-                <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {dateSlots.map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSelectedDate(slot)}
-                      className={
-                        selectedDate === slot
-                          ? "min-w-fit rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-sm  text-primary"
-                          : "min-w-fit rounded-full border border-border/60 bg-background px-4 py-2 text-sm  text-muted-foreground"
-                      }
-                    >
-                      {slot}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm  text-foreground">Time slots</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {timeSlots.map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      onClick={() => setSelectedTime(slot)}
-                      className={
-                        selectedTime === slot
-                          ? "flex h-11 items-center justify-between rounded-[16px] border border-primary/25 bg-primary/10 px-3 text-sm  text-primary"
-                          : "flex h-11 items-center justify-between rounded-[16px] border border-border/60 bg-background px-3 text-sm  text-muted-foreground"
-                      }
-                    >
-                      <span>{slot}</span>
-                      {selectedTime === slot && <Check className="h-4 w-4" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm  text-foreground">Player count</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {playerCounts.map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => setSelectedPlayers(count)}
-                      className={
-                        selectedPlayers === count
-                          ? "h-11 rounded-[16px] border border-primary/25 bg-primary/10 text-sm  text-primary"
-                          : "h-11 rounded-[16px] border border-border/60 bg-background text-sm  text-muted-foreground"
-                      }
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-[28px] border-border/60 bg-card shadow-[0_12px_34px_-26px_rgba(15,23,42,0.35)] w-full min-w-0 overflow-hidden">
-            <CardContent className="space-y-4 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs  uppercase tracking-[0.24em] text-primary">
-                    Payment summary
-                  </p>
-                  <h2 className="mt-2 text-lg ">Review total</h2>
-                </div>
-                <CreditCard className="h-5 w-5 text-primary" />
-              </div>
-
-              <div className="rounded-[22px] border border-border/60 bg-background p-4">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Selected date</span>
-                  <span className="">{selectedDate}</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Selected time</span>
-                  <span className="">{selectedTime}</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Players</span>
-                  <span className="">{selectedPlayers}</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Venue charge</span>
-                  <span className="">₹1,200</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-                  <span className="text-sm ">Payable now</span>
-                  <span className="text-xl  text-primary">₹1,200</span>
-                </div>
-              </div>
-
-              <div className="rounded-[22px] border border-primary/15 bg-primary/10 p-4">
-                <p className="text-sm  text-foreground">Booking confirmation</p>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  We will hold the slot, send the confirmation to your profile,
-                  and keep the payment policy visible before checkout.
-                </p>
-              </div>
-
-              <Button
-                variant="outline"
-                className="h-12 w-full sm:w-1/2 flex mx-auto justify-center items-center gap-2 rounded-[18px] border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 bg-transparent hover:bg-transparent hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-sm cursor-pointer transition-colors shadow-none"
-              >
-                Confirm booking
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </CardContent>
-          </Card>
-        </section>
+        </motion.div>
       </div>
+    );
+  }
 
-      <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] z-40 border-t border-border/50 bg-background/90 px-4 py-3 backdrop-blur-2xl md:hidden">
-        <div className="mx-auto flex max-w-screen-xl items-center justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
-              Next step
-            </p>
-            <p className="mt-1 text-sm  text-foreground">
-              {selectedDate} at {selectedTime}
-            </p>
+  return (
+    <div className="max-w-5xl mx-auto py-4 sm:py-6 px-4 space-y-6">
+      {/* Header Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-slate-50 to-slate-100 dark:from-emerald-950/20 dark:via-[#10131c] dark:to-[#0c0e14] p-5 sm:p-7 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+      >
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+            <Sparkles className="h-4 w-4" />
+            <span>Player Console</span>
           </div>
+          <h1 className="mt-1 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            My Venue Bookings
+          </h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Track your confirmed sports sessions, view turf details, and download digital tickets.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            className="h-11 rounded-[16px] border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 bg-transparent hover:bg-transparent hover:border-emerald-600 dark:hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 font-bold text-sm px-5 cursor-pointer transition-colors shadow-none"
+            size="sm"
+            onClick={() => fetchUserBookings(true)}
+            disabled={isRefreshing}
+            className="rounded-xl border-slate-300 dark:border-white/10 h-10 px-3.5 gap-2 text-xs font-semibold cursor-pointer"
           >
-            Book now
+            <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin text-emerald-500" : ""}`} />
+            <span>Refresh</span>
+          </Button>
+          <Button
+            onClick={() => navigate("/venues")}
+            className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold h-10 px-4 gap-1.5 cursor-pointer shadow-sm"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Book New Slot</span>
           </Button>
         </div>
+      </motion.div>
+
+      {/* Filter Tabs & Quick Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {[
+            { id: "all", label: "All Bookings", count: bookings.length },
+            {
+              id: "upcoming",
+              label: "Upcoming",
+              count: bookings.filter(
+                (b) => String(b.status || "").toLowerCase() === "confirmed" || String(b.status || "").toLowerCase() === "upcoming"
+              ).length,
+            },
+            {
+              id: "completed",
+              label: "Completed",
+              count: bookings.filter((b) => String(b.status || "").toLowerCase() === "completed").length,
+            },
+            {
+              id: "cancelled",
+              label: "Cancelled",
+              count: bookings.filter(
+                (b) => String(b.status || "").toLowerCase() === "cancelled" || String(b.status || "").toLowerCase() === "canceled"
+              ).length,
+            },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilterTab(tab.id)}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                filterTab === tab.id
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10"
+              }`}
+            >
+              {tab.label} ({tab.count})
+            </button>
+          ))}
+        </div>
+
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Showing {filteredBookings.length} {filteredBookings.length === 1 ? "booking" : "bookings"}
+        </span>
       </div>
+
+      {/* Bookings List */}
+      {isLoading ? (
+        <div className="py-20 flex flex-col items-center justify-center text-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+            Syncing your bookings from database...
+          </p>
+        </div>
+      ) : filteredBookings.length === 0 ? (
+        <div className="py-16 px-4 rounded-3xl border border-dashed border-slate-300 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02] text-center flex flex-col items-center justify-center">
+          <div className="h-14 w-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+            <CalendarDays className="h-7 w-7" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+            {filterTab === "all" ? "No bookings found" : `No ${filterTab} bookings`}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+            {filterTab === "all"
+              ? "You have not made any venue bookings yet. Explore top sports turfs and reserve your preferred slots!"
+              : `There are currently no bookings under the '${filterTab}' filter.`}
+          </p>
+          <Button
+            onClick={() => navigate("/venues")}
+            className="mt-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-10 px-5 shadow-sm cursor-pointer"
+          >
+            Explore Sports Venues
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {filteredBookings.map((b) => {
+            const statusStr = String(b.status || "Confirmed").toLowerCase();
+            const isConfirmed = statusStr === "confirmed" || statusStr === "upcoming";
+            const isCompleted = statusStr === "completed";
+            const isCancelled = statusStr === "cancelled" || statusStr === "canceled";
+
+            const turfImg = b.turf_image || b.image_url || b.image || "/assets/venues/turf-1.webp";
+            const amountVal = Number(b.amount || b.price || b.total_price || 0);
+
+            return (
+              <motion.div
+                key={b.id || `booking-${b.date}-${b.time_slot}`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#10131c] p-4 sm:p-5 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+              >
+                {/* Turf Photo & Details */}
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5">
+                    <ImageWithFallback
+                      src={turfImg}
+                      alt={b.turf_name || "Turf"}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white truncate">
+                        {b.turf_name || b.venue || "Sports Arena"}
+                      </h3>
+                      <Badge
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${
+                          isConfirmed
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            : isCompleted
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
+                        }`}
+                      >
+                        {b.status || "Confirmed"}
+                      </Badge>
+                    </div>
+
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      {b.sport_type || b.sport || "Football"} Match Slot
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                      <div className="flex items-center gap-1.5">
+                        <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                        <span>{b.date || "Date scheduled"}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock3 className="h-3.5 w-3.5 text-slate-400" />
+                        <span>{b.time_slot || b.timeSlot || "Time Slot"}</span>
+                      </div>
+                      {b.booking_id && (
+                        <div className="flex items-center gap-1 text-[11px] font-mono text-slate-400">
+                          <span>Ref: #{b.booking_id}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Amount & Actions */}
+                <div className="flex items-center justify-between md:flex-col md:items-end md:justify-center gap-3 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-white/5 shrink-0">
+                  <div className="text-left md:text-right">
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Amount Paid</p>
+                    <p className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                      ₹{amountVal.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDownloadTicket(b)}
+                      className="rounded-xl border-slate-300 dark:border-white/20 h-9 px-3 gap-1.5 text-xs font-semibold cursor-pointer"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Ticket PDF</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate("/venues")}
+                      className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white h-9 px-3.5 text-xs font-bold cursor-pointer"
+                    >
+                      Book Again
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

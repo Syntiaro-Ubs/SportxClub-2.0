@@ -243,7 +243,9 @@ export function VenueDetails() {
     ? {
       name: activeVenueData.name,
       location: activeVenueData.location,
-      address: `${typeof activeVenueData.location === 'object' ? (activeVenueData.location?.address || activeVenueData.location?.city || '') : (activeVenueData.location || '')}, Mumbai, Maharashtra`,
+      address: typeof activeVenueData.location === 'object' 
+        ? (activeVenueData.location?.address || activeVenueData.location?.city || '') 
+        : (activeVenueData.location || ''),
       rating:
         typeof activeVenueData.rating === "number"
           ? activeVenueData.rating

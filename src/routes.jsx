@@ -451,13 +451,6 @@ export const router = createBrowserRouter([
               return { Component: SquadBookingPage };
             },
           },
-          {
-            path: "/open-lobbies",
-            lazy: async () => {
-              const { OpenLobbiesPage } = await import("./app/pages/open-lobbies");
-              return { Component: OpenLobbiesPage };
-            },
-          },
 
           {
             path: "/community",
