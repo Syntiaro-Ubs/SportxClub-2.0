@@ -814,7 +814,12 @@ export function VenueDetails() {
     window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    const interval = setInterval(loadBookings, 3000);
+    // Refresh slot bookings every 30s only when tab is actively visible
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadBookings();
+      }
+    }, 30000);
 
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
