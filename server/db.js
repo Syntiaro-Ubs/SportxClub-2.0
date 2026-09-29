@@ -1136,7 +1136,7 @@ async function seedData() {
       INSERT INTO banners (title, subtitle, image_url, link, status, position)
       VALUES 
       ('Book Your Turf Now', 'Get flat 20% off on your first booking with coupon WELCOME50', 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=1200', '/turfs', 'Active', 1),
-      ('Join Local Squad Games', 'Meet players near you and play your favorite sports', 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200', '/open-lobbies', 'Active', 2)
+      ('Join Local Squad Games', 'Meet players near you and play your favorite sports', 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200', '/squad-booking', 'Active', 2)
     `);
   }
 
@@ -1212,11 +1212,17 @@ async function seedData() {
       INSERT INTO cms_banners (title, subtitle, image_url, link, cta_text, secondary_cta_text, secondary_link, is_active, display_order)
       VALUES 
       ('Flat 15% Cashback on Early Bird & Night Turf Bookings', 'Book verified turfs before 11 AM or after 10 PM. Instant refund-safe slots & zero extra fees.', '/assets/hero/ai_hero_1.jpg', '/venues', 'Book a Turf Now', 'Explore Passes', '/venues', 1, 1),
-      ('Never Play Short – Join Open Lobbies in Your City', 'Find available players near you or create your own open lobby. Connect, play, and rate players.', '/assets/hero/ai_hero_3.jpg', '/open-lobbies', 'Find Open Lobbies', 'Book Squad Slot', '/squad-booking', 1, 2),
+      ('Never Play Short – Book Squad Slots in Your City', 'Find available players near you and reserve your team slot. Connect, play, and rate players.', '/assets/hero/ai_hero_3.jpg', '/squad-booking', 'Book Squad Slot', 'Browse Venues', '/venues', 1, 2),
       ('SportX Club All-Access Priority Pass', 'Get up to 40% discount on regular bookings, priority slot reservation, and free cancellations.', '/assets/hero/ai_hero_4.jpg', '/venues', 'Get Club Pass', 'Learn More', '/venues', 1, 3),
       ('FIFA-Standard Floodlit Night Turfs & Arenas', 'High-lux pro lighting, shock-pad turfing, rooftop courts, and player lounge amenities.', '/assets/hero/new_hero_5.jpg', '/venues', 'Browse All Venues', 'View Night Slots', '/venues', 1, 4)
     `);
   }
+
+  // Clean up any existing banners pointing to legacy /open-lobbies
+  try {
+    await conn.query(`UPDATE banners SET link = '/squad-booking' WHERE link = '/open-lobbies'`);
+    await conn.query(`UPDATE cms_banners SET link = '/squad-booking' WHERE link = '/open-lobbies'`);
+  } catch (err) {}
 
   // Seed CMS Sports if empty
   const [cmsSports] = await conn.query("SELECT COUNT(*) as count FROM cms_sports");
@@ -1270,17 +1276,14 @@ async function seedData() {
     `);
   }
 
-  // Seed CMS Gallery if empty
-  const [cmsGallery] = await conn.query("SELECT COUNT(*) as count FROM cms_gallery");
-  if (cmsGallery[0].count === 0) {
+  // Clean up any legacy dummy Mumbai mock records from cms_gallery
+  try {
     await conn.query(`
-      INSERT INTO cms_gallery (name, location, rating, reviews, image_url, className, is_active, display_order)
-      VALUES 
-      ('Elite Football Arena', 'Mumbai Central', '4.9', 124, 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800', 'md:col-span-2 md:row-span-2', 1, 1),
-      ('Smash & Drive Badminton', 'Andheri West', '4.8', 89, 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800', 'md:col-span-1 md:row-span-1', 1, 2),
-      ('GreenPark Tennis Club', 'Bandra', '4.7', 56, 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800', 'md:col-span-1 md:row-span-1', 1, 3),
-      ('Hoops Rooftop Court', 'South Mumbai', '5.0', 210, 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800', 'md:col-span-2 md:row-span-1', 1, 4)
+      DELETE FROM cms_gallery 
+      WHERE name IN ('Elite Football Arena', 'Smash & Drive Badminton', 'GreenPark Tennis Club', 'Hoops Rooftop Court')
     `);
+  } catch (err) {
+    console.error("Error cleaning up dummy cms_gallery items:", err?.message);
   }
 
   // Seed CMS Why Cards if empty

@@ -2471,40 +2471,8 @@ export function StoreSection() {
   );
 }
 
-const galleryTurfs = [
-  {
-    id: "g1",
-    name: "Hoops Rooftop Court",
-    location: "South Mumbai",
-    rating: "5.0",
-    reviews: 210,
-    image: asset("/venues/turf-6.webp"),
-  },
-  {
-    id: "g2",
-    name: "Elite Football Arena",
-    location: "Mumbai Central",
-    rating: "4.9",
-    reviews: 124,
-    image: asset("/venues/turf-1.webp"),
-  },
-  {
-    id: "g3",
-    name: "Smash & Drive Badminton",
-    location: "Andheri West, Mumbai",
-    rating: "4.8",
-    reviews: 89,
-    image: asset("/venues/turf-3.webp"),
-  },
-  {
-    id: "g4",
-    name: "GreenPark Tennis Club",
-    location: "Bandra, Mumbai",
-    rating: "4.7",
-    reviews: 56,
-    image: asset("/venues/turf-4.webp"),
-  },
-];
+// Fallback gallery is empty; all turfs are driven dynamically by live database / CMS
+const galleryTurfs = [];
 
 const CITY_METRO_CLUSTERS = {
   mumbai: [
