@@ -128,37 +128,6 @@ export const cashfreeService = {
         localStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
       } catch (e) {}
 
-      // Helper to record confirmed booking in localStorage immediately
-      const recordConfirmedLocally = (orderId, statusData = {}) => {
-        try {
-          const saved = sessionStorage.getItem("sportxclub_last_booking") || sessionStorage.getItem("sportxclub_pending_booking") || sessionStorage.getItem("sportxclub_booking") || localStorage.getItem("sportxclub_last_booking");
-          const bData = saved ? JSON.parse(saved) : bookingPayload;
-          const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
-          const newBooking = {
-            booking_code: statusData.booking?.booking_code || orderId,
-            turf_name: bData?.venue?.name || bData?.venue || "SportX Turf",
-            venue: bData?.venue?.name || bData?.venue || "SportX Turf",
-            turf_id: bData?.venueId,
-            date: bData?.date || bData?.selectedDate || new Date().toISOString().split("T")[0],
-            time_slot: bData?.time || bData?.timeSlot || "6:00 PM - 7:00 PM",
-            slot_time: bData?.time || bData?.timeSlot || "6:00 PM - 7:00 PM",
-            time: bData?.time || bData?.timeSlot || "6:00 PM - 7:00 PM",
-            sport: bData?.sport || "Football",
-            amount: bData?.price || bData?.amount || 1200,
-            user_name: bData?.userName || localStorage.getItem("userName") || "SportX Player",
-            user_email: bData?.userEmail || localStorage.getItem("userEmail") || "user@sportxclub.com",
-            status: "Confirmed",
-            timestamp: Date.now(),
-          };
-          const exists = confirmedList.some((b) => b.booking_code === newBooking.booking_code || (b.turf_name === newBooking.turf_name && b.date === newBooking.date && b.time_slot === newBooking.time_slot));
-          if (!exists) {
-            confirmedList.unshift(newBooking);
-            localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(confirmedList.slice(0, 50)));
-          }
-          sessionStorage.setItem("sportxclub_last_booking_status", "Confirmed");
-        } catch (e) {}
-      };
-
       // 2. Load official Cashfree SDK v3 in production live mode
       const Cashfree = await loadCashfreeSDK();
       const cashfree = new Cashfree({
@@ -174,7 +143,22 @@ export const cashfreeService = {
 
       console.log(`[Cashfree Checkout] Launching mode: ${redirectTarget} (isMobile: ${isMobile}) for order ${order_id}`);
 
-      // Start automatic live polling in background (useful if modal or if user returns back)
+      // 3. Launch Checkout
+      const checkoutOptions = {
+        paymentSessionId: payment_session_id,
+        redirectTarget,
+      };
+
+      if (redirectTarget === "_self") {
+        // ON MOBILE: Let Cashfree SDK navigate to Cashfree hosted checkout page.
+        // DO NOT hijack navigation to /payment-status!
+        // Cashfree will redirect back to return_url (payment-status) once the user pays or cancels.
+        await cashfree.checkout(checkoutOptions);
+        return { success: true, order_id, redirecting: true };
+      }
+
+      // ON DESKTOP (_modal):
+      // Modal opens as an overlay on the current page.
       let isCompleted = false;
       const pollInterval = setInterval(async () => {
         if (isCompleted) return;
@@ -183,7 +167,6 @@ export const cashfreeService = {
           if (statusRes && (statusRes.isPaid || statusRes.status === "Success")) {
             isCompleted = true;
             clearInterval(pollInterval);
-            recordConfirmedLocally(order_id, statusRes);
             window.location.href = `/payment-status?order_id=${encodeURIComponent(order_id)}`;
           }
         } catch (e) {}
@@ -192,40 +175,17 @@ export const cashfreeService = {
       // Stop polling after 10 minutes
       setTimeout(() => clearInterval(pollInterval), 600000);
 
-      // 3. Launch Checkout
-      const checkoutOptions = {
-        paymentSessionId: payment_session_id,
-        redirectTarget,
-      };
-
       const result = await cashfree.checkout(checkoutOptions);
-
-      setTimeout(async () => {
-        if (isCompleted) return;
-        try {
-          const statusRes = await cashfreeService.getOrderStatus(order_id);
-          if (statusRes && (statusRes.isPaid || statusRes.status === "Success")) {
-            isCompleted = true;
-            clearInterval(pollInterval);
-            recordConfirmedLocally(order_id, statusRes);
-            window.location.href = `/payment-status?order_id=${encodeURIComponent(order_id)}`;
-            return;
-          }
-        } catch (e) {}
-      }, 1000);
 
       if (result && result.error) {
         console.warn("Cashfree checkout notice:", result.error);
-        if (result.error.message && !result.error.message.toLowerCase().includes("closed")) {
-          clearInterval(pollInterval);
-          return { success: false, message: result.error.message };
-        }
+        clearInterval(pollInterval);
+        return { success: false, message: result.error.message };
       }
 
-      if (result && (result.paymentDetails || result.redirect)) {
+      if (result && result.paymentDetails) {
         isCompleted = true;
         clearInterval(pollInterval);
-        recordConfirmedLocally(order_id);
         window.location.href = `/payment-status?order_id=${encodeURIComponent(order_id)}`;
       }
 

@@ -377,6 +377,11 @@ export function PaymentStatus() {
                 success: false,
                 message: "Payment is pending or awaiting bank settlement.",
               });
+              try {
+                const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+                const filtered = confirmedList.filter((b) => b.booking_code !== orderId && b.booking_code !== statusRes.order_id);
+                localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(filtered));
+              } catch (e) {}
               toast.info("Payment is being processed by your bank.");
             }
           } else {
@@ -385,7 +390,12 @@ export function PaymentStatus() {
               success: false,
               message: statusRes.message || failureReason || "Payment was not completed on Cashfree.",
             });
-            toast.error("Payment Failed. The slot was not reserved.");
+            try {
+              const confirmedList = JSON.parse(localStorage.getItem("sportxclub_confirmed_bookings") || "[]");
+              const filtered = confirmedList.filter((b) => b.booking_code !== orderId && b.booking_code !== statusRes.order_id);
+              localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(filtered));
+            } catch (e) {}
+            toast.error("Payment was not completed.");
           }
         } else if (queryStatus.toLowerCase() === "success") {
           setVerificationResult({
@@ -443,6 +453,11 @@ export function PaymentStatus() {
     verificationResult?.status === "Success" ||
     verificationResult?.success === true ||
     queryStatus.toLowerCase() === "success";
+
+  const isPending =
+    !isSuccess &&
+    (verificationResult?.status === "Pending" ||
+      verificationResult?.order_status === "ACTIVE");
 
   const currentPaymentDate = (() => {
     try {
@@ -505,8 +520,10 @@ export function PaymentStatus() {
           transition={{ duration: 0.35 }}
           className="text-center space-y-6 max-w-[490px] w-full"
         >
-          {/* 🎟️ Exact 1:1 Matching SportX Official Match Entry Ticket (Matches match-pass-pdf.js) */}
-          <div className="relative w-full max-w-[480px] mx-auto select-none pt-8">
+          {isSuccess ? (
+            <>
+              {/* 🎟️ Exact 1:1 Matching SportX Official Match Entry Ticket (Matches match-pass-pdf.js) */}
+              <div className="relative w-full max-w-[480px] mx-auto select-none pt-8">
             {/* Outer Ticket Card with 1:1 PDF Navy Border */}
             <div className="relative bg-white dark:bg-[#111827] rounded-[24px] p-6 sm:p-8 pt-9 shadow-[0_20px_50px_rgba(0,0,0,0.06)] border-[1.5px] border-[#0F2A43] dark:border-slate-300 space-y-4 text-center transition-all">
 
@@ -701,26 +718,66 @@ export function PaymentStatus() {
             </div>
           </div>
 
-          {/* Action Navigation Buttons */}
-          <div className="space-y-3 pt-2 max-w-[480px] mx-auto w-full">
-            {isSuccess ? (
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button
-                  onClick={handleDownloadReceipt}
-                  className="flex-1 cursor-pointer text-sm font-bold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 bg-transparent rounded-xl h-12 gap-2 shadow-xs transition-all hover:scale-[1.01]"
-                >
-                  <Download className="h-4 w-4" />
-                  Download Entry Pass
-                </Button>
-                <Link to="/venues" className="flex-1">
-                  <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50/30 rounded-xl h-12">
-                    Book Another Turf
+              {/* Action Navigation Buttons for Confirmed Pass */}
+              <div className="space-y-3 pt-2 max-w-[480px] mx-auto w-full">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleDownloadReceipt}
+                    className="flex-1 cursor-pointer text-sm font-bold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 bg-transparent rounded-xl h-12 gap-2 shadow-xs transition-all hover:scale-[1.01]"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Entry Pass
                   </Button>
-                </Link>
+                  <Link to="/venues" className="flex-1">
+                    <Button variant="outline" className="w-full cursor-pointer text-xs sm:text-sm font-bold border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50/30 rounded-xl h-12">
+                      Book Another Turf
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            ) : (
-              <div className="space-y-2.5 w-full">
-                <div className="flex gap-3">
+            </>
+          ) : (
+            /* ❌ / ⏳ Incomplete / Cancelled / Pending Payment Card */
+            <div className="relative w-full max-w-[480px] mx-auto select-none pt-8">
+              <div className="relative bg-white dark:bg-[#111827] rounded-[24px] p-6 sm:p-8 pt-9 shadow-[0_20px_50px_rgba(0,0,0,0.06)] border-[1.5px] border-slate-200 dark:border-slate-800 space-y-5 text-center">
+                {/* Elevated Disc Badge */}
+                <div className="flex justify-center -mt-16 mb-1">
+                  <div className={`h-16 w-16 rounded-full flex items-center justify-center shadow-lg border-4 border-white dark:border-[#111827] ${
+                    isPending ? "bg-amber-500 text-white" : "bg-rose-500 text-white"
+                  }`}>
+                    {isPending ? <Clock className="h-8 w-8" /> : <XCircle className="h-8 w-8" />}
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <h1 className={`text-2xl font-bold tracking-tight ${isPending ? "text-amber-500" : "text-rose-500"}`}>
+                    {isPending ? "Payment Incomplete / Pending" : "Payment Not Completed"}
+                  </h1>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {verificationResult?.message ||
+                      (isPending
+                        ? "Payment confirmation was not received. If you cancelled or exited the payment app, no money was charged."
+                        : "Your payment was not completed and the slot was not booked. No amount was deducted.")}
+                  </p>
+                </div>
+
+                {/* Order Details Summary Box */}
+                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 text-left space-y-2 text-xs text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-700">
+                  <div className="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                    <span className="text-slate-400">Venue:</span>
+                    <span className="font-semibold text-slate-800 dark:text-white">{venueName}</span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                    <span className="text-slate-400">Order ID:</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300">{orderId || "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-slate-400">Amount:</span>
+                    <span className="font-bold text-slate-900 dark:text-white">₹{price}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-col sm:flex-row gap-3">
                   <Button
                     onClick={() => navigate(-1)}
                     className="flex-1 cursor-pointer text-xs sm:text-sm font-bold bg-rose-600 text-white hover:bg-rose-700 rounded-xl h-12 gap-2"
@@ -735,8 +792,8 @@ export function PaymentStatus() {
                   </Link>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </motion.div>
       </Container>
       <GlobalFooter />
