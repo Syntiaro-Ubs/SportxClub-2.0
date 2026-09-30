@@ -39,18 +39,16 @@ export function ImageWithFallback(props) {
   }
 
   return (
-    <div className={cn("relative overflow-hidden inline-block", className)} style={style}>
+    <div className={cn("relative overflow-hidden inline-block bg-muted/40", className)} style={style}>
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-sm z-20">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-600 drop-shadow-md" />
-        </div>
+        <div className="absolute inset-0 bg-slate-200/40 dark:bg-slate-800/40 animate-pulse z-10" />
       )}
       <img
         src={src}
         alt={alt}
         decoding="async"
         loading="lazy"
-        className={cn("w-full h-full object-cover", !isLoaded && "opacity-0")}
+        className={cn("w-full h-full object-cover transition-opacity duration-300", !isLoaded ? "opacity-0" : "opacity-100")}
         {...rest}
         onLoad={handleLoad}
         onError={handleError}

@@ -2,86 +2,80 @@
  * Utility for automatic geolocation detection and reverse geocoding
  */
 export async function detectUserCity() {
-  // 1. Try Browser Geolocation API first
+  if (typeof window !== "undefined") {
+    const cachedCity = sessionStorage.getItem("spx_detected_city") || localStorage.getItem("preferred-city");
+    if (cachedCity && cachedCity !== "All" && cachedCity !== "All Cities") {
+      return cachedCity;
+    }
+  }
+
+  // Helper fetch with timeout
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 2500) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      return null;
+    }
+  };
+
+  // 1. Try Browser Geolocation API first with short timeout
   if (typeof window !== "undefined" && "geolocation" in navigator) {
     try {
       const position = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          timeout: 8000,
-          enableHighAccuracy: true,
-          maximumAge: 0,
+          timeout: 2500,
+          enableHighAccuracy: false,
+          maximumAge: 600000, // 10 minutes cache
         });
       });
       const { latitude, longitude } = position.coords;
 
-      // Reverse Geocode using OpenStreetMap Nominatim first (Very accurate city/district/suburb)
+      // Reverse Geocode using BigDataCloud or OpenStreetMap
       try {
-        const osmRes = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=14&addressdetails=1`,
-          { headers: { "Accept-Language": "en" } }
+        const res = await fetchWithTimeout(
+          `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+          {},
+          2000
         );
-        if (osmRes.ok) {
-          const osmData = await osmRes.json();
-          const addr = osmData.address || {};
-          const cityCandidate =
-            addr.city ||
-            addr.town ||
-            addr.state_district ||
-            addr.district ||
-            addr.county ||
-            addr.suburb ||
-            addr.village ||
-            addr.municipality;
-
-          if (cityCandidate && cityCandidate.trim()) {
-            return cityCandidate.trim();
+        if (res && res.ok) {
+          const data = await res.json();
+          const city =
+            data.city ||
+            (data.localityInfo?.administrative?.find((a) => a.adminLevel === 6 || a.adminLevel === 5 || a.adminLevel === 4)?.name) ||
+            data.locality ||
+            data.principalSubdivision;
+          if (city && city.trim()) {
+            const trimmed = city.trim();
+            sessionStorage.setItem("spx_detected_city", trimmed);
+            return trimmed;
           }
         }
       } catch (err) {
-        console.warn("[GEOLOCATION] OpenStreetMap fallback to BigDataCloud:", err);
-      }
-
-      // Secondary: BigDataCloud Reverse Geocoding
-      const res = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        const city =
-          data.city ||
-          (data.localityInfo && data.localityInfo.administrative && (
-            data.localityInfo.administrative.find((a) => a.adminLevel === 6 || a.adminLevel === 5 || a.adminLevel === 4)?.name
-          )) ||
-          data.locality ||
-          data.principalSubdivision;
-        if (city && city.trim()) {
-          return city.trim();
-        }
+        console.warn("[GEOLOCATION] Geocode fast fallback:", err);
       }
     } catch (e) {
-      console.warn("[GEOLOCATION] Browser position unavailable or permission denied, attempting IP fallback:", e);
+      // Browser position denied or timed out
     }
   }
 
-  // 2. Fallback to IP Geolocation if browser position fails or is denied
+  // 2. Fast Fallback to IP Geolocation
   try {
-    const ipRes = await fetch("https://ipapi.co/json/");
-    if (ipRes.ok) {
-      const ipData = await ipRes.json();
-      if (ipData && (ipData.city || ipData.region)) {
-        return ipData.city || ipData.region;
+    const fallbackRes = await fetchWithTimeout("https://api.bigdatacloud.net/data/reverse-geocode-client", {}, 2000);
+    if (fallbackRes && fallbackRes.ok) {
+      const fallbackData = await fallbackRes.json();
+      const city = fallbackData.city || fallbackData.principalSubdivision || fallbackData.locality;
+      if (city && city.trim()) {
+        const trimmed = city.trim();
+        sessionStorage.setItem("spx_detected_city", trimmed);
+        return trimmed;
       }
     }
-  } catch (e) {
-    try {
-      const fallbackRes = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client");
-      if (fallbackRes.ok) {
-        const fallbackData = await fallbackRes.json();
-        const city = fallbackData.city || fallbackData.principalSubdivision || fallbackData.locality;
-        if (city) return city;
-      }
-    } catch (err) {}
-  }
+  } catch (err) {}
 
   return "Mumbai";
 }
