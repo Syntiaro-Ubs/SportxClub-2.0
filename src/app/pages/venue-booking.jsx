@@ -69,14 +69,14 @@ function ImageWithLoader({ src, alt, className, onError, ...props }) {
   return (
     <>
       {!isLoaded && !error && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50 dark:bg-slate-800/50 backdrop-blur-sm z-0">
-          <Loader2 className="w-6 h-6 animate-spin text-emerald-500" />
-        </div>
+        <div className="absolute inset-0 bg-slate-200/40 dark:bg-slate-800/40 animate-pulse z-0" />
       )}
       <img
         src={src}
         alt={alt}
-        className={cn(className, !isLoaded ? "opacity-0" : "opacity-100")}
+        loading="lazy"
+        decoding="async"
+        className={cn(className, "transition-opacity duration-300", !isLoaded ? "opacity-0" : "opacity-100")}
         onLoad={() => setIsLoaded(true)}
         onError={(e) => {
           setIsLoaded(true);

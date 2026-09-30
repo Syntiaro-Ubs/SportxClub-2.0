@@ -373,7 +373,7 @@ export function LoginPage() {
   return (
     <div className="bg-background min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
       {/* Right Aligned Full Height Login Form Drawer */}
-      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full bg-card shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-border px-6 sm:px-10 py-10 relative z-10 flex flex-col justify-center">
+      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full bg-card shadow-[-8px_0_30px_rgb(0,0,0,0.06)] border-y border-l border-border px-6 sm:px-10 py-6 sm:py-10 relative z-10 flex flex-col justify-center overflow-y-auto">
 
         {/* Close Button */}
         <button
@@ -576,16 +576,16 @@ export function LoginPage() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Version Indicator */}
-        <div className="absolute bottom-6 left-0 w-full flex flex-col items-center justify-center pointer-events-none">
-          <p className="text-[11px] font-medium tracking-widest text-slate-700 dark:text-slate-400">
-            POWERED BY <span className="text-[#3b82f6] dark:text-[#3b9388] text-primary font-semibold">SYNTIARO</span>
-          </p>
-          <div className="w-40 border-t border-slate-300 dark:border-slate-700 my-2"></div>
-          <p className="text-[11px] font-mono font-medium text-slate-600 dark:text-slate-500 tracking-wider">v1.0.1</p>
+            {/* Version Indicator in Natural Document Flow */}
+            <div className="pt-6 pb-2 flex flex-col items-center justify-center pointer-events-none">
+              <p className="text-[10px] font-medium tracking-widest text-muted-foreground/80">
+                POWERED BY <span className="text-emerald-600 dark:text-emerald-400 font-semibold">SYNTIARO</span>
+              </p>
+              <div className="w-24 border-t border-border/70 my-1.5"></div>
+              <p className="text-[10px] font-mono font-medium text-muted-foreground/60 tracking-wider">v1.0.1</p>
+            </div>
+          </div>
         </div>
 
         {/* Premium UI/UX Success Modal Overlay */}

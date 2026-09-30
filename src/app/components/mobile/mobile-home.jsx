@@ -35,14 +35,17 @@ const asset = (path) => `/assets${path}`;
 
 const marqueeStyle = `
   @keyframes marquee-categories {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
   }
   .animate-marquee-categories {
     display: flex;
-    animation: marquee-categories 16s linear infinite;
+    width: max-content;
+    animation: marquee-categories 24s linear infinite;
+    will-change: transform;
   }
-  .animate-marquee-categories:hover {
+  .animate-marquee-categories:hover,
+  .animate-marquee-categories:active {
     animation-play-state: paused;
   }
 `;
@@ -398,6 +401,136 @@ function CarouselCard({ title, copy, tint }) {
   );
 }
 
+function InteractiveCategoriesScroller({ categories, onSelect }) {
+  const containerRef = useRef(null);
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startScrollLeftRef = useRef(0);
+  const hasMovedRef = useRef(false);
+  const resumeTimerRef = useRef(null);
+  const isPausedRef = useRef(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let animId;
+    const speed = 0.55;
+
+    const tick = () => {
+      if (el && !isPausedRef.current && !isDraggingRef.current) {
+        el.scrollLeft += speed;
+        const halfWidth = el.scrollWidth / 2;
+        if (halfWidth > 50 && el.scrollLeft >= halfWidth) {
+          el.scrollLeft -= halfWidth;
+        }
+      }
+      animId = requestAnimationFrame(tick);
+    };
+
+    animId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animId);
+  }, []);
+
+  const handleMouseDown = (e) => {
+    isDraggingRef.current = true;
+    hasMovedRef.current = false;
+    isPausedRef.current = true;
+    startXRef.current = e.pageX;
+    startScrollLeftRef.current = containerRef.current ? containerRef.current.scrollLeft : 0;
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current || !containerRef.current) return;
+    const deltaX = e.pageX - startXRef.current;
+    if (Math.abs(deltaX) > 4) {
+      hasMovedRef.current = true;
+    }
+    containerRef.current.scrollLeft = startScrollLeftRef.current - deltaX;
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+    resumeTimerRef.current = setTimeout(() => {
+      isPausedRef.current = false;
+    }, 1500);
+  };
+
+  const handleTouchStart = (e) => {
+    isDraggingRef.current = true;
+    hasMovedRef.current = false;
+    isPausedRef.current = true;
+    startXRef.current = e.touches[0].pageX;
+    startScrollLeftRef.current = containerRef.current ? containerRef.current.scrollLeft : 0;
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDraggingRef.current || !containerRef.current) return;
+    const deltaX = e.touches[0].pageX - startXRef.current;
+    if (Math.abs(deltaX) > 4) {
+      hasMovedRef.current = true;
+    }
+    containerRef.current.scrollLeft = startScrollLeftRef.current - deltaX;
+  };
+
+  const handleTouchEnd = () => {
+    isDraggingRef.current = false;
+    resumeTimerRef.current = setTimeout(() => {
+      isPausedRef.current = false;
+    }, 1500);
+  };
+
+  const doubleCategories = useMemo(() => {
+    return [...categories, ...categories];
+  }, [categories]);
+
+  return (
+    <div
+      ref={containerRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseEnter={() => {
+        isPausedRef.current = true;
+      }}
+      className="flex overflow-x-auto gap-2.5 pb-2 select-none cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden overscroll-x-contain touch-pan-x"
+    >
+      {doubleCategories.map((item, index) => (
+        <button
+          key={`${item.name}-${index}`}
+          onClick={() => {
+            if (!hasMovedRef.current) {
+              onSelect(item.name);
+            }
+          }}
+          className="flex w-[80px] min-w-[80px] shrink-0 flex-col items-center gap-1 group cursor-pointer border-0 bg-transparent active:scale-95 transition-transform pointer-events-auto"
+        >
+          <span className="flex w-full aspect-square max-w-[80px] items-center justify-center rounded-[20px] transition-all border-0 bg-transparent pointer-events-none">
+            <span className="flex w-[95%] aspect-square overflow-hidden rounded-xl relative border-0 bg-transparent">
+              <ImageWithFallback
+                src={item.image}
+                alt={item.name}
+                loading="lazy"
+                decoding="async"
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+              />
+            </span>
+          </span>
+          <span className="text-center text-[0.75rem] md:text-[0.8rem] leading-tight text-muted-foreground truncate w-full px-0.5 pointer-events-none">
+            {item.name}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function MobileHomePage() {
   const navigate = useNavigate();
   const [currentBg, setCurrentBg] = useState(0);
@@ -481,81 +614,6 @@ export function MobileHomePage() {
     }));
   }, [turfs]);
 
-  const scrollRef = useRef(null);
-  const isDown = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-  const isDragging = useRef(false);
-  const [isPaused, setIsPaused] = useState(false);
-
-  useEffect(() => {
-    const slider = scrollRef.current;
-    if (!slider) return;
-
-    let autoScrollId;
-    const scrollSpeed = 0.5; // Pixels per frame
-    let scrollPos = slider.scrollLeft;
-
-    const scrollStep = () => {
-      if (!slider) return;
-      scrollPos += scrollSpeed;
-      const maxScroll = slider.scrollWidth / 2;
-      if (maxScroll > 100 && scrollPos >= maxScroll) {
-        scrollPos -= maxScroll;
-      }
-      slider.scrollLeft = Math.floor(scrollPos);
-      autoScrollId = requestAnimationFrame(scrollStep);
-    };
-
-    if (!isPaused) {
-      scrollPos = slider.scrollLeft;
-      autoScrollId = requestAnimationFrame(scrollStep);
-    }
-
-    return () => {
-      cancelAnimationFrame(autoScrollId);
-    };
-  }, [isPaused]);
-
-  const handleMouseDown = (e) => {
-    isDown.current = true;
-    isDragging.current = false;
-    startX.current = e.pageX - scrollRef.current.offsetLeft;
-    scrollLeft.current = scrollRef.current.scrollLeft;
-    setIsPaused(true);
-  };
-
-  const handleMouseLeave = () => {
-    isDown.current = false;
-    setIsPaused(false);
-  };
-
-  const handleMouseUp = () => {
-    isDown.current = false;
-    setTimeout(() => {
-      setIsPaused(false);
-    }, 100);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDown.current) return;
-    e.preventDefault();
-    isDragging.current = true;
-    const x = e.pageX - scrollRef.current.offsetLeft;
-    const walk = (x - startX.current) * 1.5;
-    scrollRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  const handleTouchStart = () => {
-    setIsPaused(true);
-  };
-
-  const handleTouchEnd = () => {
-    setTimeout(() => {
-      setIsPaused(false);
-    }, 100);
-  };
-
   const [dynamicBanners, setDynamicBanners] = useState([]);
 
   useEffect(() => {
@@ -567,7 +625,7 @@ export function MobileHomePage() {
           setDynamicBanners(active.map((b) => b.image_url));
         }
       }
-    }).catch(() => {});
+    }).catch(() => { });
     return () => {
       isMounted = false;
     };
@@ -592,8 +650,6 @@ export function MobileHomePage() {
 
   return (
     <div className="theme-adaptive min-h-dvh bg-background text-foreground">
-      <MobileAppBar />
-
       <div>
         <div className="space-y-4 px-4 pb-4 pt-2">
           <motion.section
@@ -617,9 +673,6 @@ export function MobileHomePage() {
             </div>
 
             <div className="relative z-10 mt-auto pb-1">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-white/90 mb-1 drop-shadow-md">
-                Good evening, {firstName}
-              </p>
               <h1 className="text-xl font-bold tracking-tight leading-[1.2] text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] max-w-[85%]">
                 Ready for your next game?
               </h1>
@@ -628,45 +681,13 @@ export function MobileHomePage() {
 
           <section className="space-y-2 sports-categories-container">
             <SectionHeader title="Sports categories" action="More" />
-            <div className="relative w-full">
-              <div
-                ref={scrollRef}
-                onMouseDown={handleMouseDown}
-                onMouseLeave={handleMouseLeave}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-                className="flex overflow-x-auto gap-2 pb-4 select-none cursor-grab active:cursor-grabbing [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              >
-                {[...sortedSportsCategories, ...sortedSportsCategories].map((item, index) => (
-                  <motion.button
-                    key={`${item.name}-${index}`}
-                    onClick={() => {
-                      if (!isDragging.current) {
-                        navigate("/venues", { state: { sport: item.name } });
-                      }
-                    }}
-                    whileTap={{ scale: 0.96 }}
-                    className="flex w-[calc(25%-6px)] min-w-[calc(25%-6px)] shrink-0 flex-col items-center gap-1 group cursor-pointer border-0 bg-transparent pointer-events-auto"
-                  >
-                    <span className="flex w-full aspect-square max-w-[90px] items-center justify-center rounded-[20px] transition-all border-0 bg-transparent pointer-events-none">
-                      <span className="flex w-[95%] aspect-square overflow-hidden rounded-xl relative border-0 bg-transparent">
-                        <ImageWithFallback
-                          src={item.image}
-                          alt={item.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-                        />
-                      </span>
-                    </span>
-                    <span className="text-center text-[0.75rem] md:text-[0.8rem] leading-tight text-muted-foreground truncate w-full px-0.5 pointer-events-none">
-                      {item.name}
-                    </span>
-                  </motion.button>
-                ))}
-              </div>
+            <div className="relative w-full overflow-hidden">
+              <InteractiveCategoriesScroller
+                categories={sortedSportsCategories}
+                onSelect={(sportName) => {
+                  navigate("/venues", { state: { sport: sportName } });
+                }}
+              />
             </div>
           </section>
 
