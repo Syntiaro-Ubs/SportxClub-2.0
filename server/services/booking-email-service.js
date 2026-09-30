@@ -5,6 +5,7 @@ import nodemailer from "nodemailer";
 import { jsPDF } from "jspdf";
 import { getPool } from "../db.js";
 import { generatePassPdfBuffer } from "./match-pass-pdf.js";
+import { generateSettlementPdfBuffer } from "./settlement-pdf.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1576,211 +1577,100 @@ export async function sendCancellationEmails(bookingIdOrCode, details = {}) {
  */
 
 /**
- * Generates rich HTML template for Daily Turf Owner Settlement & Payment Report
+ * Generates Plain Text version of Daily Turf Owner Settlement Email
  */
-function getDailySettlementHtml({
+function getOwnerSettlementTransferText({
   ownerName,
-  turfName,
   settlementDate,
-  settlementId,
-  totalBookings,
   grossAmount,
-  platformFee,
-  netPayoutAmount,
-  bankName,
-  accountNumber,
-  ifscCode,
-  upiId,
-  utrNumber,
-  transferId,
-  transferStatus,
-  bookings = [],
+  netAmount,
+  settlementStatus,
+  transactionId,
+  transferredOn,
+  ownerDashboardUrl,
 }) {
-  const formattedGross = Number(grossAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
-  const formattedFee = Number(platformFee || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
-  const formattedNet = Number(netPayoutAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 });
-  const maskedAcc = accountNumber ? `•••• •••• ${accountNumber.slice(-4)}` : (upiId || "Registered Account");
+  return `Dear ${ownerName || "Turf Owner"},
 
-  const bookingRowsHtml = bookings.length > 0
-    ? bookings.map((b, idx) => `
-      <tr style="border-bottom: 1px solid #e5e7eb; background: ${idx % 2 === 0 ? '#ffffff' : '#f9fafb'}; font-size: 13px;">
-        <td style="padding: 10px 12px; font-weight: 600; color: #111827;">${b.booking_code || `BK-${b.id}`}</td>
-        <td style="padding: 10px 12px; color: #374151;">${b.user_name || "Player"}</td>
-        <td style="padding: 10px 12px; color: #4b5563;">${b.sport || "Turf Sport"}</td>
-        <td style="padding: 10px 12px; color: #374151; white-space: nowrap;">${b.time_slot || b.slot_time || "Slot Time"}</td>
-        <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #111827;">₹${Number(b.amount || 0).toLocaleString("en-IN")}</td>
-        <td style="padding: 10px 12px; text-align: right; font-weight: 600; color: #059669;">₹${Number(b.owner_payout_amount || b.amount || 0).toLocaleString("en-IN")}</td>
-      </tr>
-    `).join("")
-    : `
-      <tr>
-        <td colspan="6" style="padding: 16px; text-align: center; color: #6b7280; font-size: 13px;">
-          No itemized bookings recorded for this settlement batch.
-        </td>
-      </tr>
-    `;
+Your settlement has been successfully processed and the settlement amount has been transferred to your registered bank account.
 
+Settlement Summary:
+
+Settlement Date: - ${settlementDate}
+Gross Settlement Amount: - ₹${grossAmount}
+Net Amount Transferred: - ₹${netAmount}
+Settlement Status: - ${settlementStatus}
+Transaction ID: - ${transactionId}
+Transferred On: - ${transferredOn}
+
+The detailed settlement breakdown is attached as a PDF with this email for your records.
+
+Owner Dashboard: ${ownerDashboardUrl}
+
+If you need any assistance with your settlement or owner account, feel free to contact our support team.
+
+Thank you for partnering with SportXClub.
+
+Best Regards,
+SportXClub Team`.trim();
+}
+
+/**
+ * Generates Clean HTML version of Daily Turf Owner Settlement Email
+ */
+function getOwnerSettlementTransferHtml({
+  ownerName,
+  settlementDate,
+  grossAmount,
+  netAmount,
+  settlementStatus,
+  transactionId,
+  transferredOn,
+  ownerDashboardUrl,
+}) {
   return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Daily Settlement Report - ${turfName}</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 24px 0;">
-    <tr>
-      <td align="center">
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 650px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
-          
-          <!-- BRAND HEADER -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #059669 0%, #047857 100%); padding: 28px 32px; text-align: left;">
-              <table width="100%">
-                <tr>
-                  <td>
-                    <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">SportXClub</h1>
-                    <p style="margin: 4px 0 0 0; color: #a7f3d0; font-size: 13px; font-weight: 500;">Turf Owner Automated Payout & Settlement Report</p>
-                  </td>
-                  <td align="right">
-                    <span style="background: rgba(255, 255, 255, 0.2); color: #ffffff; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                      ${transferStatus || 'PAID'}
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+<div style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.6; color: #202124;">
+  <p style="margin: 0 0 16px 0;">Dear <strong>${ownerName || "Turf Owner"}</strong>,</p>
 
-          <!-- GREETING & INFO -->
-          <tr>
-            <td style="padding: 24px 32px 16px 32px;">
-              <p style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #111827;">Hello ${ownerName || "Partner"},</p>
-              <p style="margin: 0; font-size: 14px; color: #4b5563; line-height: 1.5;">
-                Here is your automated daily settlement report for <strong style="color: #111827;">${turfName}</strong> on <strong style="color: #111827;">${settlementDate}</strong>. 
-                All slot booking payouts for today have been automatically calculated and credited to your registered bank account.
-              </p>
-            </td>
-          </tr>
+  <p style="margin: 0 0 16px 0;">
+    Your settlement has been successfully processed and the settlement amount has been transferred to your registered bank account.
+  </p>
 
-          <!-- FINANCIAL KPI CARDS -->
-          <tr>
-            <td style="padding: 8px 32px 20px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <!-- Total Bookings -->
-                  <td width="23%" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 10px; text-align: center;">
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Total Slots</div>
-                    <div style="font-size: 18px; color: #111827; font-weight: 800;">${totalBookings || 0}</div>
-                  </td>
-                  <td width="2%"></td>
-                  <!-- Gross Volume -->
-                  <td width="23%" style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 10px; text-align: center;">
-                    <div style="font-size: 11px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Gross Total</div>
-                    <div style="font-size: 18px; color: #111827; font-weight: 800;">₹${formattedGross}</div>
-                  </td>
-                  <td width="2%"></td>
-                  <!-- Platform Fee -->
-                  <td width="23%" style="background: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 14px 10px; text-align: center;">
-                    <div style="font-size: 11px; color: #dc2626; font-weight: 600; text-transform: uppercase; margin-bottom: 4px;">Platform Fee</div>
-                    <div style="font-size: 18px; color: #dc2626; font-weight: 800;">-₹${formattedFee}</div>
-                  </td>
-                  <td width="2%"></td>
-                  <!-- Net Payout -->
-                  <td width="25%" style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 14px 10px; text-align: center;">
-                    <div style="font-size: 11px; color: #059669; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Net Payout</div>
-                    <div style="font-size: 18px; color: #059669; font-weight: 800;">₹${formattedNet}</div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Settlement Summary:</strong><br><br>
+    <strong>Settlement Date: -</strong> ${settlementDate}<br>
+    <strong>Gross Settlement Amount: -</strong> ₹${grossAmount}<br>
+    <strong>Net Amount Transferred: -</strong> ₹${netAmount}<br>
+    <strong>Settlement Status: -</strong> ${settlementStatus}<br>
+    <strong>Transaction ID: -</strong> ${transactionId}<br>
+    <strong>Transferred On: -</strong> ${transferredOn}
+  </p>
 
-          <!-- BANK TRANSFER / UTR INFO BOX -->
-          <tr>
-            <td style="padding: 0 32px 24px 32px;">
-              <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 16px;">
-                <table width="100%" style="font-size: 13px;">
-                  <tr>
-                    <td style="color: #64748b; padding: 4px 0; font-weight: 500;">Bank / Destination:</td>
-                    <td style="color: #0f172a; padding: 4px 0; font-weight: 700; text-align: right;">${bankName || "Bank Account"} (${maskedAcc})</td>
-                  </tr>
-                  ${ifscCode ? `
-                  <tr>
-                    <td style="color: #64748b; padding: 4px 0; font-weight: 500;">IFSC Code:</td>
-                    <td style="color: #0f172a; padding: 4px 0; font-weight: 600; text-align: right;">${ifscCode}</td>
-                  </tr>` : ""}
-                  <tr>
-                    <td style="color: #64748b; padding: 4px 0; font-weight: 500;">Cashfree UTR / Ref No:</td>
-                    <td style="color: #059669; padding: 4px 0; font-weight: 800; text-align: right; font-family: monospace; font-size: 14px;">${utrNumber || "TRANSFERRED"}</td>
-                  </tr>
-                  <tr>
-                    <td style="color: #64748b; padding: 4px 0; font-weight: 500;">Settlement ID:</td>
-                    <td style="color: #475569; padding: 4px 0; font-weight: 600; text-align: right; font-family: monospace;">${settlementId}</td>
-                  </tr>
-                </table>
-              </div>
-            </td>
-          </tr>
+  <p style="margin: 0 0 16px 0;">
+    The detailed settlement breakdown is attached as a PDF with this email for your records.
+  </p>
 
-          <!-- ITEMIZED BOOKING SLOTS BREAKDOWN -->
-          <tr>
-            <td style="padding: 0 32px 24px 32px;">
-              <h3 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 700; color: #111827;">
-                Today's Slot Booking Breakdown (${bookings.length} Bookings)
-              </h3>
-              <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-                <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; text-align: left;">
-                  <thead>
-                    <tr style="background: #f3f4f6; font-size: 12px; color: #4b5563; text-transform: uppercase; font-weight: 700; border-bottom: 1px solid #e5e7eb;">
-                      <th style="padding: 10px 12px;">Booking ID</th>
-                      <th style="padding: 10px 12px;">Player</th>
-                      <th style="padding: 10px 12px;">Sport</th>
-                      <th style="padding: 10px 12px;">Slot Time</th>
-                      <th style="padding: 10px 12px; text-align: right;">Gross (₹)</th>
-                      <th style="padding: 10px 12px; text-align: right;">Payout (₹)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${bookingRowsHtml}
-                  </tbody>
-                  <tfoot>
-                    <tr style="background: #f9fafb; font-size: 13px; font-weight: 700; border-top: 2px solid #e5e7eb;">
-                      <td colspan="4" style="padding: 10px 12px; color: #111827;">Total Settlement Payout:</td>
-                      <td style="padding: 10px 12px; text-align: right; color: #111827;">₹${formattedGross}</td>
-                      <td style="padding: 10px 12px; text-align: right; color: #059669;">₹${formattedNet}</td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </td>
-          </tr>
+  <p style="margin: 0 0 16px 0;">
+    <strong>Owner Dashboard:</strong> <a href="${ownerDashboardUrl}" target="_blank" style="color: #059669; text-decoration: underline;">${ownerDashboardUrl}</a>
+  </p>
 
-          <!-- FOOTER & SUPPORT -->
-          <tr>
-            <td style="background: #f9fafb; padding: 24px 32px; border-top: 1px solid #e5e7eb; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;">
-                Have questions regarding your settlement? Contact us anytime at 
-                <a href="mailto:support@sportxclub.com" style="color: #059669; text-decoration: none; font-weight: 600;">support@sportxclub.com</a>
-              </p>
-              <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                © ${new Date().getFullYear()} SportXClub Partner Network. All rights reserved.
-              </p>
-            </td>
-          </tr>
+  <p style="margin: 0 0 16px 0;">
+    If you need any assistance with your settlement or owner account, feel free to contact our support team.
+  </p>
 
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+  <p style="margin: 0 0 16px 0;">
+    Thank you for partnering with SportXClub.
+  </p>
+
+  <p style="margin: 0; line-height: 1.5;">
+    Best Regards,<br>
+    <strong>SportXClub Team</strong>
+  </p>
+</div>
   `.trim();
 }
 
 /**
- * Dispatches the Daily Settlement Email to Turf Owner
+ * Dispatches the Daily Settlement Email to Turf Owner with attached PDF Breakdown
  */
 export async function sendDailyOwnerSettlementReport({
   owner,
@@ -1798,6 +1688,7 @@ export async function sendDailyOwnerSettlementReport({
   utrNumber,
   transferId,
   transferStatus,
+  transferredOn,
   bookings = [],
 }) {
   const ownerEmail = (owner.email || owner.owner_email || "").trim();
@@ -1808,35 +1699,97 @@ export async function sendDailyOwnerSettlementReport({
 
   try {
     const transporter = getTransporter();
-    const smtpFrom = process.env.SMTP_FROM || `"SportXClub Settlements" <${process.env.SMTP_USER || "waghmareshrinivas99@gmail.com"}>`;
+    const smtpFrom = process.env.SMTP_FROM || `"SportXClub Settlements" <${process.env.SMTP_USER || "sportxclub.com@gmail.com"}>`;
 
-    const htmlContent = getDailySettlementHtml({
-      ownerName: owner.name || owner.full_name || "Turf Owner",
-      turfName,
+    const ownerName = owner.name || owner.full_name || `${turfName} Owner`;
+    const formattedGross = Number(grossAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formattedNet = Number(netPayoutAmount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const statusText = String(transferStatus || "SUCCESS").toUpperCase();
+    const transactionId = utrNumber && utrNumber !== "PROCESSING" && utrNumber !== "FAILED" ? utrNumber : (transferId || settlementId || "N/A");
+    const transferDateTime = transferredOn || formatDateTime(new Date());
+
+    const frontendBase = (process.env.APP_FRONTEND_URL || "https://sportxclub.com").replace(/\/$/, "");
+    const ownerDashboardUrl = `${frontendBase}/admin-login`;
+
+    const textContent = getOwnerSettlementTransferText({
+      ownerName,
       settlementDate,
-      settlementId,
-      totalBookings,
-      grossAmount,
-      platformFee,
-      netPayoutAmount,
-      bankName,
-      accountNumber,
-      ifscCode,
-      upiId,
-      utrNumber,
-      transferId,
-      transferStatus,
-      bookings,
+      grossAmount: formattedGross,
+      netAmount: formattedNet,
+      settlementStatus: statusText,
+      transactionId,
+      transferredOn: transferDateTime,
+      ownerDashboardUrl,
     });
 
-    const info = await transporter.sendMail({
+    const htmlContent = getOwnerSettlementTransferHtml({
+      ownerName,
+      settlementDate,
+      grossAmount: formattedGross,
+      netAmount: formattedNet,
+      settlementStatus: statusText,
+      transactionId,
+      transferredOn: transferDateTime,
+      ownerDashboardUrl,
+    });
+
+    // Generate detailed Settlement Breakdown PDF Attachment
+    let pdfBuffer = null;
+    try {
+      pdfBuffer = await generateSettlementPdfBuffer({
+        ownerName,
+        turfName,
+        settlementDate,
+        settlementId,
+        totalBookings,
+        grossAmount,
+        platformFee,
+        netPayoutAmount,
+        bankName,
+        accountNumber,
+        ifscCode,
+        upiId,
+        utrNumber,
+        transferId,
+        transferStatus: statusText,
+        transferredOn: transferDateTime,
+        bookings,
+      });
+    } catch (pdfErr) {
+      console.error("[DAILY SETTLEMENT EMAIL] Failed to generate PDF buffer:", pdfErr.message);
+    }
+
+    const cleanTurfName = (turfName || "Turf").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const pdfFilename = `Settlement_Breakdown_${settlementDate}_${cleanTurfName}.pdf`;
+
+    const mailOptions = {
       from: smtpFrom,
       to: ownerEmail,
-      subject: `💰 Daily Settlement Report: ₹${Number(netPayoutAmount || 0).toLocaleString("en-IN")} Credited for ${turfName} (${settlementDate})`,
+      subject: `Settlement Successfully Transferred – ${settlementDate}`,
+      text: textContent,
       html: htmlContent,
-    });
+      priority: "high",
+      headers: {
+        "X-Priority": "1",
+        "X-MSMail-Priority": "High",
+        "Importance": "High",
+        "X-Entity-Ref-ID": `settlement-${settlementId}`,
+      },
+    };
 
-    console.log(`[DAILY SETTLEMENT EMAIL] ✓ Report sent to Turf Owner: ${ownerEmail} (MsgId: ${info.messageId})`);
+    if (pdfBuffer) {
+      mailOptions.attachments = [
+        {
+          filename: pdfFilename,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ];
+    }
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log(`[DAILY SETTLEMENT EMAIL] ✓ Settlement email & PDF breakdown sent to Turf Owner: ${ownerEmail} (MsgId: ${info.messageId})`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error(`[DAILY SETTLEMENT EMAIL] ✗ Failed sending report to ${ownerEmail}:`, error.message);
