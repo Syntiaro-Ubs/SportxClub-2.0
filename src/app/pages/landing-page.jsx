@@ -1,5 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { useIsMobile } from "../components/ui/use-mobile";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
 
 const HomePage = lazy(() =>
   import("../components/home/homepage").then((m) => ({ default: m.HomePage }))
@@ -19,8 +21,17 @@ export function LandingPage() {
   const isMobile = useIsMobile();
 
   return (
-    <Suspense fallback={<FallbackLoader />}>
-      {isMobile ? <MobileHomePage /> : <HomePage />}
-    </Suspense>
+    <>
+      <PageMeta
+        title={PAGE_SEO.home.title}
+        description={PAGE_SEO.home.description}
+        canonical={PAGE_SEO.home.canonical}
+        keywords={PAGE_SEO.home.keywords}
+      />
+      <Suspense fallback={<FallbackLoader />}>
+        {isMobile ? <MobileHomePage /> : <HomePage />}
+      </Suspense>
+    </>
   );
 }
+

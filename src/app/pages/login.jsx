@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 import { useAuth } from "../providers/auth-provider";
 import { motion } from "motion/react";
 import {

@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 import {
   Card,
   CardContent,
@@ -81,6 +84,13 @@ export function AISportsAssistant() {
   };
 
   return (
+    <>
+      <PageMeta
+        title={PAGE_SEO.aiAssistant.title}
+        description={PAGE_SEO.aiAssistant.description}
+        canonical={PAGE_SEO.aiAssistant.canonical}
+        keywords={PAGE_SEO.aiAssistant.keywords}
+      />
     <Container className="space-y-6">
       <div className="text-center">
         <div className="flex justify-center mb-4">
@@ -211,5 +221,6 @@ export function AISportsAssistant() {
         </CardContent>
       </Card>
     </Container>
+    </>
   );
 }

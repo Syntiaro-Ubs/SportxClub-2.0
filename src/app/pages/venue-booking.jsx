@@ -7,6 +7,9 @@ import { cn } from "../components/ui/utils";
 import { Button } from "../components/ui/button";
 import { adminApi } from "../services/admin-api";
 import { fastCache } from "../services/fast-cache";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 
 function ChevronLeft120({ className = "h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white", strokeWidth = 1.5 }) {
   return (

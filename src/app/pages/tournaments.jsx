@@ -1,5 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 import { useAuth } from "../providers/auth-provider";
 import {
   Card,
@@ -367,8 +370,16 @@ export function Tournaments() {
   }, [tournamentsList, searchQuery, statusTab]);
 
   return (
+    <>
+      <PageMeta
+        title={PAGE_SEO.tournaments.title}
+        description={PAGE_SEO.tournaments.description}
+        canonical={PAGE_SEO.tournaments.canonical}
+        keywords={PAGE_SEO.tournaments.keywords}
+      />
     <div className="space-y-4 pb-6">
       {/* Header */}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -922,5 +933,6 @@ export function Tournaments() {
         </div>
       </div>
     </div>
+    </>
   );
 }

@@ -1,4 +1,7 @@
 import { Link } from "react-router";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 import { 
   FileText, 
   CreditCard, 
@@ -104,6 +107,13 @@ Key Highlights:
   ];
 
   return (
+    <>
+      <PageMeta
+        title={PAGE_SEO.terms.title}
+        description={PAGE_SEO.terms.description}
+        canonical={PAGE_SEO.terms.canonical}
+        noIndex={false}
+      />
     <div className={cn("min-h-screen pt-20 pb-16 transition-colors duration-200", isDark ? "bg-[#080B11] text-white" : "bg-slate-50 text-slate-900")}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -198,5 +208,6 @@ Key Highlights:
 
       </div>
     </div>
+    </>
   );
 }

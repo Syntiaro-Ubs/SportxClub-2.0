@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate, useLocation, useParams } from "react-router";
 import { toast } from "sonner";
+import { PageMeta } from "../components/seo/PageMeta";
+import { buildVenueSchema, buildTitle, buildCanonical, DEFAULT_OG_IMAGE } from "../utils/seo";
+
 import { useAuth } from "../providers/auth-provider";
 import { useTheme } from "next-themes";
 import { cashfreeService } from "../payment/cashfree-service";
@@ -1313,6 +1316,18 @@ export function VenueDetails() {
   };
 
   return (
+    <>
+      <PageMeta
+        title={venue?.name
+          ? buildTitle(`${venue.name} — Book ${venue.sport || "Sports"} Venue Online`)
+          : buildTitle("Book Sports Venue Online")}
+        description={venue?.name
+          ? `Book ${venue.sport || "sports"} at ${venue.name}${venue.address ? `, ${venue.address}` : ""}. Check slot availability, pricing and amenities. Instant online booking on SportXClub.`
+          : "Book sports venues online. Check slot availability and pricing."}
+        canonical={buildCanonical(`/venues/${venue?.id || id}`)}
+        ogImage={venue?.image && typeof venue.image === "string" && venue.image.startsWith("http") ? venue.image : DEFAULT_OG_IMAGE}
+        schema={buildVenueSchema(venue)}
+      />
     <div
       className={cn(
         "min-h-screen isolate transition-colors duration-300",
@@ -3063,5 +3078,6 @@ export function VenueDetails() {
 
       <GlobalFooter />
     </div>
+    </>
   );
 }

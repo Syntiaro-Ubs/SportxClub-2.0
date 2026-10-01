@@ -1,4 +1,7 @@
 import { Link } from "react-router";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 import { 
   RefreshCw, 
   CheckCircle2, 
@@ -55,6 +58,13 @@ export function RefundPolicy() {
   ];
 
   return (
+    <>
+      <PageMeta
+        title={PAGE_SEO.refundPolicy.title}
+        description={PAGE_SEO.refundPolicy.description}
+        canonical={PAGE_SEO.refundPolicy.canonical}
+        noIndex={false}
+      />
     <div className={cn("min-h-screen pt-20 pb-16 transition-colors duration-200", isDark ? "bg-[#080B11] text-white" : "bg-slate-50 text-slate-900")}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -227,5 +237,6 @@ export function RefundPolicy() {
 
       </div>
     </div>
+    </>
   );
 }

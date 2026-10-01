@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+Disallow: /admin-panel/
+Disallow: /site-maker/
+Disallow: /dashboard/
+Disallow: /player-dashboard/
+Disallow: /login
+Disallow: /register
+Disallow: /player-login
+Disallow: /owner-setup
+Disallow: /payment-status
+Disallow: /edit-profile
+Disallow: /organizer-dashboard
+Disallow: /booking-success
+
+# Allow specific crawlable public pages
+Allow: /venues
+Allow: /tournaments
+Allow: /community
+Allow: /terms
+Allow: /privacy
+Allow: /refund-policy
+Allow: /ai-assistant
+
+Sitemap: https://www.sportxclub.in/sitemap.xml

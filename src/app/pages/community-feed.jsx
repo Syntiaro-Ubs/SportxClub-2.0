@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
@@ -231,6 +234,13 @@ export function CommunityFeed() {
   const displayInitials = initials(userName);
 
   return (
+    <>
+      <PageMeta
+        title={PAGE_SEO.community.title}
+        description={PAGE_SEO.community.description}
+        canonical={PAGE_SEO.community.canonical}
+        keywords={PAGE_SEO.community.keywords}
+      />
     <div className="grid lg:grid-cols-3 gap-5 sm:gap-6 -mt-1 sm:-mt-2">
       <input ref={fileInputRef} type="file" onChange={handleMedia} accept="image/*,video/*" className="hidden" />
 
@@ -271,5 +281,6 @@ export function CommunityFeed() {
 
       <div className="space-y-3.5"><Card className="border-border/50"><CardContent className="p-4 sm:p-4.5"><div className="flex items-center gap-2 mb-3"><TrendingUp className="h-5 w-5 text-emerald-600" /><h3 className="text-base font-bold">Your Activity</h3></div><div className="space-y-2.5">{Object.entries(activity).map(([label, value]) => <div key={label} className="flex items-center justify-between"><span className="text-sm text-muted-foreground">{label[0].toUpperCase() + label.slice(1)}</span><span className="font-extrabold">{value}</span></div>)}</div></CardContent></Card><Card className="border-border/50"><CardContent className="p-4 sm:p-4.5"><h3 className="text-base font-bold mb-2.5">Database-backed engagement</h3><p className="text-sm text-muted-foreground">Likes, comments, shares, and their counters are saved with each community post.</p></CardContent></Card></div>
     </div>
+    </>
   );
 }

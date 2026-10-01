@@ -8,9 +8,10 @@
 
   # Single Page Application (React / Vite) Router Fallback
   # If requested file or directory does not exist, serve index.html
+  # But EXCLUDE SEO files from being redirected to index.html
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_URI} !^/(assets|images|favicon)
+  RewriteCond %{REQUEST_URI} !^/(assets|images|favicon|sitemap\.xml|robots\.txt|og-image\.(png|jpg))
   RewriteRule . /index.html [L]
 </IfModule>
 

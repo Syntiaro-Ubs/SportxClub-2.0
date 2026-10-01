@@ -1,4 +1,7 @@
 import { Link } from "react-router";
+import { PageMeta } from "../components/seo/PageMeta";
+import { PAGE_SEO } from "../utils/seo";
+
 import { 
   Lock, 
   Shield, 
@@ -111,6 +114,13 @@ We disclose data strictly under the following controlled circumstances:
   ];
 
   return (
+    <>
+      <PageMeta
+        title={PAGE_SEO.privacy.title}
+        description={PAGE_SEO.privacy.description}
+        canonical={PAGE_SEO.privacy.canonical}
+        noIndex={false}
+      />
     <div className={cn("min-h-screen pt-20 pb-16 transition-colors duration-200", isDark ? "bg-[#080B11] text-white" : "bg-slate-50 text-slate-900")}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -203,5 +213,6 @@ We disclose data strictly under the following controlled circumstances:
 
       </div>
     </div>
+    </>
   );
 }

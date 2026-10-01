@@ -119,6 +119,115 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date() });
 });
 
+// ===== SEO: Dynamic Sitemap.xml =====
+app.get("/sitemap.xml", async (req, res) => {
+  try {
+    const pool = getPool();
+
+    // Fetch all active turf venues from DB
+    let venueUrls = "";
+    try {
+      const [turfs] = await pool.execute(
+        "SELECT id, name, updated_at FROM turfs WHERE status = 'active' OR status = 'approved' OR status IS NULL LIMIT 1000"
+      );
+      venueUrls = turfs
+        .map((t) => {
+          const lastmod = t.updated_at
+            ? new Date(t.updated_at).toISOString().split("T")[0]
+            : new Date().toISOString().split("T")[0];
+          return `
+  <url>
+    <loc>https://www.sportxclub.in/venues/${t.id}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+        })
+        .join("");
+    } catch (dbErr) {
+      console.warn("Sitemap: Could not fetch turfs from DB:", dbErr.message);
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.sportxclub.in/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.sportxclub.in/venues</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.sportxclub.in/tournaments</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.sportxclub.in/community</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.sportxclub.in/ai-assistant</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.sportxclub.in/terms</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://www.sportxclub.in/privacy</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://www.sportxclub.in/refund-policy</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>${venueUrls}
+</urlset>`;
+
+    res.setHeader("Content-Type", "application/xml");
+    res.setHeader("Cache-Control", "public, max-age=3600"); // cache for 1 hour
+    res.send(xml);
+  } catch (err) {
+    console.error("Sitemap generation error:", err);
+    res.status(500).send("Error generating sitemap");
+  }
+});
+
+// ===== SEO: robots.txt fallback (static file is served by express.static first) =====
+app.get("/robots.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain");
+  res.send(`User-agent: *
+Allow: /
+Disallow: /admin-panel/
+Disallow: /site-maker/
+Disallow: /dashboard/
+Disallow: /player-dashboard/
+Disallow: /login
+Disallow: /register
+Disallow: /payment-status
+
+Sitemap: https://www.sportxclub.in/sitemap.xml`);
+});
+
+
 // Serve frontend in production with optimized cache headers
 app.use(
   express.static(path.join(__dirname, "../dist"), {
