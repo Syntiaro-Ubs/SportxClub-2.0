@@ -121,7 +121,11 @@ export async function processDailyTurfSettlements(targetDate = null) {
       groupedBookings.get(groupKey).bookings.push(booking);
     }
 
-    const defaultCommissionPercent = Number(process.env.PLATFORM_COMMISSION_PERCENT || 5); // Default 5% platform fee
+    // Platform Commission Fee (Defaults to 0% - 100% payout to turf owners)
+    const defaultCommissionPercent =
+      process.env.PLATFORM_COMMISSION_PERCENT !== undefined && process.env.PLATFORM_COMMISSION_PERCENT !== ""
+        ? Number(process.env.PLATFORM_COMMISSION_PERCENT)
+        : 0;
 
     // 4. Process Payout for each group
     for (const [groupKey, group] of groupedBookings.entries()) {

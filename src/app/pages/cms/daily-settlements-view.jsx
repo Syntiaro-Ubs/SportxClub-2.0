@@ -206,7 +206,7 @@ export function DailySettlementsView() {
     const totalSlots = settlements.reduce((acc, s) => acc + Number(s.total_bookings || 0), 0);
 
     const queuedGross = queuedTodayBookings.reduce((acc, b) => acc + Number(b.amount || 0), 0);
-    const queuedEstimatedNet = queuedGross * 0.95;
+    const queuedEstimatedNet = queuedGross; // 0% platform fee, 100% to turf owner
 
     return {
       totalGross,
@@ -355,7 +355,7 @@ export function DailySettlementsView() {
         <Card className="bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/20 p-4 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-extrabold tracking-wider text-blue-800 dark:text-blue-400">
-              Platform Commission (5%)
+              Platform Commission (0%)
             </span>
             <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600">
               <Percent className="w-4 h-4" />
@@ -488,7 +488,7 @@ export function DailySettlementsView() {
                     <th className="px-4 py-3">Destination Bank</th>
                     <th className="px-3 py-3 text-center">Slots</th>
                     <th className="px-4 py-3 text-right">Gross (₹)</th>
-                    <th className="px-4 py-3 text-right">Fee (5%)</th>
+                    <th className="px-4 py-3 text-right">Platform Fee (₹)</th>
                     <th className="px-4 py-3 text-right">Net Payout (₹)</th>
                     <th className="px-4 py-3">Cashfree UTR</th>
                     <th className="px-3 py-3 text-center">Status</th>
@@ -666,8 +666,8 @@ export function DailySettlementsView() {
                       <th className="px-4 py-2.5">Sport</th>
                       <th className="px-4 py-2.5">Slot Time</th>
                       <th className="px-4 py-2.5 text-right">Amount (₹)</th>
-                      <th className="px-4 py-2.5 text-right">Platform Fee (5%)</th>
-                      <th className="px-4 py-2.5 text-right">Owner Payout (95%)</th>
+                      <th className="px-4 py-2.5 text-right">Platform Fee (0%)</th>
+                      <th className="px-4 py-2.5 text-right">Owner Payout (100%)</th>
                       <th className="px-4 py-2.5 text-center">Status</th>
                     </tr>
                   </thead>
@@ -681,8 +681,8 @@ export function DailySettlementsView() {
                           <td className="px-4 py-2.5 text-slate-600">{b.sport}</td>
                           <td className="px-4 py-2.5 text-slate-700">{b.time_slot || b.slot_time}</td>
                           <td className="px-4 py-2.5 text-right font-bold text-slate-900">₹{Number(b.amount || 0).toLocaleString("en-IN")}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold text-rose-600">-₹{(Number(b.amount || 0) * 0.05).toFixed(2)}</td>
-                          <td className="px-4 py-2.5 text-right font-black text-emerald-700">₹{(Number(b.amount || 0) * 0.95).toFixed(2)}</td>
+                          <td className="px-4 py-2.5 text-right font-semibold text-slate-500">₹0</td>
+                          <td className="px-4 py-2.5 text-right font-black text-emerald-700">₹{Number(b.amount || 0).toLocaleString("en-IN")}</td>
                           <td className="px-4 py-2.5 text-center">
                             <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px]">
                               Awaiting 12:00 AM
@@ -858,7 +858,7 @@ export function DailySettlementsView() {
                             <td className="p-2.5 text-slate-600">{b.sport}</td>
                             <td className="p-2.5 text-slate-700">{b.time_slot || b.slot_time}</td>
                             <td className="p-2.5 text-right font-bold">₹{Number(b.amount || 0).toLocaleString("en-IN")}</td>
-                            <td className="p-2.5 text-right font-bold text-emerald-700">₹{Number(b.owner_payout_amount || b.amount * 0.95).toLocaleString("en-IN")}</td>
+                            <td className="p-2.5 text-right font-bold text-emerald-700">₹{Number(b.owner_payout_amount !== undefined && b.owner_payout_amount !== null ? b.owner_payout_amount : b.amount).toLocaleString("en-IN")}</td>
                           </tr>
                         ))
                       ) : (

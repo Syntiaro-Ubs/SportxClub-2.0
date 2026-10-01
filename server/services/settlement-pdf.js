@@ -201,7 +201,7 @@ export async function generateSettlementPdfBuffer({
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(220, 38, 38);
-  doc.text(`- Rs. ${fmt(platformFee)}`, box2X + boxW / 2, curY + 13.5, { align: "center" });
+  doc.text(platformFee > 0 ? `- Rs. ${fmt(platformFee)}` : `Rs. ${fmt(platformFee)}`, box2X + boxW / 2, curY + 13.5, { align: "center" });
 
   // Box 3: Net Transferred Amount
   const box3X = box2X + boxW + 3;

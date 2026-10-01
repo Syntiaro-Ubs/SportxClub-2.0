@@ -48,8 +48,8 @@ export function AdminSettings() {
               <TableBody>
                 <TableRow>
                   <TableCell>Platform Commission</TableCell>
-                  <TableCell>10%</TableCell>
-                  <TableCell>Fee taken per booking</TableCell>
+                  <TableCell>0% (Free Promotional)</TableCell>
+                  <TableCell>Fee taken per booking (100% to Owner)</TableCell>
                   <TableCell><Badge variant="secondary" className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 border-none font-medium">Active</Badge></TableCell>
                 </TableRow>
                 <TableRow>
