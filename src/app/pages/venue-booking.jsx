@@ -922,25 +922,30 @@ function extractImageSrc(val) {
           {/* Content */}
           <div className="flex-1 min-w-0">
             {/* Header Section */}
-            <div className="flex items-end justify-between mb-3">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <button onClick={() => navigate(-1)} className="flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer text-slate-900 dark:text-white border-none bg-transparent">
+            <div className="flex items-center justify-between gap-2 sm:gap-4 mb-3">
+              {/* Left: Back Arrow + Title */}
+              <div className="flex items-center gap-2 min-w-0">
+                <button onClick={() => navigate(-1)} className="flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer text-slate-900 dark:text-white border-none bg-transparent shrink-0">
                   <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
-                <h2 className="text-base sm:text-lg md:text-[25px] font-semibold text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-sm sm:text-lg md:text-[25px] font-semibold text-slate-900 dark:text-white tracking-tight truncate">
                   Recommended Venues
                 </h2>
+              </div>
+
+              {/* Right: Quick Filters + See All */}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 {/* Quick Filters Toggle Button & Dropdown */}
                 <div className="relative z-40" ref={filterContainerRef}>
                   <Button
                     onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-                    className="w-fit bg-white/90 dark:bg-[#0f172a]/80 text-slate-800 dark:text-white border border-slate-200/80 dark:border-slate-800 rounded-md h-10 font-bold shadow-2xs flex items-center justify-between px-4 hover:bg-white dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 backdrop-blur-xl cursor-pointer text-xs sm:text-sm"
+                    className="w-fit bg-white/90 dark:bg-[#0f172a]/80 text-slate-800 dark:text-white border border-slate-200/80 dark:border-slate-800 rounded-md h-9 sm:h-10 font-bold shadow-2xs flex items-center justify-between px-2.5 sm:px-4 hover:bg-white dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-200 backdrop-blur-xl cursor-pointer text-xs sm:text-sm"
                   >
-                    <div className="flex items-center gap-2 mr-2">
-                      <Filter className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <div className="flex items-center gap-1.5 sm:gap-2 mr-1 sm:mr-2">
+                      <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>Quick Filters</span>
                     </div>
-                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200", isMobileFilterOpen ? "rotate-180 text-emerald-600" : "")} />
+                    <ChevronDown className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 transition-transform duration-200", isMobileFilterOpen ? "rotate-180 text-emerald-600" : "")} />
                   </Button>
 
                   <AnimatePresence>
@@ -1035,19 +1040,21 @@ function extractImageSrc(val) {
                     )}
                   </AnimatePresence>
                 </div>
+
+                <Link
+                  to="/venues"
+                  onClick={() => {
+                    setSelectedSport("All Sports");
+                    setSelectedLocation("All Cities");
+                    localStorage.setItem("preferred-city", "All Cities");
+                    window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
+                  }}
+                  className="flex items-center gap-0.5 sm:gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-xs sm:text-sm hover:underline cursor-pointer shrink-0 whitespace-nowrap"
+                >
+                  <span>See All</span>
+                  <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </Link>
               </div>
-              <Link
-                to="/venues"
-                onClick={() => {
-                  setSelectedSport("All Sports");
-                  setSelectedLocation("All Cities");
-                  localStorage.setItem("preferred-city", "All Cities");
-                  window.dispatchEvent(new CustomEvent("preferredCityChanged", { detail: "All Cities" }));
-                }}
-                className="flex items-center gap-1 text-[#059669] font-semibold text-sm hover:underline cursor-pointer"
-              >
-                See All <ChevronRight className="w-4 h-4" />
-              </Link>
             </div>
 
             {/* Recommended Venues Slider */}
