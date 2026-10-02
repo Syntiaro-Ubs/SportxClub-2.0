@@ -124,14 +124,6 @@ export function MobileAppBar() {
     { label: "Tournaments", to: "/tournaments", icon: Trophy },
     { label: "Community", to: "/community", icon: MessageSquare, requiresAuth: true },
     { label: "AI Assistant", to: "/ai-assistant", icon: Sparkles },
-
-    {
-      label: "Notifications",
-      to: "/profile",
-      icon: Bell,
-      badge: 3,
-      requiresAuth: true,
-    },
     {
       label: "Cart",
       to: "/bookings",

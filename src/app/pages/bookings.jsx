@@ -208,9 +208,10 @@ export function BookingsPage() {
           </Button>
           <Button
             onClick={() => navigate("/venues")}
-            className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold h-10 px-4 gap-1.5 cursor-pointer shadow-sm"
+            variant="outline"
+            className="rounded-xl border border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 text-xs font-bold h-10 px-4 gap-1.5 cursor-pointer shadow-none"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>Book New Slot</span>
           </Button>
         </div>
@@ -244,10 +245,10 @@ export function BookingsPage() {
             <button
               key={tab.id}
               onClick={() => setFilterTab(tab.id)}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              className={`rounded-full px-4 py-1.5 text-xs font-bold transition-all cursor-pointer whitespace-nowrap border ${
                 filterTab === tab.id
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10"
+                  ? "border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent shadow-none"
+                  : "border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400 bg-transparent hover:border-slate-300 dark:hover:border-white/20"
               }`}
             >
               {tab.label} ({tab.count})
@@ -283,7 +284,8 @@ export function BookingsPage() {
           </p>
           <Button
             onClick={() => navigate("/venues")}
-            className="mt-5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-10 px-5 shadow-sm cursor-pointer"
+            variant="outline"
+            className="mt-5 rounded-xl border border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 font-bold text-xs h-10 px-5 shadow-none cursor-pointer"
           >
             Explore Sports Venues
           </Button>
@@ -376,9 +378,10 @@ export function BookingsPage() {
                       <span className="hidden sm:inline">Ticket PDF</span>
                     </Button>
                     <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => navigate("/venues")}
-                      className="rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white h-9 px-3.5 text-xs font-bold cursor-pointer"
+                      className="rounded-xl border border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 h-9 px-3.5 text-xs font-bold cursor-pointer shadow-none"
                     >
                       Book Again
                     </Button>

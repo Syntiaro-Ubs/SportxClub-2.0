@@ -530,7 +530,10 @@ export function UserProfile() {
       <Container className="py-24 text-center max-w-md mx-auto space-y-4">
         <EmptyState>Please sign in to view your player account.</EmptyState>
         <Link to="/login">
-          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-6">
+          <Button
+            variant="outline"
+            className="rounded-xl border border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 font-bold px-6 cursor-pointer shadow-none"
+          >
             Log In / Sign Up
           </Button>
         </Link>
@@ -1651,10 +1654,11 @@ export function UserProfile() {
 
       {/* TEAMMATE REVIEWS & RATINGS (DYNAMIC FROM DATABASE) */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between text-left">
-          <div>
-            <h2 className="text-xl font-black flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" /> Teammate Reviews & Ratings
+        <div className="flex items-start justify-between text-left gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-xl font-black flex items-start gap-2">
+              <MessageSquare className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <span>Teammate Reviews & Ratings</span>
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               Authentic teammate ratings, sportsmanship reviews, and skill endorsements.

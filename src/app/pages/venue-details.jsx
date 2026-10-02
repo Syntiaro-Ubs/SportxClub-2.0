@@ -1396,19 +1396,19 @@ export function VenueDetails() {
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black !text-white tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
                     {venue.name}
                   </h1>
-                  <div className="flex items-center gap-3 mt-2 text-xs sm:text-sm font-semibold !text-white/90">
+                  <div className="flex items-start justify-between gap-3 mt-2 text-xs sm:text-sm font-semibold !text-white/90">
                     <div
                       className={cn(
-                        "flex items-center gap-1",
+                        "flex items-start gap-1.5 min-w-0 flex-1",
                         isDark ? "text-white" : "text-white"
                       )}
                     >
-                      <MapPin className="h-4 w-4 shrink-0" />
-                      <span>{typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}</span>
+                      <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span className="leading-snug">{typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}</span>
                     </div>
                     <div
                       className={cn(
-                        "flex items-center gap-1.5 px-1 rounded-full",
+                        "flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs shrink-0 whitespace-nowrap self-start",
                         isDark ? "text-white" : "text-white"
                       )}
                     >
@@ -1575,18 +1575,17 @@ export function VenueDetails() {
               </div>
               <div
                 className={cn(
-                  "flex items-center gap-2 text-xs",
+                  "flex items-start gap-2 text-xs",
                   isDark ? "text-white/70" : "text-slate-600",
                 )}
               >
                 <MapPin
                   className={cn(
-                    "h-4 w-4 shrink-0",
+                    "h-4 w-4 shrink-0 mt-0.5",
                     isDark ? "text-emerald-600" : "text-emerald-600",
                   )}
-                >
-                </MapPin>
-                <span>{venue.address}</span>
+                />
+                <span className="leading-snug">{venue.address}</span>
               </div>
             </div>
 
@@ -1594,14 +1593,14 @@ export function VenueDetails() {
             <div className="space-y-5 w-full order-5 lg:order-none">
               <div
                 className={cn(
-                  "flex items-center justify-between border-b pb-4",
+                  "flex items-center justify-between gap-3 border-b pb-4",
                   isDark ? "border-white/10" : "border-slate-200",
                 )}
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3
                     className={cn(
-                      "text-xl font-extrabold tracking-tight",
+                      "text-lg sm:text-xl font-extrabold tracking-tight",
                       isDark ? "text-white" : "text-slate-900",
                     )}
                   >
@@ -1609,17 +1608,17 @@ export function VenueDetails() {
                   </h3>
                   <p
                     className={cn(
-                      "text-xs mt-0.5",
+                      "text-xs mt-0.5 truncate",
                       isDark ? "text-white/50" : "text-slate-500",
                     )}
                   >
                     Verified players who booked this venue
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-transparent">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-transparent shrink-0 whitespace-nowrap">
                   <Star
                     className={cn(
-                      "h-3.5 w-3.5",
+                      "h-3.5 w-3.5 shrink-0",
                       totalVenueReviews > 0 ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-white/30",
                     )}
                   />
@@ -1635,7 +1634,7 @@ export function VenueDetails() {
                   </span>
                   <span
                     className={cn(
-                      "text-xs font-semibold",
+                      "text-xs font-semibold whitespace-nowrap",
                       isDark ? "text-white/60" : "text-slate-500",
                     )}
                   >
