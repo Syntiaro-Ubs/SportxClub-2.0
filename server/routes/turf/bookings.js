@@ -3,6 +3,8 @@ import { getPool } from "../../db.js";
 import { sendBookingEmails, sendCancellationEmails } from "../../services/booking-email-service.js";
 import { authenticateToken, requireRole, optionalAuth } from "../../middleware/auth.js";
 
+import { syncCompletedBookings } from "../../services/booking-slot-service.js";
+
 const router = express.Router();
 
 // GET /api/turf/bookings - List bookings (Protected)
@@ -30,6 +32,8 @@ router.get("/", authenticateToken, async (req, res) => {
     }
 
     const [rows] = await pool.query(sql, params);
+    // Auto-sync concluded bookings in returned list to 'Completed'
+    await syncCompletedBookings(pool, rows);
     return res.json({ success: true, data: rows });
   } catch (err) {
     console.error("Fetch Bookings Error:", err);

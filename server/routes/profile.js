@@ -3,6 +3,7 @@ import { getPool } from "../db.js";
 import { sendBookingEmails, sendCancellationEmails } from "../services/booking-email-service.js";
 import { authenticateToken, requireRole, optionalAuth } from "../middleware/auth.js";
 import { processCashfreeRefund } from "../payment/cashfree-routes.js";
+import { parseBookingSlotTimes, validateBookingCancellation } from "../services/booking-slot-service.js";
 
 const router = express.Router();
 
@@ -92,16 +93,49 @@ async function getProfileData(pool, user) {
     [user.id, user.full_name]
   );
 
-  const [activeBookingRows] = await pool.query(
+  const [userBookings] = await pool.query(
     `SELECT b.*, t.image_url AS turf_image
        FROM bookings b
        LEFT JOIN turfs t ON t.name = b.turf_name
       WHERE (LOWER(b.user_email) = LOWER(?) OR LOWER(b.user_name) = LOWER(?))
         AND b.status NOT IN ('Cancelled', 'Canceled')
       ORDER BY COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), b.created_at) DESC, b.id DESC
-      LIMIT 1`,
+      LIMIT 50`,
     [user.email, user.full_name]
   );
+
+  let activeBooking = null;
+  const expiredBookingIds = [];
+  const now = new Date();
+
+  for (const b of userBookings) {
+    const { slotStart, isPast } = parseBookingSlotTimes(b.date, b.time_slot || b.slot_time, now);
+
+    // If the slot has concluded, transition status to 'Completed' in database
+    if (isPast && (b.status === "Confirmed" || b.status === "Paid" || !b.status)) {
+      expiredBookingIds.push(b.id);
+      b.status = "Completed";
+    }
+
+    // Active booking must be an upcoming, confirmed/paid slot that has not yet concluded
+    if (!isPast && (b.status === "Confirmed" || b.status === "Paid")) {
+      if (!activeBooking) {
+        activeBooking = b;
+      } else {
+        const curTimes = parseBookingSlotTimes(activeBooking.date, activeBooking.time_slot || activeBooking.slot_time, now);
+        // Prioritize the nearest upcoming slot
+        if (slotStart && curTimes.slotStart && slotStart < curTimes.slotStart) {
+          activeBooking = b;
+        }
+      }
+    }
+  }
+
+  // Asynchronously sync past bookings to 'Completed' status
+  if (expiredBookingIds.length > 0) {
+    pool.query("UPDATE bookings SET status = 'Completed' WHERE id IN (?)", [expiredBookingIds])
+      .catch((err) => console.warn("[Auto-Complete Bookings Notice]:", err.message));
+  }
 
   let [matchRows] = await pool.query(
     `SELECT id, venue, sport, match_date AS matchDate, result, score
@@ -132,7 +166,7 @@ async function getProfileData(pool, user) {
     user: mapUser(user, stats),
     walletBalance: Number(wallet?.balance || 0),
     transactions: transactionRows,
-    activeBooking: activeBookingRows[0] || null,
+    activeBooking: activeBooking || null,
     matchHistory: matchRows || [],
     reviews: reviewRows || [],
     shopItems: products || [],
@@ -626,6 +660,19 @@ router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
 
     if (["Cancelled", "Canceled"].includes(booking.status)) {
       return res.status(400).json({ success: false, error: "This booking is already cancelled" });
+    }
+
+    // Strict validation: Prevent cancellation if the match slot has already concluded, started, or is completed
+    const cancelValidation = validateBookingCancellation(booking);
+    if (!cancelValidation.allowed) {
+      // Ensure DB status is up to date if slot ended
+      if (booking.status !== "Completed" && cancelValidation.reason?.includes("concluded")) {
+        await connection.query("UPDATE bookings SET status = 'Completed' WHERE id = ?", [booking.id]);
+      }
+      return res.status(400).json({
+        success: false,
+        error: cancelValidation.reason || "This match slot cannot be cancelled as it has already commenced or concluded.",
+      });
     }
 
     const cancelReason = String(reason || "User cancelled slot").trim();

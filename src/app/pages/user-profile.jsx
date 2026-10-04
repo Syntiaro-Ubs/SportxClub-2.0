@@ -156,6 +156,72 @@ function EmptyState({ children }) {
   return <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">{children}</p>;
 }
 
+const isBookingSlotConcluded = (booking) => {
+  if (!booking) return false;
+  const status = String(booking.status || "").toLowerCase();
+  if (status === "completed") return true;
+  try {
+    const dateStr = booking.date;
+    const timeSlotStr = booking.time_slot || booking.slot_time;
+    if (!dateStr) return false;
+
+    // Parse time
+    const parts = String(timeSlotStr || "").split(/[-–—]|(?:\s+to\s+)/i);
+    const endStr = parts[1] || parts[0];
+    let endHours = 23, endMinutes = 59;
+    if (endStr) {
+      const match = endStr.trim().match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?/i);
+      if (match) {
+        let h = parseInt(match[1], 10);
+        const m = match[2] ? parseInt(match[2], 10) : 0;
+        const mer = match[3] ? match[3].toUpperCase() : null;
+        if (mer === "PM" && h < 12) h += 12;
+        if (mer === "AM" && h === 12) h = 0;
+        endHours = h;
+        endMinutes = m;
+      }
+    }
+
+    // Parse date
+    let y = 0, mo = 0, d = 0;
+    const isoMatch = String(dateStr).match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    const dmyMatch = String(dateStr).match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (isoMatch) {
+      y = parseInt(isoMatch[1], 10);
+      mo = parseInt(isoMatch[2], 10) - 1;
+      d = parseInt(isoMatch[3], 10);
+    } else if (dmyMatch) {
+      d = parseInt(dmyMatch[1], 10);
+      mo = parseInt(dmyMatch[2], 10) - 1;
+      y = parseInt(dmyMatch[3], 10);
+    } else {
+      const parsed = new Date(dateStr);
+      if (!isNaN(parsed.getTime())) {
+        y = parsed.getFullYear();
+        mo = parsed.getMonth();
+        d = parsed.getDate();
+      } else {
+        return false;
+      }
+    }
+
+    const slotEnd = new Date(y, mo, d, endHours, endMinutes, 0);
+    const startMatch = parts[0] ? parts[0].trim().match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?/i) : null;
+    if (startMatch) {
+      let sh = parseInt(startMatch[1], 10);
+      const smer = startMatch[3] ? startMatch[3].toUpperCase() : null;
+      if (smer === "PM" && sh < 12) sh += 12;
+      if (smer === "AM" && sh === 12) sh = 0;
+      if (endHours <= sh) {
+        slotEnd.setDate(slotEnd.getDate() + 1);
+      }
+    }
+    return new Date() >= slotEnd;
+  } catch {
+    return false;
+  }
+};
+
 export function UserProfile() {
   const navigate = useNavigate();
   const { currentUser, playerUser, logout, deleteAccount } = useAuth();
@@ -370,6 +436,11 @@ export function UserProfile() {
 
   const handleCancelBooking = async () => {
     if (!profile?.activeBooking) return;
+    if (isBookingSlotConcluded(profile.activeBooking)) {
+      toast.error("This match slot has already concluded and cannot be cancelled or refunded.");
+      setCancelOpen(false);
+      return;
+    }
     try {
       setIsCancelling(true);
       const booking = profile.activeBooking;
@@ -731,7 +802,8 @@ export function UserProfile() {
                 <Share2 className="h-4 w-4" /> Share Pass
               </Button>
               <Button
-                className="flex-1 text-xs gap-1.5 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                variant="outline"
+                className="flex-1 text-xs gap-1.5 h-10 rounded-xl border border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 hover:border-emerald-600 dark:hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 font-bold shadow-none"
                 onClick={() => downloadPdfPass(activeBooking, user)}
               >
                 <Download className="h-4 w-4" /> Download PDF Pass
@@ -903,16 +975,14 @@ export function UserProfile() {
                 <Send className="h-4 w-4 text-sky-600" /> Telegram
               </Button>
             </div>
-            {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleNativeShare}
-                className="w-full text-xs font-bold gap-2 mt-1"
-              >
-                <Share2 className="h-4 w-4" /> Share via other apps...
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleNativeShare}
+              className="w-full h-10 text-xs font-bold gap-2 mt-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border-emerald-500/40 bg-transparent hover:border-emerald-500 transition-all cursor-pointer"
+            >
+              <Share2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> Share via other apps...
+            </Button>
           </div>
 
           <DialogFooter>
@@ -1072,11 +1142,15 @@ export function UserProfile() {
             </Button>
             <Button
               variant="destructive"
-              disabled={isCancelling}
+              disabled={isCancelling || isBookingSlotConcluded(activeBooking)}
               onClick={handleCancelBooking}
-              className="bg-rose-600 hover:bg-rose-700 font-bold text-white text-xs rounded-xl h-10 px-5 cursor-pointer shadow-md shadow-rose-600/20"
+              className="bg-rose-600 hover:bg-rose-700 font-bold text-white text-xs rounded-xl h-10 px-5 cursor-pointer shadow-md shadow-rose-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isCancelling ? "Processing Refund..." : "Confirm Cancellation"}
+              {isCancelling
+                ? "Processing Refund..."
+                : isBookingSlotConcluded(activeBooking)
+                ? "Slot Concluded (Non-Refundable)"
+                : "Confirm Cancellation"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1406,8 +1480,8 @@ export function UserProfile() {
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-black text-xs uppercase">
-                  {activeBooking.status || "CONFIRMED"}
+                <Badge className={isBookingSlotConcluded(activeBooking) ? "bg-amber-500/10 text-amber-600 border-amber-500/20 font-black text-xs uppercase" : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-black text-xs uppercase"}>
+                  {isBookingSlotConcluded(activeBooking) ? "COMPLETED" : (activeBooking.status || "CONFIRMED")}
                 </Badge>
               </div>
 
@@ -1420,11 +1494,13 @@ export function UserProfile() {
                 >
                   <div className="flex items-center justify-between">
                     <QrCode className="h-5 w-5 text-emerald-600 group-hover:scale-110 transition-transform" />
-                    <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-500/30">Active</Badge>
+                    <Badge variant="outline" className={`text-[9px] ${isBookingSlotConcluded(activeBooking) ? "text-amber-600 border-amber-500/30" : "text-emerald-600 border-emerald-500/30"}`}>
+                      {isBookingSlotConcluded(activeBooking) ? "Concluded" : "Active"}
+                    </Badge>
                   </div>
                   <div>
                     <span className="text-xs font-bold block">Entry Pass</span>
-                    <span className="text-[10px] text-muted-foreground">Digital QR Ticket</span>
+                    <span className="text-[10px] text-muted-foreground">{isBookingSlotConcluded(activeBooking) ? "Completed Pass" : "Digital QR Ticket"}</span>
                   </div>
                 </div>
 
@@ -1458,18 +1534,34 @@ export function UserProfile() {
                   </div>
                 </div>
 
-                {/* 4. CANCEL SLOT */}
+                {/* 4. CANCEL SLOT (DISABLED IF CONCLUDED) */}
                 <div
-                  onClick={() => setCancelOpen(true)}
-                  className="rounded-2xl border border-border bg-card p-3 h-32 flex flex-col justify-between cursor-pointer hover:border-rose-500/60 hover:bg-rose-500/5 hover:shadow-md transition-all group"
+                  onClick={() => {
+                    if (isBookingSlotConcluded(activeBooking)) {
+                      toast.info("This match has already concluded. Concluded match slots cannot be cancelled.");
+                    } else {
+                      setCancelOpen(true);
+                    }
+                  }}
+                  className={`rounded-2xl border p-3 h-32 flex flex-col justify-between transition-all group ${
+                    isBookingSlotConcluded(activeBooking)
+                      ? "border-border/50 bg-muted/20 opacity-60 cursor-not-allowed"
+                      : "border-border bg-card cursor-pointer hover:border-rose-500/60 hover:bg-rose-500/5 hover:shadow-md"
+                  }`}
                 >
                   <div className="flex items-center justify-between">
-                    <Ban className="h-5 w-5 text-rose-500 group-hover:scale-110 transition-transform" />
-                    <Badge variant="outline" className="text-[9px] text-rose-600 border-rose-500/30">Refund</Badge>
+                    <Ban className={`h-5 w-5 ${isBookingSlotConcluded(activeBooking) ? "text-muted-foreground" : "text-rose-500 group-hover:scale-110"} transition-transform`} />
+                    <Badge variant="outline" className={`text-[9px] ${isBookingSlotConcluded(activeBooking) ? "text-muted-foreground border-border" : "text-rose-600 border-rose-500/30"}`}>
+                      {isBookingSlotConcluded(activeBooking) ? "Locked" : "Refund"}
+                    </Badge>
                   </div>
                   <div>
-                    <span className="text-xs font-bold block text-rose-600 dark:text-rose-400">Cancel Slot</span>
-                    <span className="text-[10px] text-muted-foreground">Instant Refund</span>
+                    <span className={`text-xs font-bold block ${isBookingSlotConcluded(activeBooking) ? "text-muted-foreground" : "text-rose-600 dark:text-rose-400"}`}>
+                      {isBookingSlotConcluded(activeBooking) ? "Completed" : "Cancel Slot"}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {isBookingSlotConcluded(activeBooking) ? "Not Cancellable" : "Instant Refund"}
+                    </span>
                   </div>
                 </div>
               </div>

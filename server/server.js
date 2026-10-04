@@ -25,6 +25,7 @@ import aiAssistantRoutes from "./routes/ai-assistant.js";
 import cashfreeRoutes from "./payment/cashfree-routes.js";
 import settlementsRoutes from "./routes/settlements.js";
 import { startMidnightPayoutScheduler } from "./services/payout-cron-service.js";
+import { startBookingStatusScheduler, syncCompletedBookings } from "./services/booking-slot-service.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -256,12 +257,17 @@ async function startServer() {
       const pool = getPool();
       await syncApprovedTurfOwners(pool);
       console.log("Turf owners initial sync completed.");
+      // Auto-complete any concluded bookings that ended in the past
+      await syncCompletedBookings(pool);
     } catch (syncErr) {
       console.warn("Initial turf sync warning:", syncErr.message);
     }
     
     // Start automated 12:00 AM Midnight Turf Payout Cron Scheduler
     startMidnightPayoutScheduler();
+
+    // Start automated 15-minute booking lifecycle status monitor (Confirmed -> Completed)
+    startBookingStatusScheduler();
 
     app.listen(PORT, () => {
       console.log(`=================================`);
