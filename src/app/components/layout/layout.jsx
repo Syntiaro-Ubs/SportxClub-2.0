@@ -172,14 +172,14 @@ export function Layout() {
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
       {/* Desktop Top Navbar */}
-      <header className="hidden md:flex h-14 items-center justify-between border-b border-border/40 bg-background/90 backdrop-blur-xl px-6 sticky top-0 z-50 w-full">
-        <div className="flex items-center gap-8">
-          <a href="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
-            <Logo className="h-[50px] md:h-[80px]" />
+      <header className="hidden md:flex h-14 items-center justify-between border-b border-border/40 bg-background/90 backdrop-blur-xl px-3 md:px-4 lg:px-6 sticky top-0 z-50 w-full">
+        <div className="flex items-center gap-3 lg:gap-8 shrink-0">
+          <a href="/" className="flex items-center translate-y-[3px] md:translate-y-[5px]">
+            <Logo className="h-[46px] md:h-[56px] lg:h-[75px]" />
           </a>
         </div>
 
-        <nav className="flex items-center gap-8">
+        <nav className="flex items-center gap-1 md:gap-2 lg:gap-5 xl:gap-8 mx-2 overflow-hidden">
           {navigation
             .filter((item) => {
               if (
@@ -200,28 +200,28 @@ export function Layout() {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${isActive
+                  className={`group relative flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${isActive
                     ? "text-primary"
                     : "text-muted-foreground hover:text-primary"
                     }`}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0" />
                   <span>{item.name}</span>
                 </Link>
               );
             })}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-2 lg:gap-3 shrink-0">
           <LocationModal
             activeCity={city}
             onCitySelect={handleCitySelect}
             trigger={
               <button
-                className="group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[13px] font-medium cursor-pointer !bg-transparent hover:!bg-transparent focus:outline-none focus:ring-0 text-foreground transition-colors"
+                className="group relative flex items-center gap-1 px-2 lg:px-2.5 py-1.5 rounded-full text-xs lg:text-[13px] font-medium cursor-pointer !bg-transparent hover:!bg-transparent focus:outline-none focus:ring-0 text-foreground transition-colors shrink-0"
               >
                 <MapPin className="h-3.5 w-3.5 shrink-0 text-foreground transition-all duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
-                <span className="truncate max-w-[140px] leading-normal pb-0.5 text-foreground transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 font-medium">
+                <span className="truncate max-w-[70px] md:max-w-[100px] lg:max-w-[140px] leading-normal pb-0.5 text-foreground transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 font-medium">
                   {city === "All" || city === "All Cities" ? "All Cities" : city}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 shrink-0 text-foreground/70 transition-all duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 group-hover:translate-y-0.5" />
@@ -229,29 +229,34 @@ export function Layout() {
             }
           />
 
-          <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0" />
+          <ThemeToggleButton className="h-8 w-8 bg-transparent hover:bg-transparent border-0 shadow-none text-foreground hover:text-foreground p-0 cursor-pointer flex items-center justify-center focus:ring-0 focus-visible:ring-0 shrink-0" />
           {isAuthenticated ? (
-            <Link to={currentUser.role === 'owner' ? '/admin-panel' : '/profile'}>
+            <Link
+              to={currentUser.role === 'owner' ? '/admin-panel' : '/profile'}
+              className="shrink-0 transition-transform duration-300 ease-out hover:scale-105 active:scale-95 inline-flex items-center"
+            >
               <Button
                 variant="ghost"
-                className="group relative rounded-md gap-2.5 text-muted-foreground hover:text-primary hover:bg-transparent px-3 h-10 cursor-pointer focus:ring-0 focus-visible:ring-0 focus-visible:outline-none"
+                className="group relative rounded-md gap-2 text-muted-foreground hover:text-primary hover:bg-transparent dark:hover:!bg-transparent dark:hover:!text-emerald-400 px-2 lg:px-3 h-9 lg:h-10 cursor-pointer focus:ring-0 focus-visible:ring-0 focus-visible:outline-none transition-all duration-300"
               >
-                <Avatar className="h-6.5 w-6.5 border-0 bg-transparent flex items-center justify-center">
+                <Avatar className="h-6 w-6 lg:h-6.5 lg:w-6.5 border-0 bg-transparent flex items-center justify-center shrink-0">
                   {isValidProfileImage(currentUser?.profilePicture || currentUser?.avatar) && (
                     <AvatarImage src={currentUser.profilePicture || currentUser.avatar} className="object-cover" />
                   )}
-                  <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <User className="h-4 w-4 stroke-[2.2]" />
+                  <AvatarFallback className="bg-transparent text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-colors duration-300 group-hover:text-emerald-500 dark:group-hover:text-emerald-400">
+                    <User className="h-3.5 w-3.5 lg:h-4 lg:w-4 stroke-[2.2]" />
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-semibold leading-none">{displayName}</span>
+                <span className="text-xs lg:text-sm font-semibold leading-none max-w-[75px] lg:max-w-[130px] truncate transition-colors duration-300 group-hover:text-primary dark:group-hover:text-emerald-400">
+                  {displayName}
+                </span>
               </Button>
             </Link>
           ) : (
-            <Link to="/login">
+            <Link to="/login" className="shrink-0">
               <Button
                 variant="outline"
-                className="rounded-full bg-transparent border border-emerald-600 text-foreground hover:bg-transparent hover:text-foreground hover:opacity-80 transition-all px-5 text-sm font-semibold"
+                className="rounded-full bg-transparent border border-emerald-600 text-foreground hover:bg-transparent hover:text-foreground hover:opacity-80 transition-all px-3 lg:px-5 h-8.5 lg:h-9 text-xs lg:text-sm font-semibold"
               >
                 Login / Sign Up
               </Button>

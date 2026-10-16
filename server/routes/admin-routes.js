@@ -230,7 +230,7 @@ router.get("/admin/dashboard/stats", authenticateToken, requireRole(["admin", "s
 // ----------------------------------------------------
 // ALL TURFS REPORTS & ONBOARDING ANALYTICS (Admin/CMS)
 // ----------------------------------------------------
-router.get(["/admin/reports/turfs-summary", "/admin/turf-reports", "/reports/turfs-summary"], optionalAuth, async (req, res) => {
+router.get(["/admin/reports/turfs-summary", "/admin/turf-reports", "/reports/turfs-summary"], authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
   try {
     const pool = getPool();
 
@@ -980,12 +980,13 @@ router.post("/admin/turfs/reset-order", authenticateToken, requireRole(["admin",
 // ----------------------------------------------------
 // DYNAMIC TURF OWNER SETTINGS (GET & PUT)
 // ----------------------------------------------------
-router.get(["/admin/owner/settings", "/owner/settings", "/settings/owner"], optionalAuth, async (req, res) => {
+router.get(["/admin/owner/settings", "/owner/settings", "/settings/owner"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const queryEmail = req.query.ownerEmail || req.query.email;
     const queryName = req.query.ownerName || req.query.name;
-    const userEmail = req.user?.email || queryEmail;
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    const userEmail = isSuperAdmin ? (queryEmail || req.user?.email) : req.user?.email;
     const userId = req.user?.id;
 
     let ownerRows = [];
@@ -1091,12 +1092,13 @@ router.get(["/admin/owner/settings", "/owner/settings", "/settings/owner"], opti
   }
 });
 
-router.put(["/admin/owner/settings", "/owner/settings", "/settings/owner"], optionalAuth, async (req, res) => {
+router.put(["/admin/owner/settings", "/owner/settings", "/settings/owner"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const data = req.body || {};
     const queryEmail = req.query.ownerEmail || req.query.email || data.contactEmail;
-    const userEmail = req.user?.email || queryEmail;
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    const userEmail = isSuperAdmin ? (queryEmail || req.user?.email) : req.user?.email;
     const ownerIdParam = data.id || req.user?.id;
 
     let ownerRows = [];
@@ -1276,7 +1278,7 @@ router.get(["/admin/owner/disabled-dates", "/owner/disabled-dates", "/disabled-d
   }
 });
 
-router.post(["/admin/owner/disabled-dates", "/owner/disabled-dates", "/disabled-dates"], optionalAuth, async (req, res) => {
+router.post(["/admin/owner/disabled-dates", "/owner/disabled-dates", "/disabled-dates"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const { date, reason, turfId, turfName, ownerId: bodyOwnerId, ownerEmail: bodyOwnerEmail } = req.body || {};
@@ -1305,7 +1307,7 @@ router.post(["/admin/owner/disabled-dates", "/owner/disabled-dates", "/disabled-
   }
 });
 
-router.delete(["/admin/owner/disabled-dates", "/owner/disabled-dates", "/disabled-dates"], optionalAuth, async (req, res) => {
+router.delete(["/admin/owner/disabled-dates", "/owner/disabled-dates", "/disabled-dates"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const date = req.query.date || req.body?.date;
@@ -1343,11 +1345,12 @@ router.delete(["/admin/owner/disabled-dates", "/owner/disabled-dates", "/disable
 // ----------------------------------------------------
 // OWNER CUSTOMERS AGGREGATION ENDPOINT
 // ----------------------------------------------------
-router.get(["/admin/owner/customers", "/owner/customers", "/customers", "/customers/owner"], optionalAuth, async (req, res) => {
+router.get(["/admin/owner/customers", "/owner/customers", "/customers", "/customers/owner"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const queryEmail = req.query.ownerEmail || req.query.email;
-    const userEmail = req.user?.email || queryEmail;
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    const userEmail = isSuperAdmin ? (queryEmail || req.user?.email) : req.user?.email;
 
     let ownerTurfNames = [];
     if (userEmail) {
@@ -1477,11 +1480,12 @@ router.get(["/admin/owner/customers", "/owner/customers", "/customers", "/custom
 // ----------------------------------------------------
 // OWNER KYC ENDPOINTS
 // ----------------------------------------------------
-router.get(["/admin/owner/kyc", "/owner/kyc", "/kyc", "/kyc/owner"], optionalAuth, async (req, res) => {
+router.get(["/admin/owner/kyc", "/owner/kyc", "/kyc", "/kyc/owner"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const queryEmail = req.query.ownerEmail || req.query.email;
-    const userEmail = req.user?.email || queryEmail;
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    const userEmail = isSuperAdmin ? (queryEmail || req.user?.email) : req.user?.email;
 
     let ownerRows = [];
     if (userEmail) {
@@ -1491,7 +1495,7 @@ router.get(["/admin/owner/kyc", "/owner/kyc", "/kyc", "/kyc/owner"], optionalAut
       );
       ownerRows = rows;
     }
-    if (ownerRows.length === 0) {
+    if (false) {
       const [rows] = await pool.query(
         "SELECT * FROM turf_owners ORDER BY id DESC LIMIT 1"
       );
@@ -1544,12 +1548,13 @@ router.get(["/admin/owner/kyc", "/owner/kyc", "/kyc", "/kyc/owner"], optionalAut
   }
 });
 
-router.post(["/admin/owner/kyc", "/owner/kyc", "/kyc", "/kyc/owner"], optionalAuth, async (req, res) => {
+router.post(["/admin/owner/kyc", "/owner/kyc", "/kyc", "/kyc/owner"], authenticateToken, requireRole(["admin", "super admin", "cms-admin", "turf-owner", "owner"]), async (req, res) => {
   try {
     const pool = getPool();
     const data = req.body || {};
     const queryEmail = req.query.ownerEmail || req.query.email || data.email;
-    const userEmail = req.user?.email || queryEmail;
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    const userEmail = isSuperAdmin ? (queryEmail || req.user?.email) : req.user?.email;
 
     let ownerRows = [];
     if (userEmail) {
@@ -1559,7 +1564,7 @@ router.post(["/admin/owner/kyc", "/owner/kyc", "/kyc", "/kyc/owner"], optionalAu
       );
       ownerRows = rows;
     }
-    if (ownerRows.length === 0) {
+    if (false) {
       const [rows] = await pool.query(
         "SELECT * FROM turf_owners ORDER BY id DESC LIMIT 1"
       );
@@ -1633,8 +1638,8 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
 
   // Enforce authentication on sensitive entities (allow owner-scoped queries)
   if (SENSITIVE_ENTITIES.has(entity)) {
-    const isOwnerScoped = Boolean(req.query.ownerEmail || req.query.ownerName || req.query.ownerId);
-    if (!req.user && !isOwnerScoped) {
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    if (!req.user || (!isSuperAdmin && ["users", "user", "customer", "customers", "reports", "report"].includes(entity))) {
       return res.status(401).json({ success: false, error: `Authentication required to view ${entity}.` });
     }
   }
@@ -1868,7 +1873,11 @@ router.get(["/admin/:entity", "/owner/:entity", "/:entity"], optionalAuth, async
       }
     }
 
-    const [rows] = await pool.query(`SELECT * FROM \`${tableName}\` ORDER BY id DESC`);
+    let selectSql = `SELECT * FROM \`${tableName}\` ORDER BY id DESC`;
+    if (tableName === "users") {
+      selectSql = "SELECT id, full_name, email, role, phone, city, bio, selected_sports, status, joined_date, avatar, games_played, bookings, created_at FROM users ORDER BY id DESC";
+    }
+    const [rows] = await pool.query(selectSql);
     return res.json({ success: true, data: rows });
   } catch (err) {
     console.error(`Fetch ${entity} Error:`, err);
@@ -1884,13 +1893,19 @@ router.get(["/admin/:entity/:id", "/owner/:entity/:id", "/:entity/:id"], optiona
     return next();
   }
 
+  if (SENSITIVE_ENTITIES.has(entity) && !req.user) {
+    return res.status(401).json({ success: false, error: `Authentication required to view ${entity}.` });
+  }
+
   try {
     const pool = getPool();
     const [rows] = await pool.query(`SELECT * FROM \`${tableName}\` WHERE id = ? LIMIT 1`, [id]);
     if (rows.length === 0) {
       return res.status(404).json({ success: false, error: `${entity} with id ${id} not found` });
     }
-    return res.json({ success: true, data: rows[0] });
+    const record = { ...rows[0] };
+    if (record.password) delete record.password;
+    return res.json({ success: true, data: record });
   } catch (err) {
     console.error(`Fetch ${entity}/${id} Error:`, err);
     return res.status(500).json({ success: false, error: err.message });

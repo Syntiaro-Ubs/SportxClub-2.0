@@ -11,11 +11,38 @@ export default function App() {
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let fadeTimer = null;
+    let removeTimer = null;
+
+    const hideSplash = () => {
       setIsFading(true);
-      setTimeout(() => setShowSplash(false), 500);
-    }, 2000);
-    return () => clearTimeout(timer);
+      removeTimer = setTimeout(() => setShowSplash(false), 500);
+    };
+
+    const startTime = Date.now();
+    const minDisplayTime = 500; // Graceful 500ms intro branding animation
+
+    const onFullyLoaded = () => {
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, minDisplayTime - elapsed);
+      fadeTimer = setTimeout(hideSplash, remaining);
+    };
+
+    if (document.readyState === "complete") {
+      onFullyLoaded();
+    } else {
+      window.addEventListener("load", onFullyLoaded, { once: true });
+    }
+
+    // Safety fallback: Never trap the user longer than 6s even on ultra-slow 2G
+    const maxSafetyTimer = setTimeout(hideSplash, 6000);
+
+    return () => {
+      window.removeEventListener("load", onFullyLoaded);
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+      clearTimeout(maxSafetyTimer);
+    };
   }, []);
 
   return (

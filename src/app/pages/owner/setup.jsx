@@ -983,8 +983,9 @@ export function OwnerSetupPage() {
 
           <div className="pt-2 flex flex-col sm:flex-row gap-3">
             <Button
+              variant="outline"
               onClick={() => navigate("/admin-login")}
-              className="flex-1 h-12 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md cursor-pointer flex items-center justify-center gap-2"
+              className="flex-1 h-12 rounded-xl border border-slate-300 dark:border-slate-700 bg-transparent hover:bg-transparent text-emerald-600 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500 dark:hover:border-emerald-400 font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all shadow-none"
             >
               <span>Login to Owner Portal</span>
               <ArrowRight className="h-4 w-4" />

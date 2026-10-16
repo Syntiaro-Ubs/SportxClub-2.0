@@ -333,10 +333,6 @@ export function UserProfile() {
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText.trim().toUpperCase() !== "DELETE") {
-      toast.error("Please type DELETE to confirm account deletion.");
-      return;
-    }
     try {
       setIsDeleting(true);
       await profileService.deleteAccount(currentUser);
@@ -362,12 +358,18 @@ export function UserProfile() {
       toast.error("Please enter a valid top-up amount.");
       return;
     }
+    const validPhone = String(currentUser?.phone || profile?.phone || localStorage.getItem("sportxclub_user_phone") || "").replace(/[^0-9]/g, "").slice(-10);
+    if (!validPhone || validPhone.length !== 10) {
+      toast.error("Please enter a valid 10-digit mobile number in your profile before topping up wallet.");
+      return;
+    }
+
     try {
       const topupPayload = {
         amount,
         userEmail: currentUser?.email || profile?.email || "user@sportxclub.com",
         userName: currentUser?.name || currentUser?.fullName || profile?.fullName || "SportX Player",
-        userPhone: currentUser?.phone || profile?.phone || "9876543210",
+        userPhone: validPhone,
         orderType: "WALLET_TOPUP",
       };
 
@@ -617,7 +619,31 @@ export function UserProfile() {
   }
 
   if (error) {
-    return <Container className="py-16 text-center space-y-4"><EmptyState>{error}</EmptyState><Button onClick={refreshProfile}>Retry</Button></Container>;
+    const isSessionExpired =
+      error.toLowerCase().includes("session expired") ||
+      error.toLowerCase().includes("token expired") ||
+      error.toLowerCase().includes("access denied");
+
+    return (
+      <Container className="py-16 text-center space-y-4">
+        <EmptyState>{error}</EmptyState>
+        <div className="flex items-center justify-center gap-3">
+          {isSessionExpired ? (
+            <Button
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Log In Again
+            </Button>
+          ) : (
+            <Button onClick={refreshProfile}>Retry</Button>
+          )}
+        </div>
+      </Container>
+    );
   }
 
   const displayName = user?.fullName || "";
@@ -1320,27 +1346,19 @@ export function UserProfile() {
               <strong className="text-rose-500 font-bold">Important Notice:</strong> This action will permanently remove your athlete profile, match stats, wallet balance, active bookings, and reviews from our MySQL database. <strong>This cannot be undone.</strong>
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            <p className="text-xs text-muted-foreground font-medium">
-              Please type <strong className="text-foreground font-mono font-bold">DELETE</strong> to confirm:
-            </p>
-            <Input
-              type="text"
-              placeholder="Type DELETE"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              className="text-xs font-mono uppercase tracking-wider"
-            />
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => { setDeleteOpen(false); setDeleteConfirmText(""); }}>
+          <DialogFooter className="gap-2 sm:gap-2 lg:max-xl:gap-8 [@media(horizontal-viewport-segments:2)]:gap-8 lg:max-xl:justify-between [@media(horizontal-viewport-segments:2)]:justify-between pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteOpen(false)}
+              className="font-semibold lg:max-xl:px-5 [@media(horizontal-viewport-segments:2)]:px-5"
+            >
               Cancel
             </Button>
             <Button
-              variant="destructive"
-              disabled={deleteConfirmText.trim().toUpperCase() !== "DELETE" || isDeleting}
+              type="button"
+              disabled={isDeleting}
               onClick={handleDeleteAccount}
-              className="bg-rose-600 hover:bg-rose-700 font-bold text-white cursor-pointer"
+              className="border border-rose-500/70 bg-rose-500/10 hover:!bg-rose-500/20 hover:!border-rose-600 hover:!text-rose-600 dark:bg-rose-950/30 dark:hover:!bg-rose-900/40 dark:hover:!border-rose-400 dark:hover:!text-rose-400 text-rose-600 dark:text-rose-400 font-bold cursor-pointer transition-all shadow-none"
             >
               {isDeleting ? "Deleting from Database..." : "Permanently Delete"}
             </Button>
@@ -1814,9 +1832,8 @@ export function UserProfile() {
         </div>
         <Button
           type="button"
-          variant="destructive"
           onClick={() => setDeleteOpen(true)}
-          className="text-xs h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 font-bold shrink-0 cursor-pointer shadow-sm"
+          className="text-xs h-9 px-4 rounded-xl border border-rose-500/70 bg-rose-500/10 hover:!bg-rose-500/20 hover:!border-rose-600 hover:!text-rose-600 dark:bg-rose-950/30 dark:hover:!bg-rose-900/40 dark:hover:!border-rose-400 dark:hover:!text-rose-400 text-rose-600 dark:text-rose-400 font-bold shrink-0 cursor-pointer shadow-none transition-all"
         >
           <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Account
         </Button>

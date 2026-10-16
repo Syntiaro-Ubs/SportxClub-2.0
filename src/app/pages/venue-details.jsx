@@ -52,6 +52,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import { adminApi } from "../services/admin-api";
+import { fastCache } from "../services/fast-cache";
 import { profileService } from "../services/profile.service";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
@@ -190,7 +191,7 @@ export function VenueDetails() {
     try {
       const p = JSON.parse(localStorage.getItem("playerUser") || "{}");
       if (p && (p.email || p.fullName || p.name || p.id)) return p;
-    } catch {}
+    } catch { }
     return null;
   }, [currentUser, playerUser]);
 
@@ -234,10 +235,24 @@ export function VenueDetails() {
 
   useEffect(() => {
     if (id) {
-      adminApi.getAll("turfs").then((turfs) => {
-        const found = (turfs || []).find((t) => String(t.id) === String(id));
-        if (found) setFetchedTurf(found);
-      }).catch(console.error);
+      fetch(`/api/turf/turfs/${id}`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (json?.success && json?.data) {
+            setFetchedTurf(json.data);
+          } else {
+            adminApi.getAll("turfs").then((turfs) => {
+              const found = (turfs || []).find((t) => String(t.id) === String(id));
+              if (found) setFetchedTurf(found);
+            }).catch(() => { });
+          }
+        })
+        .catch(() => {
+          adminApi.getAll("turfs").then((turfs) => {
+            const found = (turfs || []).find((t) => String(t.id) === String(id));
+            if (found) setFetchedTurf(found);
+          }).catch(() => { });
+        });
     }
   }, [id]);
 
@@ -246,8 +261,8 @@ export function VenueDetails() {
     ? {
       name: activeVenueData.name,
       location: activeVenueData.location,
-      address: typeof activeVenueData.location === 'object' 
-        ? (activeVenueData.location?.address || activeVenueData.location?.city || '') 
+      address: typeof activeVenueData.location === 'object'
+        ? (activeVenueData.location?.address || activeVenueData.location?.city || '')
         : (activeVenueData.location || ''),
       rating:
         typeof activeVenueData.rating === "number"
@@ -274,7 +289,7 @@ export function VenueDetails() {
             try {
               const p = JSON.parse(trimmed);
               return p.data || p.url || p.preview || "/assets/venues/turf-1.webp";
-            } catch (e) {}
+            } catch (e) { }
           }
           return trimmed;
         }
@@ -292,7 +307,7 @@ export function VenueDetails() {
               try {
                 const parsed = JSON.parse(trimmed);
                 return parsed.data || parsed.url || parsed.preview || "";
-              } catch (e) {}
+              } catch (e) { }
             }
             return trimmed;
           }
@@ -397,7 +412,7 @@ export function VenueDetails() {
             list.push(...parsed);
             continue;
           }
-        } catch {}
+        } catch { }
         list.push(...raw.split(/[,•;/&|\n]+/).map((s) => s.trim()).filter(Boolean));
       }
     }
@@ -587,6 +602,49 @@ export function VenueDetails() {
   const [cancelReason, setCancelReason] = useState("Change of plans / Schedule conflict");
   const [customReason, setCustomReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
+  const [phoneModalOpen, setPhoneModalOpen] = useState(false);
+  const [enteredPhoneNumber, setEnteredPhoneNumber] = useState("");
+  const [pendingBookingPayload, setPendingBookingPayload] = useState(null);
+  const rightColRef = useRef(null);
+
+  useEffect(() => {
+    const el = rightColRef.current;
+    if (!el) return;
+
+    const onWheel = (e) => {
+      if (window.innerWidth < 1024) return;
+
+      const rect = el.getBoundingClientRect();
+      const isLocked = rect.top <= 88;
+      const isScrollable = el.scrollHeight > el.clientHeight + 2;
+
+      if (!isLocked || !isScrollable) return;
+
+      const atBottom = Math.ceil(el.scrollTop + el.clientHeight) >= el.scrollHeight - 2;
+      const atTop = el.scrollTop <= 2;
+
+      if (e.deltaY > 0) {
+        if (!atBottom) {
+          e.stopPropagation();
+          el.scrollTop += e.deltaY;
+          e.preventDefault();
+        } else {
+          window.scrollBy({ top: e.deltaY, behavior: "auto" });
+        }
+      } else if (e.deltaY < 0) {
+        if (!atTop) {
+          e.stopPropagation();
+          el.scrollTop += e.deltaY;
+          e.preventDefault();
+        } else {
+          window.scrollBy({ top: e.deltaY, behavior: "auto" });
+        }
+      }
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
   const [reviewsList, setReviewsList] = useState([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
   const [reviewAuthor, setReviewAuthor] = useState(() => {
@@ -784,54 +842,76 @@ export function VenueDetails() {
   };
   const [showAllSlots, setShowAllSlots] = useState(false);
   const [dbBookings, setDbBookings] = useState([]);
+  const [isDateBlocked, setIsDateBlocked] = useState(false);
+  const [disabledReason, setDisabledReason] = useState("");
+  const isFetchingBookingsRef = useRef(false);
+  const lastFetchTimeRef = useRef(0);
 
-  const loadBookings = async () => {
+  const loadBookings = async (force = false) => {
+    // Prevent duplicate in-flight requests
+    if (isFetchingBookingsRef.current) return;
+
+    // Throttle automatic refetches: require at least 5s between calls unless forced
+    const now = Date.now();
+    if (!force && now - lastFetchTimeRef.current < 5000) {
+      return;
+    }
+
+    isFetchingBookingsRef.current = true;
     try {
+      const turfId = id || venue?.id;
+      const turfName = venue?.name || "";
+      const targetDate = selectedDate || new Date().toISOString().split("T")[0];
+
+      // Pass user token if present so current user can identify and manage their own booked slots
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+      const url = `/api/turf/slots/availability?turfId=${encodeURIComponent(turfId || "")}&turfName=${encodeURIComponent(turfName)}&date=${encodeURIComponent(targetDate)}`;
+      const res = await fetch(url, { headers });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success) {
+          if (Array.isArray(json.bookings)) {
+            setDbBookings(json.bookings);
+          } else if (Array.isArray(json.bookedSlots)) {
+            setDbBookings(
+              json.bookedSlots.map((slotStr, idx) => ({
+                id: `avail-${idx}`,
+                turf_name: turfName,
+                date: targetDate,
+                time_slot: slotStr,
+                slot_time: slotStr,
+                status: "Confirmed",
+              }))
+            );
+          }
+          setIsDateBlocked(Boolean(json.isDateBlocked));
+          setDisabledReason(json.disabledReason || "");
+          lastFetchTimeRef.current = Date.now();
+          return;
+        }
+      }
+
+      // Fallback only if availability endpoint is unreachable
+      if (force) {
+        fastCache.invalidate("/api/admin/bookings");
+      }
       const data = await adminApi.getAll("bookings");
       setDbBookings(data || []);
+      lastFetchTimeRef.current = Date.now();
     } catch (err) {
       console.error("Error loading bookings in venue-details:", err);
+    } finally {
+      isFetchingBookingsRef.current = false;
     }
   };
 
   useEffect(() => {
-    loadBookings();
-
-    const handlePageShow = () => {
-      loadBookings();
-    };
-    const handlePopState = () => {
-      loadBookings();
-    };
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadBookings();
-      }
-    };
-    const handleFocus = () => {
-      loadBookings();
-    };
-
-    window.addEventListener("pageshow", handlePageShow);
-    window.addEventListener("popstate", handlePopState);
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    // Refresh slot bookings every 30s only when tab is actively visible
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        loadBookings();
-      }
-    }, 30000);
-
-    return () => {
-      window.removeEventListener("pageshow", handlePageShow);
-      window.removeEventListener("popstate", handlePopState);
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      clearInterval(interval);
-    };
-  }, [id, selectedDate]);
+    // Fetch bookings on initial mount, when viewing different venue, or when selected date changes
+    loadBookings(true);
+  }, [id, venue?.name, selectedDate]);
 
   const handleOpenCancelModal = (slot) => {
     setSlotToCancel(slot);
@@ -862,8 +942,8 @@ export function VenueDetails() {
         const isTarget = (
           (bookingId && (String(b.id) === String(bookingId) || String(b.booking_code) === String(bookingId))) ||
           (String(b.turf_name || "").toLowerCase().trim() === String(venue.name || "").toLowerCase().trim() &&
-           String(b.date || "").trim() === String(selectedDate || "").trim() &&
-           (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
+            String(b.date || "").trim() === String(selectedDate || "").trim() &&
+            (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
         );
         return isTarget ? { ...b, status: "Cancelled" } : b;
       })
@@ -877,13 +957,13 @@ export function VenueDetails() {
           (b.booking_code && bookingId && String(b.booking_code) === String(bookingId)) ||
           (b.id && bookingId && String(b.id) === String(bookingId)) ||
           (String(b.turf_name || "").toLowerCase().trim() === String(venue.name || "").toLowerCase().trim() &&
-           String(b.date || "").trim() === String(selectedDate || "").trim() &&
-           (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
+            String(b.date || "").trim() === String(selectedDate || "").trim() &&
+            (String(b.time_slot || "").includes(formattedTimeSlot) || String(b.time || "").includes(formattedTimeSlot)))
         );
         return !isMatch;
       });
       localStorage.setItem("sportxclub_confirmed_bookings", JSON.stringify(filtered));
-    } catch (e) {}
+    } catch (e) { }
 
     // 4. Clear sessionStorage last booking if it matched
     try {
@@ -897,7 +977,7 @@ export function VenueDetails() {
         sessionStorage.removeItem("sportxclub_booking");
         sessionStorage.removeItem("sportxclub_pending_booking");
       }
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       const user = activePlayer || currentUser;
@@ -919,10 +999,64 @@ export function VenueDetails() {
       console.warn("Cancel slot API call:", err.message);
       toast.success(`Slot booking cancelled! ₹${refundAmount} refunded.`);
     } finally {
-      await loadBookings();
+      await loadBookings(true);
       setIsCancelling(false);
       setCancelModalOpen(false);
       setSlotToCancel(null);
+    }
+  };
+
+  const launchCashfreePayment = async (bookingPayload) => {
+    try {
+      sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+      sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+      sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+      localStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+      localStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+      localStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+    } catch (e) {
+      console.warn("Storage note:", e.message);
+    }
+
+    toast.loading("Connecting to Cashfree Live Gateway...", { id: "cashfree-init" });
+    try {
+      const res = await cashfreeService.initiatePayment(bookingPayload);
+      toast.dismiss("cashfree-init");
+      if (!res?.success) {
+        toast.error(res?.message || "Cashfree could not start the payment. Please try again.");
+      }
+    } catch (err) {
+      toast.dismiss("cashfree-init");
+      console.error("Cashfree initialization error:", err);
+      toast.error(err?.message || "Failed initiating Cashfree payment.");
+    }
+  };
+
+  const handleConfirmPhoneAndPay = () => {
+    const cleaned = String(enteredPhoneNumber || "").replace(/[^0-9]/g, "").slice(-10);
+    if (!cleaned || cleaned.length !== 10 || !/^[6-9]\d{9}$/.test(cleaned)) {
+      toast.error("Please enter a valid 10-digit Indian mobile number (e.g. 98XXXXXXXX).");
+      return;
+    }
+
+    try {
+      localStorage.setItem("sportxclub_user_phone", cleaned);
+      const rawUser = localStorage.getItem("playerUser");
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        parsed.phone = cleaned;
+        localStorage.setItem("playerUser", JSON.stringify(parsed));
+      }
+    } catch (e) { }
+
+    setPhoneModalOpen(false);
+
+    if (pendingBookingPayload) {
+      const updatedPayload = {
+        ...pendingBookingPayload,
+        userPhone: cleaned,
+      };
+      launchCashfreePayment(updatedPayload);
     }
   };
 
@@ -946,9 +1080,9 @@ export function VenueDetails() {
         (b.id && localB.id && String(b.id) === String(localB.id)) ||
         (b.booking_code && localB.booking_code && String(b.booking_code) === String(localB.booking_code)) ||
         (String(b.turf_name || "").toLowerCase().trim() === String(localB.turf_name || "").toLowerCase().trim() &&
-         String(b.date || "").trim() === String(localB.date || "").trim() &&
-         String(b.time_slot || b.slot_time || "").trim() === String(localB.time_slot || localB.time || "").trim() &&
-         String(b.status || "").toLowerCase() !== "cancelled")
+          String(b.date || "").trim() === String(localB.date || "").trim() &&
+          String(b.time_slot || b.slot_time || "").trim() === String(localB.time_slot || localB.time || "").trim() &&
+          String(b.status || "").toLowerCase() !== "cancelled")
       );
       if (!isAlreadyPresent && localB.status !== "Cancelled") {
         combined.push(localB);
@@ -1328,1140 +1462,978 @@ export function VenueDetails() {
         ogImage={venue?.image && typeof venue.image === "string" && venue.image.startsWith("http") ? venue.image : DEFAULT_OG_IMAGE}
         schema={buildVenueSchema(venue)}
       />
-    <div
-      className={cn(
-        "min-h-screen isolate transition-colors duration-300",
-        isDark ? "bg-[#060813] text-white" : "bg-slate-50 text-slate-900",
-      )}
-    >
+      <div
+        className={cn(
+          "min-h-screen isolate transition-colors duration-300",
+          isDark ? "bg-[#060813] text-white" : "bg-[#FFFFFF] text-slate-900",
+        )}
+      >
 
 
-      <style>{marqueeHorizontalStyle}</style>
+        <style>{marqueeHorizontalStyle}</style>
 
-      <div className="mx-auto max-w-[1440px] px-4 pt-0 pb-2 sm:px-6 lg:px-8 lg:pt-4 lg:pb-0">
-        <div className="mb-4 pt-2">
-          <button onClick={() => navigate(-1)} className="flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer text-slate-900 dark:text-white border-none bg-transparent w-fit">
-            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
-          </button>
-        </div>
-        {/* Main 12-Column Layout Section */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          {/* Left Column: Hero Photo, Venue Overview, Amenities, Map, Reviews */}
-          <div className="contents lg:block lg:col-span-6 xl:col-span-7 lg:space-y-8 lg:pr-2 lg:pb-6">
-            {/* Unified Photo Gallery Container */}
-            <div className="flex flex-col gap-3 w-full order-1 lg:order-none">
-              {/* Main Hero Photo (Spans 1 column on desktop) */}
-              <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-auto md:h-[280px] rounded-2xl overflow-hidden group">
-                <ImageWithFallback
-                  src={venue.image || (venue.gallery && venue.gallery[0]) || "/assets/venues/turf-1.webp"}
-                  alt={venue.name}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-black/30 to-transparent" />
+        <div className="mx-auto max-w-[1440px] px-4 pt-0 pb-2 sm:px-6 lg:px-8 lg:pt-3 lg:max-xl:pt-1 [@media(horizontal-viewport-segments:2)]:pt-1 lg:pb-0">
+          <div className="mb-2 sm:mb-2.5 lg:max-xl:mb-2 [@media(horizontal-viewport-segments:2)]:mb-2 pt-1 lg:max-xl:pt-0.5 [@media(horizontal-viewport-segments:2)]:pt-0.5">
+            <button onClick={() => navigate(-1)} className="flex items-center justify-center hover:scale-110 transition-transform duration-200 cursor-pointer text-slate-900 dark:text-white border-none bg-transparent w-fit">
+              <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
+          </div>
+          {/* Main 12-Column Layout Section */}
+          <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* Left Column: Hero Photo, Venue Overview, Amenities, Map, Reviews */}
+            <div className="contents lg:block lg:col-span-6 xl:col-span-7 lg:space-y-8 lg:pr-2 lg:pb-6">
+              {/* Unified Photo Gallery Container */}
+              <div className="flex flex-col gap-3 w-full order-1 lg:order-none">
+                {/* Main Hero Photo (Spans 1 column on desktop) */}
+                <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] md:aspect-auto md:h-[280px] rounded-2xl overflow-hidden group">
+                  <ImageWithFallback
+                    src={venue.image || (venue.gallery && venue.gallery[0]) || "/assets/venues/turf-1.webp"}
+                    alt={venue.name}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/90 via-black/30 to-transparent" />
 
-                {/* Bottom Venue Details Overlay */}
-                <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10">
-                  <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                    <Badge
-                      className={cn(
-                        "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
-                        isDark
-                          ? "bg-transparent text-white"
-                          : "bg-transparent text-white",
-                      )}
-                    >
-                      FIFA Standard
-                    </Badge>
-                    <Badge
-                      className={cn(
-                        "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
-                        isDark
-                          ? "bg-transparent text-white"
-                          : "bg-transparent text-white",
-                      )}
-                    >
-                      Pro Lighting
-                    </Badge>
-                    <Badge
-                      className={cn(
-                        "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
-                        isDark
-                          ? "bg-transparent text-white"
-                          : "bg-transparent text-white",
-                      )}
-                    >
-                      📐 {venue.area}
-                    </Badge>
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black !text-white tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
-                    {venue.name}
-                  </h1>
-                  <div className="flex items-start justify-between gap-3 mt-2 text-xs sm:text-sm font-semibold !text-white/90">
-                    <div
-                      className={cn(
-                        "flex items-start gap-1.5 min-w-0 flex-1",
-                        isDark ? "text-white" : "text-white"
-                      )}
-                    >
-                      <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
-                      <span className="leading-snug">{typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}</span>
-                    </div>
-                    <div
-                      className={cn(
-                        "flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs shrink-0 whitespace-nowrap self-start",
-                        isDark ? "text-white" : "text-white"
-                      )}
-                    >
-                      {totalVenueReviews > 0 ? (
-                        <>
-                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                          <span className="font-bold text-white">
-                            {averageVenueRating.toFixed(1)}
-                          </span>
-                          <span className="text-[10px] text-white/80">
-                            ({totalVenueReviews})
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <Star className="h-3.5 w-3.5 text-white/40" />
-                          <span className="text-xs font-semibold text-white/80">
-                            New (0 reviews)
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Automatic Scrolling Marquee for Secondary Photos */}
-              <div className="overflow-hidden relative w-full rounded-xl">
-                <div className="animate-marquee-horizontal">
-                  {(() => {
-                    let photos = [];
-                    if (venue.gallery && Array.isArray(venue.gallery)) {
-                      photos = Array.from(new Set(venue.gallery.filter(Boolean)));
-                    }
-                    const mainImg = venue.image;
-                    photos = photos.filter((img) => img && img !== mainImg);
-                    if (photos.length === 0) {
-                      photos = [
-                        "/assets/venues/turf-2.webp",
-                        "/assets/venues/turf-3.webp",
-                        "/assets/venues/new_football_turf_2.png",
-                      ];
-                    }
-                    const marqueeList = photos.length >= 3
-                      ? [...photos, ...photos]
-                      : photos.length === 2
-                      ? [photos[0], photos[1], photos[0], photos[1], photos[0], photos[1]]
-                      : [photos[0], "/assets/venues/turf-2.webp", "/assets/venues/turf-3.webp"];
-                    return marqueeList.map((img, idx) => (
-                      <div key={idx} className="relative aspect-video sm:aspect-[21/9] md:aspect-video rounded-xl overflow-hidden group border border-slate-200 dark:border-white/5 w-[150px] sm:w-[220px] md:w-[280px] shrink-0">
-                        <ImageWithFallback
-                          src={img}
-                          alt={`Venue Photo ${idx + 1}`}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-            </div>
-
-            {/* Amenities Section */}
-            <div className="space-y-4 w-full order-3 lg:order-none">
-              <h3
-                className={cn(
-                  "text-xl font-extrabold tracking-tight",
-                  isDark ? "text-white" : "text-slate-900",
-                )}
-              >
-                Venue Amenities
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {displayedAmenities.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <div
-                      key={item.label}
-                      className={cn(
-                        "flex items-center gap-3 rounded-2xl border p-3.5 transition-all shadow-sm",
-                        isDark
-                          ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.05] hover:border-emerald-600/30"
-                          : "border-slate-200 bg-white hover:bg-slate-50/50 hover:border-emerald-300",
-                      )}
-                    >
-                      <div
+                  {/* Bottom Venue Details Overlay */}
+                  <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 z-10">
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                      <Badge
                         className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-xl border shrink-0",
+                          "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
                           isDark
-                            ? "bg-emerald-600/10 border-emerald-600/20 text-emerald-600"
-                            : "bg-emerald-50 border-emerald-150 text-emerald-600",
+                            ? "bg-transparent text-white"
+                            : "bg-transparent text-white",
                         )}
                       >
-                        <Icon className="h-5 w-5" />
+                        FIFA Standard
+                      </Badge>
+                      <Badge
+                        className={cn(
+                          "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
+                          isDark
+                            ? "bg-transparent text-white"
+                            : "bg-transparent text-white",
+                        )}
+                      >
+                        Pro Lighting
+                      </Badge>
+                      <Badge
+                        className={cn(
+                          "rounded-full font-black text-[10px] uppercase tracking-wider px-2.5 py-0.5",
+                          isDark
+                            ? "bg-transparent text-white"
+                            : "bg-transparent text-white",
+                        )}
+                      >
+                        📐 {venue.area}
+                      </Badge>
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black !text-white tracking-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+                      {venue.name}
+                    </h1>
+                    <div className="flex items-start justify-between gap-3 mt-2 text-xs sm:text-sm font-semibold !text-white/90">
+                      <div
+                        className={cn(
+                          "flex items-start gap-1.5 min-w-0 flex-1",
+                          isDark ? "text-white" : "text-white"
+                        )}
+                      >
+                        <MapPin className="h-4 w-4 shrink-0 mt-0.5" />
+                        <span className="leading-snug">{typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Location unavailable') : venue.location}</span>
                       </div>
-                      <div>
-                        <p
-                          className={cn(
-                            "text-xs font-bold",
-                            isDark ? "text-white" : "text-slate-800",
-                          )}
-                        >
-                          {item.label}
-                        </p>
-                        <p
-                          className={cn(
-                            "text-[10px]",
-                            isDark ? "text-white/50" : "text-slate-500",
-                          )}
-                        >
-                          {item.desc}
-                        </p>
+                      <div
+                        className={cn(
+                          "flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/30 backdrop-blur-xs shrink-0 whitespace-nowrap self-start",
+                          isDark ? "text-white" : "text-white"
+                        )}
+                      >
+                        {totalVenueReviews > 0 ? (
+                          <>
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            <span className="font-bold text-white">
+                              {averageVenueRating.toFixed(1)}
+                            </span>
+                            <span className="text-[10px] text-white/80">
+                              ({totalVenueReviews})
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Star className="h-3.5 w-3.5 text-white/40" />
+                            <span className="text-xs font-semibold text-white/80">
+                              New (0 reviews)
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  </div>
+                </div>
 
-            {/* Map & Directions */}
-            <div className="space-y-4 w-full order-4 lg:order-none">
-              <div className="flex items-center justify-between">
+                {/* Automatic Scrolling Marquee for Secondary Photos */}
+                <div className="overflow-hidden relative w-full rounded-xl">
+                  <div className="animate-marquee-horizontal">
+                    {(() => {
+                      let photos = [];
+                      if (venue.gallery && Array.isArray(venue.gallery)) {
+                        photos = Array.from(new Set(venue.gallery.filter(Boolean)));
+                      }
+                      const mainImg = venue.image;
+                      photos = photos.filter((img) => img && img !== mainImg);
+                      if (photos.length === 0) {
+                        photos = [
+                          "/assets/venues/turf-2.webp",
+                          "/assets/venues/turf-3.webp",
+                          "/assets/venues/new_football_turf_2.png",
+                        ];
+                      }
+                      const marqueeList = photos.length >= 3
+                        ? [...photos, ...photos]
+                        : photos.length === 2
+                          ? [photos[0], photos[1], photos[0], photos[1], photos[0], photos[1]]
+                          : [photos[0], "/assets/venues/turf-2.webp", "/assets/venues/turf-3.webp"];
+                      return marqueeList.map((img, idx) => (
+                        <div key={idx} className="relative aspect-video sm:aspect-[21/9] md:aspect-video rounded-xl overflow-hidden group border border-slate-200 dark:border-white/5 w-[150px] sm:w-[220px] md:w-[280px] shrink-0">
+                          <ImageWithFallback
+                            src={img}
+                            alt={`Venue Photo ${idx + 1}`}
+                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          />
+                          <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors duration-300" />
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Amenities Section */}
+              <div className="space-y-4 w-full order-3 lg:order-none">
                 <h3
                   className={cn(
                     "text-xl font-extrabold tracking-tight",
                     isDark ? "text-white" : "text-slate-900",
                   )}
                 >
-                  Location & Directions
+                  Venue Amenities
                 </h3>
-                <a
-                  href={`https://maps.google.com/?q=${encodeURIComponent(venue.address)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className={cn(
-                    "flex items-center gap-1.5 text-xs font-bold transition-colors",
-                    isDark
-                      ? "text-emerald-600 hover:underline"
-                      : "text-emerald-600 hover:underline",
-                  )}
-                >
-                  <Navigation className="h-3.5 w-3.5" />
-                  <span>Get Directions</span>
-                </a>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {displayedAmenities.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div
+                        key={item.label}
+                        className={cn(
+                          "flex items-center gap-3 rounded-2xl border p-3.5 transition-all shadow-sm",
+                          isDark
+                            ? "border-white/5 bg-white/[0.03] hover:bg-white/[0.05] hover:border-emerald-600/30"
+                            : "border-slate-200 bg-white hover:bg-slate-50/50 hover:border-emerald-300",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 items-center justify-center rounded-xl border shrink-0",
+                            isDark
+                              ? "bg-emerald-600/10 border-emerald-600/20 text-emerald-600"
+                              : "bg-emerald-50 border-emerald-150 text-emerald-600",
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p
+                            className={cn(
+                              "text-xs font-bold",
+                              isDark ? "text-white" : "text-slate-800",
+                            )}
+                          >
+                            {item.label}
+                          </p>
+                          <p
+                            className={cn(
+                              "text-[10px]",
+                              isDark ? "text-white/50" : "text-slate-500",
+                            )}
+                          >
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              <div
-                className={cn(
-                  "rounded-2xl border overflow-hidden h-[280px] relative transition-colors duration-300",
-                  isDark
-                    ? "border-white/10 bg-[#050505]"
-                    : "border-slate-200 bg-slate-100",
-                )}
-              >
-                <iframe
-                  frameBorder="0"
-                  style={{ border: 0 }}
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(venue.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                  allowFullScreen
-                  title="Venue Google Map"
-                  className="absolute -top-14 -left-14 w-[calc(100%+112px)] h-[calc(100%+112px)] border-0 transition-opacity duration-300"
-                />
-              </div>
-              <div
-                className={cn(
-                  "flex items-start gap-2 text-xs",
-                  isDark ? "text-white/70" : "text-slate-600",
-                )}
-              >
-                <MapPin
-                  className={cn(
-                    "h-4 w-4 shrink-0 mt-0.5",
-                    isDark ? "text-emerald-600" : "text-emerald-600",
-                  )}
-                />
-                <span className="leading-snug">{venue.address}</span>
-              </div>
-            </div>
-
-            {/* Verified Player Reviews */}
-            <div className="space-y-5 w-full order-5 lg:order-none">
-              <div
-                className={cn(
-                  "flex items-center justify-between gap-3 border-b pb-4",
-                  isDark ? "border-white/10" : "border-slate-200",
-                )}
-              >
-                <div className="min-w-0 flex-1">
+              {/* Map & Directions */}
+              <div className="space-y-4 w-full order-4 lg:order-none">
+                <div className="flex items-center justify-between">
                   <h3
                     className={cn(
-                      "text-lg sm:text-xl font-extrabold tracking-tight",
+                      "text-xl font-extrabold tracking-tight",
                       isDark ? "text-white" : "text-slate-900",
                     )}
                   >
-                    Player Reviews
+                    Location & Directions
                   </h3>
-                  <p
+                  <a
+                    href={`https://maps.google.com/?q=${encodeURIComponent(venue.address)}`}
+                    target="_blank"
+                    rel="noreferrer"
                     className={cn(
-                      "text-xs mt-0.5 truncate",
-                      isDark ? "text-white/50" : "text-slate-500",
+                      "flex items-center gap-1.5 text-xs font-bold transition-colors",
+                      isDark
+                        ? "text-emerald-600 hover:underline"
+                        : "text-emerald-600 hover:underline",
                     )}
                   >
-                    Verified players who booked this venue
-                  </p>
+                    <Navigation className="h-3.5 w-3.5" />
+                    <span>Get Directions</span>
+                  </a>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-transparent shrink-0 whitespace-nowrap">
-                  <Star
+
+                <div
+                  className={cn(
+                    "rounded-2xl border overflow-hidden h-[280px] relative transition-colors duration-300",
+                    isDark
+                      ? "border-white/10 bg-[#050505]"
+                      : "border-slate-200 bg-slate-100",
+                  )}
+                >
+                  <iframe
+                    frameBorder="0"
+                    style={{ border: 0 }}
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(venue.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                    allowFullScreen
+                    title="Venue Google Map"
+                    className="absolute -top-14 -left-14 w-[calc(100%+112px)] h-[calc(100%+112px)] border-0 transition-opacity duration-300"
+                  />
+                </div>
+                <div
+                  className={cn(
+                    "flex items-start gap-2 text-xs",
+                    isDark ? "text-white/70" : "text-slate-600",
+                  )}
+                >
+                  <MapPin
                     className={cn(
-                      "h-3.5 w-3.5 shrink-0",
-                      totalVenueReviews > 0 ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-white/30",
+                      "h-4 w-4 shrink-0 mt-0.5",
+                      isDark ? "text-emerald-600" : "text-emerald-600",
                     )}
                   />
-                  <span
-                    className={cn(
-                      "text-sm font-black",
-                      totalVenueReviews > 0
-                        ? (isDark ? "text-emerald-400" : "text-emerald-700")
-                        : (isDark ? "text-white/60" : "text-slate-500"),
-                    )}
-                  >
-                    {totalVenueReviews > 0 ? averageVenueRating.toFixed(1) : "0.0"}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xs font-semibold whitespace-nowrap",
-                      isDark ? "text-white/60" : "text-slate-500",
-                    )}
-                  >
-                    ({totalVenueReviews} {totalVenueReviews === 1 ? "review" : "reviews"})
-                  </span>
+                  <span className="leading-snug">{venue.address}</span>
                 </div>
               </div>
 
-              {/* Interactive "Write a Review" Box */}
-              <div
-                className={cn(
-                  "p-4 sm:p-5 rounded-2xl border transition-all duration-300 shadow-sm space-y-3",
-                  isDark
-                    ? "bg-white/[0.03] border-white/10"
-                    : "bg-white border-slate-200"
-                )}
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs shrink-0">
-                      <MessageSquarePlus className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className={cn("text-sm font-extrabold", isDark ? "text-white" : "text-slate-900")}>
-                        Leave a Review
-                      </h4>
-                      <p className={cn("text-[11px]", isDark ? "text-white/50" : "text-slate-500")}>
-                        Share your playing experience with other athletes
-                      </p>
-                    </div>
+              {/* Verified Player Reviews */}
+              <div className="space-y-5 w-full order-5 lg:order-none">
+                <div
+                  className={cn(
+                    "flex items-center justify-between gap-3 border-b pb-4",
+                    isDark ? "border-white/10" : "border-slate-200",
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className={cn(
+                        "text-lg sm:text-xl font-extrabold tracking-tight",
+                        isDark ? "text-white" : "text-slate-900",
+                      )}
+                    >
+                      Player Reviews
+                    </h3>
+                    <p
+                      className={cn(
+                        "text-xs mt-0.5 truncate",
+                        isDark ? "text-white/50" : "text-slate-500",
+                      )}
+                    >
+                      Verified players who booked this venue
+                    </p>
                   </div>
-
-                  {/* Rating Stars Selector */}
-                  <div className="flex items-center gap-1 bg-white dark:bg-white/5 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 w-fit">
-                    <span className={cn("text-[11px] font-semibold mr-1", isDark ? "text-white/60" : "text-slate-500")}>
-                      Rating:
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-transparent shrink-0 whitespace-nowrap">
+                    <Star
+                      className={cn(
+                        "h-3.5 w-3.5 shrink-0",
+                        totalVenueReviews > 0 ? "fill-amber-400 text-amber-400" : "text-slate-400 dark:text-white/30",
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "text-sm font-black",
+                        totalVenueReviews > 0
+                          ? (isDark ? "text-emerald-400" : "text-emerald-700")
+                          : (isDark ? "text-white/60" : "text-slate-500"),
+                      )}
+                    >
+                      {totalVenueReviews > 0 ? averageVenueRating.toFixed(1) : "0.0"}
                     </span>
-                    {[1, 2, 3, 4, 5].map((star) => {
-                      const active = (reviewHoverRating || reviewRating) >= star;
-                      return (
-                        <button
-                          key={star}
-                          type="button"
-                          onMouseEnter={() => setReviewHoverRating(star)}
-                          onMouseLeave={() => setReviewHoverRating(0)}
-                          onClick={() => setReviewRating(star)}
-                          className="p-0.5 transition-transform hover:scale-125 cursor-pointer"
-                          title={`${star} Star${star > 1 ? "s" : ""}`}
-                        >
-                          <Star
-                            className={cn(
-                              "h-4 w-4 transition-colors",
-                              active
-                                ? "fill-amber-400 text-amber-400"
-                                : isDark ? "text-white/20" : "text-slate-300"
-                            )}
-                          />
-                        </button>
-                      );
-                    })}
-                    <span className="text-xs font-black ml-1 text-amber-500">
-                      {(reviewHoverRating || reviewRating).toFixed(1)}
+                    <span
+                      className={cn(
+                        "text-xs font-semibold whitespace-nowrap",
+                        isDark ? "text-white/60" : "text-slate-500",
+                      )}
+                    >
+                      ({totalVenueReviews} {totalVenueReviews === 1 ? "review" : "reviews"})
                     </span>
                   </div>
                 </div>
 
-                <form onSubmit={handleSubmitReview} className="space-y-3 pt-1">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                    <div className="sm:col-span-1">
-                      <input
-                        type="text"
-                        value={reviewAuthor}
-                        onChange={(e) => setReviewAuthor(e.target.value)}
-                        placeholder="Enter your name"
+                {/* Interactive "Write a Review" Box */}
+                <div
+                  className={cn(
+                    "p-4 sm:p-5 rounded-2xl border transition-all duration-300 shadow-sm space-y-3",
+                    isDark
+                      ? "bg-white/[0.03] border-white/10"
+                      : "bg-white border-slate-200"
+                  )}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs shrink-0">
+                        <MessageSquarePlus className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className={cn("text-sm font-extrabold", isDark ? "text-white" : "text-slate-900")}>
+                          Leave a Review
+                        </h4>
+                        <p className={cn("text-[11px]", isDark ? "text-white/50" : "text-slate-500")}>
+                          Share your playing experience with other athletes
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Rating Stars Selector */}
+                    <div className="flex items-center gap-1 bg-white dark:bg-white/5 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-white/10 w-fit">
+                      <span className={cn("text-[11px] font-semibold mr-1", isDark ? "text-white/60" : "text-slate-500")}>
+                        Rating:
+                      </span>
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const active = (reviewHoverRating || reviewRating) >= star;
+                        return (
+                          <button
+                            key={star}
+                            type="button"
+                            onMouseEnter={() => setReviewHoverRating(star)}
+                            onMouseLeave={() => setReviewHoverRating(0)}
+                            onClick={() => setReviewRating(star)}
+                            className="p-0.5 transition-transform hover:scale-125 cursor-pointer"
+                            title={`${star} Star${star > 1 ? "s" : ""}`}
+                          >
+                            <Star
+                              className={cn(
+                                "h-4 w-4 transition-colors",
+                                active
+                                  ? "fill-amber-400 text-amber-400"
+                                  : isDark ? "text-white/20" : "text-slate-300"
+                              )}
+                            />
+                          </button>
+                        );
+                      })}
+                      <span className="text-xs font-black ml-1 text-amber-500">
+                        {(reviewHoverRating || reviewRating).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleSubmitReview} className="space-y-3 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div className="sm:col-span-1">
+                        <input
+                          type="text"
+                          value={reviewAuthor}
+                          onChange={(e) => setReviewAuthor(e.target.value)}
+                          placeholder="Enter your name"
+                          className={cn(
+                            "w-full h-10 px-3 rounded-xl border text-xs font-medium outline-none transition-all",
+                            isDark
+                              ? "bg-black/30 border-white/10 text-white placeholder:text-white/40 focus:border-emerald-500"
+                              : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                          )}
+                        />
+                      </div>
+                      <div className="sm:col-span-2 flex items-center">
+                        <div className="flex flex-wrap gap-1.5 items-center">
+                          {["⚽ Great Turf Quality", "💡 Excellent Floodlights", "🚗 Easy Parking", "⚡ Smooth Booking"].map((tag) => (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => setReviewComment((prev) => prev ? `${prev} • ${tag.replace(/^[^\s]+\s/, "")}` : tag.replace(/^[^\s]+\s/, ""))}
+                              className={cn(
+                                "text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer",
+                                isDark
+                                  ? "bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
+                                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                              )}
+                            >
+                              {tag}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <textarea
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="Write your review here... (e.g. Clean synthetic grass, well-maintained dugout, punctual slot management)"
+                        rows={3}
                         className={cn(
-                          "w-full h-10 px-3 rounded-xl border text-xs font-medium outline-none transition-all",
+                          "w-full p-3 rounded-xl border text-xs leading-relaxed outline-none transition-all resize-none",
                           isDark
                             ? "bg-black/30 border-white/10 text-white placeholder:text-white/40 focus:border-emerald-500"
                             : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
                         )}
                       />
                     </div>
-                    <div className="sm:col-span-2 flex items-center">
-                      <div className="flex flex-wrap gap-1.5 items-center">
-                        {["⚽ Great Turf Quality", "💡 Excellent Floodlights", "🚗 Easy Parking", "⚡ Smooth Booking"].map((tag) => (
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                      <p className={cn("text-[11px]", isDark ? "text-white/40" : "text-slate-400")}>
+                        Your review will appear immediately for other players.
+                      </p>
+
+                      <Button
+                        type="submit"
+                        disabled={isSubmittingReview || !reviewComment.trim()}
+                        className="h-9 px-5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 bg-transparent hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-600 dark:border-emerald-500 shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Send className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        {isSubmittingReview ? "Posting..." : "Post Review"}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Review Sorting Controls - UI/UX Premium Redesign */}
+                {reviewsList.length > 0 && (
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
+                    <div className="flex items-center gap-1.5 shrink-0 select-none">
+                      <Sparkles className={cn(
+                        "h-3.5 w-3.5",
+                        isDark ? "text-emerald-600" : "text-emerald-600"
+                      )} />
+                      <span className={cn(
+                        "text-xs font-extrabold tracking-wide leading-none",
+                        isDark ? "text-slate-200" : "text-slate-800"
+                      )}>
+                        Sort Reviews
+                      </span>
+                    </div>
+
+                    <div className={cn(
+                      "flex p-1 rounded-full border w-full sm:w-fit select-none transition-all duration-300",
+                      isDark
+                        ? "bg-white/[0.03] border-white/5"
+                        : "bg-[#f1f5f9] border-slate-200/80"
+                    )}>
+                      {[
+                        { key: "recent", label: "Recent" },
+                        { key: "highest", label: "Highest Rating" },
+                        { key: "lowest", label: "Lowest Rating" }
+                      ].map((opt) => {
+                        const isActive = sortBy === opt.key;
+                        return (
                           <button
-                            key={tag}
+                            key={opt.key}
                             type="button"
-                            onClick={() => setReviewComment((prev) => prev ? `${prev} • ${tag.replace(/^[^\s]+\s/, "")}` : tag.replace(/^[^\s]+\s/, ""))}
+                            onClick={() => setSortBy(opt.key)}
                             className={cn(
-                              "text-[10px] font-semibold px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer",
-                              isDark
-                                ? "bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:text-white"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                              "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
+                              isActive
+                                ? isDark
+                                  ? "bg-emerald-600 text-black shadow-md shadow-emerald-600/10 scale-100 font-extrabold"
+                                  : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100 font-bold"
+                                : isDark
+                                  ? "text-white/60 hover:text-white bg-transparent border-transparent"
+                                  : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
                             )}
                           >
-                            {tag}
+                            {opt.label}
                           </button>
-                        ))}
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {reviewsList.length === 0 ? (
+                    <div
+                      className={cn(
+                        "flex flex-col items-center justify-center p-8 sm:p-10 rounded-2xl border text-center space-y-3 transition-colors duration-300",
+                        isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200/80 shadow-sm"
+                      )}
+                    >
+                      <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                        <MessageSquare className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className={cn("text-base font-bold", isDark ? "text-white" : "text-slate-900")}>
+                          No reviews yet for this venue
+                        </h4>
+                        <p className={cn("text-xs max-w-sm", isDark ? "text-white/50" : "text-slate-500")}>
+                          Be the first athlete to write a review above and share your experience with the community!
+                        </p>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="relative">
-                    <textarea
-                      value={reviewComment}
-                      onChange={(e) => setReviewComment(e.target.value)}
-                      placeholder="Write your review here... (e.g. Clean synthetic grass, well-maintained dugout, punctual slot management)"
-                      rows={3}
-                      className={cn(
-                        "w-full p-3 rounded-xl border text-xs leading-relaxed outline-none transition-all resize-none",
-                        isDark
-                          ? "bg-black/30 border-white/10 text-white placeholder:text-white/40 focus:border-emerald-500"
-                          : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-                    <p className={cn("text-[11px]", isDark ? "text-white/40" : "text-slate-400")}>
-                      Your review will appear immediately for other players.
-                    </p>
-
-                    <Button
-                      type="submit"
-                      disabled={isSubmittingReview || !reviewComment.trim()}
-                      className="h-9 px-5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 bg-transparent hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-600 dark:border-emerald-500 shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <Send className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      {isSubmittingReview ? "Posting..." : "Post Review"}
-                    </Button>
-                  </div>
-                </form>
-              </div>
-
-              {/* Review Sorting Controls - UI/UX Premium Redesign */}
-              {reviewsList.length > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1 pb-1">
-                  <div className="flex items-center gap-1.5 shrink-0 select-none">
-                    <Sparkles className={cn(
-                      "h-3.5 w-3.5",
-                      isDark ? "text-emerald-600" : "text-emerald-600"
-                    )} />
-                    <span className={cn(
-                      "text-xs font-extrabold tracking-wide leading-none",
-                      isDark ? "text-slate-200" : "text-slate-800"
-                    )}>
-                      Sort Reviews
-                    </span>
-                  </div>
-
-                  <div className={cn(
-                    "flex p-1 rounded-full border w-full sm:w-fit select-none transition-all duration-300",
-                    isDark
-                      ? "bg-white/[0.03] border-white/5"
-                      : "bg-[#f1f5f9] border-slate-200/80"
-                  )}>
-                    {[
-                      { key: "recent", label: "Recent" },
-                      { key: "highest", label: "Highest Rating" },
-                      { key: "lowest", label: "Lowest Rating" }
-                    ].map((opt) => {
-                      const isActive = sortBy === opt.key;
-                      return (
-                        <button
-                          key={opt.key}
-                          type="button"
-                          onClick={() => setSortBy(opt.key)}
+                  ) : (
+                    [...reviewsList]
+                      .sort((a, b) => {
+                        if (sortBy === "highest") {
+                          if (b.rating !== a.rating) return b.rating - a.rating;
+                          return (b.id || 0) - (a.id || 0);
+                        }
+                        if (sortBy === "lowest") {
+                          if (a.rating !== b.rating) return a.rating - b.rating;
+                          return (b.id || 0) - (a.id || 0);
+                        }
+                        // Default: recent
+                        return (b.id || 0) - (a.id || 0);
+                      })
+                      .slice(0, visibleReviewsCount)
+                      .map((rev, idx) => (
+                        <div
+                          key={rev.id || idx}
                           className={cn(
-                            "flex-1 sm:flex-initial px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer whitespace-nowrap text-center active:scale-95",
-                            isActive
-                              ? isDark
-                                ? "bg-emerald-600 text-black shadow-md shadow-emerald-600/10 scale-100 font-extrabold"
-                                : "bg-white text-slate-800 shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-slate-200/40 scale-100 font-bold"
-                              : isDark
-                                ? "text-white/60 hover:text-white bg-transparent border-transparent"
-                                : "text-slate-500 hover:text-slate-800 bg-transparent border-transparent"
+                            "rounded-xl border p-3.5 space-y-2 transition-colors shadow-sm",
+                            isDark
+                              ? "border-white/5 bg-white/[0.03]"
+                              : "border-slate-200 bg-white hover:bg-slate-50/30",
                           )}
                         >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {reviewsList.length === 0 ? (
-                  <div
-                    className={cn(
-                      "flex flex-col items-center justify-center p-8 sm:p-10 rounded-2xl border text-center space-y-3 transition-colors duration-300",
-                      isDark ? "bg-white/[0.02] border-white/10" : "bg-white border-slate-200/80 shadow-sm"
-                    )}
-                  >
-                    <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                      <MessageSquare className="w-6 h-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className={cn("text-base font-bold", isDark ? "text-white" : "text-slate-900")}>
-                        No reviews yet for this venue
-                      </h4>
-                      <p className={cn("text-xs max-w-sm", isDark ? "text-white/50" : "text-slate-500")}>
-                        Be the first athlete to write a review above and share your experience with the community!
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  [...reviewsList]
-                    .sort((a, b) => {
-                      if (sortBy === "highest") {
-                        if (b.rating !== a.rating) return b.rating - a.rating;
-                        return (b.id || 0) - (a.id || 0);
-                      }
-                      if (sortBy === "lowest") {
-                        if (a.rating !== b.rating) return a.rating - b.rating;
-                        return (b.id || 0) - (a.id || 0);
-                      }
-                      // Default: recent
-                      return (b.id || 0) - (a.id || 0);
-                    })
-                    .slice(0, visibleReviewsCount)
-                    .map((rev, idx) => (
-                      <div
-                        key={rev.id || idx}
-                        className={cn(
-                          "rounded-xl border p-3.5 space-y-2 transition-colors shadow-sm",
-                          isDark
-                            ? "border-white/5 bg-white/[0.03]"
-                            : "border-slate-200 bg-white hover:bg-slate-50/30",
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div
-                              className={cn(
-                                "h-8 w-8 rounded-full border font-bold text-xs flex items-center justify-center uppercase",
-                                isDark
-                                  ? "bg-emerald-600/20 border-emerald-600/40 text-emerald-600"
-                                  : "bg-emerald-100 border-emerald-300 text-emerald-800",
-                              )}
-                            >
-                              {rev.name?.[0] || "P"}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-1.5">
-                                <p
-                                  className={cn(
-                                    "text-xs font-bold",
-                                    isDark ? "text-white" : "text-slate-800",
-                                  )}
-                                >
-                                  {rev.name}
-                                </p>
-                                {isMyReview(rev) && (
-                                  <span
-                                    className={cn(
-                                      "text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider",
-                                      isDark
-                                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                        : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                    )}
-                                  >
-                                    You
-                                  </span>
-                                )}
-                              </div>
-                              <p
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                              <div
                                 className={cn(
-                                  "text-[10px]",
-                                  isDark ? "text-white/40" : "text-slate-400",
+                                  "h-8 w-8 rounded-full border font-bold text-xs flex items-center justify-center uppercase",
+                                  isDark
+                                    ? "bg-emerald-600/20 border-emerald-600/40 text-emerald-600"
+                                    : "bg-emerald-100 border-emerald-300 text-emerald-800",
                                 )}
                               >
-                                {rev.date}
-                              </p>
+                                {rev.name?.[0] || "P"}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <p
+                                    className={cn(
+                                      "text-xs font-bold",
+                                      isDark ? "text-white" : "text-slate-800",
+                                    )}
+                                  >
+                                    {rev.name}
+                                  </p>
+                                  {isMyReview(rev) && (
+                                    <span
+                                      className={cn(
+                                        "text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase tracking-wider",
+                                        isDark
+                                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                          : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                      )}
+                                    >
+                                      You
+                                    </span>
+                                  )}
+                                </div>
+                                <p
+                                  className={cn(
+                                    "text-[10px]",
+                                    isDark ? "text-white/40" : "text-slate-400",
+                                  )}
+                                >
+                                  {rev.date}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 shrink-0">
+                              <span className={cn("text-[11px] font-extrabold", isDark ? "text-white" : "text-slate-800")}>
+                                {Number(rev.rating).toFixed(1)}
+                              </span>
+                              <Star
+                                className="h-3 w-3 fill-emerald-500 text-emerald-500"
+                              />
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/10 shrink-0">
-                            <span className={cn("text-[11px] font-extrabold", isDark ? "text-white" : "text-slate-800")}>
-                              {Number(rev.rating).toFixed(1)}
-                            </span>
-                            <Star
-                              className="h-3 w-3 fill-emerald-500 text-emerald-500"
-                            />
+                          <p
+                            className={cn(
+                              "text-xs leading-relaxed",
+                              isDark ? "text-white/70" : "text-slate-600",
+                            )}
+                          >
+                            "{rev.comment}"
+                          </p>
+
+                          {/* Review Action Buttons */}
+                          <div className="flex items-center justify-end gap-3 pt-1">
+                            <button
+                              onClick={() => handleLikeReview(rev.id || idx)}
+                              className={cn(
+                                "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                                likedReviews.has(rev.id || idx)
+                                  ? "text-emerald-600"
+                                  : isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                              )}
+                            >
+                              <ThumbsUp className={cn("h-3.5 w-3.5", likedReviews.has(rev.id || idx) ? "fill-emerald-600" : "")} />
+                              Like
+                            </button>
+                            <button
+                              onClick={() => handleReplyReview(rev.id || idx)}
+                              className={cn(
+                                "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                                isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                              )}
+                            >
+                              <MessageSquare className="h-3.5 w-3.5" />
+                              Reply
+                            </button>
+                            <button
+                              onClick={() => handleReportReview(rev.id || idx)}
+                              className={cn(
+                                "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
+                                isDark ? "text-white/30 hover:text-rose-400" : "text-slate-300 hover:text-rose-500"
+                              )}
+                            >
+                              <Flag className="h-3 w-3" />
+                              Report
+                            </button>
+
+                            {/* Delete Button - ONLY rendered if this review was written by the current logged in user */}
+                            {isMyReview(rev) && (
+                              <button
+                                onClick={() => handleDeleteReview(rev)}
+                                className={cn(
+                                  "flex items-center gap-1 text-[11px] font-semibold transition-colors cursor-pointer text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 pl-2.5 border-l",
+                                  isDark ? "border-white/10" : "border-slate-200"
+                                )}
+                                title="Delete this review"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </div>
-                        <p
+                      ))
+                  )}
+
+                  {reviewsList.length > 3 && (
+                    <div className="flex justify-center pt-2">
+                      {visibleReviewsCount < reviewsList.length ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setVisibleReviewsCount((prev) => prev + 3)}
                           className={cn(
-                            "text-xs leading-relaxed",
-                            isDark ? "text-white/70" : "text-slate-600",
+                            "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
+                            isDark
+                              ? "border-emerald-600/30 hover:bg-emerald-600/10 text-emerald-600 bg-emerald-600/5"
+                              : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
                           )}
                         >
-                          "{rev.comment}"
-                        </p>
-
-                        {/* Review Action Buttons */}
-                        <div className="flex items-center justify-end gap-3 pt-1">
-                          <button
-                            onClick={() => handleLikeReview(rev.id || idx)}
-                            className={cn(
-                              "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
-                              likedReviews.has(rev.id || idx)
-                                ? "text-emerald-600"
-                                : isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
-                            )}
-                          >
-                            <ThumbsUp className={cn("h-3.5 w-3.5", likedReviews.has(rev.id || idx) ? "fill-emerald-600" : "")} />
-                            Like
-                          </button>
-                          <button
-                            onClick={() => handleReplyReview(rev.id || idx)}
-                            className={cn(
-                              "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
-                              isDark ? "text-white/40 hover:text-white" : "text-slate-400 hover:text-slate-700"
-                            )}
-                          >
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            Reply
-                          </button>
-                          <button
-                            onClick={() => handleReportReview(rev.id || idx)}
-                            className={cn(
-                              "flex items-center gap-1.5 text-[11px] font-semibold transition-colors cursor-pointer",
-                              isDark ? "text-white/30 hover:text-rose-400" : "text-slate-300 hover:text-rose-500"
-                            )}
-                          >
-                            <Flag className="h-3 w-3" />
-                            Report
-                          </button>
-
-                          {/* Delete Button - ONLY rendered if this review was written by the current logged in user */}
-                          {isMyReview(rev) && (
-                            <button
-                              onClick={() => handleDeleteReview(rev)}
-                              className={cn(
-                                "flex items-center gap-1 text-[11px] font-semibold transition-colors cursor-pointer text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 pl-2.5 border-l",
-                                isDark ? "border-white/10" : "border-slate-200"
-                              )}
-                              title="Delete this review"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Delete
-                            </button>
+                          Show More Reviews
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setVisibleReviewsCount(3)}
+                          className={cn(
+                            "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
+                            isDark
+                              ? "border-emerald-600/30 hover:bg-emerald-600/10 text-emerald-600 bg-emerald-600/5"
+                              : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
                           )}
-                        </div>
-                      </div>
-                    ))
-                )}
-
-                {reviewsList.length > 3 && (
-                  <div className="flex justify-center pt-2">
-                    {visibleReviewsCount < reviewsList.length ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setVisibleReviewsCount((prev) => prev + 3)}
-                        className={cn(
-                          "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
-                          isDark
-                            ? "border-emerald-600/30 hover:bg-emerald-600/10 text-emerald-600 bg-emerald-600/5"
-                            : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
-                        )}
-                      >
-                        Show More Reviews
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setVisibleReviewsCount(3)}
-                        className={cn(
-                          "rounded-xl font-bold text-xs h-9 px-4 cursor-pointer transition-all border shadow-xs active:scale-95",
-                          isDark
-                            ? "border-emerald-600/30 hover:bg-emerald-600/10 text-emerald-600 bg-emerald-600/5"
-                            : "border-slate-200 hover:bg-slate-100 text-slate-700 bg-white"
-                        )}
-                      >
-                        Show Less Reviews
-                      </Button>
-                    )}
-                  </div>
-                )}
+                        >
+                          Show Less Reviews
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Column: High-Converting Interactive Slot Booking Widget */}
-          <div className="w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 lg:sticky lg:top-24 lg:pl-1 lg:pb-6 space-y-6">
-            <Card
+            {/* Right Column: High-Converting Interactive Slot Booking Widget */}
+            <div
+              ref={rightColRef}
               className={cn(
-                "rounded-xl border shadow-2xl relative z-20 transition-colors duration-300",
-                isDark
-                  ? "border-emerald-600/30 bg-[#0d0f15] text-white"
-                  : "border-slate-200 bg-white text-slate-900",
+                "w-full order-2 lg:order-none lg:col-span-6 xl:col-span-5 space-y-6",
+                "lg:sticky lg:top-20 lg:max-xl:top-16 lg:pl-1 lg:pb-6",
+                "lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto",
+                "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               )}
             >
-              <CardContent className="pt-2 sm:pt-2.5 pb-4 px-4 sm:px-5 space-y-3 relative z-10">
-                {/* Header & Controls */}
-                <div
-                  className={cn(
-                    "flex flex-col xl:flex-row xl:items-center justify-between border-b pb-1.5 gap-4 -mt-1",
-                    isDark ? "border-white/10" : "border-slate-200",
-                  )}
-                >
-                  <div className="xl:pb-0">
-                    <h3
-                      className={cn(
-                        "text-xl font-extrabold tracking-tight whitespace-nowrap",
-                        isDark ? "text-white" : "text-slate-900",
-                      )}
-                    >
-                      Reserve Slot
-                    </h3>
-                  </div>
-
-                  {/* Single Row 2 Dropdown Controls (Sport, Date) */}
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[440px]">
-                    {/* 1. Sport Select */}
-                    <div className="space-y-1 min-w-0">
-                      <Select value={selectedSport} onValueChange={setSelectedSport}>
-                        <SelectTrigger
-                          className={cn(
-                            "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-2.5",
-                            isDark
-                              ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
-                              : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
-                          )}
-                        >
-                          <SelectValue placeholder="Select Sport">
-                            <span className="flex items-center gap-1.5 font-bold truncate">
-                              <span className="shrink-0 text-sm">{getSportEmoji(selectedSport)}</span>
-                              <span className="truncate">{selectedSport}</span>
-                            </span>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 max-h-60 overflow-y-auto z-50 p-1 shadow-2xl bg-white dark:bg-slate-900 min-w-[155px] w-auto">
-                          {availableSports.map((sportItem) => (
-                            <SelectItem
-                              key={sportItem.name}
-                              value={sportItem.name}
-                              className="text-xs sm:text-sm font-semibold py-2 pl-3 pr-8 rounded-lg cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/40 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
-                            >
-                              <div className="flex items-center gap-2 whitespace-nowrap">
-                                <span className="text-base shrink-0">{sportItem.icon}</span>
-                                <span>{sportItem.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+              <Card
+                className={cn(
+                  "rounded-xl border relative z-20 transition-colors duration-300",
+                  isDark
+                    ? "border-emerald-600/30 bg-[#0d0f15] text-white"
+                    : "border-slate-200 bg-white text-slate-900",
+                )}
+              >
+                <CardContent className="pt-2 sm:pt-2.5 pb-4 lg:max-xl:pb-2 [@media(horizontal-viewport-segments:2)]:pb-2 px-4 sm:px-5 space-y-3 lg:max-xl:space-y-2 [@media(horizontal-viewport-segments:2)]:space-y-2 relative z-10">
+                  {/* Header & Controls */}
+                  <div
+                    className={cn(
+                      "flex flex-col xl:flex-row xl:items-center justify-between border-b pb-1.5 lg:max-xl:pb-1 [@media(horizontal-viewport-segments:2)]:pb-1 gap-4 lg:max-xl:gap-2 [@media(horizontal-viewport-segments:2)]:gap-2 -mt-1",
+                      isDark ? "border-white/10" : "border-slate-200",
+                    )}
+                  >
+                    <div className="xl:pb-0">
+                      <h3
+                        className={cn(
+                          "text-xl font-extrabold tracking-tight whitespace-nowrap",
+                          isDark ? "text-white" : "text-slate-900",
+                        )}
+                      >
+                        Reserve Slot
+                      </h3>
                     </div>
 
-                    {/* 2. Date Select + Interactive Calendar Trigger */}
-                    <div className="space-y-1 relative min-w-0">
-                      <div className="relative flex items-center">
-                        <Select
-                          value={selectedDate}
-                          onValueChange={(val) => {
-                            setSelectedDate(val);
-                            setShowCalendar(false);
-                          }}
-                        >
+                    {/* Single Row 2 Dropdown Controls (Sport, Date) */}
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full xl:w-auto xl:flex-1 xl:max-w-[440px]">
+                      {/* 1. Sport Select */}
+                      <div className="space-y-1 min-w-0">
+                        <Select value={selectedSport} onValueChange={setSelectedSport}>
                           <SelectTrigger
                             className={cn(
-                              "h-10 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs pl-8 pr-2 sm:pr-3",
+                              "h-9 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs px-2 sm:px-2.5",
                               isDark
                                 ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
                                 : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
                             )}
                           >
-                            <SelectValue placeholder="Select Date">
-                              <span className="truncate block">
-                                {
-                                  selectedDate === dateOptions[0]?.iso
-                                    ? "Today"
-                                    : selectedDate === dateOptions[1]?.iso
-                                      ? "Tomorrow"
-                                      : formatDateLabel(selectedDate)
-                                }
+                            <SelectValue placeholder="Select Sport">
+                              <span className="flex items-center gap-1.5 font-bold truncate">
+                                <span className="shrink-0 text-sm">{getSportEmoji(selectedSport)}</span>
+                                <span className="truncate">{selectedSport}</span>
                               </span>
                             </SelectValue>
                           </SelectTrigger>
-                          <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
-                            {dateOptions.map((opt) => (
-                              <SelectItem key={opt.iso} value={opt.iso} className="text-sm font-medium py-2 cursor-pointer">
-                                📅 {opt.label}
+                          <SelectContent className="rounded-xl border border-slate-300 dark:border-slate-700 max-h-60 overflow-y-auto z-50 p-1 shadow-2xl bg-white dark:bg-slate-900 min-w-[155px] w-auto">
+                            {availableSports.map((sportItem) => (
+                              <SelectItem
+                                key={sportItem.name}
+                                value={sportItem.name}
+                                className="text-xs sm:text-sm font-semibold py-2 pl-3 pr-8 rounded-lg cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-950/40 focus:bg-emerald-50 dark:focus:bg-emerald-950/40"
+                              >
+                                <div className="flex items-center gap-2 whitespace-nowrap">
+                                  <span className="text-base shrink-0">{sportItem.icon}</span>
+                                  <span>{sportItem.name}</span>
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            setShowCalendar((prev) => !prev);
-                          }}
-                          className="absolute left-2 z-20 hover:scale-125 transition-transform cursor-pointer text-base bg-transparent border-0 p-0.5 focus:outline-none"
-                          title="Click to open full calendar"
-                        >
-                          📅
-                        </button>
                       </div>
 
-                      {/* Dropdown Popover Monthly Calendar */}
-                      {showCalendar && (
-                        <>
-                          {/* Click away backdrop */}
-                          <div
-                            className="fixed inset-0 z-40 cursor-default"
-                            onClick={() => setShowCalendar(false)}
-                          />
-                          <div
-                            className={cn(
-                              "absolute left-1/2 -translate-x-1/2 sm:left-[-35px] sm:translate-x-0 top-12 z-[100] w-76 sm:w-80 max-w-[90vw] rounded-2xl border-2 p-4 sm:p-5 shadow-2xl backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95",
-                              isDark
-                                ? "bg-[#0d0f15]/98 border-slate-700 text-white shadow-emerald-500/10"
-                                : "bg-white border-slate-300 text-slate-800 shadow-emerald-500/15"
-                            )}
+                      {/* 2. Date Select + Interactive Calendar Trigger */}
+                      <div className="space-y-1 relative min-w-0">
+                        <div className="relative flex items-center">
+                          <Select
+                            value={selectedDate}
+                            onValueChange={(val) => {
+                              setSelectedDate(val);
+                              setShowCalendar(false);
+                            }}
                           >
-                            {/* Calendar Header */}
-                            <div className="flex items-center justify-between mb-3">
-                              <button
-                                type="button"
-                                onClick={handlePrevMonth}
-                                className={cn(
-                                  "p-1.5 rounded-lg border transition-all cursor-pointer",
-                                  isDark
-                                    ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
-                                    : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
-                                )}
-                              >
-                                <ChevronLeft className="h-3.5 w-3.5" />
-                              </button>
-                              <span className="text-xs font-black uppercase tracking-wider">
-                                {currentCalendarDate.toLocaleDateString("en-US", {
-                                  month: "long",
-                                  year: "numeric",
-                                })}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={handleNextMonth}
-                                className={cn(
-                                  "p-1.5 rounded-lg border transition-all cursor-pointer",
-                                  isDark
-                                    ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
-                                    : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
-                                )}
-                              >
-                                <ChevronRight className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-
-                            {/* Days Header */}
-                            <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-                                <span
-                                  key={day}
-                                  className={cn(
-                                    "text-[10px] font-bold uppercase tracking-wider",
-                                    isDark ? "text-white/40" : "text-slate-400"
-                                  )}
-                                >
-                                  {day}
-                                </span>
-                              ))}
-                            </div>
-
-                            {/* Calendar Cells */}
-                            <div className="grid grid-cols-7 gap-1.5 text-center">
-                              {getCalendarCells().map((cell, idx) => {
-                                const isSelected = selectedDate === cell.iso;
-                                const isDisabled = isDateDisabled(cell.date);
-                                return (
-                                  <button
-                                    key={idx}
-                                    type="button"
-                                    disabled={isDisabled}
-                                    onClick={() => {
-                                      setSelectedDate(cell.iso);
-                                      setShowCalendar(false);
-                                    }}
-                                    className={cn(
-                                      "h-8 w-8 text-[11px] font-bold rounded-lg flex items-center justify-center transition-all cursor-pointer",
-                                      isSelected
-                                        ? "bg-emerald-600 text-white font-extrabold shadow-sm"
-                                        : isDisabled
-                                          ? "text-slate-300 dark:text-white/10 cursor-not-allowed line-through opacity-40"
-                                          : cell.isCurrentMonth
-                                            ? isDark
-                                              ? "text-white hover:bg-white/10"
-                                              : "text-slate-800 hover:bg-slate-100"
-                                            : isDark
-                                              ? "text-white/30 hover:bg-white/5"
-                                              : "text-slate-400 hover:bg-slate-100"
-                                    )}
-                                  >
-                                    {cell.day}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step: Time Slot Matrix */}
-                <div className="space-y-1.5 pt-0.5">
-                  <div className="flex items-center justify-between">
-                    <label
-                      className={cn(
-                        "text-xs font-bold tracking-wider",
-                        isDark ? "text-white/70" : "text-slate-700",
-                      )}
-                    >
-                      Choose Time Slot
-                    </label>
-                    <span
-                      className={cn(
-                        "text-[10px] font-bold",
-                        isDark ? "text-emerald-600" : "text-emerald-600",
-                      )}
-                    >
-                      🟢 Available
-                    </span>
-                  </div>
-
-                  {timeSlots.length === 0 ? (
-                    <div className="py-8 text-center px-4 rounded-2xl border border-dashed border-border bg-muted/20">
-                      <p className="text-xs font-bold text-muted-foreground">
-                        ⏰ All time slots for today have passed. Please select Tomorrow or pick a custom date.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {/* Same Day / Today Slots */}
-                      {timeSlots.filter(s => s.startHour < 24).length > 0 && (
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
-                          {timeSlots.filter(s => s.startHour < 24).map((slot) => {
-                            const slotHour = slot.startHour;
-                            const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
-                            const isReserved = isBooked && (
-                              String(slot.bookedBy || "").toLowerCase().includes("reserved") ||
-                              String(slot.booking?.user_name || "").toLowerCase().includes("reserved") ||
-                              String(slot.booking?.status || "").toLowerCase().includes("reserved")
-                            );
-                            const overlaps = isOverlapping(slotHour);
-                            const outOfBounds = isOutOfBounds(slotHour);
-                            const cannotSelect = isBooked || overlaps || outOfBounds;
-                            const isSelected = selectedSlots.includes(slotHour);
-                            const slotPrice = getSlotPrice(slotHour, playHours);
-
-                            // Only the user who booked this slot can cancel it
-                            const currentEmail = String(activePlayer?.email || localStorage.getItem("userEmail") || "").toLowerCase().trim();
-                            const currentName = String(activePlayer?.fullName || activePlayer?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
-                            const currentPhone = String(activePlayer?.phone || activePlayer?.phoneNumber || localStorage.getItem("userPhone") || "").replace(/\D/g, "");
-                            const currentUserId = activePlayer?.id;
-
-                            const bookedEmail = String(slot.bookedByEmail || slot.booking?.user_email || "").toLowerCase().trim();
-                            const bookedName = String(slot.bookedBy || slot.booking?.user_name || "").toLowerCase().trim();
-                            const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
-                            const bookedUserId = slot.booking?.user_id;
-
-                            const isMyBooking = isBooked && !isReserved && Boolean(
-                              (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
-                              (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
-                              (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
-                              (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName))) ||
-                              (sessionStorage.getItem("sportxclub_last_booking") && (() => {
-                                try {
-                                  const lb = JSON.parse(sessionStorage.getItem("sportxclub_last_booking") || "{}");
-                                  return (
-                                    lb.venue === venue.name &&
-                                    lb.date === selectedDate &&
-                                    (lb.time === formatSlotRange(slotHour, playHours) || lb.time?.includes(formatHour(slotHour)))
-                                  );
-                                } catch { return false; }
-                              })())
-                            );
-
-                            return (
-                              <div
-                                key={slotHour}
-                                role="button"
-                                tabIndex={!cannotSelect ? 0 : -1}
-                                onClick={() => {
-                                  if (cannotSelect) return;
-                                  handleToggleSlot(slotHour);
-                                }}
-                                onKeyDown={(e) => {
-                                  if (!cannotSelect && (e.key === "Enter" || e.key === " ")) {
-                                    e.preventDefault();
-                                    handleToggleSlot(slotHour);
-                                  }
-                                }}
-                                className={cn(
-                                  "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
-                                  !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
-                                  isSelected
-                                    ? isDark
-                                      ? "bg-emerald-600/10 border-2 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]"
-                                      : "bg-emerald-50/70 border-2 border-emerald-700 text-slate-900 shadow-sm"
-                                    : cannotSelect
-                                      ? isReserved
-                                        ? isDark
-                                          ? "border-amber-500/60 bg-amber-500/10 text-amber-300 opacity-90"
-                                          : "border-amber-300 bg-amber-50 text-amber-800 opacity-90"
-                                        : isDark
-                                          ? "border-red-500/60 bg-red-500/10 opacity-70"
-                                          : "border-red-200 bg-red-50 text-red-700 opacity-70"
-                                      : isDark
-                                        ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
-                                        : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
-                                )}
-                              >
-                                <span
-                                  className={cn(
-                                    "text-xs font-bold",
-                                    cannotSelect
-                                      ? isReserved
-                                        ? isDark
-                                          ? "text-amber-300"
-                                          : "text-amber-800"
-                                        : isDark
-                                          ? "text-white"
-                                          : "text-red-400"
-                                      : isDark
-                                        ? "text-white"
-                                        : "text-slate-800",
-                                  )}
-                                >
-                                  {formatSlotRange(slotHour, playHours).replace(/ PM -| AM -/g, " -")}
-                                </span>
-
-                                {!cannotSelect && (
-                                  <span
-                                    className={cn(
-                                      "text-[11px] font-black mt-0.5",
-                                      isDark
-                                        ? "text-white"
-                                        : "text-emerald-700",
-                                    )}
-                                  >
-                                    <span className="rupee-symbol">₹</span>{slotPrice}
-                                  </span>
-                                )}
-
-                                <span
-                                  className={cn(
-                                    "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
-                                    isSelected
-                                      ? isDark
-                                        ? "text-white"
-                                        : "text-emerald-600"
-                                      : cannotSelect
-                                        ? isReserved
-                                          ? isDark
-                                            ? "text-amber-400"
-                                            : "text-amber-600"
-                                          : isDark
-                                            ? "text-white"
-                                            : "text-red-500"
-                                        : isDark
-                                          ? "text-white"
-                                          : "text-emerald-600/70",
-                                  )}
-                                >
-                                  {cannotSelect ? (
-                                    <div className="flex flex-col items-center w-full">
-                                      <span className="block leading-tight font-black">
-                                        {isReserved ? "Reserved" : isBooked ? "Booked" : "Unavailable"}
-                                      </span>
-                                      {isBooked && isMyBooking && (
-                                        <div className="flex flex-col items-center mt-1 w-full gap-0.5">
-                                          <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
-                                            Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
-                                          </span>
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              e.preventDefault();
-                                              handleOpenCancelModal(slot);
-                                            }}
-                                            className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/35 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer shadow-xs border border-red-500/30 active:scale-95 mt-0.5 z-20"
-                                          >
-                                            CANCEL
-                                          </button>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : isSelected ? (
-                                    "Selected ✓"
-                                  ) : (
-                                    "Available"
-                                  )}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* Tomorrow (Post-Midnight Slots) Horizontal Line & Section */}
-                      {timeSlots.filter(s => s.startHour >= 24).length > 0 && (
-                        <div className="space-y-2 pt-1.5">
-                          <div className="relative flex py-2 items-center">
-                            <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
-                            <span
+                            <SelectTrigger
                               className={cn(
-                                "flex-shrink mx-3 text-[11px] font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 uppercase tracking-wider shadow-2xs",
+                                "h-9 rounded-lg border text-xs sm:text-sm font-semibold w-full transition-all cursor-pointer shadow-xs pl-8 pr-2 sm:pr-3",
                                 isDark
-                                  ? "bg-indigo-950/70 text-indigo-300 border border-indigo-500/40"
-                                  : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                  ? "bg-slate-900/60 border-slate-700 text-white focus:border-emerald-500"
+                                  : "bg-white border-slate-300 text-slate-900 focus:border-emerald-500"
                               )}
                             >
-                              <span>🌙</span> Tomorrow (Post-Midnight Slots)
-                            </span>
-                            <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
-                          </div>
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
-                            {timeSlots.filter(s => s.startHour >= 24).map((slot) => {
+                              <SelectValue placeholder="Select Date">
+                                <span className="truncate block">
+                                  {
+                                    selectedDate === dateOptions[0]?.iso
+                                      ? "Today"
+                                      : selectedDate === dateOptions[1]?.iso
+                                        ? "Tomorrow"
+                                        : formatDateLabel(selectedDate)
+                                  }
+                                </span>
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent className="rounded-lg border border-slate-300 dark:border-slate-700 z-50">
+                              {dateOptions.map((opt) => (
+                                <SelectItem key={opt.iso} value={opt.iso} className="text-sm font-medium py-2 cursor-pointer">
+                                  📅 {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setShowCalendar((prev) => !prev);
+                            }}
+                            className="absolute left-2 z-20 hover:scale-125 transition-transform cursor-pointer text-base bg-transparent border-0 p-0.5 focus:outline-none"
+                            title="Click to open full calendar"
+                          >
+                            📅
+                          </button>
+                        </div>
+
+                        {/* Dropdown Popover Monthly Calendar */}
+                        {showCalendar && (
+                          <>
+                            {/* Click away backdrop */}
+                            <div
+                              className="fixed inset-0 z-40 cursor-default"
+                              onClick={() => setShowCalendar(false)}
+                            />
+                            <div
+                              className={cn(
+                                "absolute right-0 top-11 sm:top-12 z-[100] w-[295px] sm:w-[310px] rounded-2xl border p-3 sm:p-4 shadow-2xl shadow-black/10 dark:shadow-black/50 backdrop-blur-xl transition-all duration-300 animate-in fade-in zoom-in-95",
+                                isDark
+                                  ? "bg-[#0d0f15] border-slate-800 text-white"
+                                  : "bg-white border-slate-200 text-slate-800"
+                              )}
+                            >
+                              {/* Calendar Header */}
+                              <div className="flex items-center justify-between mb-3">
+                                <button
+                                  type="button"
+                                  onClick={handlePrevMonth}
+                                  className={cn(
+                                    "p-1.5 rounded-lg border transition-all cursor-pointer",
+                                    isDark
+                                      ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
+                                      : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
+                                  )}
+                                >
+                                  <ChevronLeft className="h-3.5 w-3.5" />
+                                </button>
+                                <span className="text-xs font-black uppercase tracking-wider">
+                                  {currentCalendarDate.toLocaleDateString("en-US", {
+                                    month: "long",
+                                    year: "numeric",
+                                  })}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={handleNextMonth}
+                                  className={cn(
+                                    "p-1.5 rounded-lg border transition-all cursor-pointer",
+                                    isDark
+                                      ? "border-white/10 hover:bg-white/5 text-white/70 hover:text-white"
+                                      : "border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-900"
+                                  )}
+                                >
+                                  <ChevronRight className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+
+                              {/* Days Header */}
+                              <div className="grid grid-cols-7 gap-1 text-center mb-2">
+                                {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+                                  <span
+                                    key={day}
+                                    className={cn(
+                                      "text-[10px] font-bold uppercase tracking-wider",
+                                      isDark ? "text-white/40" : "text-slate-400"
+                                    )}
+                                  >
+                                    {day}
+                                  </span>
+                                ))}
+                              </div>
+
+                              {/* Calendar Cells */}
+                              <div className="grid grid-cols-7 gap-1 text-center">
+                                {getCalendarCells().map((cell, idx) => {
+                                  const todayIso = new Date().toISOString().split("T")[0];
+                                  const isSelected = selectedDate === cell.iso;
+                                  const isToday = cell.iso === todayIso;
+                                  const isDisabled = isDateDisabled(cell.date);
+                                  return (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      disabled={isDisabled}
+                                      onClick={() => {
+                                        setSelectedDate(cell.iso);
+                                        setShowCalendar(false);
+                                      }}
+                                      className={cn(
+                                        "h-7.5 w-7.5 sm:h-8 sm:w-8 text-[10px] sm:text-[11px] font-bold rounded-full flex items-center justify-center mx-auto transition-all cursor-pointer",
+                                        isSelected
+                                          ? "border-2 border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-transparent hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 font-black shadow-xs"
+                                          : isToday
+                                            ? "border border-emerald-500/60 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/10"
+                                            : isDisabled
+                                              ? "text-slate-300 dark:text-white/10 cursor-not-allowed line-through opacity-40"
+                                              : cell.isCurrentMonth
+                                                ? isDark
+                                                  ? "text-white hover:bg-white/10"
+                                                  : "text-slate-800 hover:bg-slate-100"
+                                                : isDark
+                                                  ? "text-white/30 hover:bg-white/5"
+                                                  : "text-slate-400 hover:bg-slate-100"
+                                      )}
+                                    >
+                                      {cell.day}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step: Time Slot Matrix */}
+                  <div className="space-y-1.5 pt-0.5">
+                    <div className="flex items-center justify-between">
+                      <label
+                        className={cn(
+                          "text-xs font-bold tracking-wider",
+                          isDark ? "text-white/70" : "text-slate-700",
+                        )}
+                      >
+                        Choose Time Slot
+                      </label>
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold",
+                          isDark ? "text-emerald-600" : "text-emerald-600",
+                        )}
+                      >
+                        🟢 Available
+                      </span>
+                    </div>
+
+                    {isDateBlocked ? (
+                      <div className="py-6 text-center px-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                        <p className="text-xs font-bold">
+                          🚫 This date is closed for bookings: {disabledReason || "Closed by Turf Management"}.
+                        </p>
+                        <p className="text-[11px] mt-1 text-muted-foreground">
+                          Please select another date from the dropdown above.
+                        </p>
+                      </div>
+                    ) : timeSlots.length === 0 ? (
+                      <div className="py-8 text-center px-4 rounded-2xl border border-dashed border-border bg-muted/20">
+                        <p className="text-xs font-bold text-muted-foreground">
+                          ⏰ All time slots for today have passed. Please select Tomorrow or pick a custom date.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Same Day / Today Slots */}
+                        {timeSlots.filter(s => s.startHour < 24).length > 0 && (
+                          <div className="grid grid-cols-2 min-[370px]:grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                            {timeSlots.filter(s => s.startHour < 24).map((slot, index) => {
                               const slotHour = slot.startHour;
                               const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
                               const isReserved = isBooked && (
@@ -2519,8 +2491,17 @@ export function VenueDetails() {
                                     }
                                   }}
                                   className={cn(
-                                    "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
-                                    !cannotSelect ? "cursor-pointer" : "cursor-default",
+                                    "py-1.5 px-2 rounded-lg border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
+                                    !cannotSelect ? "cursor-pointer" : "cursor-not-allowed",
+                                    !showAllSlots && (
+                                      index >= 12
+                                        ? "hidden"
+                                        : index >= 9
+                                          ? "max-sm:hidden"
+                                          : index >= 6
+                                            ? "max-[369px]:hidden"
+                                            : ""
+                                    ),
                                     isSelected
                                       ? isDark
                                         ? "bg-emerald-600/10 border-2 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]"
@@ -2535,7 +2516,7 @@ export function VenueDetails() {
                                             : "border-red-200 bg-red-50 text-red-700 opacity-70"
                                         : isDark
                                           ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
-                                          : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
+                                          : "border-slate-300 bg-white text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
                                   )}
                                 >
                                   <span
@@ -2624,153 +2605,439 @@ export function VenueDetails() {
                               );
                             })}
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {timeSlots.length > 16 && (
-                    <div className="flex justify-end mt-2">
-                      <button
-                        onClick={() => setShowAllSlots(!showAllSlots)}
+                        )}
+
+                        {/* Tomorrow (Post-Midnight Slots) Horizontal Line & Section */}
+                        {(showAllSlots || timeSlots.filter(s => s.startHour < 24).length === 0) && timeSlots.filter(s => s.startHour >= 24).length > 0 && (
+                          <div className="space-y-2 pt-1.5">
+                            <div className="relative flex py-2 items-center">
+                              <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+                              <span
+                                className={cn(
+                                  "flex-shrink mx-3 text-[11px] font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 uppercase tracking-wider shadow-2xs",
+                                  isDark
+                                    ? "bg-indigo-950/70 text-indigo-300 border border-indigo-500/40"
+                                    : "bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                )}
+                              >
+                                <span>🌙</span> Tomorrow (Post-Midnight Slots)
+                              </span>
+                              <div className="flex-grow border-t border-slate-300 dark:border-slate-700"></div>
+                            </div>
+                            <div className="grid grid-cols-2 min-[370px]:grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                              {timeSlots.filter(s => s.startHour >= 24).map((slot) => {
+                                const slotHour = slot.startHour;
+                                const isBooked = !!slot.bookedBy && !cancelledSlots.includes(slotHour);
+                                const isReserved = isBooked && (
+                                  String(slot.bookedBy || "").toLowerCase().includes("reserved") ||
+                                  String(slot.booking?.user_name || "").toLowerCase().includes("reserved") ||
+                                  String(slot.booking?.status || "").toLowerCase().includes("reserved")
+                                );
+                                const overlaps = isOverlapping(slotHour);
+                                const outOfBounds = isOutOfBounds(slotHour);
+                                const cannotSelect = isBooked || overlaps || outOfBounds;
+                                const isSelected = selectedSlots.includes(slotHour);
+                                const slotPrice = getSlotPrice(slotHour, playHours);
+
+                                // Only the user who booked this slot can cancel it
+                                const currentEmail = String(activePlayer?.email || localStorage.getItem("userEmail") || "").toLowerCase().trim();
+                                const currentName = String(activePlayer?.fullName || activePlayer?.name || localStorage.getItem("userName") || "").toLowerCase().trim();
+                                const currentPhone = String(activePlayer?.phone || activePlayer?.phoneNumber || localStorage.getItem("userPhone") || "").replace(/\D/g, "");
+                                const currentUserId = activePlayer?.id;
+
+                                const bookedEmail = String(slot.bookedByEmail || slot.booking?.user_email || "").toLowerCase().trim();
+                                const bookedName = String(slot.bookedBy || slot.booking?.user_name || "").toLowerCase().trim();
+                                const bookedPhone = String(slot.booking?.user_phone || slot.booking?.phone || "").replace(/\D/g, "");
+                                const bookedUserId = slot.booking?.user_id;
+
+                                const isMyBooking = isBooked && !isReserved && Boolean(
+                                  (currentUserId && bookedUserId && String(currentUserId) === String(bookedUserId)) ||
+                                  (currentEmail && bookedEmail && (currentEmail === bookedEmail || currentEmail.includes(bookedEmail) || bookedEmail.includes(currentEmail))) ||
+                                  (currentPhone && bookedPhone && currentPhone.length >= 10 && currentPhone === bookedPhone) ||
+                                  (currentName && bookedName && (currentName === bookedName || currentName.includes(bookedName) || bookedName.includes(currentName))) ||
+                                  (sessionStorage.getItem("sportxclub_last_booking") && (() => {
+                                    try {
+                                      const lb = JSON.parse(sessionStorage.getItem("sportxclub_last_booking") || "{}");
+                                      return (
+                                        lb.venue === venue.name &&
+                                        lb.date === selectedDate &&
+                                        (lb.time === formatSlotRange(slotHour, playHours) || lb.time?.includes(formatHour(slotHour)))
+                                      );
+                                    } catch { return false; }
+                                  })())
+                                );
+
+                                return (
+                                  <div
+                                    key={slotHour}
+                                    role="button"
+                                    tabIndex={!cannotSelect ? 0 : -1}
+                                    onClick={() => {
+                                      if (cannotSelect) return;
+                                      handleToggleSlot(slotHour);
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (!cannotSelect && (e.key === "Enter" || e.key === " ")) {
+                                        e.preventDefault();
+                                        handleToggleSlot(slotHour);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "py-1.5 px-2 rounded-xl border flex flex-col items-center justify-center transition-all min-h-[48px] text-center relative select-none",
+                                      !cannotSelect ? "cursor-pointer" : "cursor-default",
+                                      isSelected
+                                        ? isDark
+                                          ? "bg-emerald-600/10 border-2 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.25)]"
+                                          : "bg-emerald-50/70 border-2 border-emerald-700 text-slate-900 shadow-sm"
+                                        : cannotSelect
+                                          ? isReserved
+                                            ? isDark
+                                              ? "border-amber-500/60 bg-amber-500/10 text-amber-300 opacity-90"
+                                              : "border-amber-300 bg-amber-50 text-amber-800 opacity-90"
+                                            : isDark
+                                              ? "border-red-500/60 bg-red-500/10 opacity-70"
+                                              : "border-red-200 bg-red-50 text-red-700 opacity-70"
+                                          : isDark
+                                            ? "border-emerald-500/60 bg-white/[0.03] text-white hover:border-emerald-400 hover:bg-white/[0.08]"
+                                            : "border-slate-200 bg-slate-50 text-slate-800 hover:border-emerald-500 hover:bg-emerald-50/50",
+                                    )}
+                                  >
+                                    <span
+                                      className={cn(
+                                        "text-xs font-bold",
+                                        cannotSelect
+                                          ? isReserved
+                                            ? isDark
+                                              ? "text-amber-300"
+                                              : "text-amber-800"
+                                            : isDark
+                                              ? "text-white"
+                                              : "text-red-400"
+                                          : isDark
+                                            ? "text-white"
+                                            : "text-slate-800",
+                                      )}
+                                    >
+                                      {formatSlotRange(slotHour, playHours).replace(/ PM -| AM -/g, " -")}
+                                    </span>
+
+                                    {!cannotSelect && (
+                                      <span
+                                        className={cn(
+                                          "text-[11px] font-black mt-0.5",
+                                          isDark
+                                            ? "text-white"
+                                            : "text-emerald-700",
+                                        )}
+                                      >
+                                        <span className="rupee-symbol">₹</span>{slotPrice}
+                                      </span>
+                                    )}
+
+                                    <span
+                                      className={cn(
+                                        "text-[9px] font-extrabold uppercase mt-0.5 tracking-wider leading-tight",
+                                        isSelected
+                                          ? isDark
+                                            ? "text-white"
+                                            : "text-emerald-600"
+                                          : cannotSelect
+                                            ? isReserved
+                                              ? isDark
+                                                ? "text-amber-400"
+                                                : "text-amber-600"
+                                              : isDark
+                                                ? "text-white"
+                                                : "text-red-500"
+                                            : isDark
+                                              ? "text-white"
+                                              : "text-emerald-600/70",
+                                      )}
+                                    >
+                                      {cannotSelect ? (
+                                        <div className="flex flex-col items-center w-full">
+                                          <span className="block leading-tight font-black">
+                                            {isReserved ? "Reserved" : isBooked ? "Booked" : "Unavailable"}
+                                          </span>
+                                          {isBooked && isMyBooking && (
+                                            <div className="flex flex-col items-center mt-1 w-full gap-0.5">
+                                              <span className="block text-[7.5px] font-semibold opacity-90 normal-case tracking-normal text-slate-500 dark:text-white leading-none">
+                                                Cancel by {formatSlotRange(slotHour - 2, 0).split(' - ')[0]}
+                                              </span>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  e.preventDefault();
+                                                  handleOpenCancelModal(slot);
+                                                }}
+                                                className="px-2.5 py-0.5 bg-red-500/20 hover:bg-red-500/35 text-red-600 dark:text-red-400 rounded-md text-[8.5px] font-extrabold tracking-wider transition-all cursor-pointer shadow-xs border border-red-500/30 active:scale-95 mt-0.5 z-20"
+                                              >
+                                                CANCEL
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ) : isSelected ? (
+                                        "Selected ✓"
+                                      ) : (
+                                        "Available"
+                                      )}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {timeSlots.length > 6 && (
+                      <div
                         className={cn(
-                          "text-xs font-bold hover:underline transition-colors",
-                          isDark ? "text-white/90 hover:text-white" : "text-emerald-700 hover:text-emerald-600"
+                          "flex justify-end mt-2",
+                          !showAllSlots && timeSlots.length <= 12 && "sm:hidden",
+                          !showAllSlots && timeSlots.length <= 9 && "min-[370px]:max-sm:hidden",
+                          !showAllSlots && timeSlots.length <= 6 && "max-[369px]:hidden"
                         )}
                       >
-                        {showAllSlots ? "Show Less Slot" : "Show More Slot"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* SportX Wallet Status Box */}
-                {activePlayer && (
-                  <div
-                    className={cn(
-                      "rounded-xl border p-2.5 flex items-center justify-between text-xs transition-all",
-                      walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0
-                        ? isDark
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                          : "bg-emerald-50 border-emerald-300 text-emerald-800"
-                        : isDark
-                          ? "bg-white/[0.02] border-white/10 text-slate-300"
-                          : "bg-slate-50 border-slate-200 text-slate-700"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
-                        <Wallet className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] uppercase font-bold text-muted-foreground">SportX Wallet</span>
-                        <span className="font-extrabold text-xs text-foreground flex items-center gap-1">
-                          ₹{isLoadingWallet ? "..." : (walletBalance !== null ? walletBalance.toFixed(2) : "0.00")}
-                          {walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0 && (
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold ml-1 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">
-                              ✓ Sufficient Balance
-                            </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowAllSlots(!showAllSlots)}
+                          className={cn(
+                            "text-xs font-bold hover:underline transition-colors flex items-center gap-1 cursor-pointer py-1 px-1.5 rounded-md",
+                            isDark ? "text-emerald-400 hover:text-emerald-300" : "text-emerald-700 hover:text-emerald-600"
                           )}
-                        </span>
+                        >
+                          <span>{showAllSlots ? "Show Less Slot" : "Show More Slot"}</span>
+                          <span className="text-[10px]">{showAllSlots ? "▲" : "▼"}</span>
+                        </button>
                       </div>
-                    </div>
-
-                    <Link
-                      to="/profile?tab=wallet"
-                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-2 py-1 rounded-lg hover:bg-emerald-500/10 transition-colors"
-                    >
-                      + Top Up
-                    </Link>
+                    )}
                   </div>
-                )}
 
-                {/* Booking Order Summary Box */}
-                <div
-                  className={cn(
-                    "rounded-xl border p-3 space-y-1.5 transition-colors",
-                    isDark
-                      ? "border-white/10 bg-white/[0.03]"
-                      : "border-slate-200 bg-slate-50/90",
+                  {/* SportX Wallet Status Box */}
+                  {activePlayer && (
+                    <div
+                      className={cn(
+                        "rounded-lg border p-2.5 flex items-center justify-between text-xs transition-all",
+                        walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0
+                          ? isDark
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-emerald-50 border-emerald-300 text-emerald-800"
+                          : isDark
+                            ? "bg-white/[0.02] border-white/10 text-slate-300"
+                            : "bg-white border-slate-200 text-slate-700"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-lg bg-emerald-500/20 text-emerald-500 flex items-center justify-center shrink-0">
+                          <Wallet className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground">SportX Wallet</span>
+                          <span className="font-extrabold text-xs text-foreground flex items-center gap-1">
+                            ₹{isLoadingWallet ? "..." : (walletBalance !== null ? walletBalance.toFixed(2) : "0.00")}
+                            {walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0 && (
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold ml-1 bg-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                                ✓ Sufficient Balance
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Link
+                        to="/profile?tab=wallet"
+                        className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline px-2 py-1 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                      >
+                        + Top Up
+                      </Link>
+                    </div>
                   )}
-                >
+
+                  {/* Booking Order Summary Box */}
                   <div
                     className={cn(
-                      "flex items-center justify-between",
-                      isDark ? "border-white/10" : "border-slate-200",
+                      "rounded-lg border p-3 space-y-1.5 transition-colors",
+                      isDark
+                        ? "border-white/10 bg-white/[0.03]"
+                        : "border-slate-200 bg-white",
                     )}
                   >
-                    <div className="flex flex-col min-w-0 pr-2">
+                    <div
+                      className={cn(
+                        "flex items-center justify-between",
+                        isDark ? "border-white/10" : "border-slate-200",
+                      )}
+                    >
+                      <div className="flex flex-col min-w-0 pr-2">
+                        <span
+                          className={cn(
+                            "text-sm font-bold tracking-wider",
+                            isDark ? "text-white" : "text-slate-900",
+                          )}
+                        >
+                          Total payable:
+                        </span>
+                        {selectedSlots.length > 0 && (
+                          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 truncate">
+                            {selectedSlots.length} {selectedSlots.length === 1 ? "Slot" : "Slots"} Selected
+                          </span>
+                        )}
+                      </div>
                       <span
                         className={cn(
-                          "text-sm font-bold tracking-wider",
-                          isDark ? "text-white" : "text-slate-900",
+                          "text-xl font-black shrink-0",
+                          hasSelectedSlots
+                            ? isDark ? "text-white" : "text-emerald-600"
+                            : isDark ? "text-white/40" : "text-slate-400",
                         )}
                       >
-                        Total payable:
+                        {hasSelectedSlots ? (
+                          <>
+                            <span className="rupee-symbol">₹</span>{totalSlotPrice}
+                          </>
+                        ) : (
+                          <span className="text-sm font-semibold text-muted-foreground">
+                            <span className="rupee-symbol">₹</span>0
+                          </span>
+                        )}
                       </span>
-                      {selectedSlots.length > 0 && (
-                        <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 truncate">
-                          {selectedSlots.length} {selectedSlots.length === 1 ? "Slot" : "Slots"} Selected
-                        </span>
-                      )}
                     </div>
-                    <span
-                      className={cn(
-                        "text-xl font-black shrink-0",
-                        hasSelectedSlots
-                          ? isDark ? "text-white" : "text-emerald-600"
-                          : isDark ? "text-white/40" : "text-slate-400",
-                      )}
-                    >
-                      {hasSelectedSlots ? (
-                        <>
-                          <span className="rupee-symbol">₹</span>{totalSlotPrice}
-                        </>
-                      ) : (
-                        <span className="text-sm font-semibold text-muted-foreground">
-                          <span className="rupee-symbol">₹</span>0
-                        </span>
-                      )}
-                    </span>
+                    {!hasSelectedSlots && (
+                      <p className="text-[11px] font-medium text-amber-500/90 dark:text-amber-400/90 flex items-center gap-1">
+                        <span>⚠️</span> Please select one or more available time slots
+                      </p>
+                    )}
                   </div>
-                  {!hasSelectedSlots && (
-                    <p className="text-[11px] font-medium text-amber-500/90 dark:text-amber-400/90 flex items-center gap-1">
-                      <span>⚠️</span> Please select one or more available time slots
-                    </p>
-                  )}
-                </div>
 
-                {/* CTA Buttons */}
-                <div className="flex flex-col sm:flex-row items-center gap-2 justify-end pt-1">
-                  {/* 1-Click SportX Wallet Pay (Rendered when balance is sufficient) */}
-                  {hasSelectedSlots && walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0 && (
+                  {/* CTA Buttons */}
+                  <div className="flex flex-col sm:flex-row items-center gap-2 justify-end pt-1">
+                    {/* 1-Click SportX Wallet Pay (Rendered when balance is sufficient) */}
+                    {hasSelectedSlots && walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0 && (
+                      <Button
+                        disabled={isWalletPaying}
+                        onClick={async () => {
+                          if (!hasSelectedSlots) {
+                            toast.error("Please select at least one available time slot first.");
+                            return;
+                          }
+                          if (!activePlayer && !currentUser) {
+                            toast.error("Please sign in first to pay with SportX Wallet.");
+                            navigate("/login");
+                            return;
+                          }
+
+                          const formattedSlotTimes = selectedSlots.map((h) => formatSlotRange(h, playHours)).join(", ");
+                          const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
+                            ? venue.image
+                            : asset("/venues/turf-1.webp");
+
+                          const bookingPayload = {
+                            venue: venue.name,
+                            turf_name: venue.name,
+                            image: safeImage,
+                            location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
+                            sport: selectedSport,
+                            date: selectedDate,
+                            time: formattedSlotTimes,
+                            time_slot: formattedSlotTimes,
+                            slot_time: formattedSlotTimes,
+                            slots: selectedSlots.map((h) => ({
+                              startHour: h,
+                              time: formatSlotRange(h, playHours),
+                              price: getSlotPrice(h, playHours),
+                            })),
+                            slotCount: selectedSlots.length,
+                            price: totalSlotPrice,
+                            amount: totalSlotPrice,
+                            userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
+                            userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
+                            userPhone: activePlayer?.phone || activePlayer?.phoneNumber || currentUser?.phone || localStorage.getItem("sportxclub_user_phone") || '',
+                            venueId: venue.id,
+                            turf_id: venue.id,
+                            userId: activePlayer?.id,
+                          };
+
+                          setIsWalletPaying(true);
+                          toast.loading("⚡ Processing 1-Click SportX Wallet Payment...", { id: "wallet-pay" });
+
+                          try {
+                            const res = await profileService.payWithWallet(bookingPayload);
+                            toast.dismiss("wallet-pay");
+
+                            if (res?.success) {
+                              setWalletBalance(res.walletBalance);
+                              toast.success(res.message || "🎉 Booking Confirmed via SportX Wallet!");
+
+                              try {
+                                sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
+                                sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
+                                sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
+                                sessionStorage.setItem("sportxclub_cashfree_order_id", res.booking?.orderId || res.booking?.order_id);
+                              } catch (e) { }
+
+                              const b = res.booking || {};
+                              navigate(`/payment-status?order_id=${b.orderId || b.order_id}&payment_id=${b.paymentId || b.payment_id}&booking_code=${b.bookingCode || b.booking_code}&method=wallet&status=SUCCESS`);
+                            } else {
+                              toast.error(res?.error || "Failed to process wallet payment.");
+                            }
+                          } catch (err) {
+                            toast.dismiss("wallet-pay");
+                            console.error("Wallet payment failed:", err);
+                            toast.error(err.message || "Error completing wallet booking.");
+                          } finally {
+                            setIsWalletPaying(false);
+                          }
+                        }}
+                        className="group h-11 w-full sm:w-auto px-5 rounded-xl font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center select-none bg-transparent border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-[0.97] cursor-pointer shadow-none"
+                      >
+                        {isWalletPaying ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Deducting ₹{totalSlotPrice}...</span>
+                          </div>
+                        ) : (
+                          <span>1-Click Pay with Wallet (₹{totalSlotPrice})</span>
+                        )}
+                      </Button>
+                    )}
+
+                    {/* Standard Gateway Button (UPI / Card / Netbanking) */}
                     <Button
-                      disabled={isWalletPaying}
-                      onClick={async () => {
+                      variant="outline"
+                      disabled={!hasSelectedSlots || isWalletPaying}
+                      onClick={() => {
                         if (!hasSelectedSlots) {
                           toast.error("Please select at least one available time slot first.");
                           return;
                         }
                         if (!activePlayer && !currentUser) {
-                          toast.error("Please sign in first to pay with SportX Wallet.");
+                          toast.error("Please sign in first to continue booking.");
                           navigate("/login");
                           return;
                         }
-
                         const formattedSlotTimes = selectedSlots.map((h) => formatSlotRange(h, playHours)).join(", ");
                         const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
                           ? venue.image
                           : asset("/venues/turf-1.webp");
 
+                        const existingPhone = String(
+                          activePlayer?.phone ||
+                          activePlayer?.phoneNumber ||
+                          currentUser?.phone ||
+                          localStorage.getItem("sportxclub_user_phone") ||
+                          ""
+                        ).replace(/[^0-9]/g, "").slice(-10);
+
                         const bookingPayload = {
                           venue: venue.name,
-                          turf_name: venue.name,
                           image: safeImage,
                           location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
                           sport: selectedSport,
                           date: selectedDate,
                           time: formattedSlotTimes,
-                          time_slot: formattedSlotTimes,
-                          slot_time: formattedSlotTimes,
                           slots: selectedSlots.map((h) => ({
                             startHour: h,
                             time: formatSlotRange(h, playHours),
@@ -2781,302 +3048,290 @@ export function VenueDetails() {
                           amount: totalSlotPrice,
                           userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
                           userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
-                          userPhone: activePlayer?.phone || activePlayer?.phoneNumber || currentUser?.phone || '9876543210',
+                          userPhone: existingPhone,
                           venueId: venue.id,
-                          turf_id: venue.id,
-                          userId: activePlayer?.id,
                         };
 
-                        setIsWalletPaying(true);
-                        toast.loading("⚡ Processing 1-Click SportX Wallet Payment...", { id: "wallet-pay" });
-
-                        try {
-                          const res = await profileService.payWithWallet(bookingPayload);
-                          toast.dismiss("wallet-pay");
-
-                          if (res?.success) {
-                            setWalletBalance(res.walletBalance);
-                            toast.success(res.message || "🎉 Booking Confirmed via SportX Wallet!");
-
-                            try {
-                              sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
-                              sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
-                              sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
-                              sessionStorage.setItem("sportxclub_cashfree_order_id", res.booking?.orderId || res.booking?.order_id);
-                            } catch (e) {}
-
-                            const b = res.booking || {};
-                            navigate(`/payment-status?order_id=${b.orderId || b.order_id}&payment_id=${b.paymentId || b.payment_id}&booking_code=${b.bookingCode || b.booking_code}&method=wallet&status=SUCCESS`);
-                          } else {
-                            toast.error(res?.error || "Failed to process wallet payment.");
-                          }
-                        } catch (err) {
-                          toast.dismiss("wallet-pay");
-                          console.error("Wallet payment failed:", err);
-                          toast.error(err.message || "Error completing wallet booking.");
-                        } finally {
-                          setIsWalletPaying(false);
+                        if (!existingPhone || existingPhone.length !== 10 || !/^[6-9]\d{9}$/.test(existingPhone)) {
+                          setPendingBookingPayload(bookingPayload);
+                          setEnteredPhoneNumber(existingPhone || "");
+                          setPhoneModalOpen(true);
+                          return;
                         }
+
+                        launchCashfreePayment(bookingPayload);
                       }}
-                      className="group h-11 w-full sm:w-auto px-5 rounded-xl font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center select-none bg-transparent border-2 border-emerald-600 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-[0.97] cursor-pointer shadow-none"
-                    >
-                      {isWalletPaying ? (
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>Deducting ₹{totalSlotPrice}...</span>
-                        </div>
-                      ) : (
-                        <span>1-Click Pay with Wallet (₹{totalSlotPrice})</span>
+                      className={cn(
+                        "group h-11 w-full sm:w-auto px-5 rounded-lg font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center select-none border-2",
+                        hasSelectedSlots
+                          ? isDark
+                            ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97] cursor-pointer"
+                            : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97] cursor-pointer"
+                          : isDark
+                            ? "border-white/10 text-white/30 bg-white/[0.02] cursor-not-allowed opacity-50 pointer-events-none"
+                            : "border-slate-300 text-black bg-white cursor-not-allowed opacity-60 pointer-events-none",
                       )}
+                    >
+                      <span>
+                        {hasSelectedSlots && walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0
+                          ? "Pay via UPI / Cards (Cashfree)"
+                          : "Proceed to payment"}
+                      </span>
                     </Button>
-                  )}
-
-                  {/* Standard Gateway Button (UPI / Card / Netbanking) */}
-                  <Button
-                    variant="outline"
-                    disabled={!hasSelectedSlots || isWalletPaying}
-                    onClick={() => {
-                      if (!hasSelectedSlots) {
-                        toast.error("Please select at least one available time slot first.");
-                        return;
-                      }
-                      if (!activePlayer && !currentUser) {
-                        toast.error("Please sign in first to continue booking.");
-                        navigate("/login");
-                        return;
-                      }
-                      const formattedSlotTimes = selectedSlots.map((h) => formatSlotRange(h, playHours)).join(", ");
-                      const safeImage = (venue.image && typeof venue.image === 'string' && venue.image.length < 500)
-                        ? venue.image
-                        : asset("/venues/turf-1.webp");
-
-                      const bookingPayload = {
-                        venue: venue.name,
-                        image: safeImage,
-                        location: typeof venue.location === 'object' ? (venue.location?.city || venue.location?.address || 'Mumbai') : (venue.location || 'Mumbai'),
-                        sport: selectedSport,
-                        date: selectedDate,
-                        time: formattedSlotTimes,
-                        slots: selectedSlots.map((h) => ({
-                          startHour: h,
-                          time: formatSlotRange(h, playHours),
-                          price: getSlotPrice(h, playHours),
-                        })),
-                        slotCount: selectedSlots.length,
-                        price: totalSlotPrice,
-                        amount: totalSlotPrice,
-                        userName: activePlayer?.fullName || activePlayer?.name || currentUser?.full_name || currentUser?.email?.split('@')[0] || 'SportX Player',
-                        userEmail: activePlayer?.email || currentUser?.email || 'user@sportxclub.com',
-                        userPhone: activePlayer?.phone || activePlayer?.phoneNumber || currentUser?.phone || '9876543210',
-                        venueId: venue.id,
-                      };
-
-                      try {
-                        sessionStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
-                        sessionStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
-                        sessionStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
-                        localStorage.setItem("sportxclub_booking", JSON.stringify(bookingPayload));
-                        localStorage.setItem("sportxclub_pending_booking", JSON.stringify(bookingPayload));
-                        localStorage.setItem("sportxclub_last_booking", JSON.stringify(bookingPayload));
-                      } catch (e) {
-                        console.warn("Storage note:", e.message);
-                      }
-
-                      toast.loading("Connecting to Cashfree Live Gateway...", { id: "cashfree-init" });
-                      cashfreeService.initiatePayment(bookingPayload).then((res) => {
-                        toast.dismiss("cashfree-init");
-                        if (!res.success) {
-                          toast.error(res.message || "Cashfree could not start the payment. Please try again.");
-                        }
-                      }).catch((err) => {
-                        toast.dismiss("cashfree-init");
-                        console.error("Cashfree initialization error:", err);
-                        toast.error("Failed initiating Cashfree payment.");
-                      });
-                    }}
-                    className={cn(
-                      "group h-11 w-full sm:w-auto px-5 rounded-xl font-bold text-xs tracking-wider transition-all duration-300 flex items-center justify-center select-none border-2",
-                      hasSelectedSlots
-                        ? isDark
-                          ? "border-emerald-600 text-emerald-600 hover:border-green-400 hover:text-green-400 hover:bg-green-400/5 active:scale-[0.97] cursor-pointer"
-                          : "border-emerald-600 text-emerald-600 hover:border-emerald-800 hover:text-emerald-800 hover:bg-emerald-50/50 active:scale-[0.97] cursor-pointer"
-                        : isDark
-                          ? "border-white/10 text-white/30 bg-white/[0.02] cursor-not-allowed opacity-50 pointer-events-none"
-                          : "border-slate-200 text-slate-400 bg-slate-100 cursor-not-allowed opacity-60 pointer-events-none",
-                    )}
-                  >
-                    <span>
-                      {hasSelectedSlots && walletBalance !== null && walletBalance >= totalSlotPrice && totalSlotPrice > 0
-                        ? "Pay via UPI / Cards (Cashfree)"
-                        : "Proceed to payment"}
-                    </span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Cancellation Reason Modal Dialog */}
-      <Dialog open={cancelModalOpen} onOpenChange={(open) => { if (!isCancelling) setCancelModalOpen(open); }}>
-        <DialogContent className={cn(
-          "max-w-md w-full rounded-3xl p-0 border shadow-2xl overflow-hidden max-h-[90vh] flex flex-col",
-          isDark ? "bg-[#0f172a] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
-        )}>
-          <DialogHeader className="p-5 sm:p-6 pb-3 border-b border-border/50 shrink-0 text-left">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
-                <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-black tracking-tight">
-                  Cancel Slot Booking
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Are you sure you want to cancel this reservation?
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {slotToCancel && (
-            <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
-              {/* Slot Details Summary Box */}
-              <div className={cn(
-                "rounded-2xl p-3.5 border space-y-2",
-                isDark ? "bg-slate-900/80 border-slate-800" : "bg-slate-50 border-slate-200"
-              )}>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-muted-foreground">Turf Venue:</span>
-                  <span className="text-xs font-black text-foreground">{venue.name}</span>
+        {/* Cancellation Reason Modal Dialog */}
+        <Dialog open={cancelModalOpen} onOpenChange={(open) => { if (!isCancelling) setCancelModalOpen(open); }}>
+          <DialogContent className={cn(
+            "max-w-md w-full rounded-3xl p-0 border shadow-2xl overflow-hidden max-h-[90dvh] sm:max-h-[85vh] flex flex-col",
+            isDark ? "bg-[#0f172a] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
+          )}>
+            <DialogHeader className="p-4 sm:p-6 pb-3 border-b border-border/50 shrink-0 text-left">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                  <AlertTriangle className="h-5 w-5 stroke-[2.5]" />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-muted-foreground">Sport & Date:</span>
-                  <span className="text-xs font-black text-foreground">
-                    {venue.sport} • {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", weekday: "short" })}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-muted-foreground">Reserved Slot:</span>
-                  <span className="text-xs font-black text-emerald-500">
-                    {formatSlotRange(slotToCancel.startHour, 1)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-dashed border-border/60">
-                  <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
-                    <Wallet className="h-3.5 w-3.5 text-emerald-500" /> Wallet Refund:
-                  </span>
-                  <span className="text-sm font-black text-emerald-500">
-                    ₹{slotToCancel.booking?.amount || getSlotPrice(slotToCancel.startHour, 1) || venue.price || 0}
-                  </span>
+                <div>
+                  <DialogTitle className="text-lg font-black tracking-tight">
+                    Cancel Slot Booking
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                    Are you sure you want to cancel this reservation?
+                  </DialogDescription>
                 </div>
               </div>
+            </DialogHeader>
 
-              {/* Reason Selector */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Please select a reason for cancellation <span className="text-red-500">*</span>
-                </label>
-                <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
-                  {CANCEL_REASONS.map((r) => {
-                    const isSelected = cancelReason === r.label;
-                    return (
-                      <div
-                        key={r.id}
-                        onClick={() => setCancelReason(r.label)}
-                        className={cn(
-                          "flex items-center gap-2.5 p-2.5 rounded-xl border text-xs font-medium cursor-pointer transition-all",
-                          isSelected
-                            ? isDark
-                              ? "bg-red-500/10 border-red-500/50 text-white font-bold"
-                              : "bg-red-50/80 border-red-400 text-red-950 font-bold shadow-xs"
-                            : isDark
-                              ? "bg-slate-800/40 border-slate-800 text-slate-300 hover:bg-slate-800/80"
-                              : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100/70"
-                        )}
-                      >
-                        <span className="text-base leading-none">{r.icon}</span>
-                        <span className="flex-1 leading-tight">{r.label}</span>
-                        <div className={cn(
-                          "h-4 w-4 rounded-full border flex items-center justify-center transition-colors",
-                          isSelected ? "border-red-500 bg-red-500 text-white" : "border-slate-400/50"
-                        )}>
-                          {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+            {slotToCancel && (
+              <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3.5 sm:py-4 space-y-3 sm:space-y-4">
+                {/* Slot Details Summary Box */}
+                <div className={cn(
+                  "rounded-2xl p-3.5 border space-y-2",
+                  isDark ? "bg-slate-900/80 border-slate-800" : "bg-slate-50 border-slate-200"
+                )}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted-foreground">Turf Venue:</span>
+                    <span className="text-xs font-black text-foreground">{venue.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted-foreground">Sport & Date:</span>
+                    <span className="text-xs font-black text-foreground">
+                      {venue.sport} • {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", weekday: "short" })}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted-foreground">Reserved Slot:</span>
+                    <span className="text-xs font-black text-emerald-500">
+                      {formatSlotRange(slotToCancel.startHour, 1)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-dashed border-border/60">
+                    <span className="text-xs font-bold text-muted-foreground flex items-center gap-1">
+                      <Wallet className="h-3.5 w-3.5 text-emerald-500" /> Wallet Refund:
+                    </span>
+                    <span className="text-sm font-black text-emerald-500">
+                      ₹{slotToCancel.booking?.amount || getSlotPrice(slotToCancel.startHour, 1) || venue.price || 0}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Reason Selector */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Please select a reason for cancellation <span className="text-red-500">*</span>
+                  </label>
+                  <div className="space-y-1.5 max-h-[140px] overflow-y-auto pr-1">
+                    {CANCEL_REASONS.map((r) => {
+                      const isSelected = cancelReason === r.label;
+                      return (
+                        <div
+                          key={r.id}
+                          onClick={() => setCancelReason(r.label)}
+                          className={cn(
+                            "flex items-center gap-2.5 p-2.5 rounded-xl border text-xs font-medium cursor-pointer transition-all",
+                            isSelected
+                              ? isDark
+                                ? "bg-red-500/10 border-red-500/50 text-white font-bold"
+                                : "bg-red-50/80 border-red-400 text-red-950 font-bold shadow-xs"
+                              : isDark
+                                ? "bg-slate-800/40 border-slate-800 text-slate-300 hover:bg-slate-800/80"
+                                : "bg-white border-slate-200 text-slate-700 hover:bg-slate-100/70"
+                          )}
+                        >
+                          <span className="text-base leading-none">{r.icon}</span>
+                          <span className="flex-1 leading-tight">{r.label}</span>
+                          <div className={cn(
+                            "h-4 w-4 rounded-full border flex items-center justify-center transition-colors",
+                            isSelected ? "border-red-500 bg-red-500 text-white" : "border-slate-400/50"
+                          )}>
+                            {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Custom Reason / Optional Feedback input */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-muted-foreground flex items-center justify-between">
+                    <span>Additional Details / Notes</span>
+                    <span className="text-[10px] font-normal text-muted-foreground/80">Optional</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                    placeholder="Help us improve by telling us why you're cancelling..."
+                    className={cn(
+                      "w-full px-3 py-2 text-xs rounded-xl border outline-none transition-all resize-none",
+                      isDark
+                        ? "bg-slate-900/90 border-slate-800 text-white focus:border-red-500/50 placeholder:text-slate-600"
+                        : "bg-white border-slate-200 text-slate-900 focus:border-red-400 placeholder:text-slate-400"
+                    )}
+                  />
+                </div>
+
+                {/* Refund Policy Alert */}
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400 flex items-start gap-2">
+                  <span className="text-xs shrink-0 mt-0.5">ℹ️</span>
+                  <span>
+                    Upon cancellation, this slot will be released for other players immediately and the amount will be credited to your <strong>SportXClub Wallet</strong>.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="p-3.5 sm:p-5 pt-3 border-t border-border/50 bg-muted/20 shrink-0 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isCancelling}
+                onClick={() => setCancelModalOpen(false)}
+                className="rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 h-10 px-4 cursor-pointer w-full sm:w-auto"
+              >
+                Keep My Booking
+              </Button>
+              <Button
+                type="button"
+                disabled={isCancelling}
+                onClick={handleConfirmCancelSlot}
+                className={cn(
+                  "rounded-xl text-xs font-black h-10 px-5 transition-all text-white flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto",
+                  "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-500/20 active:scale-95 disabled:opacity-50"
+                )}
+              >
+                {isCancelling ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Cancelling...</span>
+                  </>
+                ) : (
+                  <>
+                    <Ban className="h-4 w-4" />
+                    <span>Confirm Cancellation</span>
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Mobile Number Verification Modal for Payment */}
+        <Dialog open={phoneModalOpen} onOpenChange={setPhoneModalOpen}>
+          <DialogContent className={cn(
+            "max-w-md w-full rounded-3xl p-0 border shadow-2xl overflow-hidden flex flex-col",
+            isDark ? "bg-[#0f172a] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
+          )}>
+            <DialogHeader className="p-5 sm:p-6 pb-3 border-b border-border/50 shrink-0 text-left">
+              <div className="flex items-center gap-3">
+                <div className="h-11 w-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shrink-0">
+                  <Phone className="h-5 w-5 stroke-[2.5]" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg font-black tracking-tight">
+                    Enter Mobile Number
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                    Required for payment & instant booking receipt
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="p-5 sm:p-6 space-y-4">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Please enter your 10-digit mobile number. Cashfree uses this to securely load your verified payment methods and send your booking confirmation.
+              </p>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-muted-foreground">Mobile Number</label>
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "h-11 px-3 rounded-xl border flex items-center justify-center text-xs font-bold shrink-0",
+                    isDark ? "bg-slate-900 border-slate-800 text-slate-300" : "bg-slate-100 border-slate-200 text-slate-700"
+                  )}>
+                    🇮🇳 +91
+                  </div>
+                  <input
+                    type="tel"
+                    maxLength={10}
+                    autoFocus
+                    placeholder="Enter 10-digit number"
+                    value={enteredPhoneNumber}
+                    onChange={(e) => {
+                      const clean = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                      setEnteredPhoneNumber(clean);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleConfirmPhoneAndPay();
+                    }}
+                    className={cn(
+                      "flex-1 h-11 px-4 rounded-xl border text-sm font-semibold tracking-wider outline-none transition-all",
+                      isDark
+                        ? "bg-slate-900 border-slate-800 text-white placeholder:text-slate-600 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        : "bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600"
+                    )}
+                  />
                 </div>
               </div>
 
-              {/* Custom Reason / Optional Feedback input */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground flex items-center justify-between">
-                  <span>Additional Details / Notes</span>
-                  <span className="text-[10px] font-normal text-muted-foreground/80">Optional</span>
-                </label>
-                <textarea
-                  rows={2}
-                  value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
-                  placeholder="Help us improve by telling us why you're cancelling..."
-                  className={cn(
-                    "w-full px-3 py-2 text-xs rounded-xl border outline-none transition-all resize-none",
-                    isDark
-                      ? "bg-slate-900/90 border-slate-800 text-white focus:border-red-500/50 placeholder:text-slate-600"
-                      : "bg-white border-slate-200 text-slate-900 focus:border-red-400 placeholder:text-slate-400"
-                  )}
-                />
-              </div>
-
-              {/* Refund Policy Alert */}
-              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400 flex items-start gap-2">
-                <span className="text-xs shrink-0 mt-0.5">ℹ️</span>
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-600 dark:text-emerald-400 flex items-start gap-2">
+                <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>
-                  Upon cancellation, this slot will be released for other players immediately and the amount will be credited to your <strong>SportXClub Wallet</strong>.
+                  Your phone number is protected with RBI-authorized payment standards. Never shared with third parties.
                 </span>
               </div>
             </div>
-          )}
 
-          <DialogFooter className="p-4 sm:p-5 pt-3 border-t border-border/50 bg-muted/20 shrink-0 flex flex-row items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              disabled={isCancelling}
-              onClick={() => setCancelModalOpen(false)}
-              className="rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 h-10 px-4 cursor-pointer"
-            >
-              Keep My Booking
-            </Button>
-            <Button
-              type="button"
-              disabled={isCancelling}
-              onClick={handleConfirmCancelSlot}
-              className={cn(
-                "rounded-xl text-xs font-black h-10 px-5 transition-all text-white flex items-center gap-2 cursor-pointer",
-                "bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-500/20 active:scale-95 disabled:opacity-50"
-              )}
-            >
-              {isCancelling ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Cancelling...</span>
-                </>
-              ) : (
-                <>
-                  <Ban className="h-4 w-4" />
-                  <span>Confirm Cancellation</span>
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="p-4 sm:p-5 pt-3 border-t border-border/50 bg-muted/20 shrink-0 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPhoneModalOpen(false)}
+                className="rounded-xl text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 h-10 px-4 cursor-pointer w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmPhoneAndPay}
+                className="rounded-xl text-xs font-black h-10 px-5 transition-all flex items-center justify-center gap-2 cursor-pointer w-full sm:w-auto active:scale-95 bg-transparent border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-600 dark:hover:border-emerald-500 text-slate-800 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-500"
+              >
+                <span>Continue to Payment</span>
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <GlobalFooter />
-    </div>
+        <GlobalFooter />
+      </div>
     </>
   );
 }

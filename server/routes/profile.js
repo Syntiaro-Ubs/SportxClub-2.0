@@ -183,8 +183,9 @@ async function loadUserFromRequest(req, res) {
   const requestedUserId = req.query.userId || body.userId;
   const requestedEmail = req.query.email || body.email;
 
-  const targetId = authUserId || requestedUserId || null;
-  const targetEmail = authUserEmail || requestedEmail || null;
+  const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+  const targetId = isSuperAdmin ? (requestedUserId || authUserId) : authUserId;
+  const targetEmail = isSuperAdmin ? (requestedEmail || authUserEmail) : authUserEmail;
 
   if (!targetId && !targetEmail) {
     res.status(401).json({ success: false, error: "Please log in to view your player account." });
@@ -207,7 +208,7 @@ async function loadUserFromRequest(req, res) {
 }
 
 // GET /api/profile
-router.get("/", optionalAuth, async (req, res) => {
+router.get("/", authenticateToken, async (req, res) => {
   try {
     const result = await loadUserFromRequest(req, res);
     if (!result) return;
@@ -220,6 +221,14 @@ router.get("/", optionalAuth, async (req, res) => {
 
 // POST /api/profile/wallet/top-up (Secured: Only authenticated users can trigger topup requests)
 router.post("/wallet/top-up", authenticateToken, async (req, res) => {
+  const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+  if (!isSuperAdmin) {
+    return res.status(403).json({
+      success: false,
+      error: "Direct unverified wallet top-up is disabled. Please add funds using the Cashfree payment gateway.",
+    });
+  }
+
   const connection = await getPool().getConnection();
   try {
     const { amount } = req.body;
@@ -228,7 +237,7 @@ router.post("/wallet/top-up", authenticateToken, async (req, res) => {
       return res.status(400).json({ success: false, error: "A valid top-up amount is required" });
     }
 
-    const userId = req.user.id;
+    const userId = req.body.userId || req.user.id;
     const user = await findUser(connection, userId);
     if (!user) return res.status(404).json({ success: false, error: "Player account not found" });
 
@@ -372,7 +381,7 @@ router.post("/bookings/wallet-pay", optionalAuth, async (req, res) => {
     const finalTime = time || time_slot || slot_time || "Selected Slots";
     const finalUserName = user.full_name || userName || user_name || "SportX Player";
     const finalUserEmail = user.email || targetEmail || "user@sportxclub.com";
-    const finalUserPhone = user.phone || userPhone || user_phone || "9876543210";
+    const finalUserPhone = user.phone || userPhone || user_phone || "";
 
     await connection.beginTransaction();
 
@@ -676,7 +685,15 @@ router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
     }
 
     const cancelReason = String(reason || "User cancelled slot").trim();
-    const refundAmount = parseFloat(booking.amount || 0);
+    let refundAmount = parseFloat(booking.amount || 0);
+
+    // Apply 30-minute refund policy
+    const { slotStart } = parseBookingSlotTimes(booking.date, booking.time_slot || booking.slot_time, new Date());
+    let refundMessageSuffix = "";
+    if (slotStart && (slotStart.getTime() - Date.now() <= 30 * 60 * 1000)) {
+      refundAmount = 0;
+      refundMessageSuffix = " (No refund issued as cancellation is within 30 minutes of slot start time).";
+    }
 
     const isDirectBankRefund = refundDestination === "source";
     let refundMode = isDirectBankRefund ? "source" : "wallet";
@@ -723,13 +740,21 @@ router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
         refundStatus = "INITIATED";
       }
 
-      refundMessage = `Slot booking cancelled! ₹${refundAmount} refund initiated directly to your original Bank / UPI account (Ref: ${refundArn || refundId}). It will reflect within 24h to 3-5 working days.`;
+      if (refundAmount > 0) {
+        refundMessage = `Slot booking cancelled! ₹${refundAmount} refund initiated directly to your original Bank / UPI account (Ref: ${refundArn || refundId}). It will reflect within 24h to 3-5 working days.`;
+      } else {
+        refundMessage = `Slot booking cancelled!${refundMessageSuffix}`;
+      }
     } else {
       // User explicitly chose SportX Wallet credit
       refundMode = "wallet";
       refundId = `SX-WAL-REF-${Date.now().toString().slice(-8)}`;
       refundStatus = "SUCCESS";
-      refundMessage = `Slot booking cancelled! ₹${refundAmount} has been refunded to your SportX Wallet.`;
+      if (refundAmount > 0) {
+        refundMessage = `Slot booking cancelled! ₹${refundAmount} has been refunded to your SportX Wallet.`;
+      } else {
+        refundMessage = `Slot booking cancelled!${refundMessageSuffix}`;
+      }
     }
 
     await connection.beginTransaction();
@@ -790,6 +815,95 @@ router.post("/bookings/:id/cancel", optionalAuth, async (req, res) => {
   } catch (err) {
     await connection.rollback();
     console.error("Cancel Player Booking Error:", err);
+    return res.status(500).json({ success: false, error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// POST /api/profile/bookings/:id/exchange (Secured: Exchange booking slot)
+router.post("/bookings/:id/exchange", optionalAuth, async (req, res) => {
+  const connection = await getPool().getConnection();
+  try {
+    const { newDate, newTimeSlot, newSlotTime, userId, email, userEmail, userName } = req.body;
+    const bookingId = req.params.id;
+    const authUser = req.user || {};
+
+    if (!newDate || (!newTimeSlot && !newSlotTime)) {
+      return res.status(400).json({ success: false, error: "New date and time slot are required for exchange." });
+    }
+    const finalNewTimeSlot = newTimeSlot || newSlotTime;
+
+    const [bookings] = await connection.query("SELECT * FROM bookings WHERE id = ? LIMIT 1", [bookingId]);
+    if (!bookings || bookings.length === 0) {
+      return res.status(404).json({ success: false, error: "Booking not found." });
+    }
+    const booking = bookings[0];
+
+    // Ownership check
+    const callerEmail = String(authUser.email || email || userEmail || "").toLowerCase().trim();
+    const callerId = authUser.id || userId;
+    const bookedEmail = String(booking.user_email || "").toLowerCase().trim();
+    const isAdmin = authUser.role === "Admin" || authUser.role === "Super Admin" || authUser.accountType === "cms-admin" || authUser.role === "owner";
+    
+    const isOwnerOfBooking =
+      !bookedEmail ||
+      !callerEmail ||
+      bookedEmail === callerEmail ||
+      bookedEmail.includes(callerEmail) ||
+      callerEmail.includes(bookedEmail) ||
+      (callerId && booking.user_id && String(callerId) === String(booking.user_id)) ||
+      isAdmin;
+
+    if (!isOwnerOfBooking) {
+      return res.status(403).json({ success: false, error: "Forbidden. You can only exchange your own bookings." });
+    }
+
+    if (["Cancelled", "Canceled", "Completed"].includes(booking.status)) {
+      return res.status(400).json({ success: false, error: `This booking is ${booking.status} and cannot be exchanged.` });
+    }
+
+    // Check if new slot is available
+    const [existingBookings] = await connection.query(
+      `SELECT id FROM bookings 
+       WHERE (turf_id = ? OR LOWER(turf_name) = LOWER(?)) 
+         AND date = ? 
+         AND (time_slot = ? OR slot_time = ?)
+         AND status IN ('Confirmed', 'Paid')`,
+      [booking.turf_id, booking.turf_name, newDate, finalNewTimeSlot, finalNewTimeSlot]
+    );
+
+    if (existingBookings.length > 0) {
+      return res.status(400).json({ success: false, error: "The selected slot is already booked. Please choose another." });
+    }
+
+    await connection.beginTransaction();
+
+    // Mark current booking as Exchanged (or update it directly, but better to keep audit trail if needed.
+    // For simplicity, we update the existing booking's date and time.)
+    await connection.query(
+      `UPDATE bookings SET date = ?, time_slot = ?, slot_time = ? WHERE id = ?`,
+      [newDate, finalNewTimeSlot, finalNewTimeSlot, booking.id]
+    );
+
+    // Optionally log this exchange
+    // await connection.query("INSERT INTO exchange_logs ...")
+
+    await connection.commit();
+
+    // Re-fetch user profile data
+    const user = await findUser(connection, callerId || authUser.id, bookedEmail || callerEmail);
+    const profileData = user ? await getProfileData(connection, user) : null;
+
+    return res.json({
+      success: true,
+      message: "Slot exchanged successfully!",
+      bookingId: booking.id,
+      data: profileData
+    });
+  } catch (err) {
+    await connection.rollback();
+    console.error("Exchange Booking Error:", err);
     return res.status(500).json({ success: false, error: err.message });
   } finally {
     connection.release();

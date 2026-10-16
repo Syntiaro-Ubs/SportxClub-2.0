@@ -56,13 +56,8 @@ export function EditProfilePage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText.trim().toUpperCase() !== "DELETE") {
-      toast.error("Please type DELETE to confirm account deletion.");
-      return;
-    }
     try {
       setIsDeleting(true);
       await profileService.deleteAccount(currentUser);
@@ -347,7 +342,7 @@ export function EditProfilePage() {
                     <Button
                       type="button"
                       onClick={() => setDeleteOpen(true)}
-                      className="text-xs h-8 px-3 rounded-lg border border-rose-500/70 bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-400 shrink-0 font-bold cursor-pointer transition-all shadow-none"
+                      className="text-xs h-8 px-3 rounded-lg border border-rose-500/70 bg-rose-500/10 hover:!bg-rose-500/20 hover:!border-rose-600 hover:!text-rose-600 dark:bg-rose-950/30 dark:hover:!bg-rose-900/40 dark:hover:!border-rose-400 dark:hover:!text-rose-400 text-rose-600 dark:text-rose-400 shrink-0 font-bold cursor-pointer transition-all shadow-none"
                     >
                       Delete Account
                     </Button>
@@ -370,27 +365,19 @@ export function EditProfilePage() {
                   <strong className="text-rose-500 font-bold">Important:</strong> All your personal details, match records, wallet balance, active bookings, and reviews will be <strong>permanently deleted from our MySQL database</strong>. This cannot be undone.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-2 py-2">
-                <p className="text-xs text-muted-foreground font-medium">
-                  Please type <strong className="text-foreground font-mono font-bold">DELETE</strong> to confirm:
-                </p>
-                <Input
-                  type="text"
-                  placeholder="Type DELETE"
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  className="text-xs font-mono uppercase tracking-wider"
-                />
-              </div>
-              <DialogFooter className="gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => { setDeleteOpen(false); setDeleteConfirmText(""); }}>
+              <DialogFooter className="gap-2 sm:gap-2 lg:max-xl:gap-8 [@media(horizontal-viewport-segments:2)]:gap-8 lg:max-xl:justify-between [@media(horizontal-viewport-segments:2)]:justify-between pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteOpen(false)}
+                  className="font-semibold lg:max-xl:px-5 [@media(horizontal-viewport-segments:2)]:px-5"
+                >
                   Cancel
                 </Button>
                 <Button
-                  variant="destructive"
-                  disabled={deleteConfirmText.trim().toUpperCase() !== "DELETE" || isDeleting}
+                  type="button"
+                  disabled={isDeleting}
                   onClick={handleDeleteAccount}
-                  className="bg-rose-600 hover:bg-rose-700 font-bold text-white cursor-pointer"
+                  className="border border-rose-500/70 bg-rose-500/10 hover:!bg-rose-500/20 hover:!border-rose-600 hover:!text-rose-600 dark:bg-rose-950/30 dark:hover:!bg-rose-900/40 dark:hover:!border-rose-400 dark:hover:!text-rose-400 text-rose-600 dark:text-rose-400 font-bold cursor-pointer transition-all shadow-none"
                 >
                   {isDeleting ? "Deleting from Database..." : "Permanently Delete"}
                 </Button>

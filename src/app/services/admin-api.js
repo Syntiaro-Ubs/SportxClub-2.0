@@ -1,6 +1,7 @@
 import { fastCache } from "./fast-cache";
 
 const API_BASE = "/api";
+const inFlightRequests = new Map();
 
 export function getAuthHeaders(extraHeaders = {}) {
   let token = null;
@@ -19,22 +20,22 @@ export function getAuthHeaders(extraHeaders = {}) {
           sessionStorage.getItem("sportx_cms_token") ||
           cUser.token ||
           sessionStorage.getItem("cmsAdminToken") ||
-          localStorage.getItem("cmsAdminToken") ||
-          (cUser && (cUser.role || cUser.username || cUser.email) ? `cms_admin_${encodeURIComponent(cUser.username || cUser.email || "admin")}` : "cms_admin_master_session");
+          localStorage.getItem("token") ||
+          localStorage.getItem("cmsAdminToken");
       } else if (isOwnerRoute) {
         token =
           sessionStorage.getItem("sportx_owner_token") ||
           sessionStorage.getItem("turfOwnerToken") ||
           oUser.token ||
-          localStorage.getItem("turfOwnerToken") ||
-          (oUser && (oUser.email || oUser.ownerId || oUser.fullName) ? `owner_session_${encodeURIComponent(oUser.email || oUser.ownerId || "owner")}` : (sessionStorage.getItem("token") || localStorage.getItem("token") || localStorage.getItem("authToken")));
+          localStorage.getItem("token") ||
+          localStorage.getItem("turfOwnerToken");
       } else {
         token =
           sessionStorage.getItem("playerToken") ||
           sessionStorage.getItem("token") ||
           pUser.token ||
-          localStorage.getItem("playerToken") ||
           localStorage.getItem("token") ||
+          localStorage.getItem("playerToken") ||
           localStorage.getItem("authToken");
       }
 
@@ -91,11 +92,18 @@ export const adminApi = {
       const url = query ? `${API_BASE}/admin/${entity}?${query}` : `${API_BASE}/admin/${entity}`;
 
       let json;
-      if (!isOwnerRoute && (entity === "turfs" || entity === "tournaments" || entity === "reviews" || entity === "onboarding" || entity === "turf-onboarding")) {
-        json = await fastCache.fetchWithSWR(url, { headers: getAuthHeaders() });
+      if (!isOwnerRoute && (entity === "turfs" || entity === "tournaments" || entity === "reviews" || entity === "onboarding" || entity === "turf-onboarding" || entity === "bookings")) {
+        json = await fastCache.fetchWithSWR(url, { headers: getAuthHeaders() }, null, 60000);
       } else {
-        const res = await fetch(url, { headers: getAuthHeaders() });
-        json = await res.json();
+        if (!inFlightRequests.has(url)) {
+          const fetchPromise = fetch(url, { headers: getAuthHeaders() })
+            .then((res) => res.json())
+            .finally(() => {
+              inFlightRequests.delete(url);
+            });
+          inFlightRequests.set(url, fetchPromise);
+        }
+        json = await inFlightRequests.get(url);
       }
 
       if (!json || !json.success) throw new Error(json?.error || `Failed to fetch ${entity}`);

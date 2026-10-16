@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router";
 import useEmblaCarousel from "embla-carousel-react";
 import { toast } from "sonner";
@@ -58,6 +58,7 @@ import { Logo } from "../brand/Logo";
 import { ThemeToggleButton } from "../ui/theme-toggle-button";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { AppDownloadCTA } from "./AppDownloadCTA";
+import { StickyScrollSection } from "./StickyScrollSection";
 import { Footer } from "./Footer";
 
 const asset = (path) => `/assets${path}`;
@@ -318,10 +319,28 @@ export function Navbar() {
   const isDark = resolvedTheme !== "light";
   const [activeCity, setActiveCity] = useState(
     () => localStorage.getItem("preferred-city") || "Mumbai",
-  );
-  const [menuOpen, setMenuOpen] = useState(false);
+  ); const [menuOpen, setMenuOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const drawerRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Smoothly maps 0px -> 120px scroll to 0 -> 1 progress
+          const progress = Math.min(1, Math.max(0, window.scrollY / 120));
+          setScrollProgress(progress);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -341,7 +360,7 @@ export function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [userName, setUserName] = useState("");
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
 
   useEffect(() => {
     const active = currentUser;
@@ -356,7 +375,7 @@ export function Navbar() {
           setUserName(pUser.fullName ? pUser.fullName.split(" ")[0] : (pUser.name || "User"));
           return;
         }
-      } catch (e) {}
+      } catch (e) { }
       const loggedIn = localStorage.getItem("isLoggedIn") === "true";
       const name = localStorage.getItem("userName") || "User";
       setIsLoggedIn(loggedIn);
@@ -390,8 +409,6 @@ export function Navbar() {
       });
     }
   }, []);
-
-
 
   const handleCitySelect = (selected) => {
     localStorage.setItem("preferred-city", selected);
@@ -431,35 +448,89 @@ export function Navbar() {
       : []),
   ];
 
+  const headerStyle = {
+    backgroundColor: isDark
+      ? `rgba(11, 15, 25, ${scrollProgress * 0.95})`
+      : `rgba(255, 255, 255, ${scrollProgress * 0.96})`,
+    backdropFilter: scrollProgress > 0.05 ? "blur(16px)" : "none",
+    WebkitBackdropFilter: scrollProgress > 0.05 ? "blur(16px)" : "none",
+    borderBottomColor: isDark
+      ? `rgba(30, 41, 59, ${scrollProgress * 0.8})`
+      : `rgba(226, 232, 240, ${scrollProgress * 0.8})`,
+    boxShadow: scrollProgress > 0.15
+      ? (isDark
+        ? `0 4px 20px -2px rgba(0, 0, 0, ${scrollProgress * 0.5})`
+        : `0 4px 20px -2px rgba(0, 0, 0, ${scrollProgress * 0.08})`)
+      : "none",
+  };
+
   return (
     <>
       <header
+        style={headerStyle}
         className={cn(
-          "sticky top-0 z-50 w-full border-b backdrop-blur-2xl transition-colors duration-200 shadow-sm dark:shadow-[0_4px_30px_rgba(0,0,0,0.6)]",
-          isDark
-            ? "border-slate-800/80 bg-[#0b0f19]/90 text-white"
-            : "border-slate-200/80 bg-white/95 text-slate-900",
+          "fixed top-0 left-0 right-0 z-50 w-full border-b transition-colors duration-200 ease-out",
+          scrollProgress > 0.5
+            ? (isDark ? "text-white" : "text-slate-900")
+            : "text-white",
         )}
       >
-        <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between gap-4 pl-6 lg:pl-8 pr-0">
-          {/* Left Section: Logo */}
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 pl-6 lg:pl-8 pr-4 md:pr-6">
+          {/* Left Section: Logo with GPU-accelerated smooth scaling and cross-fade */}
           <div className="flex items-center justify-start">
-            <a href="/" className="flex items-center translate-y-[5px] md:translate-y-[8px]">
-              <Logo className="h-[50px] md:h-[80px]" />
+            <a href="/" className="flex items-center translate-y-[2px] md:translate-y-[4px]">
+              <div
+                style={{
+                  transform: `scale(${1.2 - scrollProgress * 0.2})`,
+                  transformOrigin: "left center",
+                  willChange: "transform",
+                }}
+                className="relative flex items-center"
+              >
+                {/* White logo for dark banner at top */}
+                <div
+                  style={{
+                    opacity: isDark ? 1 : Math.max(0, 1 - scrollProgress * 1.5),
+                    willChange: "opacity",
+                  }}
+                >
+                  <Logo forceTheme="dark" className="h-[50px] md:h-[75px] drop-shadow-md" />
+                </div>
+                {/* Adaptive light mode logo as navbar becomes white */}
+                {!isDark && (
+                  <div
+                    style={{
+                      opacity: Math.min(1, Math.max(0, (scrollProgress - 0.2) * 1.25)),
+                      willChange: "opacity",
+                    }}
+                    className="absolute inset-0 flex items-center"
+                  >
+                    <Logo forceTheme="light" className="h-[50px] md:h-[75px]" />
+                  </div>
+                )}
+              </div>
             </a>
           </div>
 
           {/* Right Section: Sign In + Hamburger Menu Toggle */}
           <div className="flex items-center justify-end gap-3 md:gap-4">
-            {/* Location Pill (Moved here) */}
-            <div className="hidden md:block">
+            {/* Location Pill */}
+            <div
+              style={{
+                opacity: scrollProgress,
+                transform: `translateY(${(1 - scrollProgress) * -6}px)`,
+                pointerEvents: scrollProgress > 0.3 ? "auto" : "none",
+                willChange: "opacity, transform",
+              }}
+              className="hidden md:block"
+            >
               <LocationModal
                 activeCity={activeCity}
                 onCitySelect={handleCitySelect}
                 trigger={
                   <button
                     className={cn(
-                      "group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[13px] lg:text-[14px] font-medium cursor-pointer !bg-transparent hover:!bg-transparent focus:outline-none focus:ring-0 text-foreground transition-colors"
+                      "group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[13px] lg:text-[14px] font-medium cursor-pointer !bg-transparent hover:!bg-transparent focus:outline-none focus:ring-0 text-foreground transition-colors",
                     )}
                   >
                     <MapPin className="h-3.5 w-3.5 lg:h-4 lg:w-4 shrink-0 text-foreground transition-all duration-300 ease-out group-hover:scale-125 group-hover:-rotate-12 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
@@ -473,110 +544,138 @@ export function Navbar() {
             </div>
 
             {/* Theme Toggle Button */}
-            <div className="hidden md:block">
+            <div
+              style={{
+                opacity: scrollProgress,
+                transform: `translateY(${(1 - scrollProgress) * -6}px)`,
+                pointerEvents: scrollProgress > 0.3 ? "auto" : "none",
+                willChange: "opacity, transform",
+              }}
+              className="hidden md:block"
+            >
               <ThemeToggleButton
                 className={cn(
                   "flex h-10 w-10 items-center justify-center transition hover:bg-transparent",
                   isDark
                     ? "text-white/80 hover:text-white"
-                    : "text-slate-700 hover:text-slate-900"
+                    : "text-slate-700 hover:text-slate-900",
                 )}
                 variant="ghost"
               />
             </div>
-            {/* Auth Section: Login or Profile */}
-            {isLoggedIn ? (
-              <div className="relative">
-                <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className={cn(
-                    "group relative flex h-10 items-center justify-center gap-2 transition px-2 lg:px-4 cursor-pointer rounded-md",
-                    isDark
-                      ? "bg-transparent text-white"
-                      : "bg-transparent text-emerald-600",
-                  )}
-                >
-                  <User className="h-5 w-5" />
-                  <span className="text-sm font-medium">{userName}</span>
-                </button>
 
-                {/* Profile Dropdown */}
-                {profileOpen && (
-                  <div
+            {/* Auth Section: Login or Profile */}
+            <div
+              style={{
+                opacity: scrollProgress,
+                transform: `translateY(${(1 - scrollProgress) * -6}px)`,
+                pointerEvents: scrollProgress > 0.3 ? "auto" : "none",
+                willChange: "opacity, transform",
+              }}
+            >
+              {isLoggedIn ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setProfileOpen(!profileOpen)}
                     className={cn(
-                      "absolute right-0 mt-2 w-48 rounded-xl border shadow-lg overflow-hidden z-50",
+                      "group relative flex h-10 items-center justify-center gap-2 transition px-2 lg:px-4 cursor-pointer rounded-md",
                       isDark
-                        ? "bg-[#101216] border-white/[0.08]"
-                        : "bg-white border-slate-200",
+                        ? "bg-transparent text-white"
+                        : "bg-transparent text-emerald-600",
                     )}
                   >
-                    <div className="p-2 space-y-1">
-                      <Link
-                        to={currentUser?.role === 'owner' ? '/admin-panel' : '/profile'}
-                        onClick={() => setProfileOpen(false)}
-                      >
+                    <User className="h-5 w-5" />
+                    <span className="text-sm font-medium">{userName}</span>
+                  </button>
+
+                  {/* Profile Dropdown */}
+                  {profileOpen && (
+                    <div
+                      className={cn(
+                        "absolute right-0 mt-2 w-48 rounded-xl border shadow-lg overflow-hidden z-50",
+                        isDark
+                          ? "bg-[#101216] border-white/[0.08]"
+                          : "bg-white border-slate-200",
+                      )}
+                    >
+                      <div className="p-2 space-y-1">
+                        <Link
+                          to={currentUser?.role === 'owner' ? '/admin-panel' : '/profile'}
+                          onClick={() => setProfileOpen(false)}
+                        >
+                          <button
+                            className={cn(
+                              "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition",
+                              isDark
+                                ? "hover:bg-white/5 text-white"
+                                : "hover:bg-slate-100 text-slate-800",
+                            )}
+                          >
+                            <User className="h-4 w-4" />
+                            Profile
+                          </button>
+                        </Link>
+                        <div
+                          className={cn(
+                            "h-[1px] w-full my-1",
+                            isDark ? "bg-white/10" : "bg-slate-100",
+                          )}
+                        />
                         <button
+                          onClick={() => {
+                            if (typeof logout === "function") {
+                              logout();
+                            }
+                            localStorage.removeItem("playerUser");
+                            localStorage.removeItem("playerToken");
+                            sessionStorage.removeItem("playerUser");
+                            sessionStorage.removeItem("playerToken");
+                            localStorage.removeItem("isLoggedIn");
+                            localStorage.removeItem("userName");
+                            setIsLoggedIn(false);
+                            setProfileOpen(false);
+                          }}
                           className={cn(
                             "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition",
                             isDark
-                              ? "hover:bg-white/5 text-white"
-                              : "hover:bg-slate-100 text-slate-800",
+                              ? "hover:bg-white/5 text-red-400"
+                              : "hover:bg-slate-100 text-red-600",
                           )}
                         >
-                          <User className="h-4 w-4" />
-                          Profile
+                          <LogOut className="h-4 w-4" />
+                          Logout
                         </button>
-                      </Link>
-                      <div
-                        className={cn(
-                          "h-[1px] w-full my-1",
-                          isDark ? "bg-white/10" : "bg-slate-100",
-                        )}
-                      />
-                      <button
-                        onClick={() => {
-                          localStorage.removeItem("isLoggedIn");
-                          setIsLoggedIn(false);
-                          setProfileOpen(false);
-                        }}
-                        className={cn(
-                          "w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition",
-                          isDark
-                            ? "hover:bg-white/5 text-red-400"
-                            : "hover:bg-slate-100 text-red-600",
-                        )}
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Logout
-                      </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link to="/login">
-                <button
-                  className={cn(
-                    "flex h-10 items-center justify-center px-5 text-sm tracking-wide transition-all cursor-pointer group",
-                    isDark
-                      ? "bg-transparent text-white hover:shadow-none"
-                      : "bg-transparent text-slate-800 hover:shadow-none",
                   )}
-                >
-                  <span className="group-hover:scale-110 transition-transform duration-300">Login</span>
-                </button>
-              </Link>
-            )}
+                </div>
+              ) : (
+                <Link to="/login">
+                  <button
+                    className={cn(
+                      "flex h-10 items-center justify-center px-5 text-sm tracking-wide transition-all cursor-pointer group",
+                      isDark
+                        ? "bg-transparent text-white hover:shadow-none"
+                        : "bg-transparent text-slate-800 hover:shadow-none",
+                    )}
+                  >
+                    <span className="group-hover:scale-110 transition-transform duration-300">Login</span>
+                  </button>
+                </Link>
+              )}
+            </div>
 
             {/* Hamburger Menu Toggle Button */}
             <button
               id="hamburger-menu-toggle-btn"
               onClick={() => setMenuOpen(!menuOpen)}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full transition duration-200 cursor-pointer bg-transparent hover:bg-transparent group",
-                isDark
-                  ? "text-white/80 hover:text-white"
-                  : "text-slate-700 hover:text-slate-900",
+                "flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 cursor-pointer bg-transparent hover:bg-transparent group",
+                scrollProgress > 0.5
+                  ? (isDark
+                    ? "text-white/80 hover:text-white"
+                    : "text-slate-700 hover:text-slate-900")
+                  : "text-white hover:text-white/80 drop-shadow-md",
               )}
               aria-label="Toggle menu"
             >
@@ -585,28 +684,34 @@ export function Navbar() {
               ) : (
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                  width="22"
+                  height="22"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="h-5 w-5 transition-transform duration-200 group-hover:scale-110"
+                  className="h-5 w-5 transition-transform duration-200 group-hover:scale-110 drop-shadow"
                 >
                   <line x1="4" y1="9" x2="20" y2="9" />
                   <line x1="4" y1="15" x2="14" y2="15" />
                 </svg>
               )}
             </button>
-
-            {/* Removed Theme Toggle Button */}
           </div>
         </div>
 
-        {/* Mobile/Tablet Location pill (shown only below 'md' screen size) */}
-        <div className="md:hidden px-4 pb-3">
+        {/* Mobile/Tablet Location pill (shown only below 'md' screen size when scrolled) */}
+        <div
+          style={{
+            opacity: scrollProgress,
+            maxHeight: `${scrollProgress * 56}px`,
+            pointerEvents: scrollProgress > 0.4 ? "auto" : "none",
+            willChange: "max-height, opacity",
+          }}
+          className="md:hidden px-4 overflow-hidden"
+        >
           <div
             className={cn(
               "flex items-center justify-center w-full rounded-full border px-4 py-2.5 shadow-sm transition-all duration-200",
@@ -861,7 +966,7 @@ export function HeroSection() {
       if (cached && Array.isArray(cached.data)) {
         return cached.data.filter((b) => b.is_active === undefined || b.is_active === 1 || b.is_active === true);
       }
-    } catch {}
+    } catch { }
     return [];
   });
 
@@ -958,7 +1063,7 @@ export function HeroSection() {
           onMouseLeave={() => setIsPaused(false)}
         >
           <div className="overflow-hidden w-full cursor-grab active:cursor-grabbing" ref={emblaRef}>
-            <div className="flex touch-pan-y items-center h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px]">
+            <div className="flex touch-pan-y items-center h-[310px] sm:h-[360px] md:h-[400px] lg:h-[440px]">
               {activeSlides.map((slide, index) => {
                 const isActive = currentSlide === index;
                 return (
@@ -967,8 +1072,8 @@ export function HeroSection() {
                     className="relative flex-[0_0_100%] min-w-0 h-full"
                   >
                     <div className={cn(
-                      "relative w-full h-full overflow-hidden border-y transition-all duration-500 shadow-2xl",
-                      isDark ? "border-white/20 bg-[#101216]" : "border-y-slate-300/90 bg-white",
+                      "relative w-full h-full overflow-hidden border-b border-t-0 transition-all duration-500 shadow-2xl",
+                      isDark ? "border-b-white/20 bg-[#101216]" : "border-b-slate-300/90 bg-white",
                       isActive ? "opacity-100" : "opacity-100 cursor-pointer"
                     )}
                       onClick={() => !isActive && handleDotClick(index)}>
@@ -1249,12 +1354,12 @@ function SportCard({ id, name, count, image, badge, icon, index }) {
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.45, delay: index * 0.05 }}
       whileHover={{ y: -6, scale: 1.015 }}
-      className="group shrink-0 snap-center w-[45vw] sm:w-[calc(33.33%-5.33px)] md:w-[calc(25%-6px)] lg:w-[calc(16.666%-6.66px)]"
+      className="group shrink-0 snap-center w-[54vw] sm:w-[calc(38%-6px)] md:w-[calc(28%-7px)] lg:w-[calc(20%-11.2px)]"
     >
       <Link to="/venues" state={{ sport: name }} className="block">
         <div
           className={cn(
-            "relative aspect-[2/3] overflow-hidden rounded-2xl border transition-all duration-300 ease-out",
+            "relative aspect-[7/10] overflow-hidden rounded-2xl border transition-all duration-300 ease-out",
             isDark
               ? "border-white/[0.08] bg-[#101216]"
               : "border-slate-300 bg-white shadow-sm hover:shadow-2xl hover:border-emerald-500/20",
@@ -1531,6 +1636,17 @@ export function SportsCategories() {
     () => localStorage.getItem("preferred-city") || "All Cities"
   );
   const [popularityMap, setPopularityMap] = useState({});
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScrollButtons = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atStart = el.scrollLeft <= 2;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+    setCanScrollLeft(!atStart);
+    setCanScrollRight(!atEnd);
+  }, []);
 
   // 1. Listen for City Changes in Navbar/Modal
   useEffect(() => {
@@ -1574,6 +1690,7 @@ export function SportsCategories() {
           if (!Array.isArray(dataList)) return;
           const mapped = dataList
             .filter((s) => s.is_active !== 0 && s.is_active !== false)
+            .filter((s) => s.name?.toLowerCase().trim() !== "pickleball")
             .map((s) => ({
               id: s.id,
               name: s.name,
@@ -1634,15 +1751,35 @@ export function SportsCategories() {
     });
   }, [dynamicSports, popularityMap]);
 
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    checkScrollButtons();
+
+    el.addEventListener("scroll", checkScrollButtons, { passive: true });
+    window.addEventListener("resize", checkScrollButtons);
+
+    const timeoutId = setTimeout(checkScrollButtons, 250);
+
+    return () => {
+      el.removeEventListener("scroll", checkScrollButtons);
+      window.removeEventListener("resize", checkScrollButtons);
+      clearTimeout(timeoutId);
+    };
+  }, [checkScrollButtons, sortedSports]);
+
   const scrollLeft = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -350, behavior: "smooth" });
+      scrollRef.current.scrollBy({ left: -380, behavior: "smooth" });
+      setTimeout(checkScrollButtons, 350);
     }
   };
 
   const scrollRight = () => {
     if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 350, behavior: "smooth" });
+      scrollRef.current.scrollBy({ left: 380, behavior: "smooth" });
+      setTimeout(checkScrollButtons, 350);
     }
   };
 
@@ -1651,7 +1788,7 @@ export function SportsCategories() {
   }
 
   return (
-    <section className="pt-2 sm:pt-2.5 md:pt-3 pb-1 relative overflow-hidden group/section">
+    <section className="pt-2 sm:pt-2.5 md:pt-3 pb-1 sm:pb-2 relative overflow-hidden group/section">
       <SportsBackgroundAnimation />
       <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8 relative">
         <SectionHeading
@@ -1659,7 +1796,7 @@ export function SportsCategories() {
         />
 
         <div className="relative mt-0.5">
-          {sortedSports.length > 6 && (
+          {canScrollLeft && (
             <button
               onClick={scrollLeft}
               aria-label="Scroll left"
@@ -1671,14 +1808,14 @@ export function SportsCategories() {
 
           <div
             ref={scrollRef}
-            className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x gap-2.5 sm:gap-3.5 pt-2 sm:pt-2.5 pb-3 sm:pb-4 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex snap-x snap-mandatory overflow-x-auto overflow-y-hidden touch-pan-x gap-2.5 sm:gap-3.5 pt-2 sm:pt-2.5 pb-4 sm:pb-5.5 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {sortedSports.map((sport, index) => (
               <SportCard key={sport.id || sport.name} index={index} {...sport} />
             ))}
           </div>
 
-          {sortedSports.length > 6 && (
+          {canScrollRight && (
             <button
               onClick={scrollRight}
               aria-label="Scroll right"
@@ -1687,6 +1824,115 @@ export function SportsCategories() {
               <ChevronRight120 className="h-8 w-8 md:h-10 md:w-10 text-slate-900 dark:text-white" strokeWidth={1.35} />
             </button>
           )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const CIRCLE_SPORTS = [
+  {
+    name: "Box Cricket",
+    image: "/assets/sports/circle-icons/box-cricket.png",
+  },
+  {
+    name: "Football",
+    image: "/assets/sports/circle-icons/football.png",
+  },
+  {
+    name: "Badminton",
+    image: "/assets/sports/circle-icons/badminton.png",
+  },
+  {
+    name: "Cricket Nets",
+    image: "/assets/sports/circle-icons/cricket-nets.png",
+  },
+  {
+    name: "Tennis",
+    image: "/assets/sports/circle-icons/tennis.png",
+  },
+  {
+    name: "Table Tennis",
+    image: "/assets/sports/circle-icons/table-tennis.png",
+  },
+  {
+    name: "Basketball",
+    image: "/assets/sports/circle-icons/basketball.png",
+  },
+  {
+    name: "Volleyball",
+    image: "/assets/sports/circle-icons/volleyball.png",
+  },
+  {
+    name: "Swimming",
+    image: "/assets/sports/circle-icons/swimming.png",
+  },
+  {
+    name: "Padel",
+    image: "/assets/sports/circle-icons/padel.png",
+  },
+];
+
+export function SportsCircleMarquee() {
+  const marqueeList = useMemo(() => [...CIRCLE_SPORTS, ...CIRCLE_SPORTS], []);
+
+  return (
+    <section className="relative w-full py-3 sm:py-5 overflow-hidden select-none cursor-default border-y border-slate-100 dark:border-slate-800/60 bg-gradient-to-b from-slate-50/40 via-white to-slate-50/20 dark:from-slate-900/20 dark:via-[#0b0f19] dark:to-slate-900/10">
+      <style>{`
+        @keyframes sportsMarqueeLtr {
+          0% {
+            transform: translate3d(-50%, 0, 0);
+          }
+          100% {
+            transform: translate3d(0%, 0, 0);
+          }
+        }
+        .animate-sports-marquee-ltr {
+          display: flex;
+          width: max-content;
+          animation: sportsMarqueeLtr 32s linear infinite;
+          will-change: transform;
+        }
+      `}</style>
+
+      {/* Edge gradient masks for smooth seamless blending */}
+      <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-24 md:w-32 bg-gradient-to-r from-white dark:from-[#0b0f19] to-transparent z-10" />
+      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-24 md:w-32 bg-gradient-to-l from-white dark:from-[#0b0f19] to-transparent z-10" />
+
+      {/* Marquee track: continuous non-stop auto-scroll */}
+      <div className="relative w-full overflow-hidden pointer-events-none">
+        <div className="animate-sports-marquee-ltr gap-8 sm:gap-12 md:gap-14 py-2 px-4 pointer-events-none">
+          {marqueeList.map((sport, idx) => (
+            <div
+              key={`${sport.name}-${idx}`}
+              className="flex flex-col items-center justify-center shrink-0 cursor-default select-none group pointer-events-none"
+            >
+              {/* 3D icon without background circle */}
+              <div className="relative flex items-center justify-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 md:w-22 md:h-22 flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+                  <img
+                    src={sport.image}
+                    alt={sport.name}
+                    draggable={false}
+                    className="w-full h-full object-contain pointer-events-none drop-shadow-md select-none"
+                    loading="lazy"
+                  />
+                </div>
+
+                {/* Badge (e.g., Pickleball NEW) */}
+                {sport.badge && (
+                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-white shadow-md bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pointer-events-none">
+                    {sport.badge}
+                  </span>
+                )}
+              </div>
+
+              {/* Title label underneath */}
+              <span className="mt-2 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight text-center pointer-events-none">
+                {sport.name}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -1861,15 +2107,18 @@ export function WhySportXClub() {
 
   return (
     <section id="about" className="pt-2 pb-12 md:pt-4 md:pb-16">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <SectionHeading
-          eyebrow="Why SportXClub"
-          title="Built for booking speed, tournament control, and trust."
-          centered
-          titleClassName="!text-xl md:!text-2xl lg:!text-3xl"
-        />
+      <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap sm:flex-nowrap">
+          <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/20 dark:border-emerald-400/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold tracking-wider uppercase shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+            Why SportXClub
+          </div>
+          <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+            Built for booking speed, tournament control, and trust.
+          </h2>
+        </div>
 
-        <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 sm:mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {cardsToRender.map((card, index) => {
             const IconComponent = getIcon(card.icon);
             return (
@@ -2098,13 +2347,17 @@ export function StoreSection() {
   }
 
   return (
-    <section className="pt-2 pb-2 md:pt-3 md:pb-4 relative overflow-hidden">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <SectionHeading
-          eyebrow="Pro Store"
-          title="Sport Related Facilities & Equipment"
-          titleClassName="!text-base sm:!text-lg md:!text-xl lg:!text-2xl"
-        />
+    <section className="pt-0 md:pt-0 pb-1 relative overflow-hidden">
+      <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap sm:flex-nowrap">
+          <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-400/10 border border-emerald-500/20 dark:border-emerald-400/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold tracking-wider uppercase shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse" />
+            Pro Store
+          </div>
+          <h2 className="text-base sm:text-lg md:text-xl font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+            Sport Related Facilities & Equipment
+          </h2>
+        </div>
       </div>
 
       {/* Infinite scrolling marquee slider track */}
@@ -2127,7 +2380,7 @@ export function StoreSection() {
           {activeProducts.map((product, idx) => (
             <div
               key={`first-${product.id || idx}`}
-              className="w-[280px] sm:w-[310px] shrink-0"
+              className="w-[245px] sm:w-[268px] shrink-0"
             >
               <div
                 className={cn(
@@ -2137,17 +2390,17 @@ export function StoreSection() {
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
                 )}
               >
-                <div className="h-44 sm:h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative shrink-0">
+                <div className="h-38 sm:h-42 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative shrink-0">
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
 
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-3 right-3">
                     <Badge
                       className={cn(
-                        "rounded-full px-2 py-1 flex items-center gap-1",
+                        "rounded-full px-2 py-0.5 flex items-center gap-1",
                         isDark
                           ? "bg-[#050505]/80 text-emerald-600 dark:text-white border border-emerald-600/30"
                           : "bg-white/90 text-emerald-700 border border-emerald-200",
@@ -2159,10 +2412,10 @@ export function StoreSection() {
                   </div>
                 </div>
 
-                <div className="flex flex-col flex-1 p-5">
+                <div className="flex flex-col flex-1 p-4">
                   <span
                     className={cn(
-                      "text-xs uppercase tracking-wider mb-2",
+                      "text-[11px] sm:text-xs uppercase tracking-wider mb-1",
                       isDark ? "text-white/50" : "text-slate-500",
                     )}
                   >
@@ -2170,17 +2423,17 @@ export function StoreSection() {
                   </span>
                   <h3
                     className={cn(
-                      "text-base leading-tight mb-3 line-clamp-2 h-10",
+                      "text-sm font-semibold leading-snug mb-2 line-clamp-2 h-10",
                       isDark ? "text-white" : "text-slate-900",
                     )}
                   >
                     {product.name}
                   </h3>
 
-                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-dashed border-slate-200 dark:border-white/10">
+                  <div className="mt-auto flex items-center justify-between pt-3 border-t border-dashed border-slate-200 dark:border-white/10">
                     <span
                       className={cn(
-                        "text-lg font-bold",
+                        "text-base sm:text-lg font-bold",
                         isDark ? "text-white" : "text-emerald-600",
                       )}
                     >
@@ -2190,7 +2443,7 @@ export function StoreSection() {
                       size="sm"
                       onClick={(e) => handleAddToCart(e, product)}
                       className={cn(
-                        "rounded-full px-4 text-xs tracking-wide transition-all group cursor-pointer",
+                        "rounded-full h-8 px-3.5 text-xs tracking-wide transition-all group cursor-pointer",
                         addedItems[product.id]
                           ? "bg-emerald-600 text-white"
                           : isDark
@@ -2198,7 +2451,7 @@ export function StoreSection() {
                             : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
                       )}
                     >
-                      <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                      <ShoppingCart className="h-3.5 w-3.5 mr-1" />
                       {addedItems[product.id] ? "Added ✓" : "Add"}
                     </Button>
                   </div>
@@ -2211,7 +2464,7 @@ export function StoreSection() {
           {activeProducts.length > 1 && activeProducts.map((product, idx) => (
             <div
               key={`second-${product.id || idx}`}
-              className="w-[280px] sm:w-[310px] shrink-0"
+              className="w-[245px] sm:w-[268px] shrink-0"
             >
               <div
                 className={cn(
@@ -2221,17 +2474,17 @@ export function StoreSection() {
                     : "border-slate-200 bg-white shadow-sm hover:shadow-xl hover:border-emerald-500/30",
                 )}
               >
-                <div className="h-44 sm:h-48 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative shrink-0">
+                <div className="h-38 sm:h-42 w-full overflow-hidden bg-slate-100 dark:bg-slate-800 relative shrink-0">
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
 
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-3 right-3">
                     <Badge
                       className={cn(
-                        "rounded-full px-2 py-1 flex items-center gap-1",
+                        "rounded-full px-2 py-0.5 flex items-center gap-1",
                         isDark
                           ? "bg-[#050505]/80 text-emerald-600 dark:text-white border border-emerald-600/30"
                           : "bg-white/90 text-emerald-700 border border-emerald-200",
@@ -2243,10 +2496,10 @@ export function StoreSection() {
                   </div>
                 </div>
 
-                <div className="flex flex-col flex-1 p-5">
+                <div className="flex flex-col flex-1 p-4">
                   <span
                     className={cn(
-                      "text-xs uppercase tracking-wider mb-2",
+                      "text-[11px] sm:text-xs uppercase tracking-wider mb-1",
                       isDark ? "text-white/50" : "text-slate-500",
                     )}
                   >
@@ -2254,17 +2507,17 @@ export function StoreSection() {
                   </span>
                   <h3
                     className={cn(
-                      "text-base leading-tight mb-3 line-clamp-2 h-10",
+                      "text-sm font-semibold leading-snug mb-2 line-clamp-2 h-10",
                       isDark ? "text-white" : "text-slate-900",
                     )}
                   >
                     {product.name}
                   </h3>
 
-                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-dashed border-slate-200 dark:border-white/10">
+                  <div className="mt-auto flex items-center justify-between pt-3 border-t border-dashed border-slate-200 dark:border-white/10">
                     <span
                       className={cn(
-                        "text-lg font-bold",
+                        "text-base sm:text-lg font-bold",
                         isDark ? "text-white" : "text-emerald-600",
                       )}
                     >
@@ -2274,7 +2527,7 @@ export function StoreSection() {
                       size="sm"
                       onClick={(e) => handleAddToCart(e, product)}
                       className={cn(
-                        "rounded-full px-4 text-xs tracking-wide transition-all group cursor-pointer",
+                        "rounded-full h-8 px-3.5 text-xs tracking-wide transition-all group cursor-pointer",
                         addedItems[product.id]
                           ? "bg-emerald-600 text-white"
                           : isDark
@@ -2282,7 +2535,7 @@ export function StoreSection() {
                             : "border border-slate-300 bg-transparent text-slate-600 hover:border-slate-900 hover:text-slate-900",
                       )}
                     >
-                      <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                      <ShoppingCart className="h-3.5 w-3.5 mr-1" />
                       {addedItems[product.id] ? "Added ✓" : "Add"}
                     </Button>
                   </div>
@@ -2294,12 +2547,12 @@ export function StoreSection() {
       </div>
 
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div className="mt-10 flex justify-center">
+        <div className="mt-2.5 sm:mt-3 flex justify-center">
           <Button
             variant="outline"
             onClick={() => setIsStoreModalOpen(true)}
             className={cn(
-              "rounded-full border-2 px-8 h-12 transition-all cursor-pointer font-bold shadow-sm hover:scale-105 active:scale-95 bg-transparent",
+              "rounded-full border px-5 sm:px-6 h-9 sm:h-9.5 text-xs sm:text-sm transition-all cursor-pointer font-semibold shadow-sm hover:scale-105 active:scale-95 bg-transparent",
               isDark
                 ? "border-emerald-500 text-emerald-400 hover:bg-emerald-500/10"
                 : "border-emerald-600 text-emerald-600 hover:bg-emerald-50",
@@ -2476,28 +2729,28 @@ const galleryTurfs = [];
 
 const CITY_METRO_CLUSTERS = {
   mumbai: [
-    "mumbai", "south mumbai", "mumbai central", "bandra", "andheri", "andheri west", 
-    "andheri east", "juhu", "powai", "borivali", "dadar", "worli", "colaba", 
-    "kurla", "malad", "goregaon", "ghatkopar", "mulund", "chembur", "thane", 
+    "mumbai", "south mumbai", "mumbai central", "bandra", "andheri", "andheri west",
+    "andheri east", "juhu", "powai", "borivali", "dadar", "worli", "colaba",
+    "kurla", "malad", "goregaon", "ghatkopar", "mulund", "chembur", "thane",
     "navi mumbai", "vashi", "kandivali", "santacruz", "khar", "bkc"
   ],
   pune: [
-    "pune", "akurdi", "koregaon park", "viman nagar", "hinjewadi", "wakad", 
-    "baner", "kothrud", "hadapsar", "aundh", "shivaji nagar", "kalyani nagar", 
+    "pune", "akurdi", "koregaon park", "viman nagar", "hinjewadi", "wakad",
+    "baner", "kothrud", "hadapsar", "aundh", "shivaji nagar", "kalyani nagar",
     "pimpri", "chinchwad", "magarpatta", "bavdhan", "kharadi", "swargate"
   ],
   bengaluru: [
-    "bengaluru", "bangalore", "koramangala", "indiranagar", "whitefield", 
-    "hsr", "hsr layout", "bellandur", "jayanagar", "electronic city", 
+    "bengaluru", "bangalore", "koramangala", "indiranagar", "whitefield",
+    "hsr", "hsr layout", "bellandur", "jayanagar", "electronic city",
     "marathahalli", "hebbal", "jp nagar", "malleshwaram", "yelahanka"
   ],
   delhi: [
-    "delhi", "new delhi", "delhi-ncr", "delhi ncr", "connaught place", 
+    "delhi", "new delhi", "delhi-ncr", "delhi ncr", "connaught place",
     "gurgaon", "gurugram", "noida", "greater noida", "ghaziabad", "faridabad",
     "saket", "dwarka", "rohini", "hauz khas", "vasant kunj"
   ],
   hyderabad: [
-    "hyderabad", "secunderabad", "gachibowli", "hitec city", "madhapur", 
+    "hyderabad", "secunderabad", "gachibowli", "hitec city", "madhapur",
     "jubilee hills", "banjara hills", "kondapur", "kukkatpally", "begumpet"
   ],
   ahmedabad: [
@@ -2552,18 +2805,12 @@ function isLocationMatchCity(venueLoc, filterCity) {
   return false;
 }
 
-const gridClassNames = [
-  "md:col-span-2 md:row-span-2", // Card 1 (First Number): Top/Highest Reviewed Turf in selected location
-  "md:col-span-1 md:row-span-1", // Card 2: 2nd Highest
-  "md:col-span-1 md:row-span-1", // Card 3: 3rd Highest
-  "md:col-span-2 md:row-span-1", // Card 4: 4th Highest
-];
-
 export function TurfGallery() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== "light";
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const [activeCity, setActiveCity] = useState(
     () => localStorage.getItem("preferred-city") || "All Cities"
@@ -2650,7 +2897,7 @@ export function TurfGallery() {
             if (typeof first === "string") img = first;
             else if (first?.url) img = first.url;
           }
-        } catch {}
+        } catch { }
       }
       if (!img) img = asset("/venues/turf-1.webp");
 
@@ -2687,107 +2934,108 @@ export function TurfGallery() {
 
     // Filter STRICTLY by selected city - NEVER mix or backfill other cities!
     const cityMatched = combined.filter((t) => isLocationMatchCity(t.location, activeCity));
-    // Sort strictly by review count descending, then rating descending (highest review on card #1)
+    // Sort strictly by review count descending, then rating descending
     cityMatched.sort(sortByReviewsDesc);
 
-    // Limit to top 4 turfs of THIS city (or all available if <= 4)
-    const finalTurfs = cityMatched.slice(0, 4);
-
-    const total = finalTurfs.length;
-    return finalTurfs.map((turf, idx) => {
-      let cls = "md:col-span-1 md:row-span-1";
-      if (total === 1) {
-        cls = "md:col-span-4 md:row-span-2 max-w-3xl mx-auto w-full";
-      } else if (total === 2) {
-        cls = "md:col-span-2 md:row-span-2";
-      } else if (total === 3) {
-        cls = idx === 0 ? "md:col-span-2 md:row-span-2" : "md:col-span-2 md:row-span-1";
-      } else {
-        cls = gridClassNames[idx] || "md:col-span-1 md:row-span-1";
-      }
-      return {
-        ...turf,
-        className: cls,
-      };
-    });
+    return cityMatched.slice(0, 4);
   }, [dbTurfs, dynamicGallery, activeCity]);
 
+  const handleTurfClick = (turf) => {
+    if (!currentUser) {
+      toast.error("Please login first to view venue details and book.");
+      navigate("/login");
+    } else {
+      if (turf.id && typeof turf.id === "number") {
+        navigate(`/venues/${turf.id}`, { state: { venue: turf } });
+      } else {
+        navigate("/venues");
+      }
+    }
+  };
+
+  const getBentoClass = (index, total) => {
+    if (total === 1) return "md:col-span-4 min-h-[350px]";
+    if (total === 2) return "md:col-span-2 min-h-[320px]";
+    if (total === 3) {
+      if (index === 0) return "md:col-span-2 md:row-span-2 min-h-[380px] md:min-h-[500px]";
+      return "md:col-span-2 md:row-span-1 min-h-[190px] md:min-h-[240px]";
+    }
+    const classes = [
+      "md:col-span-2 md:row-span-2 min-h-[380px] md:min-h-[500px]",
+      "md:col-span-1 md:row-span-1 min-h-[190px] md:min-h-[240px]",
+      "md:col-span-1 md:row-span-1 min-h-[190px] md:min-h-[240px]",
+      "md:col-span-2 md:row-span-1 min-h-[190px] md:min-h-[240px]",
+    ];
+    return classes[index] || "md:col-span-1 md:row-span-1 min-h-[200px]";
+  };
+
   return (
-    <section className="pt-0 pb-4 md:pb-6 relative overflow-hidden">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <SectionHeading
-          eyebrow={activeCity && activeCity !== "All Cities" ? `Gallery • ${activeCity}` : "Gallery"}
-          title="Immersive Turf Experiences"
-          titleClassName="!text-base sm:!text-lg md:!text-xl lg:!text-2xl"
-        />
+    <section className="pt-3 pb-10 md:pt-4 md:pb-14 relative overflow-hidden bg-white dark:bg-[#0b0f19] transition-colors duration-300">
+      <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-8 relative z-10">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Immersive Turf Experiences
+        </h2>
 
         {galleryToRender.length > 0 ? (
-          <div className="mt-5 sm:mt-6 grid grid-cols-1 md:grid-cols-4 auto-rows-[280px] gap-4">
-            {galleryToRender.map((turf) => (
+          <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-5">
+            {galleryToRender.map((turf, idx) => (
               <motion.div
-                key={turf.id}
-                initial={{ opacity: 0, scale: 0.98 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
+                key={turf.id || idx}
+                whileHover={{ scale: 1.01 }}
+                transition={{ duration: 0.25 }}
+                onClick={() => handleTurfClick(turf)}
                 className={cn(
-                  "always-dark group relative overflow-hidden rounded-3xl bg-[#101216]",
-                  turf.className,
+                  "always-dark group relative overflow-hidden rounded-[24px] sm:rounded-[28px] border border-black/10 dark:border-white/10 shadow-sm hover:shadow-xl cursor-pointer transition-shadow",
+                  getBentoClass(idx, galleryToRender.length)
                 )}
               >
+                {/* Background Image */}
                 <ImageWithFallback
                   src={turf.image}
                   alt={turf.name}
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-100" />
+                {/* Dark Vignette / Gradient Overlay */}
+                <div
+                  className="image-overlay always-dark absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none"
+                  style={{ background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 45%, rgba(0,0,0,0) 100%)" }}
+                />
 
-                <div className="absolute top-4 right-4 z-10">
-                  <div className="flex flex-col items-end">
-                    <Badge
-                      className="rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-lg backdrop-blur-md border bg-[#050505]/60 text-emerald-400 border-emerald-500/30"
-                    >
-                      <Star className="h-3.5 w-3.5 fill-current" />
-                      <span className="text-sm">{turf.rating}</span>
-                    </Badge>
-                    <span className="mt-1 text-[10px] text-[#ffffff]/90 drop-shadow-md mr-1">
-                      {turf.reviews} Reviews
-                    </span>
+                {/* Top-Right Rating Badge & Reviews */}
+                <div className="always-dark absolute top-3.5 right-3.5 sm:top-4 sm:right-4 z-20 flex flex-col items-end pointer-events-none">
+                  <div
+                    className="rounded-full px-2.5 sm:px-3 py-1 flex items-center gap-1.5 shadow-md backdrop-blur-md bg-black/60 border border-white/20 !text-white font-bold text-xs"
+                    style={{ backgroundColor: "rgba(0, 0, 0, 0.65)", color: "#ffffff" }}
+                  >
+                    <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-emerald-400 text-emerald-400" />
+                    <span className="!text-white font-bold" style={{ color: "#ffffff" }}>{turf.rating}</span>
                   </div>
+                  <span
+                    className="text-[10px] sm:text-[11px] !text-white font-medium mt-1 mr-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]"
+                    style={{ color: "#ffffff" }}
+                  >
+                    {turf.reviews} Reviews
+                  </span>
                 </div>
 
-                <div className="absolute bottom-0 left-0 w-full p-6 z-10 translate-y-2 transition-transform duration-300 group-hover:translate-y-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="h-4 w-4 text-emerald-400" />
-                    <span className="text-sm text-[#ffffff]/90 drop-shadow-md">
-                      {typeof turf.location === 'object' ? (turf.location?.city || turf.location?.address || 'Location unavailable') : turf.location}
+                {/* Bottom Info Overlay */}
+                <div className="always-dark absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-5 sm:right-5 z-20 flex flex-col items-start text-left pointer-events-none">
+                  <div className="flex items-center gap-1.5 text-xs !text-white font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] max-w-full">
+                    <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    <span
+                      className="truncate !text-white"
+                      style={{ color: "#ffffff" }}
+                    >
+                      {turf.location}
                     </span>
                   </div>
-                  <h3 className="text-2xl text-[#ffffff] drop-shadow-lg font-bold">
+                  <h3
+                    className="text-lg sm:text-xl md:text-2xl font-bold !text-white mt-1 leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] truncate max-w-full"
+                    style={{ color: "#ffffff" }}
+                  >
                     {turf.name}
                   </h3>
-
-                  <div className="mt-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <button
-                      onClick={() => {
-                        if (!currentUser) {
-                          toast.error("Please login first to view venue details and book.");
-                          navigate("/login");
-                        } else {
-                          if (turf.id && typeof turf.id === "number") {
-                            navigate(`/venues/${turf.id}`, { state: { venue: turf } });
-                          } else {
-                            navigate("/venues");
-                          }
-                        }
-                      }}
-                      className="always-dark rounded-xl bg-slate-800/60 text-white border border-white/20 hover:border-2 hover:border-emerald-500 hover:bg-slate-800/80 hover:text-white backdrop-blur-md px-5 py-2 text-sm font-semibold transition-all duration-300 cursor-pointer shadow-sm hover:shadow-[0_0_16px_rgba(16,185,129,0.4)] inline-flex items-center justify-center"
-                      style={{ backgroundColor: 'rgba(30, 41, 59, 0.65)', color: '#ffffff' }}
-                    >
-                      View Details
-                    </button>
-                  </div>
                 </div>
               </motion.div>
             ))}
@@ -2832,8 +3080,11 @@ export function HomePage() {
       <Navbar />
       <HeroSection />
       <SportsCategories />
+      <SportsCircleMarquee />
       <StoreSection />
-      <DiscoveryRails />
+
+      <StickyScrollSection />
+
       <TurfGallery />
       <WhySportXClub />
 

@@ -650,6 +650,7 @@ export function MobileHomePage() {
 
   return (
     <div className="theme-adaptive min-h-dvh bg-background text-foreground">
+      <MobileAppBar />
       <div>
         <div className="space-y-4 px-4 pb-4 pt-2">
           <motion.section
@@ -749,13 +750,13 @@ export function MobileHomePage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-1 flex-col justify-between py-1 pr-3 h-[110px]">
+                    <div className="flex flex-1 flex-col justify-between py-1 pr-3 h-[110px] min-w-0">
                       <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <Badge variant="outline" className="text-[0.6rem] px-2 py-0 border-primary/20 text-primary bg-primary/5 rounded-md font-semibold tracking-wide uppercase">
+                        <div className="flex items-center justify-between mb-1.5 gap-2">
+                          <Badge variant="outline" className="text-[0.6rem] px-2 py-0 border-primary/20 text-primary bg-primary/5 rounded-md font-semibold tracking-wide uppercase truncate max-w-[65%] inline-block text-ellipsis">
                             {venue.sport}
                           </Badge>
-                          <span className="text-[0.7rem] font-bold text-foreground bg-muted/60 px-2 py-0.5 rounded-md">{venue.price}</span>
+                          <span className="text-[0.7rem] font-bold text-foreground bg-muted/60 px-2 py-0.5 rounded-md shrink-0">{venue.price}</span>
                         </div>
 
                         <h3 className="text-[1.05rem] font-bold text-foreground leading-tight line-clamp-1 mb-1">

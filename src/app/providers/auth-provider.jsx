@@ -274,9 +274,15 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     sessionStorage.removeItem("token");
+    sessionStorage.removeItem("playerToken");
     sessionStorage.removeItem("sportx_owner_token");
     sessionStorage.removeItem("sportx_cms_token");
+    sessionStorage.removeItem("turfOwnerToken");
     localStorage.removeItem("token");
+    localStorage.removeItem("playerToken");
+    localStorage.removeItem("turfOwnerToken");
+    localStorage.removeItem("cmsAdminToken");
+    localStorage.removeItem("authToken");
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     if (path.startsWith("/admin-panel") || path.startsWith("/admin-login") || path.startsWith("/owner")) {
       setTurfOwnerUser(null);

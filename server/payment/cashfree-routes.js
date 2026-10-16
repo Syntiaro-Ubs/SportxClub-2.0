@@ -96,8 +96,16 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
       }
     }
 
-    if (amount && parseFloat(amount) > 0) {
-      authoritativeAmount = parseFloat(amount);
+    const isWalletTopup = req.body.orderType === "WALLET_TOPUP";
+    if (isWalletTopup) {
+      if (amount && parseFloat(amount) > 0) {
+        authoritativeAmount = parseFloat(amount);
+      }
+    } else {
+      // For bookings, authoritativeAmount is strictly enforced by DB turf price * count
+      if (!Number.isFinite(authoritativeAmount) || authoritativeAmount <= 0) {
+        authoritativeAmount = parseFloat(amount || 1200);
+      }
     }
 
     const numericAmount = Math.max(1, authoritativeAmount);
@@ -108,8 +116,15 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
 
     const cleanEmail = (req.user?.email || userEmail || "user@sportxclub.com").trim().toLowerCase();
     const cleanName = String(userName || "SportX Player").replace(/[^a-zA-Z0-9 ]/g, "").trim() || "SportX Player";
-    const rawPhone = String(userPhone || "9876543210").replace(/[^0-9]/g, "");
-    const cleanPhone = rawPhone.length >= 10 ? rawPhone.slice(-10) : "9876543210";
+    const rawPhone = String(userPhone || "").replace(/[^0-9]/g, "");
+    const cleanPhone = rawPhone.length >= 10 ? rawPhone.slice(-10) : "";
+    
+    if (!cleanPhone || cleanPhone.length !== 10) {
+      return res.status(400).json({
+        success: false,
+        message: "A valid 10-digit customer mobile number is required to initiate Cashfree payment.",
+      });
+    }
     
     const cleanCustomerId = `cust_${cleanPhone}_${cleanEmail.replace(/[^a-zA-Z0-9]/g, "").slice(0, 15)}`;
     const cleanDate = String(date || "").trim();
@@ -117,8 +132,27 @@ router.post(["/create-order", "/initiate"], optionalAuth, async (req, res) => {
     const cleanSport = String(sport || "Sports").trim();
     const cleanBookingCode = String(bookingCode || `SPXBK${Date.now()}`).trim();
 
+    // Double-Booking Guard: Verify slot is not already booked by another player
+    if (!isWalletTopup && (venueId || turfName) && cleanDate && cleanTime) {
+      const [alreadyBooked] = await pool.query(
+        `SELECT id FROM bookings 
+         WHERE (turf_id = ? OR LOWER(turf_name) = LOWER(?))
+           AND date = ? 
+           AND (time_slot = ? OR slot_time = ?)
+           AND status IN ('Confirmed', 'Paid')
+         LIMIT 1`,
+        [venueId || -1, resolvedTurfName, cleanDate, cleanTime, cleanTime]
+      );
+      if (alreadyBooked.length > 0) {
+        return res.status(409).json({
+          success: false,
+          message: "This time slot has already been booked by another player. Please select a different time slot.",
+        });
+      }
+    }
+
     // Cashfree API schema strictly requires return_url and notify_url to start with https://
-    const isWalletTopup = req.body.orderType === "WALLET_TOPUP";
+
     const reqOrigin = (req.headers.origin || req.headers.referer || "").replace(/\/+$/, "");
     const baseDomain = reqOrigin.startsWith("https://")
       ? reqOrigin
@@ -352,7 +386,7 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
       const bookingCode = initialBookingData?.cleanBookingCode || tags.bookingCode || `SPX-BK-${Date.now()}`;
       const userEmail = initialBookingData?.cleanEmail || orderData.customer_details?.customer_email || "user@sportxclub.com";
       const userName = initialBookingData?.cleanName || orderData.customer_details?.customer_name || "SportX Player";
-      const userPhone = initialBookingData?.cleanPhone || orderData.customer_details?.customer_phone || "9876543210";
+      const userPhone = initialBookingData?.cleanPhone || orderData.customer_details?.customer_phone || "";
 
       let paymentId = existingPayments[0]?.id;
       if (existingPayments.length > 0) {
@@ -384,8 +418,8 @@ router.get(["/order/:order_id", "/status/:order_id"], async (req, res) => {
       }
 
       const [existingBookings] = await pool.query(
-        "SELECT id, booking_code FROM bookings WHERE booking_code = ? OR (user_email = ? AND turf_name = ? AND date = ? AND (time_slot = ? OR slot_time = ?)) LIMIT 1",
-        [bookingCode, userEmail, turfName, dateStr, timeStr, timeStr]
+        "SELECT id, booking_code FROM bookings WHERE booking_code = ? OR ((turf_name = ? OR turf_id = ?) AND date = ? AND (time_slot = ? OR slot_time = ?) AND status IN ('Confirmed', 'Paid')) LIMIT 1",
+        [bookingCode, turfName, turfId || -1, dateStr, timeStr, timeStr]
       );
 
       let bookingRecord = existingBookings[0] || null;
@@ -541,7 +575,7 @@ router.post("/verify", optionalAuth, async (req, res) => {
         bookingCode,
         userName,
         userEmail,
-        bookingPayload?.userPhone || "9876543210",
+        bookingPayload?.userPhone || orderData?.customer_details?.customer_phone || "",
         turfName,
         turfId,
         sportName,
@@ -558,7 +592,7 @@ router.post("/verify", optionalAuth, async (req, res) => {
       bookingCode,
       userName,
       userEmail,
-      userPhone: bookingPayload?.userPhone || "9876543210",
+      userPhone: bookingPayload?.userPhone || orderData?.customer_details?.customer_phone || "",
       turfName,
       turfId,
       sport: sportName,

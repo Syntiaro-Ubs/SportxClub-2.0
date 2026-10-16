@@ -218,7 +218,7 @@ export function Dashboard() {
 
   // Dynamic Revenue Trend Data from MySQL
   const revenueTrendData = useMemo(() => {
-    if (payments.length === 0 && bookings.length === 0) {
+    if (!grossRevenueSum || grossRevenueSum <= 0 || (payments.length === 0 && bookings.length === 0)) {
       return [
         { name: "6 AM", revenue: 0 },
         { name: "9 AM", revenue: 0 },
@@ -229,7 +229,7 @@ export function Dashboard() {
         { name: "11 PM", revenue: 0 },
       ];
     }
-    const base = grossRevenueSum || 1200;
+    const base = grossRevenueSum;
     return [
       { name: "6 AM", revenue: Math.round(base * 0.1) },
       { name: "9 AM", revenue: Math.round(base * 0.15) },

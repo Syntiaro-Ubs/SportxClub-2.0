@@ -36,8 +36,8 @@ export function Footer() {
         )} />
       </div>
 
-      <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-8 sm:gap-10 grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_0.75fr_0.75fr_0.8fr_0.8fr]">
+      <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:max-xl:px-4 [@media(horizontal-viewport-segments:2)]:px-4 xl:px-8">
+        <div className="grid gap-6 sm:gap-8 lg:gap-4 xl:gap-10 grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_0.7fr_0.7fr_0.75fr_minmax(200px,1fr)] xl:grid-cols-[1.1fr_0.75fr_0.75fr_0.8fr_0.8fr]">
           <div className="col-span-2 sm:col-span-3 lg:col-span-1 max-w-md">
             <div className="flex items-center gap-3">
               <a href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
@@ -132,7 +132,7 @@ export function Footer() {
           ],
         },
       ].map((column) => (
-        <div key={column.title} className="col-span-1 min-w-0">
+        <div key={column.title} className={cn(column.title === "Social" ? "col-span-1 min-w-[200px]" : "col-span-1 min-w-0")}>
           <h3 className={cn("font-bold text-sm tracking-wide", isDark ? "text-white" : "text-slate-900")}>
             {column.title}
           </h3>
@@ -153,14 +153,14 @@ export function Footer() {
               ))}
             </ul>
           ) : (
-            <div className="mt-4 sm:mt-5 flex items-center flex-nowrap gap-1 sm:gap-2">
+            <div className="mt-4 sm:mt-5 flex items-center flex-nowrap gap-1 sm:gap-1.5 xl:gap-2">
               {column.links.map((link) => (
                 <a
                   key={link.label}
                   href={link.href || `#${link.label.toLowerCase()}`}
                   target={link.href ? "_blank" : "_self"}
                   rel={link.href ? "noopener noreferrer" : ""}
-                  className={`inline-flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-full border-0 bg-transparent transition hover:-translate-y-1 hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
+                  className={`inline-flex h-7.5 w-7.5 sm:h-8 sm:w-8 xl:h-9 xl:w-9 items-center justify-center rounded-full border-0 bg-transparent transition hover:-translate-y-1 hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
                   style={{ color: link.brandColor }}
                   aria-label={link.label}
                 >

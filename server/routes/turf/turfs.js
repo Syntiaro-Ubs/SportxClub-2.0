@@ -526,6 +526,19 @@ router.put("/:id", authenticateToken, requireRole(["admin", "super admin", "cms-
   try {
     const pool = getPool();
     const { id } = req.params;
+
+    const [existingTurfs] = await pool.query("SELECT * FROM turfs WHERE id = ? LIMIT 1", [id]);
+    if (existingTurfs.length === 0) {
+      return res.status(404).json({ success: false, error: "Turf not found" });
+    }
+    const turf = existingTurfs[0];
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    const isOwnerOfTurf = turf.owner_email && String(turf.owner_email).toLowerCase() === String(req.user?.email || "").toLowerCase();
+
+    if (!isSuperAdmin && !isOwnerOfTurf) {
+      return res.status(403).json({ success: false, error: "Forbidden: You are not authorized to modify this turf." });
+    }
+
     const body = await filterTurfColumns(pool, req.body);
     const keys = Object.keys(body);
     if (keys.length === 0) {
@@ -549,6 +562,19 @@ router.delete("/:id", authenticateToken, requireRole(["admin", "super admin", "c
   try {
     const pool = getPool();
     const { id } = req.params;
+
+    const [existingTurfs] = await pool.query("SELECT * FROM turfs WHERE id = ? LIMIT 1", [id]);
+    if (existingTurfs.length === 0) {
+      return res.status(404).json({ success: false, error: "Turf not found" });
+    }
+    const turf = existingTurfs[0];
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    const isOwnerOfTurf = turf.owner_email && String(turf.owner_email).toLowerCase() === String(req.user?.email || "").toLowerCase();
+
+    if (!isSuperAdmin && !isOwnerOfTurf) {
+      return res.status(403).json({ success: false, error: "Forbidden: You are not authorized to delete this turf." });
+    }
+
     await pool.query("DELETE FROM turfs WHERE id = ?", [id]);
     return res.json({ success: true, id: Number(id) });
   } catch (err) {

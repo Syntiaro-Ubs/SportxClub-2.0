@@ -70,6 +70,7 @@ export function RegisterPage() {
     selectedSports: [],
     skillLevel: "Intermediate", // Beginner | Intermediate | Pro
     city: "",
+    phone: "",
     otp: "",
     address: "",
     state: "",
@@ -166,6 +167,7 @@ export function RegisterPage() {
   const isStep1Valid = () => {
     return (
       formData.firstName.trim() !== "" &&
+      formData.phone.trim().length >= 10 &&
       formData.email.includes("@") &&
       !emailExistsError &&
       emailVerified
@@ -342,6 +344,7 @@ export function RegisterPage() {
       selectedSports: formData.selectedSports,
       skillLevel: formData.skillLevel,
       city: formData.city,
+      phone: formData.phone,
     });
 
     setIsSubmitting(false);
@@ -365,10 +368,10 @@ export function RegisterPage() {
   return (
     <div className="bg-background min-h-screen flex items-center justify-end font-sans relative overflow-hidden">
       {/* MAIN CONTAINER (Right Aligned Full Height Drawer) */}
-      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full border-y border-l border-border/50 bg-card/95 backdrop-blur-3xl rounded-none p-6 sm:p-10 shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.4)] relative overflow-y-auto z-10 flex flex-col justify-center">
+      <div className="w-full sm:w-[440px] sm:max-w-none min-h-screen h-full border-y border-l border-border/50 bg-card/95 backdrop-blur-3xl rounded-none px-6 sm:px-10 pt-4 sm:pt-6 pb-6 sm:pb-10 shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.15)] dark:shadow-[-12px_0_40px_-12px_rgba(0,0,0,0.4)] relative overflow-y-auto z-10 flex flex-col justify-center">
 
         {/* HEADER LOGO */}
-        <div className="w-full flex items-center justify-center mb-6 md:mb-10 z-10">
+        <div className="w-full flex items-center justify-center mb-6 md:mb-8 z-10 -translate-y-8 sm:-translate-y-12">
           <Link to="/" className="flex items-center gap-3">
             <Logo />
           </Link>
@@ -388,7 +391,7 @@ export function RegisterPage() {
               transition={{ duration: 0.4 }}
               className="text-center space-y-6 flex flex-col justify-center h-full max-w-md mx-auto"
             >
-              <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center relative mb-2">
+              <div className="mx-auto h-20 w-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center relative -mt-4 sm:-mt-6 mb-5 sm:mb-6">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -405,7 +408,7 @@ export function RegisterPage() {
               </div>
 
               <div className="space-y-3 mb-6">
-                <h1 className="text-[28px] text-slate-900 font-medium tracking-tight">
+                <h1 className="text-[22px] sm:text-[24px] text-slate-900 dark:text-white font-medium tracking-tight">
                   {formData.role === "owner" ? "Registration Completed!" : "Account Created Successfully!"}
                 </h1>
                 <p className="text-slate-600 text-[15px] max-w-xs mx-auto leading-relaxed">
@@ -523,6 +526,24 @@ export function RegisterPage() {
                             onChange={handleInputChange}
                           />
                         </div>
+                      </div>
+                    </div>
+
+                    {/* MOBILE NUMBER FIELD */}
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phone">Mobile Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-2.5 h-4.5 w-4.5 text-muted-foreground" />
+                        <Input
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          placeholder="Enter Mobile Number"
+                          className="pl-10 h-10.5 rounded-lg border-slate-400/80 dark:border-slate-600 bg-background/50 focus-visible:bg-background placeholder:text-xs"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          required
+                        />
                       </div>
                     </div>
 

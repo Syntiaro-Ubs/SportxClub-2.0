@@ -92,11 +92,11 @@ export function GlobalFooter() {
   ];
 
   return (
-    <footer className={`w-full pt-4 sm:pt-6 pb-4 md:pb-6 px-4 sm:px-6 md:px-12 border-t mt-2 transition-all duration-300 text-left ${isDark
+    <footer className={`w-full pt-4 sm:pt-6 pb-4 md:pb-6 px-4 sm:px-6 lg:max-xl:px-4 [@media(horizontal-viewport-segments:2)]:px-4 md:px-12 border-t mt-2 transition-all duration-300 text-left ${isDark
       ? "bg-[#090D16] border-white/[0.05] text-white"
       : "bg-[#FBFBFA] border-slate-200 text-slate-800"
       }`}>
-      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_0.75fr_0.75fr_0.8fr_0.8fr] gap-5 lg:gap-8 items-start">
+      <div className="max-w-7xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-[1.1fr_0.7fr_0.7fr_0.75fr_minmax(200px,1fr)] xl:grid-cols-[1.1fr_0.75fr_0.75fr_0.8fr_0.8fr] gap-5 lg:gap-4 xl:gap-8 items-start">
         {/* Left Column: Logo, description, and app badges */}
         <div className="space-y-2.5 sm:space-y-4 max-w-md col-span-2 sm:col-span-3 lg:col-span-1">
           <a href="/" className="inline-block transition-transform hover:scale-105 active:scale-95">
@@ -132,19 +132,19 @@ export function GlobalFooter() {
         ))}
 
         {/* Social Column */}
-        <div className="space-y-2 sm:space-y-3 min-w-0 col-span-1">
+        <div className="space-y-2 sm:space-y-3 col-span-1 min-w-[200px]">
           <h4 className={`text-[10px] uppercase font-bold tracking-[0.24em] ${isDark ? "text-white/50" : "text-slate-400"
             }`}>
             Social
           </h4>
-          <div className="flex items-center flex-nowrap gap-1 sm:gap-2">
+          <div className="flex items-center flex-nowrap gap-1 sm:gap-1.5 xl:gap-2">
             {socialLinks.map((social) => (
               <a
                 key={social.label}
                 href={social.href || `#${social.label.toLowerCase()}`}
                 target={social.href ? "_blank" : "_self"}
                 rel={social.href ? "noopener noreferrer" : ""}
-                className={`h-7.5 w-7.5 sm:h-9 sm:w-9 rounded-full flex items-center justify-center border-0 bg-transparent transition-all hover:scale-110 active:scale-95 relative overflow-hidden hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
+                className={`h-7.5 w-7.5 sm:h-8 sm:w-8 xl:h-9 xl:w-9 rounded-full flex items-center justify-center border-0 bg-transparent transition-all hover:scale-110 active:scale-95 relative overflow-hidden hover:bg-slate-100/50 dark:hover:bg-white/10 shrink-0`}
                 style={{ color: social.brandColor }}
                 aria-label={social.label}
               >

@@ -23,72 +23,11 @@ export function authenticateToken(req, res, next) {
     });
   }
 
-  // 1. Support for console admin & owner static pseudo-tokens in development & transition
-  if (
-    token.startsWith("cms_admin_") ||
-    token.startsWith("cms_") ||
-    token.startsWith("admin_") ||
-    token.startsWith("cmsAdminToken") ||
-    token === "admin"
-  ) {
-    req.user = {
-      id: 1,
-      role: "Super Admin",
-      accountType: "cms-admin",
-      isAdmin: true,
-    };
-    return next();
-  }
-
-  if (token.startsWith("owner_") || token.startsWith("turf_owner_")) {
-    const ownerEmail = req.query.ownerEmail || req.query.email || "";
-    const ownerName = req.query.ownerName || req.query.name || "";
-    req.user = {
-      id: 1,
-      email: ownerEmail,
-      fullName: ownerName,
-      role: "owner",
-      accountType: "turf-owner",
-      isAdmin: false,
-    };
-    return next();
-  }
-
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     return next();
   } catch (err) {
-    // 2. Fallback: inspect unverified JWT payload
-    const unverified = jwt.decode(token);
-    if (unverified && (unverified.role || unverified.accountType || unverified.email || unverified.isAdmin)) {
-      req.user = unverified;
-      return next();
-    }
-
-    // 3. Fallback: If token has admin marker or request is for admin endpoints
-    if (token.includes("admin") || token.includes("cms")) {
-      req.user = {
-        id: 1,
-        role: "Super Admin",
-        accountType: "cms-admin",
-        isAdmin: true,
-      };
-      return next();
-    }
-
-    if (token.includes("owner") || token.includes("turf") || req.query.ownerEmail || req.query.ownerName) {
-      req.user = {
-        id: 1,
-        email: req.query.ownerEmail || "",
-        fullName: req.query.ownerName || "",
-        role: "owner",
-        accountType: "turf-owner",
-        isAdmin: false,
-      };
-      return next();
-    }
-
     if (err.name === "TokenExpiredError") {
       return res.status(401).json({
         success: false,
@@ -116,45 +55,11 @@ export function optionalAuth(req, res, next) {
     return next();
   }
 
-  if (
-    token.startsWith("cms_admin_") ||
-    token.startsWith("cms_") ||
-    token.startsWith("admin_") ||
-    token.startsWith("cmsAdminToken") ||
-    token === "admin"
-  ) {
-    req.user = {
-      id: 1,
-      role: "Super Admin",
-      accountType: "cms-admin",
-      isAdmin: true,
-    };
-    return next();
-  }
-
-  if (token.startsWith("owner_") || token.startsWith("turf_owner_")) {
-    const ownerEmail = req.query.ownerEmail || "";
-    const ownerName = req.query.ownerName || "";
-    req.user = {
-      id: 1,
-      email: ownerEmail,
-      fullName: ownerName,
-      role: "owner",
-      accountType: "turf-owner",
-    };
-    return next();
-  }
-
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
   } catch (err) {
-    const unverified = jwt.decode(token);
-    if (unverified && (unverified.role || unverified.accountType || unverified.email || unverified.isAdmin)) {
-      req.user = unverified;
-    } else {
-      req.user = null;
-    }
+    req.user = null;
   }
   next();
 }

@@ -78,12 +78,6 @@ export function AdminLayout() {
           );
         })}
       </div>
-      <div className="p-4 mt-auto border-t border-border/40">
-        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground" onClick={handleLogout}>
-          <LogOut className="h-5 w-5" />
-          Sign Out
-        </Button>
-      </div>
     </div>
   );
 

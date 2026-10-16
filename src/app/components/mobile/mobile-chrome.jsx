@@ -335,15 +335,14 @@ export function MobileAppBar() {
   );
 }
 
-export function MobileBottomNav
-  ({ activeTab }) {
+export function MobileBottomNav({ activeTab }) {
   const { currentUser } = useAuth();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 md:hidden">
-      <div className="mx-auto max-w-screen-xl pb-[env(safe-area-inset-bottom)]">
-        <div className="relative overflow-hidden border-t border-border/40 bg-background/80 shadow-[0_-18px_40px_-22px_rgba(15,23,42,0.4)] backdrop-blur-2xl">
-          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-          <div className="grid grid-cols-5">
+      <div className="relative overflow-hidden border-t border-border/40 bg-background/90 shadow-[0_-18px_40px_-22px_rgba(15,23,42,0.4)] backdrop-blur-2xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        <div className="mx-auto max-w-screen-xl">
+          <div className="grid grid-cols-5 px-1 pt-1.5">
             {mobileNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = item.key === activeTab;
@@ -359,7 +358,7 @@ export function MobileBottomNav
                     to={item.key === 'profile' && currentUser?.role === 'owner' ? '/admin-panel' : item.href}
                     aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "relative flex h-[50px] flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-[0.68rem] transition-colors",
+                      "relative flex h-[50px] flex-col items-center justify-center gap-0.5 rounded-2xl px-1 text-[0.68rem] transition-colors select-none",
                       isActive ? "text-primary" : "text-muted-foreground",
                     )}
                   >

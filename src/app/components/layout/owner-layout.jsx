@@ -237,17 +237,6 @@ export function OwnerLayout() {
           );
         })}
       </div>
-
-      <div className="p-4 mt-auto border-t border-border/40">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 px-3 py-2.5 h-auto rounded-xl transition-colors font-semibold text-sm cursor-pointer"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-5 w-5 shrink-0" />
-          <span>Sign Out</span>
-        </Button>
-      </div>
     </div>
   );
 

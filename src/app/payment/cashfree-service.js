@@ -71,7 +71,7 @@ export const cashfreeService = {
           slots: bookingPayload.slots,
           userEmail: bookingPayload.userEmail || "user@sportxclub.com",
           userName: bookingPayload.userName || "SportX Player",
-          userPhone: bookingPayload.userPhone || "9876543210",
+          userPhone: String(bookingPayload.userPhone || "").replace(/[^0-9]/g, "").slice(-10),
           turfName: typeof bookingPayload.venue === "object" ? bookingPayload.venue.name : (bookingPayload.venue || bookingPayload.turfName || "SportX Turf"),
           date: bookingPayload.date || bookingPayload.selectedDate,
           time: bookingPayload.time,

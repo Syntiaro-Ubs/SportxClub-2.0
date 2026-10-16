@@ -15,13 +15,13 @@ export function AppDownloadSection() {
   const isDark = !mounted || resolvedTheme !== "light";
 
   return (
-    <section className={`hidden md:block w-full py-16 px-6 md:px-12 relative overflow-hidden rounded-[32px] border transition-all duration-300 text-left ${
-      isDark 
-        ? "dark bg-[#090D16] border-white/[0.05] text-white" 
+    <section className={`hidden md:block w-full py-16 px-6 md:px-12 relative overflow-hidden rounded-[32px] border transition-all duration-300 text-left ${isDark
+        ? "dark bg-[#090D16] border-white/[0.05] text-white"
         : "bg-slate-50 border-slate-200/60 text-slate-900"
-    }`}>
+      }`}>
       {/* Inline Styles to Hide Phone Mockup Scrollbars */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .no-scrollbar::-webkit-scrollbar {
           display: none !important;
         }
@@ -52,11 +52,10 @@ export function AppDownloadSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${
-              isDark 
-                ? "border-emerald-600/30 bg-emerald-600/10 text-emerald-600" 
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${isDark
+                ? "border-emerald-600/30 bg-emerald-600/10 text-emerald-600"
                 : "border-emerald-600/20 bg-emerald-50 text-emerald-600"
-            }`}
+              }`}
           >
             <Smartphone className="w-4 h-4" />
             <span>Get the App</span>
@@ -67,9 +66,8 @@ export function AppDownloadSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className={`text-2xl sm:text-3xl font-black tracking-tight leading-tight transition-colors duration-300 ${
-              isDark ? "text-white !text-white" : "text-slate-900 !text-slate-900"
-            }`}
+            className={`text-2xl sm:text-3xl font-black tracking-tight leading-tight transition-colors duration-300 ${isDark ? "text-white !text-white" : "text-slate-900 !text-slate-900"
+              }`}
           >
             Book turfs on the go <br />
             with the <span className={isDark ? "text-emerald-600" : "text-emerald-600"}>SportXClub App</span>
@@ -80,9 +78,8 @@ export function AppDownloadSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className={`text-base md:text-lg max-w-lg leading-relaxed transition-colors duration-300 ${
-              isDark ? "text-slate-300 !text-slate-300" : "text-slate-600 !text-slate-600"
-            }`}
+            className={`text-base md:text-lg max-w-lg leading-relaxed transition-colors duration-300 ${isDark ? "text-slate-300 !text-slate-300" : "text-slate-600 !text-slate-600"
+              }`}
           >
             Download the SportXClub app for faster bookings, instant notifications,
             and exclusive app-only offers — available on both Android and iOS.
@@ -96,35 +93,29 @@ export function AppDownloadSection() {
             transition={{ duration: 0.5, delay: 0.25 }}
             className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 max-w-2xl"
           >
-            <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-              isDark 
-                ? "bg-white/[0.02] border-white/[0.06] hover:border-emerald-600/30" 
+            <div className={`p-4 rounded-2xl border transition-all duration-300 ${isDark
+                ? "bg-white/[0.02] border-white/[0.06] hover:border-emerald-600/30"
                 : "bg-white border-slate-200/80 shadow-xs hover:border-emerald-600/30"
-            }`}>
-              <h3 className={`font-bold text-xs tracking-wider uppercase transition-colors duration-300 ${
-                isDark ? "text-emerald-600 !text-emerald-600" : "text-emerald-600 !text-emerald-600"
               }`}>
+              <h3 className={`font-bold text-xs tracking-wider uppercase transition-colors duration-300 ${isDark ? "text-emerald-600 !text-emerald-600" : "text-emerald-600 !text-emerald-600"
+                }`}>
                 All-in-One Sports Ecosystem
               </h3>
-              <p className={`text-xs mt-1.5 leading-relaxed transition-colors duration-300 ${
-                isDark ? "text-slate-400 !text-slate-400" : "text-slate-500 !text-slate-500"
-              }`}>
+              <p className={`text-xs mt-1.5 leading-relaxed transition-colors duration-300 ${isDark ? "text-slate-400 !text-slate-400" : "text-slate-500 !text-slate-500"
+                }`}>
                 Connect with local players, discover nearby turfs and courts, register for ongoing tournaments, and manage your sport communities in one unified application.
               </p>
             </div>
-            <div className={`p-4 rounded-2xl border transition-all duration-300 ${
-              isDark 
-                ? "bg-white/[0.02] border-white/[0.06] hover:border-emerald-600/30" 
+            <div className={`p-4 rounded-2xl border transition-all duration-300 ${isDark
+                ? "bg-white/[0.02] border-white/[0.06] hover:border-emerald-600/30"
                 : "bg-white border-slate-200/80 shadow-xs hover:border-emerald-600/30"
-            }`}>
-              <h3 className={`font-bold text-xs tracking-wider uppercase transition-colors duration-300 ${
-                isDark ? "text-emerald-600 !text-emerald-600" : "text-emerald-600 !text-emerald-600"
               }`}>
+              <h3 className={`font-bold text-xs tracking-wider uppercase transition-colors duration-300 ${isDark ? "text-emerald-600 !text-emerald-600" : "text-emerald-600 !text-emerald-600"
+                }`}>
                 Instant Availability & Booking
               </h3>
-              <p className={`text-xs mt-1.5 leading-relaxed transition-colors duration-300 ${
-                isDark ? "text-slate-400 !text-slate-400" : "text-slate-500 !text-slate-500"
-              }`}>
+              <p className={`text-xs mt-1.5 leading-relaxed transition-colors duration-300 ${isDark ? "text-slate-400 !text-slate-400" : "text-slate-500 !text-slate-500"
+                }`}>
                 Browse slot schedules in real time, compare pricing structures, read verified ratings, and book your sports venues seamlessly with secure UPI or card checkout features.
               </p>
             </div>
@@ -140,17 +131,16 @@ export function AppDownloadSection() {
             {/* Google Play Button */}
             <a
               href="#play-store"
-              className={`flex items-center gap-3 active:scale-95 transition-all px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-black/10 border ${
-                isDark 
-                  ? "bg-white text-[#090D16] border-white hover:bg-white/90" 
+              className={`flex items-center gap-3 active:scale-95 transition-all px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-black/10 border ${isDark
+                  ? "bg-white text-[#090D16] border-white hover:bg-white/90"
                   : "bg-slate-900 text-white border-slate-900 hover:bg-slate-800"
-              }`}
+                }`}
             >
               <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.25391 19.3496C3.0768 19.1725 2.97729 18.919 2.97729 18.636V5.36402C2.97729 5.081 3.0768 4.82747 3.25391 4.65036L12.3533 13.7497L3.25391 19.3496Z" fill="#00E5FF"/>
-                <path d="M16.6341 9.46897L12.3533 13.7498L3.25391 4.65039C3.43102 4.47328 3.73373 4.39429 4.09395 4.39429H15.906C16.2087 4.39429 16.4678 4.47328 16.6341 4.65039L16.6341 9.46897Z" fill="#FFC107"/>
-                <path d="M3.25391 19.3496C3.43102 19.5267 3.73373 19.6057H15.906C16.2087 19.6057 16.4678 19.5267 16.6341 19.3496L12.3533 13.7498L3.25391 19.3496Z" fill="#FF3D00"/>
-                <path d="M20.7461 11.2057C21.0805 11.5401 21.2538 12.0001 21.2538 12.5001C21.2538 13.0001 21.0805 13.4601 20.7461 13.7945L16.6342 16.3496L12.3533 13.7498L16.6342 9.469L20.7461 11.2057Z" fill="#4CAF50"/>
+                <path d="M3.25391 19.3496C3.0768 19.1725 2.97729 18.919 2.97729 18.636V5.36402C2.97729 5.081 3.0768 4.82747 3.25391 4.65036L12.3533 13.7497L3.25391 19.3496Z" fill="#00E5FF" />
+                <path d="M16.6341 9.46897L12.3533 13.7498L3.25391 4.65039C3.43102 4.47328 3.73373 4.39429 4.09395 4.39429H15.906C16.2087 4.39429 16.4678 4.47328 16.6341 4.65039L16.6341 9.46897Z" fill="#FFC107" />
+                <path d="M3.25391 19.3496C3.43102 19.5267 3.73373 19.6057H15.906C16.2087 19.6057 16.4678 19.5267 16.6341 19.3496L12.3533 13.7498L3.25391 19.3496Z" fill="#FF3D00" />
+                <path d="M20.7461 11.2057C21.0805 11.5401 21.2538 12.0001 21.2538 12.5001C21.2538 13.0001 21.0805 13.4601 20.7461 13.7945L16.6342 16.3496L12.3533 13.7498L16.6342 9.469L20.7461 11.2057Z" fill="#4CAF50" />
               </svg>
               <div className={`text-left leading-none ${isDark ? "text-black" : "text-white"}`}>
                 <span className={`text-[10px] font-medium block ${isDark ? "text-black/60" : "text-white/60"}`}>Get it on</span>
@@ -161,14 +151,13 @@ export function AppDownloadSection() {
             {/* App Store Button */}
             <a
               href="#app-store"
-              className={`flex items-center gap-3 active:scale-95 transition-all px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-black/10 border ${
-                isDark 
-                  ? "bg-white text-[#090D16] border-white hover:bg-white/90" 
+              className={`flex items-center gap-3 active:scale-95 transition-all px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-black/10 border ${isDark
+                  ? "bg-white text-[#090D16] border-white hover:bg-white/90"
                   : "bg-slate-900 text-white border-slate-900 hover:bg-slate-800"
-              }`}
+                }`}
             >
               <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.1 16.67C20.08 16.74 19.67 18.11 18.71 19.5ZM15.97 4.17C16.63 3.37 17.07 2.28 16.95 1C15.98 1.04 14.81 1.65 14.11 2.47C13.5 3.17 12.97 4.28 13.12 5.53C14.2 5.62 15.31 4.97 15.97 4.17Z"/>
+                <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.79 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.1 16.67C20.08 16.74 19.67 18.11 18.71 19.5ZM15.97 4.17C16.63 3.37 17.07 2.28 16.95 1C15.98 1.04 14.81 1.65 14.11 2.47C13.5 3.17 12.97 4.28 13.12 5.53C14.2 5.62 15.31 4.97 15.97 4.17Z" />
               </svg>
               <div className={`text-left leading-none ${isDark ? "text-black" : "text-white"}`}>
                 <span className={`text-[10px] font-medium block ${isDark ? "text-black/60" : "text-white/60"}`}>Download on the</span>
@@ -204,17 +193,14 @@ export function AppDownloadSection() {
             </div>
 
             {/* Inner Screen Scroll Container */}
-            <div className={`h-full pt-10 pb-14 overflow-y-auto no-scrollbar flex flex-col gap-3 text-left transition-colors duration-300 ${
-              isDark ? "bg-[#050912]" : "bg-[#F8FAF9]"
-            }`}>
-              {/* Dynamic Header */}
-              <div className={`px-3 pt-2 flex items-center justify-between transition-colors duration-300 ${
-                isDark ? "bg-[#050912]" : "bg-[#F8FAF9]"
+            <div className={`h-full pt-10 pb-14 overflow-y-auto no-scrollbar flex flex-col gap-3 text-left transition-colors duration-300 ${isDark ? "bg-[#050912]" : "bg-[#F8FAF9]"
               }`}>
+              {/* Dynamic Header */}
+              <div className={`px-3 pt-2 flex items-center justify-between transition-colors duration-300 ${isDark ? "bg-[#050912]" : "bg-[#F8FAF9]"
+                }`}>
                 <div className="flex items-center gap-1.5">
-                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors duration-300 ${
-                    isDark ? "bg-primary/20 text-primary" : "bg-emerald-600/10 text-emerald-600"
-                  }`}>
+                  <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors duration-300 ${isDark ? "bg-primary/20 text-primary" : "bg-emerald-600/10 text-emerald-600"
+                    }`}>
                     S
                   </div>
                   <div className="leading-tight">
@@ -226,14 +212,12 @@ export function AppDownloadSection() {
                   </div>
                 </div>
                 <div className="flex gap-1.5">
-                  <div className={`h-7 w-7 rounded-full border flex items-center justify-center transition-colors ${
-                    isDark ? "bg-slate-900 border-slate-800 text-white/70" : "bg-white border-slate-200 text-slate-600"
-                  }`}>
+                  <div className={`h-7 w-7 rounded-full border flex items-center justify-center transition-colors ${isDark ? "bg-slate-900 border-slate-800 text-white/70" : "bg-white border-slate-200 text-slate-600"
+                    }`}>
                     <Search className="w-3.5 h-3.5" />
                   </div>
-                  <div className={`h-7 w-7 rounded-full border flex items-center justify-center transition-colors ${
-                    isDark ? "bg-slate-900 border-slate-800 text-white/70" : "bg-white border-slate-200 text-slate-600"
-                  }`}>
+                  <div className={`h-7 w-7 rounded-full border flex items-center justify-center transition-colors ${isDark ? "bg-slate-900 border-slate-800 text-white/70" : "bg-white border-slate-200 text-slate-600"
+                    }`}>
                     <Bell className="w-3.5 h-3.5" />
                   </div>
                 </div>
@@ -241,9 +225,8 @@ export function AppDownloadSection() {
 
               {/* Promo Banner Slider */}
               <div className="px-3">
-                <div className={`w-full h-28 rounded-2xl p-3 relative overflow-hidden flex flex-col justify-between ${
-                  isDark ? "bg-gradient-to-r from-blue-600 to-[#1d4ed8]" : "bg-gradient-to-r from-emerald-600 to-teal-650"
-                }`}>
+                <div className={`w-full h-28 rounded-2xl p-3 relative overflow-hidden flex flex-col justify-between ${isDark ? "bg-gradient-to-r from-blue-600 to-[#1d4ed8]" : "bg-gradient-to-r from-emerald-600 to-teal-650"
+                  }`}>
                   <span className="text-[8px] uppercase tracking-widest text-white/80 bg-white/15 px-1.5 py-0.5 rounded-full w-max">
                     Trending
                   </span>
@@ -266,19 +249,16 @@ export function AppDownloadSection() {
                   What Do You Want to Play?
                 </p>
                 <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-                  <span className={`flex items-center gap-1 text-[9px] font-bold px-2.5 py-1 rounded-full shrink-0 ${
-                    isDark ? "bg-emerald-600 text-black" : "bg-emerald-600 text-black"
-                  }`}>
+                  <span className={`flex items-center gap-1 text-[9px] font-bold px-2.5 py-1 rounded-full shrink-0 ${isDark ? "bg-emerald-600 text-black" : "bg-emerald-600 text-black"
+                    }`}>
                     ⚽ Football
                   </span>
-                  <span className={`flex items-center gap-1 border text-[9px] px-2.5 py-1 rounded-full shrink-0 ${
-                    isDark ? "border-slate-800 bg-slate-900/50 text-white/80" : "border-slate-200 bg-white text-slate-700"
-                  }`}>
+                  <span className={`flex items-center gap-1 border text-[9px] px-2.5 py-1 rounded-full shrink-0 ${isDark ? "border-slate-800 bg-slate-900/50 text-white/80" : "border-slate-200 bg-white text-slate-700"
+                    }`}>
                     🏏 Cricket
                   </span>
-                  <span className={`flex items-center gap-1 border text-[9px] px-2.5 py-1 rounded-full shrink-0 ${
-                    isDark ? "border-slate-800 bg-slate-900/50 text-white/80" : "border-slate-200 bg-white text-slate-700"
-                  }`}>
+                  <span className={`flex items-center gap-1 border text-[9px] px-2.5 py-1 rounded-full shrink-0 ${isDark ? "border-slate-800 bg-slate-900/50 text-white/80" : "border-slate-200 bg-white text-slate-700"
+                    }`}>
                     🏸 Badminton
                   </span>
                 </div>
@@ -292,9 +272,8 @@ export function AppDownloadSection() {
                   </p>
                   <span className={`text-[9px] font-medium cursor-pointer ${isDark ? "text-emerald-600" : "text-emerald-600"}`}>See All</span>
                 </div>
-                <div className={`w-full rounded-2xl border p-3 space-y-3 transition-colors duration-300 ${
-                  isDark ? "border-slate-800/80 bg-slate-900/60" : "border-slate-200 bg-white shadow-xs"
-                }`}>
+                <div className={`w-full rounded-2xl border p-3 space-y-3 transition-colors duration-300 ${isDark ? "border-slate-800/80 bg-slate-900/60" : "border-slate-200 bg-white shadow-xs"
+                  }`}>
                   <div className="flex justify-between items-start">
                     <div className="space-y-0.5 text-left">
                       <h5 className={`text-xs font-semibold leading-tight ${isDark ? "text-white" : "text-slate-800"}`}>SportSquare Arena</h5>
@@ -305,15 +284,13 @@ export function AppDownloadSection() {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-[8px]">
-                    <div className={`p-1.5 rounded-lg border flex flex-col items-center transition-colors duration-300 ${
-                      isDark ? "bg-slate-950 border-slate-800/40 text-white/60" : "bg-slate-50 border-slate-100 text-slate-600"
-                    }`}>
+                    <div className={`p-1.5 rounded-lg border flex flex-col items-center transition-colors duration-300 ${isDark ? "bg-slate-950 border-slate-800/40 text-white/60" : "bg-slate-50 border-slate-100 text-slate-600"
+                      }`}>
                       <span className={`${isDark ? "text-white/40" : "text-slate-400"} block mb-0.5`}>Sport</span>
                       <span className={`font-semibold ${isDark ? "text-white" : "text-slate-700"}`}>Football</span>
                     </div>
-                    <div className={`p-1.5 rounded-lg border flex flex-col items-center transition-colors duration-300 ${
-                      isDark ? "bg-slate-950 border-slate-800/40 text-white/60" : "bg-slate-50 border-slate-100 text-slate-600"
-                    }`}>
+                    <div className={`p-1.5 rounded-lg border flex flex-col items-center transition-colors duration-300 ${isDark ? "bg-slate-950 border-slate-800/40 text-white/60" : "bg-slate-50 border-slate-100 text-slate-600"
+                      }`}>
                       <span className={`${isDark ? "text-white/40" : "text-slate-400"} block mb-0.5`}>Time Slot</span>
                       <span className={`font-semibold ${isDark ? "text-emerald-600" : "text-emerald-650"}`}>04:30 PM - 06:30 PM</span>
                     </div>
@@ -322,9 +299,8 @@ export function AppDownloadSection() {
                     <span className={isDark ? "text-white/50" : "text-slate-500"}>Slots: <strong className={isDark ? "text-white" : "text-slate-700"}>5/10</strong></span>
                     <span className={`font-bold ${isDark ? "text-white" : "text-slate-800"}`}>₹100 / player</span>
                   </div>
-                  <button type="button" className={`w-full py-1.5 rounded-lg font-bold text-[10px] active:scale-95 transition-transform cursor-pointer ${
-                    isDark ? "bg-emerald-600 text-black" : "bg-emerald-600 text-black hover:bg-emerald-700"
-                  }`}>
+                  <button type="button" className={`w-full py-1.5 rounded-lg font-bold text-[10px] active:scale-95 transition-transform cursor-pointer ${isDark ? "bg-emerald-600 text-black" : "bg-emerald-600 text-black hover:bg-emerald-700"
+                    }`}>
                     Join Match
                   </button>
                 </div>
@@ -336,9 +312,8 @@ export function AppDownloadSection() {
                   Recommended Turfs
                 </p>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                  <div className={`w-32 rounded-xl border overflow-hidden shrink-0 transition-colors duration-300 ${
-                    isDark ? "bg-slate-900/50 border-slate-800/50" : "bg-white border-slate-200 shadow-xs"
-                  }`}>
+                  <div className={`w-32 rounded-xl border overflow-hidden shrink-0 transition-colors duration-300 ${isDark ? "bg-slate-900/50 border-slate-800/50" : "bg-white border-slate-200 shadow-xs"
+                    }`}>
                     <div className="h-16 bg-slate-800 relative">
                       <img
                         src="https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=200&auto=format&fit=crop"
@@ -351,9 +326,8 @@ export function AppDownloadSection() {
                       <span className={`text-[8px] font-semibold ${isDark ? "text-emerald-600" : "text-emerald-600"}`}>₹1,200/hr</span>
                     </div>
                   </div>
-                  <div className={`w-32 rounded-xl border overflow-hidden shrink-0 transition-colors duration-300 ${
-                    isDark ? "bg-slate-900/50 border-slate-800/50" : "bg-white border-slate-200 shadow-xs"
-                  }`}>
+                  <div className={`w-32 rounded-xl border overflow-hidden shrink-0 transition-colors duration-300 ${isDark ? "bg-slate-900/50 border-slate-800/50" : "bg-white border-slate-200 shadow-xs"
+                    }`}>
                     <div className="h-16 bg-slate-800 relative">
                       <img
                         src="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?q=80&w=200&auto=format&fit=crop"
@@ -371,9 +345,8 @@ export function AppDownloadSection() {
             </div>
 
             {/* Bottom Nav Bar */}
-            <div className={`absolute bottom-0 inset-x-0 h-11 border-t flex items-center justify-around z-30 transition-colors duration-300 ${
-              isDark ? "bg-[#090D16] border-slate-900/50 text-white/50" : "bg-white border-slate-200 text-slate-500"
-            }`}>
+            <div className={`absolute bottom-0 inset-x-0 h-11 border-t flex items-center justify-around z-30 transition-colors duration-300 ${isDark ? "bg-[#090D16] border-slate-900/50 text-white/50" : "bg-white border-slate-200 text-slate-500"
+              }`}>
               <div className={`flex flex-col items-center cursor-pointer ${isDark ? "text-emerald-600" : "text-emerald-600"}`}>
                 <Home className="w-4 h-4" />
                 <span className="text-[7px] mt-0.5">Home</span>

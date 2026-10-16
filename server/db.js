@@ -12,7 +12,7 @@ dotenv.config();
 
 const DB_HOST = process.env.DB_HOST || "localhost";
 const DB_USER = process.env.DB_USER || "root";
-const DB_PASSWORD = process.env.DB_PASSWORD || "root";
+const DB_PASSWORD = process.env.DB_PASSWORD || "Samir@2002";
 const DB_NAME = process.env.DB_NAME || "sportxclub";
 const DB_PORT = process.env.DB_PORT || 3306;
 
@@ -51,67 +51,67 @@ export async function initDatabase() {
     // 3.5. Ensure all necessary schema columns and tables exist
     try {
       await pool.query("ALTER TABLE turf_owners ADD COLUMN setup_data LONGTEXT");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turf_owners ADD COLUMN owner_id VARCHAR(50) UNIQUE AFTER id");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE bookings ADD COLUMN cancellation_reason TEXT");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE cms_banners ADD COLUMN secondary_cta_text VARCHAR(100) DEFAULT 'Explore'");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE cms_banners ADD COLUMN secondary_link VARCHAR(255) DEFAULT '/venues'");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN display_order INT DEFAULT 0");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN all_display_order INT DEFAULT 0");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN reviews INT DEFAULT 0");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN owner_email VARCHAR(255)");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN gallery LONGTEXT");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN opening_time VARCHAR(50) DEFAULT '06:00 AM'");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN closing_time VARCHAR(50) DEFAULT '11:00 PM'");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN slot_duration INT DEFAULT 60");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN peak_start_time VARCHAR(50) DEFAULT '05:00 PM'");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN peak_end_time VARCHAR(50) DEFAULT '11:00 PM'");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN peak_price DECIMAL(10,2) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN operational_days LONGTEXT");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE reviews ADD COLUMN owner_reply TEXT");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE staff ADD COLUMN permissions TEXT");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE staff ADD COLUMN turfs TEXT");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE staff ADD COLUMN is_active TINYINT(1) DEFAULT 1");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS owner_disabled_dates (
@@ -126,7 +126,7 @@ export async function initDatabase() {
           INDEX idx_owner_date (owner_email, date)
         )
       `);
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS turf_onboarding_requests (
@@ -138,41 +138,41 @@ export async function initDatabase() {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `);
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE bookings ADD COLUMN platform_fee DECIMAL(10,2) DEFAULT 0.00");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE bookings ADD COLUMN owner_payout_amount DECIMAL(10,2) DEFAULT 0.00");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE bookings ADD COLUMN payout_status VARCHAR(50) DEFAULT 'PENDING'");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE bookings ADD COLUMN payout_id VARCHAR(100) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE bookings ADD COLUMN payout_utr VARCHAR(100) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE bookings ADD COLUMN payout_date VARCHAR(50) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turf_owners ADD COLUMN cashfree_beneficiary_id VARCHAR(100) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN city VARCHAR(100) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN state VARCHAR(100) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query("ALTER TABLE turfs ADD COLUMN pincode VARCHAR(20) DEFAULT NULL");
-    } catch (e) {}
+    } catch (e) { }
     try {
       // Auto populate city for any existing Nanded turfs
       await pool.query("UPDATE turfs SET city = 'Nanded', state = 'Maharashtra' WHERE location LIKE '%Nanded%' AND (city IS NULL OR city = '' OR city REGEXP '^[0-9]+$')");
-    } catch (e) {}
+    } catch (e) { }
     try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS owner_settlements (
@@ -204,7 +204,7 @@ export async function initDatabase() {
           INDEX idx_settle_status (status)
         )
       `);
-    } catch (e) {}
+    } catch (e) { }
     // 4. Auto seed initial demo data
     await seedData();
 
@@ -1222,7 +1222,7 @@ async function seedData() {
   try {
     await conn.query(`UPDATE banners SET link = '/squad-booking' WHERE link = '/open-lobbies'`);
     await conn.query(`UPDATE cms_banners SET link = '/squad-booking' WHERE link = '/open-lobbies'`);
-  } catch (err) {}
+  } catch (err) { }
 
   // Seed CMS Sports if empty
   const [cmsSports] = await conn.query("SELECT COUNT(*) as count FROM cms_sports");

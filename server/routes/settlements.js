@@ -1,14 +1,15 @@
 import express from "express";
 import { getPool } from "../db.js";
 import { processDailyTurfSettlements, getTodayDateString } from "../services/payout-cron-service.js";
+import { authenticateToken, requireRole } from "../middleware/auth.js";
 
 const router = express.Router();
 
 /**
  * GET /api/settlements
- * Fetch all settlements (with optional filters: date, owner_email, status)
+ * Fetch all settlements (Protected: Admin / Super Admin only)
  */
-router.get("/", async (req, res) => {
+router.get("/", authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
   try {
     const conn = getPool();
     const { date, owner_email, status, limit = 50, offset = 0 } = req.query;
@@ -59,12 +60,17 @@ router.get("/", async (req, res) => {
 
 /**
  * GET /api/settlements/owner/:ownerEmail
- * Fetch settlement history for a specific turf owner
+ * Fetch settlement history for a specific turf owner (Protected: Turf Owner self or Admin)
  */
-router.get("/owner/:ownerEmail", async (req, res) => {
+router.get("/owner/:ownerEmail", authenticateToken, async (req, res) => {
   try {
     const conn = getPool();
     const ownerEmail = (req.params.ownerEmail || "").toLowerCase().trim();
+
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    if (!isSuperAdmin && String(req.user?.email || "").toLowerCase() !== ownerEmail) {
+      return res.status(403).json({ success: false, message: "Forbidden: You cannot access other turf owners' settlements." });
+    }
 
     const [settlements] = await conn.query(
       `SELECT * FROM owner_settlements 
@@ -97,9 +103,9 @@ router.get("/owner/:ownerEmail", async (req, res) => {
 
 /**
  * GET /api/settlements/:settlementId
- * Get detailed view of a single settlement including its itemized bookings
+ * Get detailed view of a single settlement including its itemized bookings (Protected: Owner self or Admin)
  */
-router.get("/:settlementId", async (req, res) => {
+router.get("/:settlementId", authenticateToken, async (req, res) => {
   try {
     const conn = getPool();
     const { settlementId } = req.params;
@@ -114,6 +120,11 @@ router.get("/:settlementId", async (req, res) => {
     }
 
     const settlement = settlements[0];
+
+    const isSuperAdmin = Boolean(req.user?.isAdmin) || ["admin", "super admin", "cms-admin"].includes(String(req.user?.role || "").toLowerCase());
+    if (!isSuperAdmin && String(req.user?.email || "").toLowerCase() !== String(settlement.owner_email || "").toLowerCase()) {
+      return res.status(403).json({ success: false, message: "Forbidden: You cannot access this settlement." });
+    }
 
     // Fetch the bookings linked to this settlement
     const [bookings] = await conn.query(
@@ -136,10 +147,9 @@ router.get("/:settlementId", async (req, res) => {
 
 /**
  * POST /api/settlements/process-manual
- * Manually triggers the automated settlement batch for a given date (or today)
- * Useful for Admin dashboard to test or run instant settlements on demand.
+ * Manually triggers the automated settlement batch for a given date (Protected: Super Admin / Admin only)
  */
-router.post("/process-manual", async (req, res) => {
+router.post("/process-manual", authenticateToken, requireRole(["admin", "super admin", "cms-admin"]), async (req, res) => {
   try {
     const { targetDate } = req.body;
     const processDate = targetDate || getTodayDateString();

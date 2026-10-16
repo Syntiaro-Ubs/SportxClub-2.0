@@ -211,7 +211,59 @@ export function Revenue() {
 
   // Dynamic Revenue Trend Chart
   const revenueTrendData = useMemo(() => {
-    const base = grossRevenue || 1200;
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const orderedDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+    if (!grossRevenue || grossRevenue <= 0) {
+      return orderedDays.map((name) => ({ name, revenue: 0 }));
+    }
+
+    // Try aggregating from actual successful payments
+    const dayTotals = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+    let hasDatedPayments = false;
+
+    const validPayments = payments.filter((p) => {
+      const s = String(p.status || "").toLowerCase();
+      return s === "success" || s === "completed" || s === "settled";
+    });
+
+    if (validPayments.length > 0) {
+      validPayments.forEach((p) => {
+        const dateStr = p.created_at || p.date;
+        if (dateStr) {
+          const d = new Date(dateStr);
+          if (!isNaN(d.getTime())) {
+            const dayName = days[d.getDay()];
+            dayTotals[dayName] = (dayTotals[dayName] || 0) + (Number(p.amount) || 0);
+            hasDatedPayments = true;
+          }
+        }
+      });
+    }
+
+    if (!hasDatedPayments && bookings.length > 0) {
+      bookings.forEach((b) => {
+        const s = String(b.status || "").toLowerCase();
+        if (s === "confirmed" || s === "completed") {
+          const dateStr = b.date || b.booking_date || b.created_at;
+          if (dateStr) {
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) {
+              const dayName = days[d.getDay()];
+              dayTotals[dayName] = (dayTotals[dayName] || 0) + (Number(b.amount) || 0);
+              hasDatedPayments = true;
+            }
+          }
+        }
+      });
+    }
+
+    if (hasDatedPayments) {
+      return orderedDays.map((name) => ({ name, revenue: Math.round(dayTotals[name] || 0) }));
+    }
+
+    // Proportional breakdown based strictly on real gross revenue
+    const base = grossRevenue;
     return [
       { name: "Mon", revenue: Math.round(base * 0.12) },
       { name: "Tue", revenue: Math.round(base * 0.1) },
@@ -221,19 +273,45 @@ export function Revenue() {
       { name: "Sat", revenue: Math.round(base * 0.3) },
       { name: "Sun", revenue: Math.round(base * 0.25) },
     ];
-  }, [grossRevenue]);
+  }, [grossRevenue, payments, bookings]);
 
   // Dynamic Bookings Filled Chart
   const bookingsFilledData = useMemo(() => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const orderedDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     const count = bookings.length;
+
+    if (!count || count <= 0) {
+      return orderedDays.map((name) => ({ name, bookings: 0 }));
+    }
+
+    const dayCounts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+    let hasDatedBookings = false;
+
+    bookings.forEach((b) => {
+      const dateStr = b.date || b.booking_date || b.created_at;
+      if (dateStr) {
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+          const dayName = days[d.getDay()];
+          dayCounts[dayName] = (dayCounts[dayName] || 0) + 1;
+          hasDatedBookings = true;
+        }
+      }
+    });
+
+    if (hasDatedBookings) {
+      return orderedDays.map((name) => ({ name, bookings: dayCounts[name] || 0 }));
+    }
+
     return [
-      { name: "Mon", bookings: count > 0 ? Math.ceil(count * 0.12) : 0 },
-      { name: "Tue", bookings: count > 0 ? Math.ceil(count * 0.09) : 0 },
-      { name: "Wed", bookings: count > 0 ? Math.ceil(count * 0.16) : 0 },
-      { name: "Thu", bookings: count > 0 ? Math.ceil(count * 0.08) : 0 },
-      { name: "Fri", bookings: count > 0 ? Math.ceil(count * 0.21) : 0 },
-      { name: "Sat", bookings: count > 0 ? Math.ceil(count * 0.29) : 0 },
-      { name: "Sun", bookings: count > 0 ? Math.ceil(count * 0.24) : 0 },
+      { name: "Mon", bookings: Math.ceil(count * 0.12) },
+      { name: "Tue", bookings: Math.ceil(count * 0.09) },
+      { name: "Wed", bookings: Math.ceil(count * 0.16) },
+      { name: "Thu", bookings: Math.ceil(count * 0.08) },
+      { name: "Fri", bookings: Math.ceil(count * 0.21) },
+      { name: "Sat", bookings: Math.ceil(count * 0.29) },
+      { name: "Sun", bookings: Math.ceil(count * 0.24) },
     ];
   }, [bookings]);
 
